@@ -144,8 +144,6 @@ CallApi comes with built-in support for request and response validation, both on
 - **ArkType** - Advanced type-level validation
 - **And more!** - Any library implementing the Standard Schema spec
 
-### Using Schema Validation
-
 Here's a quick example of how to validate your API responses:
 
 ```ts twoslash title="api.ts"
@@ -178,7 +176,7 @@ const { data, error } = await callApi("/todos/1", {
 
 For a comprehensive deep-dive into validation strategies, including global validation, request-options (body, headers, params, query) validation, custom validators, and best practices, check out our [Validation Guide](./validation).
 
-### Throwing Errors
+## Throwing Errors
 
 You can throw errors instead of returning them by passing the `throwOnError` option.
 
