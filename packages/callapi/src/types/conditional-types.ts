@@ -18,13 +18,14 @@ import type {
 	Prettify,
 	UnionToIntersection,
 	UnmaskType,
+	Writeable,
 } from "./type-helpers";
 
 /**
- * @description Makes a type required if the output type of TSchema contains undefined, otherwise keeps it as is
+ * @description Makes a type partial if the output type of TSchema contains undefined, otherwise makes it required
  */
-type MakeSchemaOptionRequired<TSchema extends CallApiSchema[keyof CallApiSchema], TObject> =
-	undefined extends InferSchemaResult<TSchema> ? TObject : Required<TObject>;
+type MakeSchemaOptionPartialOrRequired<TSchemaOption extends CallApiSchema[keyof CallApiSchema], TObject> =
+	undefined extends InferSchemaResult<TSchemaOption> ? Partial<TObject> : Required<TObject>;
 
 export type ApplyURLBasedConfig<
 	TSchemaConfig extends CallApiSchemaConfig,
@@ -64,6 +65,11 @@ export type GetCurrentRouteKey<TSchemaConfig extends CallApiSchemaConfig, TPath>
 	: TPath extends URL ? string
 	: TPath;
 
+export type GetCurrentRouteSchema<
+	TBaseSchema extends BaseCallApiSchema,
+	TCurrentRouteKey extends string,
+> = NonNullable<Writeable<TBaseSchema[TCurrentRouteKey], "deep">>;
+
 type JsonPrimitive = boolean | number | string | null | undefined;
 
 export type SerializableObject = Record<keyof object, unknown>;
@@ -74,7 +80,7 @@ export type SerializableArray =
 
 export type Body = UnmaskType<RequestInit["body"] | SerializableArray | SerializableObject>;
 
-export type InferBodyOption<TSchema extends CallApiSchema> = MakeSchemaOptionRequired<
+export type InferBodyOption<TSchema extends CallApiSchema> = MakeSchemaOptionPartialOrRequired<
 	TSchema["body"],
 	{
 		/**
@@ -93,31 +99,36 @@ type InferMethodFromURL<TInitURL> =
 	: TInitURL extends `@${infer TMethod extends RouteKeyMethods}/${string}` ? Uppercase<TMethod>
 	: MethodUnion;
 
-type MakeMethodOptionRequired<TInitURL, TSchemaConfig extends CallApiSchemaConfig, TObject> =
+type MakeMethodOptionRequired<
+	TMethodSchemaOption extends CallApiSchema["method"],
+	TInitURL,
+	TSchemaConfig extends CallApiSchemaConfig,
+	TObject,
+> = MakeSchemaOptionPartialOrRequired<
+	TMethodSchemaOption,
 	undefined extends TSchemaConfig ? TObject
 	: TInitURL extends `@${string}/${string}` ?
-		TSchemaConfig["requireHttpMethodProvision"] extends true ?
+		TSchemaConfig["requireMethodProvision"] extends true ?
 			Required<TObject>
 		:	TObject
-	:	TObject;
+	:	TObject
+>;
 
 export type InferMethodOption<
 	TSchema extends CallApiSchema,
 	TSchemaConfig extends CallApiSchemaConfig,
 	TInitURL,
-> = MakeSchemaOptionRequired<
+> = MakeMethodOptionRequired<
 	TSchema["method"],
-	MakeMethodOptionRequired<
-		TInitURL,
-		TSchemaConfig,
-		{
-			/**
-			 * HTTP method for the request.
-			 * @default "GET"
-			 */
-			method?: InferSchemaResult<TSchema["method"], InferMethodFromURL<TInitURL>>;
-		}
-	>
+	TInitURL,
+	TSchemaConfig,
+	{
+		/**
+		 * HTTP method for the request.
+		 * @default "GET"
+		 */
+		method?: InferSchemaResult<TSchema["method"], InferMethodFromURL<TInitURL>>;
+	}
 >;
 
 export type HeadersOption = UnmaskType<
@@ -129,7 +140,7 @@ export type HeadersOption = UnmaskType<
 	| Array<[string, string]>
 >;
 
-export type InferHeadersOption<TSchema extends CallApiSchema> = MakeSchemaOptionRequired<
+export type InferHeadersOption<TSchema extends CallApiSchema> = MakeSchemaOptionPartialOrRequired<
 	TSchema["headers"],
 	{
 		/**
@@ -159,14 +170,37 @@ export interface Register {
 export type GlobalMeta =
 	Register extends { meta?: infer TMeta extends Record<string, unknown> } ? TMeta : never;
 
-export type InferMetaOption<TSchema extends CallApiSchema> = MakeSchemaOptionRequired<
+export type InferMetaOption<TSchema extends CallApiSchema> = MakeSchemaOptionPartialOrRequired<
 	TSchema["meta"],
 	{
+		/**
+		 * - An optional field you can fill with additional information,
+		 * to associate with the request, typically used for logging or tracing.
+		 *
+		 * - A good use case for this, would be to use the info to handle specific cases in any of the shared interceptors.
+		 *
+		 * @example
+		 * ```ts
+		 * const callMainApi = callApi.create({
+		 * 	baseURL: "https://main-api.com",
+		 * 	onResponseError: ({ response, options }) => {
+		 * 		if (options.meta?.userId) {
+		 * 			console.error(`User ${options.meta.userId} made an error`);
+		 * 		}
+		 * 	},
+		 * });
+		 *
+		 * const response = await callMainApi({
+		 * 	url: "https://example.com/api/data",
+		 * 	meta: { userId: "123" },
+		 * });
+		 * ```
+		 */
 		meta?: InferSchemaResult<TSchema["meta"], GlobalMeta>;
 	}
 >;
 
-export type InferQueryOption<TSchema extends CallApiSchema> = MakeSchemaOptionRequired<
+export type InferQueryOption<TSchema extends CallApiSchema> = MakeSchemaOptionPartialOrRequired<
 	TSchema["query"],
 	{
 		/**
@@ -179,8 +213,8 @@ export type InferQueryOption<TSchema extends CallApiSchema> = MakeSchemaOptionRe
 type EmptyString = "";
 
 /* eslint-disable perfectionist/sort-union-types -- I need to preserve the order of the types */
-export type InferParamFromRoute<TRoute> =
-	TRoute extends `${infer IgnoredPrefix}:${infer TCurrentParam}/${infer TRemainingPath}` ?
+export type InferParamFromRoute<TCurrentRoute> =
+	TCurrentRoute extends `${infer IgnoredPrefix}:${infer TCurrentParam}/${infer TRemainingPath}` ?
 		TCurrentParam extends EmptyString ?
 			InferParamFromRoute<TRemainingPath>
 		:	| Prettify<
@@ -196,15 +230,35 @@ export type InferParamFromRoute<TRoute> =
 					...(Params extends InferParamFromRoute<TRemainingPath> ? []
 					:	Extract<InferParamFromRoute<TRemainingPath>, unknown[]>),
 			  ]
-	: TRoute extends `${infer IgnoredPrefix}:${infer TCurrentParam}` ?
+	: TCurrentRoute extends `${infer IgnoredPrefix}:${infer TCurrentParam}` ?
 		TCurrentParam extends EmptyString ?
 			Params
 		:	Prettify<Record<TCurrentParam, AllowedQueryParamValues>> | [AllowedQueryParamValues]
 	:	Params;
 /* eslint-enable perfectionist/sort-union-types -- I need to preserve the order of the types */
 
-export type InferParamsOption<TSchema extends CallApiSchema, TCurrentRouteKey> = MakeSchemaOptionRequired<
+type MakeParamsOptionRequired<
+	TParamsSchemaOption extends CallApiSchema["params"],
+	TBaseSchema extends BaseCallApiSchema,
+	TCurrentRouteKey extends string,
+	TObject,
+> = MakeSchemaOptionPartialOrRequired<
+	TParamsSchemaOption,
+	TCurrentRouteKey extends `${string}:${string}${"" | "/"}${"" | AnyString}` ?
+		TCurrentRouteKey extends Extract<keyof TBaseSchema, TCurrentRouteKey> ?
+			Required<TObject>
+		:	TObject
+	:	TObject
+>;
+
+export type InferParamsOption<
+	TSchema extends CallApiSchema,
+	TBaseSchema extends BaseCallApiSchema,
+	TCurrentRouteKey extends string,
+> = MakeParamsOptionRequired<
 	TSchema["params"],
+	TBaseSchema,
+	TCurrentRouteKey,
 	{
 		/**
 		 * Parameters to be appended to the URL (i.e: /:id)
@@ -213,8 +267,12 @@ export type InferParamsOption<TSchema extends CallApiSchema, TCurrentRouteKey> =
 	}
 >;
 
-export type InferExtraOptions<TSchema extends CallApiSchema, TCurrentRouteKey> = InferMetaOption<TSchema>
-	& InferParamsOption<TSchema, TCurrentRouteKey>
+export type InferExtraOptions<
+	TSchema extends CallApiSchema,
+	TBaseSchema extends BaseCallApiSchema,
+	TCurrentRouteKey extends string,
+> = InferMetaOption<TSchema>
+	& InferParamsOption<TSchema, TBaseSchema, TCurrentRouteKey>
 	& InferQueryOption<TSchema>;
 
 export type InferPluginOptions<TPluginArray extends CallApiPlugin[]> = UnionToIntersection<

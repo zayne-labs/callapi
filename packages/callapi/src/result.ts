@@ -1,4 +1,4 @@
-import { commonDefaults, responseDefaults } from "./constants/default-options";
+import { responseDefaults } from "./constants/default-options";
 import type { HTTPError, ValidationError } from "./error";
 import type { CallApiExtraOptions, ThrowOnErrorUnion } from "./types";
 import type { DefaultDataType } from "./types/default-types";
@@ -181,7 +181,6 @@ export const resolveSuccessResult = (data: unknown, info: SuccessInfo): SuccessR
 
 export type ErrorInfo = {
 	cloneResponse: CallApiExtraOptions["cloneResponse"];
-	defaultErrorMessage: CallApiExtraOptions["defaultErrorMessage"];
 	message?: string;
 	resultMode: CallApiExtraOptions["resultMode"];
 };
@@ -189,7 +188,7 @@ export type ErrorInfo = {
 type ErrorResult = CallApiResultErrorVariant<unknown> | null;
 
 export const resolveErrorResult = (error: unknown, info: ErrorInfo): ErrorResult => {
-	const { cloneResponse, defaultErrorMessage, message: customErrorMessage, resultMode } = info;
+	const { cloneResponse, message: customErrorMessage, resultMode } = info;
 
 	let details = {
 		data: null,
@@ -213,9 +212,7 @@ export const resolveErrorResult = (error: unknown, info: ErrorInfo): ErrorResult
 	}
 
 	if (isHTTPErrorInstance<never>(error)) {
-		const selectedDefaultErrorMessage = defaultErrorMessage ?? commonDefaults.defaultErrorMessage;
-
-		const { errorData, message = selectedDefaultErrorMessage, name, response } = error;
+		const { errorData, message, name, response } = error;
 
 		details = {
 			data: null,

@@ -1,6 +1,7 @@
 import type { Auth } from "../auth";
 import type { fetchSpecificKeys } from "../constants/common";
 import type { DedupeOptions } from "../dedupe";
+import type { HTTPError } from "../error";
 import type { Hooks, HooksOrHooksArray } from "../hooks";
 import type { CallApiPlugin } from "../plugins";
 import type { GetCallApiResult, ResponseTypeUnion, ResultModeUnion } from "../result";
@@ -9,6 +10,7 @@ import type { URLOptions } from "../url";
 import type { BaseCallApiSchema, CallApiSchema, CallApiSchemaConfig } from "../validation";
 import type {
 	Body,
+	GetCurrentRouteSchema,
 	GlobalMeta,
 	HeadersOption,
 	InferExtraOptions,
@@ -94,10 +96,12 @@ type SharedExtraOptions<
 		customFetchImpl?: FetchImpl;
 
 		/**
-		 * Default error message to use if none is provided from a response.
+		 * Default HTTP error message to use if none is provided from a response.
 		 * @default "Failed to fetch data from server!"
 		 */
-		defaultErrorMessage?: string;
+		defaultHTTPErrorMessage?:
+			| string
+			| ((context: Pick<HTTPError<TErrorData>, "errorData" | "response">) => string);
 
 		/**
 		 * If true, forces the calculation of the total byte size from the request or response body, in case the content-length header is not present or is incorrect.
@@ -256,7 +260,7 @@ export type CallApiExtraOptions<
 		| Writeable<TSchema, "deep">
 		| ((context: {
 				baseSchema: Writeable<TBaseSchema, "deep">;
-				currentRouteSchema: NonNullable<Writeable<TBaseSchema[TCurrentRouteKey], "deep">>;
+				currentRouteSchema: GetCurrentRouteSchema<TBaseSchema, TCurrentRouteKey>;
 		  }) => Writeable<TSchema, "deep">);
 
 	/**
@@ -325,7 +329,7 @@ export type CallApiConfig<
 	TCurrentRouteKey extends string = string,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
-> = InferExtraOptions<TSchema, TCurrentRouteKey>
+> = InferExtraOptions<TSchema, TBaseSchema, TCurrentRouteKey>
 	& InferRequestOptions<TSchema, TSchemaConfig, TInitURL>
 	& Omit<
 		CallApiExtraOptions<
@@ -342,7 +346,7 @@ export type CallApiConfig<
 			TSchemaConfig,
 			TCurrentRouteKey
 		>,
-		keyof InferExtraOptions<CallApiSchema, string>
+		keyof InferExtraOptions<CallApiSchema, BaseCallApiSchema, string>
 	>
 	& Omit<CallApiRequestOptions, keyof InferRequestOptions<CallApiSchema, CallApiSchemaConfig, string>>;
 

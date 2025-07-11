@@ -19,7 +19,13 @@ import {
 	resolveSuccessResult,
 } from "./result";
 import { createRetryStrategy } from "./retry";
-import type { GetCurrentRouteKey, InferHeadersOption, InferInitURL, ThrowOnErrorUnion } from "./types";
+import type {
+	GetCurrentRouteKey,
+	GetCurrentRouteSchema,
+	InferHeadersOption,
+	InferInitURL,
+	ThrowOnErrorUnion,
+} from "./types";
 import type {
 	BaseCallApiConfig,
 	BaseCallApiExtraOptions,
@@ -89,7 +95,7 @@ export const createFetchClient = <
 			TSchemaConfig,
 			TInitURL
 		>,
-		TSchema extends CallApiSchema = NonNullable<TBaseSchema[TCurrentRouteKey]>,
+		TSchema extends CallApiSchema = GetCurrentRouteSchema<TBaseSchema, TCurrentRouteKey>,
 		TPluginArray extends CallApiPlugin[] = TBasePluginArray,
 	>(
 		...parameters: CallApiParameters<
@@ -303,7 +309,7 @@ export const createFetchClient = <
 				// == Push all error handling responsibilities to the catch block if not retrying
 				throw new HTTPError(
 					{
-						defaultErrorMessage: options.defaultErrorMessage,
+						defaultHTTPErrorMessage: options.defaultHTTPErrorMessage,
 						errorData: validErrorData,
 						response,
 					},
@@ -349,7 +355,6 @@ export const createFetchClient = <
 		} catch (error) {
 			const errorInfo = {
 				cloneResponse: options.cloneResponse,
-				defaultErrorMessage: options.defaultErrorMessage,
 				resultMode: options.resultMode,
 			} satisfies ErrorInfo;
 

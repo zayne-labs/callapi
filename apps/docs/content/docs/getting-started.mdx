@@ -50,15 +50,62 @@ type Todo = {
 const { data, error, response } = await callApi<Todo>("https://jsonplaceholder.typicode.com/todos/1");
 ```
 
-As shown in the example, callApi returns an object containing:
+As shown in the example, callApi returns a result object containing:
 
 - `data`: The response data
 - `error`: An error object containing info about any error that occurred during the lifecycle of the request
-- `response`: The original Response object
+- `response`: The Response object from the underlying fetch API
 
-You can specify the data type and error type using TypeScript generics, or using a [Validation Schema](./validation) to validate and infer the types automatically.
+You can specify the data type and error type via TypeScript generics, or using a [Validation Schema](./getting-started#request-and-response-validation) to validate and infer the types automatically.
 
-The return format can be customized using the `resultMode` option.
+```ts twoslash title="api.ts"
+import { callApi } from "@zayne-labs/callapi";
+import * as z from "zod/v4";
+
+type Todo = {
+	userId: string;
+	id: number;
+	title: string;
+	completed: boolean;
+};
+
+// Via TypeScript generics
+const { data, error, response } = await callApi<Todo>("https://jsonplaceholder.typicode.com/todos/1");
+
+// Via Validation Schemas
+const dataSchema = z.object({
+	userId: z.string(),
+	id: z.number(),
+	title: z.string(),
+	completed: z.boolean(),
+});
+
+const { data: validatedData } = await callApi("https://jsonplaceholder.typicode.com/todos/1", {
+	schema: {
+		data: dataSchema,
+	},
+});
+
+// @annotate: Hover over any of the properties to see the type
+```
+
+The result object format can be also be customized using the `resultMode` option.
+
+```ts twoslash title="api.ts"
+import { callApi } from "@zayne-labs/callapi";
+
+type Todo = {
+	userId: string;
+	id: number;
+	title: string;
+	completed: boolean;
+};
+
+// @annotate: Hover over the data to see the type
+const data = await callApi<Todo>("https://jsonplaceholder.typicode.com/todos/1", {
+	resultMode: "onlySuccess",
+});
+```
 
 ## CreateFetchClient
 
@@ -103,7 +150,7 @@ Here's a quick example of how to validate your API responses:
 
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
-import { z } from "zod"; // You can use any schema validation library that implements the Standard Schema specification
+import * as z from "zod/v4"; // You can use any schema validation library that implements the Standard Schema specification
 
 const dataSchema = z.object({
 	id: z.number(),

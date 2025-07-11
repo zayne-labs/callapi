@@ -7,12 +7,7 @@ import {
 	type PluginExtraOptions,
 	type RequestContext,
 } from "./hooks";
-import type {
-	BaseCallApiExtraOptions,
-	CallApiExtraOptions,
-	CallApiRequestOptions,
-	CallApiRequestOptionsForHooks,
-} from "./types/common";
+import type { CallApiRequestOptions, CallApiRequestOptionsForHooks } from "./types/common";
 import type { AnyFunction, Awaitable } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
 import { isArray, isFunction, isPlainObject, isString } from "./utils/guards";
@@ -85,21 +80,6 @@ export const definePlugin = <
 	return plugin;
 };
 
-const resolvePluginArray = (
-	plugins: CallApiExtraOptions["plugins"] | undefined,
-	basePlugins: BaseCallApiExtraOptions["plugins"] | undefined
-) => {
-	if (!plugins) {
-		return [];
-	}
-
-	if (isFunction(plugins)) {
-		return plugins({ basePlugins: basePlugins ?? [] });
-	}
-
-	return plugins;
-};
-
 export const initializePlugins = async (context: PluginInitContext) => {
 	const { baseConfig, config, initURL, options, request } = context;
 
@@ -107,12 +87,11 @@ export const initializePlugins = async (context: PluginInitContext) => {
 
 	const addMainHooks = () => {
 		for (const key of Object.keys(clonedHookRegistries) as Array<keyof Hooks>) {
-			const baseHook = baseConfig;
+			const overriddenHook = options[key];
+			const baseHook = baseConfig[key];
 			const instanceHook = config[key];
 
-			const overriddenHook = options[key] as HooksOrHooksArray[typeof key];
-
-			// If the base hook is an array and instance hook is defined, we need to compose it with the overridden hook
+			// == If the base hook is an array and instance hook is defined, we need to compose the base hook with the instance hook
 			const mainHook =
 				isArray(baseHook) && Boolean(instanceHook) ? [baseHook, instanceHook].flat() : overriddenHook;
 
@@ -139,7 +118,10 @@ export const initializePlugins = async (context: PluginInitContext) => {
 		addMainHooks();
 	}
 
-	const resolvedPlugins = resolvePluginArray(options.plugins, baseConfig.plugins);
+	const resolvedPlugins =
+		isFunction(options.plugins) ?
+			options.plugins({ basePlugins: baseConfig.plugins ?? [] })
+		:	(options.plugins ?? []);
 
 	let resolvedInitURL = initURL;
 	let resolvedOptions = options;
@@ -191,7 +173,7 @@ export const initializePlugins = async (context: PluginInitContext) => {
 	for (const [key, hookRegistry] of Object.entries(clonedHookRegistries)) {
 		if (hookRegistry.size === 0) continue;
 
-		// == Flatten the hook registry to remove any nested arrays or hooks incase an array of hooks is passed to any of the hooks
+		// == Flatten the hook registry to remove any nested arrays, incase an array of hooks is passed to any of the hooks
 		const flattenedHookArray = [...hookRegistry].flat();
 
 		if (flattenedHookArray.length === 0) continue;

@@ -45,7 +45,7 @@
 		"@size-limit/preset-small-lib": "11.2.0",
 		"@total-typescript/ts-reset": "0.6.1",
 		"@zayne-labs/callapi": "workspace:*",
-		"@zayne-labs/toolkit-type-helpers": "^0.10.2",
+		"@zayne-labs/toolkit-type-helpers": "^0.10.3",
 		"@zayne-labs/tsconfig": "0.9.4",
 		"concurrently": "^9.2.0",
 		"consola": "3.4.2",

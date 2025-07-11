@@ -92,7 +92,7 @@ export type GetMethodOptions = {
 export const getMethod = (options: GetMethodOptions) => {
 	const { initURL, method, schemaConfig } = options;
 
-	if (schemaConfig?.requireHttpMethodProvision === true) {
+	if (schemaConfig?.requireMethodProvision === true) {
 		return method?.toUpperCase() ?? requestOptionDefaults.method;
 	}
 
@@ -170,6 +170,8 @@ export interface URLOptions {
 
 	/**
 	 * Parameters to be appended to the URL (i.e: /:id)
+	 *
+	 * If url is defined as `/path/:id`, params will be `{ id: string }`
 	 */
 	params?: Params;
 

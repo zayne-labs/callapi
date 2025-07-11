@@ -42,7 +42,7 @@ To avoid this, you can either:
 ```ts title="todo.tsx"
 import { callApi } from "@zayne-labs/callapi";
 import { useQuery } from "@tanstack/react-query";
-import { z } from "zod";
+import * as z from "zod/v4";
 
 const dataSchema = z.object({
 	id: z.number(),

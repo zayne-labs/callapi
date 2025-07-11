@@ -3,7 +3,10 @@ title: Hooks
 description: Learn how to use hooks in CallApi
 ---
 
-Hooks are callback functions that are called at different stages of the request lifecycle. Each hook receives a specific context object and can be async. They are sometimes referred to as interceptors in other libraries.
+Hooks are essentially callback functions that you register with callapi. Think of them like event listeners for your API requests.
+CallApi runs these functions (sync or async) automatically at specific points during the request's lifecycle – before sending, after receiving a response, when an error occurs, and so on.
+
+These hooks allow you to "tap into" the process and run custom code without cluttering your main API call logic. They are sometimes referred to as interceptors in other libraries.
 
 ```ts twoslash title="example.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -57,9 +60,11 @@ callApi("/api/data", {
 });
 ```
 
-## Request Phase Hooks
+## What hooks are available and when do they run?
 
-### onRequest
+### Request Phase Hooks
+
+#### onRequest
 
 This hook is called before a request is sent. You can use this to modify request configuration, add headers, or handle authentication.
 
@@ -82,7 +87,7 @@ const client = createFetchClient({
 });
 ```
 
-### onRequestStream
+#### onRequestStream
 
 This hook is called during request body streaming, useful for tracking upload progress.
 
@@ -116,7 +121,7 @@ if (file) {
 }
 ```
 
-### onRequestError
+#### onRequestError
 
 This hook is called when the request fails before reaching the server. You can use it to handle network errors, timeouts, etc.
 
@@ -135,9 +140,9 @@ const client = createFetchClient({
 });
 ```
 
-## Response Phase Hooks
+### Response Phase Hooks
 
-### onResponse
+#### onResponse
 
 This hook is called for every response from the server, regardless of the status code. You can use it to log all API calls, handle specific status codes, etc.
 
@@ -157,7 +162,7 @@ const client = createFetchClient({
 });
 ```
 
-### onResponseStream
+#### onResponseStream
 
 This hook is called during response body streaming, perfect for tracking download progress.
 
@@ -185,7 +190,7 @@ const { data } = await client("/api/download-video", {
 });
 ```
 
-### onSuccess
+#### onSuccess
 
 This hook is called only for successful responses. You can use it to handle successful responses, cache data, etc.
 
@@ -208,7 +213,7 @@ const client = createFetchClient<User[]>({
 });
 ```
 
-### onResponseError
+#### onResponseError
 
 This hook is called for error responses (response.ok === false). You can use it to handle specific status codes, etc.
 
@@ -238,7 +243,7 @@ const client = createFetchClient({
 });
 ```
 
-### onError
+#### onError
 
 Called for any error .
 
@@ -269,9 +274,9 @@ const client = createFetchClient({
 });
 ```
 
-## Retry Phase Hooks
+### Retry Phase Hooks
 
-### onRetry
+#### onRetry
 
 This hook is called before retrying a failed request. You can use it to handle stuff before retrying.
 
@@ -290,9 +295,9 @@ const client = createFetchClient({
 });
 ```
 
-## Validation Phase Hooks
+### Validation Phase Hooks
 
-### onValidationError
+#### onValidationError
 
 This hook is called when request or response validation fails via the `schema` option.
 
@@ -306,40 +311,40 @@ const client = createFetchClient({
 });
 ```
 
-## Details to note
+## Ways in which hooks can be provided
 
-Here are some important details about how hooks work:
+Hooks can be provided at three levels:
 
-### Array Support
+1. **The Plugin Level**: (covered in [`plugins`](./plugins.mdx))
+2. **The Base Client Level**: (`createFetchClient`)
+3. **The Instance Level**: (`callApi`)
 
-Any hook can be an array of callbacks that will run sequentially:
+And each hook can be provided, as:
 
-```ts
-const { error } = await callApi("/api/data", {
+- A single callback function.
+- An array of callback functions.
+
+```ts title="example.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+const callApi = createFetchClient({
 	onRequest: [
 		(ctx) => addAuthHeader(ctx.request),
 		(ctx) => addTrackingHeader(ctx.request),
 		(ctx) => addVersionHeader(ctx.request),
 	],
 });
+
+const result = await callApi("/api/data", {
+	onRequest: (ctx) => {},
+});
 ```
 
-### Streaming
+## Hook Execution Order
 
-Both stream hooks (`onRequestStream` and `onResponseStream`) receive a context object with an `event` property of type `StreamProgressEvent` that contains:
+Hooks can be defined at three levels as we've seen above, executing in the following order:
 
-- `chunk`: Current chunk of data being streamed (Uint8Array)
-- `progress`: Progress percentage (0-100)
-- `totalBytes`: Total size of data in bytes
-- `transferredBytes`: Amount of data transferred so far
-
-### Hook Priority Levels
-
-Hooks can be defined at three levels, executing in the following order:
-
-1. **Plugin Level**: Runs first
-2. **Base Client Level**: Runs second
-3. **Instance Level**: Runs last and overrides base hooks if base hooks aren't defined as an array
+**Plugin Hooks -> Base Client Hooks -> Instance Hooks**
 
 ```ts title="example.ts"
 import { createFetchClient, definePlugin } from "@zayne-labs/callapi";
@@ -349,106 +354,84 @@ const loggingPlugin = definePlugin({
 	name: "logger",
 	hooks: {
 		onRequest: () => console.log("1. Plugin onRequest"),
+		onResponse: () => console.log("1. Plugin onResponse"),
 	},
 });
 
 // Base client hooks (run second)
 const client = createFetchClient({
 	plugins: [loggingPlugin],
-	// Single callback
 	onRequest: () => console.log("2. Base onRequest"),
-	// Or array of callbacks
-	onResponse: [() => console.log("2.1 Base onResponse"), () => console.log("2.2 Base onResponse")],
+	onResponse: () => console.log("2. Base onResponse"),
 });
 
 // Request-specific hooks (run last)
 await client("/api/data", {
-	// Overrides base onRequest
 	onRequest: () => console.log("3. Request onRequest"),
-	// Merges with base onResponse array
 	onResponse: () => console.log("3. Request onResponse"),
 });
 ```
 
-### Customizing Execution
+You can also customize the overall execution order (`mergedHooksExecutionOrder`) and whether hooks at the same level run sequentially or in parallel (`mergedHooksExecutionMode`) using options, but the default behavior is a common and predictable setup.
 
-There are two aspects to hooks execution that you can customize:
+## Hook Overriding And Merging
 
-**1. Hook Execution Order**
+1. **Plugin Hooks**: These run first by default and can't be overridden by either instance or base client hooks, making them perfect for must-have functionality.
 
-By default, plugin hooks run before main hooks (those defined in `createFetchClient` or individual requests). You can customize this with the `mergedHooksExecutionOrder` option:
+2. **Instance Hooks**: Instance-level hooks generally **override** base client hooks if both are single functions.
 
-```ts
-const client = createFetchClient({
-	mergedHooksExecutionOrder: "mainHooksBeforePlugins", // or "mainHooksAfterPlugins"
-});
-```
-
-**2. Hook Execution Mode**
-
-When multiple hooks of the same type (e.g., multiple `onRequest` hooks) are defined, whether they are base hooks, plugin hooks, or instance hooks, you can control how they run using the `mergedHooksExecutionMode` option:
-
-```ts
-const client = createFetchClient({
-	mergedHooksExecutionMode: "sequential", // Run hooks one after another (default)
-	// or
-	mergedHooksExecutionMode: "parallel", // Run all hooks simultaneously
-});
-```
+3. **Base Client Hooks**: When the base client hook is an array, instance hooks are **merged** into that array instead of replacing it, allowing you to add additional functionality without overriding existing logic.
 
 <Callout type="info">
-	Plugin initialization (`init`) functions always run sequentially in the order plugins are added,
-	regardless of these settings.
+	This merging behavior for array-type base client hooks is mostly just a convenience. If you need more
+	sophisticated control or guaranteed execution, defining your logic within a dedicated
+	[plugin](./plugins) is often the better approach.
 </Callout>
 
-### Override Behavior
+```ts title="Hook Order and Merging Example"
+import { createFetchClient, definePlugin } from "@zayne-labs/callapi";
 
-There are three ways hooks can behave when overriding:
-
-1. **Regular Hooks**: Instance hooks completely replace base hooks. If you override a hook, the base hook won't run.
-2. **Plugin Hooks**: These run first by default and can't be overridden, making them perfect for must-have functionality.
-3. **Array Hooks**: When the base hook is an array, instance hooks are **merged** with the corresponding base hook, allowing you to add additional functionality without overriding existing logic. This behavior is purely for convenience if you don't want to make a plugin just to avoid overrides.
-
-Here's how each behaves:
-
-```ts
-// 1. Regular hooks - base hook is replaced
-
-const callBackendApi = createFetchClient({
-	onRequest: (ctx) => addAuthHeader(ctx.request),
-});
-
-const result = callBackendApi("/api", {
-	onRequest: (ctx) => addVersionHeader(ctx.request), // Only this runs, auth header is lost!
-});
-
-// 2. When the base hook is an Array - corresponding instance hooks are merged instead of overriding the base hook
-const callAnotherApi = createFetchClient({
-	onRequest: [(ctx) => addAuthHeader(ctx.request)],
-});
-
-const anotherResult = callAnotherApi("/api", {
-	onRequest: (ctx) => addVersionHeader(ctx.request), // Both hooks run!
-});
-
-// 3. Plugin hooks - runs first by default
-const authHeaderPlugin = definePlugin({
-	id: "auth-header-plugin",
-	description: "Add Auth Header",
-
+// 1. Plugin Hook (Runs first)
+const examplePlugin = definePlugin({
+	id: "example-plugin",
+	name: "ExamplePlugin",
 	hooks: {
-		onRequest: (ctx) => addAuthHeader(ctx.request),
+		onRequest: (ctx) => console.log("1.1 Plugin onRequest -- (cannot be overridden)"),
+		onResponse: (ctx) => console.log("1.2 Plugin onResponse -- (cannot be overridden)"),
 	},
 });
 
-const clientWithPlugin = createFetchClient({
-	plugins: [authHeaderPlugin],
+// 2. Base Client Hooks (Runs second)
+const callBackendApi = createFetchClient({
+	plugins: [examplePlugin],
+	// Single base hook - will be overridden by instance hook
+	onRequest: (ctx) =>
+		console.log("2.1 Base onRequest -- (will be overridden by instance onRequest hook (3.1))"),
 
-	onRequest: (ctx) => addVersionHeader(ctx.request),
+	// Array base hook - instance hook will be merged
+	onResponse: [
+		(ctx) => console.log("2.2 Base onResponse (part of array)"),
+		(ctx) => console.log("2.3 Base onResponse (part of array)"),
+	],
+});
+
+// 3. Instance Hooks (Runs last, overrides or merges)
+const result = await callBackendApi("/data", {
+	// Overrides the single base onRequest hook
+	onRequest: (ctx) => console.log("3.1 Instance onRequest (overrides base onRequest (2.1))"),
+
+	// Merges with the base onResponse array
+	onResponse: (ctx) => console.log("3.2 Instance onResponse (merged with base onResponse (2.2, 2.3))"),
 });
 ```
 
-### Async Support
+**Explanation:**
+
+- The plugin's `onRequest` and `onResponse` run first.
+- The base client's `onRequest` is a single function, and the instance provides its own `onRequest`. The instance hook **replaces** the base hook for this specific call.
+- The base client's `onResponse` is an **array**. The instance `onResponse` is **added** to this array. The combined array `[2.1 Base, 2.2 Base, 3.1 Instance]` is then executed sequentially.
+
+## Async Hooks
 
 All hooks can be async or return a Promise. When this is the case, the hook will be awaited internally:
 
@@ -459,7 +442,7 @@ onRequest: async ({ request }) => {
 },
 ```
 
-### Type Safety
+## Type Safety
 
 All hooks are fully typed based on the response type you specify when creating the client. This ensures you get proper type inference and autocompletion for the data and error objects in all your hooks.
 
@@ -485,6 +468,15 @@ const { error } = await client("/api/data", {
 
 // @annotate: Hover over the data object to see the inferred type
 ```
+
+## Streaming
+
+Both stream hooks (`onRequestStream` and `onResponseStream`) receive a context object with an `event` property of type `StreamProgressEvent` that contains:
+
+- `chunk`: Current chunk of data being streamed (Uint8Array)
+- `progress`: Progress percentage (0-100)
+- `totalBytes`: Total size of data in bytes
+- `transferredBytes`: Amount of data transferred so far
 
 ## Types
 

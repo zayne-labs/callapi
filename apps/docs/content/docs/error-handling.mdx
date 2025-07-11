@@ -4,24 +4,48 @@ description: Learn more about how to handle errors in CallApi
 icon: ShieldAlert
 ---
 
-## Error Object Structure
+It prevalent knowledge that making network requests is inherently risky. Things can go wrong for many reasons:
 
-CallApi by default returns request and response errors as a value, wrapped in a single `error` object. This error object has three properties:
+- The server might be down.
+- The server might respond with an error status like 404 Not Found (the resource doesn't exist) or 500 Internal Server Error (something broke on the server).
+- There might be a network issue.
+- The request might time out.
+- The response data might not be in the format you expected (e.g., not valid JSON).
 
-1. **name**: The name of the error (e.g., `'HTTPError'`, `'ValidationError'`, `'TypeError'`, `'SyntaxError'`)
+When using the standard browser fetch API, handling these failures can sometimes be a bit clunky due to the following reasons:
+
+- Network errors throw one type of error
+- Non-2xx HTTP responses don't throw errors by default (you have to check response.ok)
+- Parsing errors might throw yet another type
+
+This can lead to complex if/else chains and unwieldy try...catch blocks just to figure out what went wrong.
+
+CallApi aims to make dealing with these failures much more predictable and convenient.
+
+## Structure of the `error` property
+
+As introduced in the [Getting Started](./getting-started.mdx) guide, CallApi wraps responses in a result object with three key properties: `data`, `error`, and `response`.
+
+When something goes wrong while making a request, the `error` property will contain a structured object detailing the problem.
+
+The `error` property is an object that has the following properties:
+
+1. **name**: A string identifying the type of error (e.g., `'HTTPError'`, `'ValidationError'`, `'TypeError'`, `'TimeoutError'`, ...etc).
 
 2. **message**: A brief description of what went wrong:
-
-   - For non-HTTP errors: The error message from the JavaScript error object
    - For HTTP errors: The error message from the server, or if not provided, falls back to the `defaultErrorMessage` option
+   - For validation errors: A formatted error message derived from the validation issues array
+   - For non-HTTP errors: The error message from the JavaScript error object that caused the error
 
 3. **errorData**: The detailed error information:
-
    - For HTTP errors: It is set to the parsed response from the API
    - For validation errors: It is set to the validation issues array
    - For non-HTTP errors: It is set to `false`
 
-4. **originalError**: The original error object that caused the error
+4. **originalError**: The original error object that caused the error:
+   - For HTTP errors: `HTTPError`
+   - For validation errors: `ValidationError`
+   - For non-HTTP errors: The underlying javascript error object (e.g., `TypeError`, `DOMException`, etc.)
 
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
@@ -30,9 +54,12 @@ const { error } = await callApi("https://my-api.com/api/v1/session");
 // @annotate: Hover over the error object to see the type
 ```
 
-## ErrorData Type
+## Handling HTTP Errors (HTTPError)
 
-For HTTP errors, you can customize the error response data type by providing a second generic type argument to callApi:
+One of the most common types of errors you'll encounter is when the server responds with a status code outside the 200-299 range (like 400, 401, 403, 404, 500, 503, etc.). Standard `fetch` doesn't throw an error for these responses.
+
+CallApi, by default, wraps these responses in an `HTTPError`.
+You can customize the error response data type by providing a second generic type argument to callApi.
 
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
@@ -49,9 +76,7 @@ if (error) {
 }
 ```
 
-## The `error` object as a discriminated union
-
-The error object returned from `callApi` is a discriminated union. You can use the `isHTTPError` utility from `@zayne-labs/callapi/utils` to check if it's an HTTP error:
+Since the `error` property is a discriminated union, you can use the `isHTTPError` utility from `@zayne-labs/callapi/utils` to check if it's an HTTP error:
 
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
@@ -71,30 +96,38 @@ type ErrorResponseData = {
 
 const { data, error } = await callApi<UserData, ErrorResponseData>("https://my-api.com/api/v1/session");
 
-// @annotate: Hover over the error object to see its type narrowed specifically to HTTPError union
 if (isHTTPError(error)) {
 	console.error(error);
-
 	console.error(error.name); // 'HTTPError'
 	console.error(error.message);
 	console.error(error.errorData); // Will be set to the error response data
 }
-
-if (error) {
-	console.error(error);
-	console.error(error.name); // PossibleValidationErrorName | PossibleJavascriptErrorNames
-	console.error(error.message);
-	console.error(error.errorData); // Will be set to the original error object that caused the error if it's a javascript error or the issues array if it's a validation error
-}
 ```
 
-If you want to handle validation errors specifically, you can use the `isValidationError` utility:
+## Handling Validation Errors (ValidationError)
+
+While covered in more detail in the [Validation](./validation.mdx) section, CallApi also has built-in support for schema validation.
+If you configure a schema (whether for any request option or for the response data) and the received data does not match that schema, CallApi will wrap this failure in a `ValidationError`.
+
+You can use the `isValidationError` utility to check specifically for this error type:
 
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
 import { isValidationError } from "@zayne-labs/callapi/utils";
+import * as z from "zod/v4";
 
-const { data, error } = await callApi("https://my-api.com/api/v1/session");
+const dataSchema = z.object({
+	id: z.number(),
+	userId: z.string(),
+	title: z.string(),
+	completed: z.boolean(),
+});
+
+const { data, error } = await callApi("https://my-api.com/api/v1/session", {
+	schema: {
+		data: dataSchema,
+	},
+});
 
 if (isValidationError(error)) {
 	console.error(error);
@@ -104,9 +137,14 @@ if (isValidationError(error)) {
 }
 ```
 
+As seen in the case above, if the data received from the API does not match the schema, the `ValidationError` thrown will be captured in the `error` property.
+
 ## Handling Thrown Errors
 
-When using the `throwOnError` option, CallApi will throw any error it encounters instead of returning it. The thrown error can be an instance of the `HTTPError` class (a subclass of `Error`) or a `ValidationError` class (a subclass of `Error`) or a regular javascript error. You can handle `HTTPError` and `ValidationError` in a try-catch block using the `isHTTPErrorInstance` or `isValidationErrorInstance` utility respectively:
+Sometimes you might prefer that the error is thrown by CallApi instead of returned as a value in the result object. You can do this by setting the `throwOnError` option to `true`:
+This is especially useful when integrating with libraries that expect promises to reject on failure, such as React Query for example.
+
+You can use the `isHTTPErrorInstance` and `isValidationErrorInstance` utilities to check if the error is an instance of `HTTPError` or `ValidationError` respectively.
 
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
@@ -145,13 +183,16 @@ try {
 }
 ```
 
-This approach is recommended when using CallApi with libraries that expect a promise in both error and success cases, like React Query.
+## The `data` and `error` properties as a discriminated union
 
-## The `data` and `error` properties as members of a discriminated union
+Another way to look at the `data` and `error` properties is as a pair of mutually exclusive properties.
 
-The `data` and `error` properties in the response are members of a discriminated union. When an error occurs, `data` will be `null`, and when the response is successful, `error` will be `null`.
+This implies that:
 
-TypeScript will narrow down the type of `data` to exclude `null` when you check for errors first:
+- If `error` is present, `data` is null.
+- If `error` is null, `data` is present.
+
+TypeScript understands this relationship. So if you check for error first and handle it, TypeScript can automatically narrow the type of `data` to exclude null.
 
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";

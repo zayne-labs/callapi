@@ -26,6 +26,7 @@ type InferSchemaInput<TSchema extends CallApiSchema[keyof CallApiSchema]> =
 	: never;
 
 export type InferSchemaResult<TSchema, TFallbackResult = unknown> =
+	// == Checking for undefined first and returning fallback to avoid type errors when passing the config around (weird tbh)
 	undefined extends TSchema ? TFallbackResult
 	: TSchema extends StandardSchemaV1 ? StandardSchemaV1.InferOutput<TSchema>
 	: TSchema extends AnyFunction<infer TResult> ? Awaited<TResult>
@@ -93,13 +94,13 @@ export interface CallApiSchemaConfig {
 	disableValidationOutputApplication?: boolean;
 
 	/**
-	 * Controls the inference of the method option based on the route modifiers (`@get/`, `@post/`, `@put/`, `@patch/`, `@delete/`).
+	 *Determines the inference or requirement of the method option based on the route modifiers (`@get/`, `@post/`, `@put/`, `@patch/`, `@delete/`).
 	 *
 	 * - When `true`, the method option is made required on the type level and is not automatically added to the request options.
 	 * - When `false` or `undefined` (default), the method option is not required on the type level, and is automatically added to the request options.
 	 *
 	 */
-	requireHttpMethodProvision?: boolean;
+	requireMethodProvision?: boolean;
 
 	/**
 	 * Controls the strictness of API route validation.
@@ -113,7 +114,6 @@ export interface CallApiSchemaConfig {
 	 * - All routes will be allowed, whether they are defined in the schema or not
 	 * - Provides more flexibility but less type safety
 	 *
-	 * @default false
 	 */
 	strict?: boolean;
 }

@@ -1,10 +1,9 @@
 import { commonDefaults } from "./constants/default-options";
 import type { CallApiExtraOptions } from "./types";
 import type { StandardSchemaV1 } from "./types/standard-schema";
-import { isObject } from "./utils/guards";
+import { isObject, isString } from "./utils/guards";
 
-type HTTPErrorDetails<TErrorData> = {
-	defaultErrorMessage: CallApiExtraOptions["defaultErrorMessage"];
+type HTTPErrorDetails<TErrorData> = Pick<CallApiExtraOptions, "defaultHTTPErrorMessage"> & {
 	errorData: TErrorData;
 	response: Response;
 };
@@ -23,10 +22,15 @@ export class HTTPError<TErrorData = Record<string, unknown>> extends Error {
 	response: HTTPErrorDetails<TErrorData>["response"];
 
 	constructor(errorDetails: HTTPErrorDetails<TErrorData>, errorOptions?: ErrorOptions) {
-		const { defaultErrorMessage, errorData, response } = errorDetails;
+		const { defaultHTTPErrorMessage, errorData, response } = errorDetails;
+
+		const resolvedDefaultHTTPErrorMessage =
+			isString(defaultHTTPErrorMessage) ? defaultHTTPErrorMessage : (
+				defaultHTTPErrorMessage?.({ errorData, response })
+			);
 
 		const selectedDefaultErrorMessage =
-			defaultErrorMessage ?? (response.statusText || commonDefaults.defaultErrorMessage);
+			resolvedDefaultHTTPErrorMessage ?? (response.statusText || commonDefaults.defaultErrorMessage);
 
 		const message =
 			(errorData as { message?: string } | undefined)?.message ?? selectedDefaultErrorMessage;

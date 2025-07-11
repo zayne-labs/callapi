@@ -10,7 +10,7 @@ import {
 } from "@zayne-labs/callapi";
 import { isValidationError } from "@zayne-labs/callapi/utils";
 import { loggerPlugin } from "@zayne-labs/callapi-plugins";
-import z from "zod";
+import * as z from "zod/v3";
 
 const newOptionSchema1 = z.object({
 	onUpload: z.function().args(

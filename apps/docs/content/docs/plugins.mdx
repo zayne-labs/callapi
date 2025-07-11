@@ -156,7 +156,7 @@ For example, let's create a plugin that tracks upload progress and defines a cus
 
 ```ts twoslash title="plugins.ts"
 import { createFetchClient, definePlugin, type PluginInitContext } from "@zayne-labs/callapi";
-import { z } from "zod";
+import * as z from "zod";
 
 const pluginOptionsSchema = z.object({
 	onUploadProgress: z.function().args(z.object({ loaded: z.number(), total: z.number() })),

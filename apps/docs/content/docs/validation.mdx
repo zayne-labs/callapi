@@ -14,7 +14,7 @@ To create a validation schema, you need to import the `defineSchema` function fr
 
 ```ts twoslash title="api.ts"
 import { defineSchema, createFetchClient } from "@zayne-labs/callapi";
-import { z } from "zod";
+import * as z from "zod/v4";
 
 export const baseSchema = defineSchema({
 	// [!code highlight]
@@ -27,7 +27,7 @@ export const baseSchema = defineSchema({
 			title: z.string(), // [!code highlight]
 			completed: z.boolean(), // [!code highlight]
 		}), // [!code highlight]
-
+		// [!code highlight]
 		data: z.object({
 			// [!code highlight]
 			userId: z.string(), // [!code highlight]
@@ -35,8 +35,9 @@ export const baseSchema = defineSchema({
 			title: z.string(), // [!code highlight]
 			completed: z.boolean(), // [!code highlight]
 		}), // [!code highlight]
-	}, // [!code highlight]
-}); // [!code highlight]
+	},
+	// [!code highlight]
+});
 
 const callApi = createFetchClient({
 	baseURL: "https://jsonplaceholder.typicode.com",
@@ -48,14 +49,6 @@ const callApi = createFetchClient({
 
 The Validation Schema is a map of paths/urls and schema. Each path in the schema can define multiple validation rules through the following keys:
 
-### Request Validation
-
-- `body`: Validates request body data before sending
-- `headers`: Ensures required headers are present and correctly formatted
-- `method`: Validates or enforces specific HTTP methods (GET, POST, etc.)
-- `params`: Validates URL parameters (both dynamic `:param` and object-style)
-- `query`: Validates query string parameters before they're added to the URL
-
 ### Response Validation
 
 - `data`: Validates successful response data
@@ -63,40 +56,9 @@ The Validation Schema is a map of paths/urls and schema. Each path in the schema
 
 If any validation fails, a `ValidationError` will be thrown.
 
-### Request Body
-
-The `body` key is used to validate the request body data, as well provide type safety for the request body data.
-
 ```ts twoslash title="client.ts"
 import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
-import { z } from "zod";
-
-const callApi = createFetchClient({
-	baseURL: "https://api.example.com",
-	schema: defineSchema({
-		"/products": {
-			body: z.object({
-				title: z.string(),
-				price: z.number(),
-				category: z.string(),
-			}),
-		},
-	}),
-});
-
-// @errors: 2739
-const { data } = await callApi("/products", {
-	body: {},
-});
-```
-
-### Response Data
-
-The `data` key validates the response data. If you define a data schema, the response will be validated before being returned. Same goes for `errorData`.
-
-```ts twoslash title="client.ts"
-import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
-import { z } from "zod";
+import * as z from "zod/v4";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
@@ -126,13 +88,67 @@ const { data, error } = await callApi("/products/:id", {
 // @annotate: errorData for HTTP errors will be typed as { code: string; message: string }
 ```
 
-### Headers Validation
+### Request Validation
+
+- `body`: Validates request body data before sending
+- `headers`: Ensures required headers are present and correctly formatted
+- `method`: Validates or enforces specific HTTP methods (GET, POST, etc.)
+- `params`: Validates URL parameters (`:param`)
+- `query`: Validates query string parameters before they're added to the URL
+
+```ts twoslash title="client.ts"
+import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
+import * as z from "zod/v4";
+
+const callApi = createFetchClient({
+	baseURL: "https://api.example.com",
+	schema: defineSchema({
+		"/users/:userId": {
+			query: z.object({
+				id: z.string(),
+			}),
+			params: z.object({
+				userId: z.string(),
+			}),
+		},
+	}),
+});
+```
+
+#### Body Validation
+
+The `body` key is used to validate the request body data, as well provide type safety for the request body data.
+
+```ts twoslash title="client.ts"
+import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
+import * as z from "zod/v4";
+
+const callApi = createFetchClient({
+	baseURL: "https://api.example.com",
+	schema: defineSchema({
+		"/products": {
+			body: z.object({
+				title: z.string(),
+				price: z.number(),
+				category: z.string(),
+			}),
+		},
+	}),
+});
+
+// @errors: 2739
+const { data } = await callApi("/products", {
+	body: {},
+});
+```
+
+#### Headers Validation
 
 The `headers` key validates request headers. This is useful for enforcing required headers or validating header formats:
 
 ```ts twoslash title="client.ts"
 import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
-import { z } from "zod";
+import * as z from "zod/v4";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
@@ -154,13 +170,13 @@ const { data } = await callApi("/products", {
 });
 ```
 
-### Query Parameters
+#### Query Parameters
 
 The query schema validates query parameters. If you define a query schema, the parameters will be validated before being added to the URL.
 
 ```ts twoslash title="client.ts"
 import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
-import { z } from "zod";
+import * as z from "zod/v4";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
@@ -182,59 +198,75 @@ const { data } = await callApi("/products", {
 });
 ```
 
-### Dynamic Path Parameters
+#### Dynamic Path Parameters
 
-The params schema validates URL parameters. You can define dynamic parameters in two ways:
+The params schema validates URL parameters. You can define dynamic parameters in the following ways:
 
-1. Using colon syntax in the schema path (`:paramName`)
-2. Using the `params` validator schema
-
-<Callout type="info">
-	When using colon syntax with multiple parameters, you can pass them as an array in the order they appear
-	in the path.
-</Callout>
+1. Using colon syntax in the schema path (`:paramName`) with providing a params schema. This only enforces the type of the parameter at the type level.
+2. Using the `params` validator schema. This takes precedence over the colon syntax.
 
 ```ts twoslash title="client.ts"
 import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
-import { z } from "zod";
+import * as z from "zod/v4";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
 
 	schema: defineSchema({
 		// Using colon syntax
-		"/products/:id/:category": {
+		"/products/:id": {
 			data: z.object({
-				id: z.number(),
-				category: z.string(),
+				name: z.string(),
+				price: z.string(),
 			}),
 		},
 
-		// Using params validator
+		// Using params schema
 		"/products": {
+			data: z.object({
+				name: z.string(),
+				price: z.number(),
+			}),
 			params: z.object({
-				id: z.string(),
+				version: z.string(),
+			}),
+		},
+
+		// Using both colon syntax and params schema (the params schema takes precedence and ensures validation both at type level and runtime)
+		"/products/:id/:category": {
+			data: z.object({
+				name: z.string(),
+				price: z.number(),
+			}),
+			params: z.object({
+				id: z.number(),
 				category: z.string(),
 			}),
 		},
 	}),
 });
 
-// Using object syntax for params validator
-const response2 = await callApi("/products/:id/:category", {
+const response1 = await callApi("/products/:id", {
 	params: {
-		id: "123",
-		category: "electronics",
+		id: 20,
 	},
 });
 
-// Using array syntax for colon parameters
-const response1 = await callApi("/products/:id/:category", {
-	params: ["123", "electronics"],
+const response2 = await callApi("/products", {
+	params: {
+		version: "v1",
+	},
+});
+
+const response3 = await callApi("/products/:id/:category", {
+	params: {
+		id: 20,
+		category: "electronics",
+	},
 });
 ```
 
-### HTTP Method Modifiers
+#### HTTP Method Modifiers
 
 You can specify the HTTP method in two ways:
 
@@ -253,7 +285,7 @@ If you use the `@method-name` prefix, it will added to the request options autom
 
 ```ts twoslash title="client.ts"
 import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
-import { z } from "zod";
+import * as z from "zod/v4";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
@@ -274,78 +306,13 @@ const callApi = createFetchClient({
 });
 ```
 
-## Schema Configuration
-
-When creating a schema with `defineSchema`, you can configure validation behavior:
-
-```ts
-interface CallApiSchemaConfig {
-	baseURL?: string; // Base URL for the schema
-	disableRuntimeValidation?: boolean; // Disable validation at runtime
-	disableValidationOutputApplication?: boolean; // Disable applying validation results
-	requireHttpMethodProvision?: boolean; // Require that http methods are provided when using method modifiers
-	strict?: boolean; // Enable strict mode
-}
-```
-
-### Strict Mode
-
-By default, CallAPI allows requests to paths not defined in the schema. Enable strict mode to only allow defined paths:
-
-```ts twoslash title="api.ts"
-import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
-import { z } from "zod";
-
-const callApi = createFetchClient({
-	schema: defineSchema({
-		"/user": {
-			data: z.object({
-				userId: z.string(),
-				id: z.number(),
-				title: z.string(),
-				completed: z.boolean(),
-			}),
-		},
-	}),
-
-	schemaConfig: {
-		// [!code highlight]
-		strict: true, // [!code highlight]
-	},
-});
-
-// @errors: 2345
-const { data, error } = await callApi("/invalid-path");
-```
-
-<Callout type="info">
-	You can disable runtime validation globally using `disableRuntimeValidation: true` in the schema config,
-	or disable validation output application with `disableValidationOutputApplication: true`.
-</Callout>
-
-## Validation Error Handling
-
-CallAPI throws a `ValidationError` when validation fails. The error includes detailed information about what failed:
-
-```ts title="client.ts"
-import { isValidationError } from "@zayne-labs/callapi";
-
-const { data, error } = await callApi("/products/:id", {
-	params: { id: "invalid" }, // Should be a number
-});
-
-if (isValidationError(error)) {
-	console.log(error.issues); // Validation issues
-}
-```
-
 ## Validation Schema Per Instance
 
 You can also define a validation schema for a specific instance of `callApi` instead of globally on `createFetchClient`:
 
 ```ts twoslash title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
-import { z } from "zod";
+import * as z from "zod/v4";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
@@ -455,7 +422,7 @@ You can override the base schema by passing a schema to the `schema` option:
 
 ```ts twoslash title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
-import { z } from "zod";
+import * as z from "zod/v4";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
@@ -487,7 +454,7 @@ In case you want to extend the base schema instead of overriding it, you can pas
 
 ```ts twoslash title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
-import { z } from "zod";
+import * as z from "zod/v4";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
@@ -516,7 +483,63 @@ const { data, error } = await callApi("/user", {
 });
 ```
 
-Al
+## Schema Configuration
+
+When creating a schema with `defineSchema`, you can configure various validation behaviors:
+
+| Option                               | Type      | Default     | Description                                                                                                                                                                                   |
+| ------------------------------------ | --------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `baseURL`                            | `string`  | `undefined` | Base URL that will be used for all requests in this schema                                                                                                                                    |
+| `disableRuntimeValidation`           | `boolean` | `false`     | When `true`, disables all runtime validation (TypeScript types will still be checked)                                                                                                         |
+| `disableValidationOutputApplication` | `boolean` | `false`     | When `true`, prevents validation results from being automatically applied to the response                                                                                                     |
+| `requireHttpMethodProvision`         | `boolean` | `false`     | When `true`, requires that you explicitly provide the HTTP method in the request options instead of allowing it to be inferred and applied automatically from the schema path method modifier |
+| `strict`                             | `boolean` | `false`     | When `true`, only allows requests to paths explicitly defined in the schema. Any path not defined in the schema will result in in a typescript error                                          |
+
+### Strict Mode
+
+By default, CallAPI allows requests to paths not defined in the schema. Enable strict mode to only allow defined paths:
+
+```ts twoslash title="api.ts"
+import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
+import * as z from "zod/v4";
+
+const callApi = createFetchClient({
+	schema: defineSchema({
+		"/user": {
+			data: z.object({
+				userId: z.string(),
+				id: z.number(),
+				title: z.string(),
+				completed: z.boolean(),
+			}),
+		},
+	}),
+
+	schemaConfig: {
+		// [!code highlight]
+		strict: true, // [!code highlight]
+	},
+});
+
+// @errors: 2345
+const { data, error } = await callApi("/invalid-path");
+```
+
+## Validation Error Handling
+
+CallAPI throws a `ValidationError` when validation fails. The error includes detailed information about what failed:
+
+```ts title="client.ts"
+import { isValidationError } from "@zayne-labs/callapi";
+
+const { data, error } = await callApi("/products/:id", {
+	params: { id: "invalid" }, // Should be a number
+});
+
+if (isValidationError(error)) {
+	console.log(error.issues); // Validation issues
+}
+```
 
 ## Types
 

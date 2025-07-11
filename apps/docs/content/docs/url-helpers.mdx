@@ -21,11 +21,20 @@ const { data } = await callBackendApi("/users/123/posts");
 
 ## Dynamic Parameters
 
-Dynamic parameters enable you to include variable segments in your URL paths using the `:` prefix. For example, in a URL like `/users/:userId`, the `:userId` segment is a dynamic parameter. When making a request, these parameters are automatically replaced with the actual values provided in the `params` option.
+Many URLs contain parts that represent specific resources, like an ID. For example, /users/123 fetches the user with ID 123, and /posts/456 fetches the post with ID 456. The 123 and 456 parts are dynamic.
 
-The `params` option can take in an object where the keys are the dynamic parameters and the values are the corresponding values to replace them with.
+Instead of manually building strings like "/users/" + userId, CallApi allows you to use dynamic parameter placeholders in your URL string with a `:` prefix. For example, `/users/:userId`.
 
-It can also take an array where the values will replace the dynamic parameters in the order they appear in the URL path. For example, if your URL is `/users/:userId/posts/:postId`, passing `params: ['123', '456']` will result in `/users/123/posts/456`.
+Then, you provide the actual values for these placeholders using the `params` option in your request options. CallApi will automatically replace the placeholders with the provided values.
+
+The `params` option can be either an object or an array:
+
+- **Object**: The keys should match the parameter names (without the `:`). For example, if your URL is `/users/:userId/posts/:postId`, passing `params: { userId: 123, postId: 456 }` will result in `/users/123/posts/456`.
+- **Array**: The values replace the parameters in the order they appear in the URL. For example, if your URL is `/users/:userId/posts/:postId`, passing `params: ['123', '456']` will result in `/users/123/posts/456`.
+
+<Callout type="info">
+	Using an object is generally recommended as it's clearer which value goes with which parameter.
+</Callout>
 
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";

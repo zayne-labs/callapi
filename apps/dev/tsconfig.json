@@ -1,6 +1,10 @@
 {
 	"extends": "@zayne-labs/tsconfig/bundler/dom/app",
 
+	"compilerOptions": {
+		"exactOptionalPropertyTypes": true
+	},
+
 	"include": ["**/*", "/*"],
 	"exclude": ["node_modules"]
 }
