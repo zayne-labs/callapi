@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.8.10
+
+### Patch Changes
+
+- 4864919: fix: pix bug in array hook merging logic
+
 ## 1.8.3
 
 ### Patch Changes
