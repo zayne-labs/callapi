@@ -72,7 +72,7 @@ type ErrorData = {
 const { error } = await callApi<unknown, ErrorData>("/api/endpoint");
 
 if (error) {
-	console.log(error.errorData); // Type is ErrorData
+	console.log(error.errorData);
 }
 ```
 

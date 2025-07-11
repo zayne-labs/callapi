@@ -21,7 +21,7 @@ Axios is a popular fetching library, and rightly so since it's been fundamental 
 But major issues with axios in this day and age involve the facts that:
 
 - It's not based on the modern Fetch API, which is a key part of web development today.
-- It's overall API for some use cases is a bit verbose.
+- It's API for some use cases is a bit verbose.
 - Lacks advanced convenience features like retries, request deduplication, schema validation, content-type detection etc.
 - Lacks / doesn't really care about type safety, which is a real DX problem.
 - It's quite on the heavier side, meaning it might not be suitable for smaller projects under a bundle size constraint.
@@ -32,10 +32,4 @@ CallApi solves all these problems out of the box, and provides an even larger fe
 
 CallApi is highly inspired by Ofetch. For example, the lifecycle interceptors/hooks idea. As well as the retries and object literal support for the request body.
 
-If you don't need the extra features and convenience options CallApi offers, and don't mind the slightly larger bundle size, Ofetch is equally a good choice since it's also based on the Fetch API.
-
-## vs Zl-Fetch
-
-Some features in CallApi were also inspired by Zl-Fetch. Examples include the content-type detection and the auth helper idea.
-
-I also recommend trying Zl-Fetch if you don't need the extra features and convenience options CallApi offers beyond it.
+If you don't need the extra features and convenience options CallApi offers and don't mind the slightly larger bundle size, Ofetch is a good choice since it's also based on the Fetch API.
