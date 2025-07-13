@@ -139,27 +139,31 @@ export interface CallApiSchema {
 	 */
 	headers?:
 		| StandardSchemaV1<HeadersOption | undefined>
-		| ((headers: HeadersOption) => Awaitable<HeadersOption>);
+		| ((headers: HeadersOption) => Awaitable<HeadersOption | undefined>);
 
 	/**
 	 *  The schema to use for validating the meta option.
 	 */
-	meta?: StandardSchemaV1<GlobalMeta | undefined> | ((meta: GlobalMeta) => Awaitable<GlobalMeta>);
+	meta?:
+		| StandardSchemaV1<GlobalMeta | undefined>
+		| ((meta: GlobalMeta) => Awaitable<GlobalMeta | undefined>);
 
 	/**
 	 *  The schema to use for validating the request method.
 	 */
-	method?: StandardSchemaV1<MethodUnion | undefined> | ((method: MethodUnion) => Awaitable<MethodUnion>);
+	method?:
+		| StandardSchemaV1<MethodUnion | undefined>
+		| ((method: MethodUnion) => Awaitable<MethodUnion | undefined>);
 
 	/**
 	 *  The schema to use for validating the request url parameters.
 	 */
-	params?: StandardSchemaV1<Params | undefined> | ((params: Params) => Awaitable<Params>);
+	params?: StandardSchemaV1<Params | undefined> | ((params: Params) => Awaitable<Params | undefined>);
 
 	/**
 	 *  The schema to use for validating the request url queries.
 	 */
-	query?: StandardSchemaV1<Query | undefined> | ((query: Query) => Awaitable<Query>);
+	query?: StandardSchemaV1<Query | undefined> | ((query: Query) => Awaitable<Query | undefined>);
 }
 
 export const routeKeyMethods = defineEnum(["delete", "get", "patch", "post", "put"]);

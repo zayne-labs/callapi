@@ -22,10 +22,10 @@ import type {
 } from "./type-helpers";
 
 /**
- * @description Makes a type partial if the output type of TSchema contains undefined, otherwise makes it required
+ * @description Makes a type partial if the output type of TSchema is not provided or has undefined in the union, otherwise makes it required
  */
-type MakeSchemaOptionPartialOrRequired<TSchemaOption extends CallApiSchema[keyof CallApiSchema], TObject> =
-	undefined extends InferSchemaResult<TSchemaOption> ? Partial<TObject> : Required<TObject>;
+type MakeSchemaOptionRequiredIfDefined<TSchemaOption extends CallApiSchema[keyof CallApiSchema], TObject> =
+	undefined extends InferSchemaResult<TSchemaOption, undefined> ? TObject : Required<TObject>;
 
 export type ApplyURLBasedConfig<
 	TSchemaConfig extends CallApiSchemaConfig,
@@ -80,7 +80,7 @@ export type SerializableArray =
 
 export type Body = UnmaskType<RequestInit["body"] | SerializableArray | SerializableObject>;
 
-export type InferBodyOption<TSchema extends CallApiSchema> = MakeSchemaOptionPartialOrRequired<
+export type InferBodyOption<TSchema extends CallApiSchema> = MakeSchemaOptionRequiredIfDefined<
 	TSchema["body"],
 	{
 		/**
@@ -104,7 +104,7 @@ type MakeMethodOptionRequired<
 	TInitURL,
 	TSchemaConfig extends CallApiSchemaConfig,
 	TObject,
-> = MakeSchemaOptionPartialOrRequired<
+> = MakeSchemaOptionRequiredIfDefined<
 	TMethodSchemaOption,
 	undefined extends TSchemaConfig ? TObject
 	: TInitURL extends `@${string}/${string}` ?
@@ -140,7 +140,7 @@ export type HeadersOption = UnmaskType<
 	| Array<[string, string]>
 >;
 
-export type InferHeadersOption<TSchema extends CallApiSchema> = MakeSchemaOptionPartialOrRequired<
+export type InferHeadersOption<TSchema extends CallApiSchema> = MakeSchemaOptionRequiredIfDefined<
 	TSchema["headers"],
 	{
 		/**
@@ -170,7 +170,7 @@ export interface Register {
 export type GlobalMeta =
 	Register extends { meta?: infer TMeta extends Record<string, unknown> } ? TMeta : never;
 
-export type InferMetaOption<TSchema extends CallApiSchema> = MakeSchemaOptionPartialOrRequired<
+export type InferMetaOption<TSchema extends CallApiSchema> = MakeSchemaOptionRequiredIfDefined<
 	TSchema["meta"],
 	{
 		/**
@@ -200,7 +200,7 @@ export type InferMetaOption<TSchema extends CallApiSchema> = MakeSchemaOptionPar
 	}
 >;
 
-export type InferQueryOption<TSchema extends CallApiSchema> = MakeSchemaOptionPartialOrRequired<
+export type InferQueryOption<TSchema extends CallApiSchema> = MakeSchemaOptionRequiredIfDefined<
 	TSchema["query"],
 	{
 		/**
@@ -242,11 +242,14 @@ type MakeParamsOptionRequired<
 	TBaseSchema extends BaseCallApiSchema,
 	TCurrentRouteKey extends string,
 	TObject,
-> = MakeSchemaOptionPartialOrRequired<
+> = MakeSchemaOptionRequiredIfDefined<
 	TParamsSchemaOption,
 	TCurrentRouteKey extends `${string}:${string}${"" | "/"}${"" | AnyString}` ?
 		TCurrentRouteKey extends Extract<keyof TBaseSchema, TCurrentRouteKey> ?
-			Required<TObject>
+			// == If ParamsSchema option is defined but has undefined in the union, it should take precedence to remove the required flag
+			undefined extends InferSchemaResult<TParamsSchemaOption, null> ?
+				TObject
+			:	Required<TObject>
 		:	TObject
 	:	TObject
 >;
