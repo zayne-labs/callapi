@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.8.12
+
+### Patch Changes
+
+- 360b0b7: fix: ensure schema takes precedence over path in terms of params when making it required
+
 ## 1.8.10
 
 ### Patch Changes
