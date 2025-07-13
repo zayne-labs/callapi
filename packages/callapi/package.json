@@ -1,7 +1,7 @@
 {
 	"name": "@zayne-labs/callapi",
 	"type": "module",
-	"version": "1.8.10",
+	"version": "1.8.11",
 	"description": "A lightweight wrapper over fetch with quality of life improvements like built-in request cancellation, retries, interceptors and more",
 	"author": "Ryan Zayne",
 	"license": "MIT",
