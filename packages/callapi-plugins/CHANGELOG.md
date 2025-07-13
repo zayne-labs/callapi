@@ -1,5 +1,12 @@
 # @zayne-labs/callapi-plugins
 
+## 1.0.4
+
+### Patch Changes
+
+- Updated dependencies [360b0b7]
+   - @zayne-labs/callapi@1.8.12
+
 ## 1.0.3
 
 ### Patch Changes
