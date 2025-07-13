@@ -296,8 +296,7 @@ export type ResultModeOption<TErrorData, TResultMode extends ResultModeUnion> =
 	: TErrorData extends false | undefined ? { resultMode?: "onlySuccessWithException" }
 	: TErrorData extends false | null ?
 		{ resultMode?: ExtractKeys<ResultModeUnion, "onlySuccess" | "onlySuccessWithException"> }
-	: null extends TResultMode ? { resultMode?: TResultMode }
-	: { resultMode: TResultMode };
+	:	{ resultMode?: TResultMode };
 
 export type ThrowOnErrorUnion = boolean;
 

@@ -8,7 +8,6 @@ import {
 	type ResultModeUnion,
 	type SuccessContext,
 } from "@zayne-labs/callapi";
-import { isValidationError } from "@zayne-labs/callapi/utils";
 import { loggerPlugin } from "@zayne-labs/callapi-plugins";
 import * as z from "zod/v3";
 
@@ -74,8 +73,8 @@ const pluginTwo = definePlugin({
 const callMainApi = createFetchClient({
 	baseURL: "https://dummyjson.com",
 	onRequest: [() => console.info("OnRequest1 - BASE"), () => console.info("OnRequest2 - BASE")],
-	// onUpload: (_progress) => {},
-	// onUploadSuccess: (_progress) => {},
+	onUpload: (_progress) => {},
+	onUploadSuccess: (_progress) => {},
 	plugins: [pluginOne, pluginTwo, loggerPlugin()],
 
 	schema: defineSchema({
@@ -118,7 +117,7 @@ const stream = new ReadableStream({
 	},
 }).pipeThrough(new TextEncoderStream());
 
-const [foo1, foo2, foo3, foo4, foo5, foo6] = await Promise.all([
+const [result1, result2, result3, result4, result5, result6] = await Promise.all([
 	callMainApi<{ foo: string }>("/products/:id", {
 		onRequest: () => console.info("OnRequest - INSTANCE"),
 		params: [1],
@@ -152,11 +151,7 @@ const [foo1, foo2, foo3, foo4, foo5, foo6] = await Promise.all([
 	}),
 ]);
 
-if (isValidationError(foo1.error)) {
-	console.info(foo1.error);
-}
-
-console.info(foo1, foo2, foo3, foo4, foo5, foo6);
+console.info(result1, result2, result3, result4, result5, result6);
 
 export type ApiSuccessResponse<TData> = {
 	data?: TData;
@@ -175,7 +170,6 @@ export type ApiErrorResponse<TError = Record<string, string>> = {
 const sharedFetchClient = createFetchClient({
 	baseURL: "/api/v1",
 	credentials: "same-origin",
-	// plugins: [redirectOn401ErrorPlugin(), toastPlugin()],
 });
 
 export const callBackendApi = <

@@ -106,14 +106,12 @@ export interface CallApiSchemaConfig {
 	 * Controls the strictness of API route validation.
 	 *
 	 * When true:
-	 * - Only routes explicitly defined in the schema will be considered valid to typescript
-	 * - Attempting to call undefined routes will result in type errors
+	 * - Only routes explicitly defined in the schema will be considered valid to typescript and runtime.
+	 * - Attempting to call undefined routes will result in type errors and runtime validation errors.
 	 * - Useful for ensuring API calls conform exactly to your schema definition
 	 *
 	 * When false or undefined (default):
 	 * - All routes will be allowed, whether they are defined in the schema or not
-	 * - Provides more flexibility but less type safety
-	 *
 	 */
 	strict?: boolean;
 }

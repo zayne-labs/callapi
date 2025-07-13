@@ -1,5 +1,5 @@
 import { createDedupeStrategy, getAbortErrorMessage, type RequestInfoCache } from "./dedupe";
-import { HTTPError } from "./error";
+import { HTTPError, ValidationError } from "./error";
 import {
 	type ErrorContext,
 	type ExecuteHookInfo,
@@ -174,23 +174,6 @@ export const createFetchClient = <
 			query: resolvedOptions.query,
 		});
 
-		const resolvedSchemaConfig =
-			isFunction(extraOptions.schemaConfig) ?
-				extraOptions.schemaConfig({ baseSchemaConfig: baseExtraOptions.schemaConfig ?? {} })
-			:	(extraOptions.schemaConfig ?? baseExtraOptions.schemaConfig);
-
-		const currentRouteKey = getCurrentRouteKey(resolvedInitURL, resolvedSchemaConfig);
-
-		const routeSchema = baseExtraOptions.schema?.[currentRouteKey];
-
-		const resolvedSchema =
-			isFunction(extraOptions.schema) ?
-				extraOptions.schema({
-					baseSchema: baseExtraOptions.schema ?? {},
-					currentRouteSchema: routeSchema ?? {},
-				})
-			:	(extraOptions.schema ?? routeSchema);
-
 		let options = {
 			...resolvedOptions,
 			...resolvedHooks,
@@ -235,6 +218,34 @@ export const createFetchClient = <
 			await handleRequestCancelStrategy();
 
 			await executeHooksInTryBlock(options.onRequest?.({ baseConfig, config, options, request }));
+
+			const resolvedSchemaConfig =
+				isFunction(extraOptions.schemaConfig) ?
+					extraOptions.schemaConfig({ baseSchemaConfig: baseExtraOptions.schemaConfig ?? {} })
+				:	(extraOptions.schemaConfig ?? baseExtraOptions.schemaConfig);
+
+			const currentRouteKey = getCurrentRouteKey(resolvedInitURL, resolvedSchemaConfig);
+
+			const routeSchema = baseExtraOptions.schema?.[currentRouteKey];
+
+			if (resolvedSchemaConfig?.strict === true && !routeSchema) {
+				const issues = [
+					{ message: `No schema found for route '${currentRouteKey}' and strict mode is enabled` },
+				] satisfies ValidationError["errorData"];
+
+				throw new ValidationError({
+					issues,
+					response: null,
+				});
+			}
+
+			const resolvedSchema =
+				isFunction(extraOptions.schema) ?
+					extraOptions.schema({
+						baseSchema: baseExtraOptions.schema ?? {},
+						currentRouteSchema: routeSchema ?? {},
+					})
+				:	(extraOptions.schema ?? routeSchema);
 
 			const { extraOptionsValidationResult, requestOptionsValidationResult } =
 				await handleOptionsValidation({
