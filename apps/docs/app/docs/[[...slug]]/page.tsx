@@ -5,6 +5,9 @@ import { getMDXComponents } from "@/components/common";
 import { createMetadata } from "@/lib/metadata";
 import { source } from "@/lib/source";
 
+// eslint-disable-next-line react-refresh/only-export-components
+export const revalidate = 86400;
+
 export default async function Page(props: { params: Promise<{ slug?: string[] }> }) {
 	// eslint-disable-next-line react/prefer-destructuring-assignment -- Ignore this
 	const params = await props.params;
@@ -14,8 +17,6 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
 	if (!page) {
 		notFound();
 	}
-
-	const path = `apps/docs/content/docs/${page.path}`;
 
 	const MDX = page.data.body;
 
@@ -28,7 +29,7 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
 			}}
 			editOnGithub={{
 				owner: "zayne-labs",
-				path,
+				path: `apps/docs/content/docs/${page.path}`,
 				repo: "callapi",
 				sha: "main",
 			}}
@@ -68,6 +69,7 @@ export async function generateMetadata(props: { params: Promise<{ slug: string[]
 
 	return createMetadata({
 		description,
+		keywords: ["fetch", "api", "wrapper", "request", "cancel", "retry", "interceptor"],
 		openGraph: {
 			images: [image],
 			url: `/docs/${page.slugs.join("/")}`,
