@@ -1,5 +1,5 @@
 import { createDedupeStrategy, getAbortErrorMessage, type RequestInfoCache } from "./dedupe";
-import { HTTPError, ValidationError } from "./error";
+import { HTTPError } from "./error";
 import {
 	type ErrorContext,
 	type ExecuteHookInfo,
@@ -12,16 +12,16 @@ import { type CallApiPlugin, initializePlugins } from "./plugins";
 import {
 	type ErrorInfo,
 	getCustomizedErrorResult,
-	type ResponseTypeUnion,
-	type ResultModeUnion,
 	resolveErrorResult,
 	resolveResponseData,
 	resolveSuccessResult,
+	type ResponseTypeUnion,
+	type ResultModeUnion,
 } from "./result";
 import { createRetryStrategy } from "./retry";
 import type {
-	GetCurrentRouteKey,
 	GetCurrentRouteSchema,
+	GetCurrentRouteSchemaKey,
 	InferHeadersOption,
 	InferInitURL,
 	ThrowOnErrorUnion,
@@ -38,7 +38,7 @@ import type {
 } from "./types/common";
 import type { DefaultDataType, DefaultPluginArray, DefaultThrowOnError } from "./types/default-types";
 import type { AnyFunction } from "./types/type-helpers";
-import { getCurrentRouteKey, getFullURL, getMethod, normalizeURL } from "./url";
+import { getFullURL, getMethod } from "./url";
 import {
 	createCombinedSignal,
 	createTimeoutSignal,
@@ -50,10 +50,10 @@ import {
 } from "./utils/common";
 import { isFunction, isHTTPErrorInstance, isValidationErrorInstance } from "./utils/guards";
 import {
-	type BaseCallApiSchema,
+	type BaseCallApiSchemaAndConfig,
 	type CallApiSchema,
 	type CallApiSchemaConfig,
-	handleOptionsValidation,
+	handleConfigValidation,
 	handleValidation,
 	type InferSchemaResult,
 } from "./validation";
@@ -66,9 +66,8 @@ export const createFetchClient = <
 	TBaseResultMode extends ResultModeUnion = ResultModeUnion,
 	TBaseThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
 	TBaseResponseType extends ResponseTypeUnion = ResponseTypeUnion,
-	const TBaseSchema extends BaseCallApiSchema = BaseCallApiSchema,
-	const TBaseSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
-	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
+	const TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
+	const TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 >(
 	initBaseConfig: BaseCallApiConfig<
 		TBaseData,
@@ -76,8 +75,7 @@ export const createFetchClient = <
 		TBaseResultMode,
 		TBaseThrowOnError,
 		TBaseResponseType,
-		TBaseSchema,
-		TBaseSchemaConfig,
+		TBaseSchemaAndConfig,
 		TBasePluginArray
 	> = {} as never
 ) => {
@@ -89,14 +87,20 @@ export const createFetchClient = <
 		TResultMode extends ResultModeUnion = TBaseResultMode,
 		TThrowOnError extends ThrowOnErrorUnion = TBaseThrowOnError,
 		TResponseType extends ResponseTypeUnion = TBaseResponseType,
-		TSchemaConfig extends CallApiSchemaConfig = TBaseSchemaConfig,
-		TInitURL extends InferInitURL<TBaseSchema, TSchemaConfig> = InferInitURL<TBaseSchema, TSchemaConfig>,
-		TCurrentRouteKey extends GetCurrentRouteKey<TSchemaConfig, TInitURL> = GetCurrentRouteKey<
+		const TSchemaConfig extends CallApiSchemaConfig = NonNullable<TBaseSchemaAndConfig["config"]>,
+		TInitURL extends InferInitURL<
+			NonNullable<TBaseSchemaAndConfig["routes"]>,
+			TSchemaConfig
+		> = InferInitURL<NonNullable<TBaseSchemaAndConfig["routes"]>, TSchemaConfig>,
+		TCurrentRouteSchemaKey extends GetCurrentRouteSchemaKey<
 			TSchemaConfig,
 			TInitURL
+		> = GetCurrentRouteSchemaKey<TSchemaConfig, TInitURL>,
+		const TSchema extends CallApiSchema = GetCurrentRouteSchema<
+			NonNullable<TBaseSchemaAndConfig["routes"]>,
+			TCurrentRouteSchemaKey
 		>,
-		TSchema extends CallApiSchema = GetCurrentRouteSchema<TBaseSchema, TCurrentRouteKey>,
-		TPluginArray extends CallApiPlugin[] = TBasePluginArray,
+		const TPluginArray extends CallApiPlugin[] = TBasePluginArray,
 	>(
 		...parameters: CallApiParameters<
 			InferSchemaResult<TSchema["data"], TData>,
@@ -104,12 +108,12 @@ export const createFetchClient = <
 			TResultMode,
 			TThrowOnError,
 			TResponseType,
-			TBaseSchema,
+			NonNullable<TBaseSchemaAndConfig["routes"]>,
 			TSchema,
-			TBaseSchemaConfig,
+			NonNullable<TBaseSchemaAndConfig["config"]>,
 			TSchemaConfig,
 			TInitURL,
-			TCurrentRouteKey,
+			TCurrentRouteSchemaKey,
 			TBasePluginArray,
 			TPluginArray
 		>
@@ -158,16 +162,21 @@ export const createFetchClient = <
 			...(!shouldSkipAutoMergeForRequest && fetchOptions),
 		} satisfies CallApiRequestOptions;
 
-		const { resolvedHooks, resolvedInitURL, resolvedOptions, resolvedRequestOptions } =
-			await initializePlugins({
-				baseConfig,
-				config,
-				initURL: initURLOrURLObject.toString(),
-				options: mergedExtraOptions as CallApiExtraOptionsForHooks,
-				request: mergedRequestOptions as CallApiRequestOptionsForHooks,
-			});
+		const {
+			resolvedCurrentRouteSchemaKey,
+			resolvedHooks,
+			resolvedInitURL,
+			resolvedOptions,
+			resolvedRequestOptions,
+		} = await initializePlugins({
+			baseConfig,
+			config,
+			initURL: initURLOrURLObject.toString(),
+			options: mergedExtraOptions as CallApiExtraOptionsForHooks,
+			request: mergedRequestOptions as CallApiRequestOptionsForHooks,
+		});
 
-		const fullURL = getFullURL({
+		const { fullURL, normalizedInitURL } = getFullURL({
 			baseURL: resolvedOptions.baseURL,
 			initURL: resolvedInitURL,
 			params: resolvedOptions.params,
@@ -180,7 +189,7 @@ export const createFetchClient = <
 
 			fullURL,
 			initURL: resolvedInitURL,
-			initURLNormalized: normalizeURL(resolvedInitURL),
+			initURLNormalized: normalizedInitURL,
 		} satisfies CallApiExtraOptionsForHooks;
 
 		const newFetchController = new AbortController();
@@ -219,46 +228,18 @@ export const createFetchClient = <
 
 			await executeHooksInTryBlock(options.onRequest?.({ baseConfig, config, options, request }));
 
-			const resolvedSchemaConfig =
-				isFunction(extraOptions.schemaConfig) ?
-					extraOptions.schemaConfig({ baseSchemaConfig: baseExtraOptions.schemaConfig ?? {} })
-				:	(extraOptions.schemaConfig ?? baseExtraOptions.schemaConfig);
-
-			const currentRouteKey = getCurrentRouteKey(resolvedInitURL, resolvedSchemaConfig);
-
-			const routeSchema = baseExtraOptions.schema?.[currentRouteKey];
-
-			if (resolvedSchemaConfig?.strict === true && !routeSchema) {
-				const issues = [
-					{ message: `No schema found for route '${currentRouteKey}' and strict mode is enabled` },
-				] satisfies ValidationError["errorData"];
-
-				throw new ValidationError({
-					issues,
-					response: null,
-				});
-			}
-
-			const resolvedSchema =
-				isFunction(extraOptions.schema) ?
-					extraOptions.schema({
-						baseSchema: baseExtraOptions.schema ?? {},
-						currentRouteSchema: routeSchema ?? {},
-					})
-				:	(extraOptions.schema ?? routeSchema);
-
-			const { extraOptionsValidationResult, requestOptionsValidationResult } =
-				await handleOptionsValidation({
-					extraOptions: options,
-					requestOptions: request,
-					schema: resolvedSchema,
-					schemaConfig: resolvedSchemaConfig,
-				});
-
-			const shouldApplySchemaOutput =
-				Boolean(extraOptionsValidationResult)
-				|| Boolean(requestOptionsValidationResult)
-				|| !resolvedSchemaConfig?.disableValidationOutputApplication;
+			const {
+				extraOptionsValidationResult,
+				requestOptionsValidationResult,
+				resolvedSchema,
+				resolvedSchemaConfig,
+				shouldApplySchemaOutput,
+			} = await handleConfigValidation({
+				baseExtraOptions,
+				currentRouteSchemaKey: resolvedCurrentRouteSchemaKey,
+				extraOptions,
+				requestOptions: request,
+			});
 
 			// == Apply Schema Output for Extra Options
 			if (shouldApplySchemaOutput) {

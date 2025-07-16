@@ -1,4 +1,4 @@
-import { callApi, createFetchClient, defineSchema } from "@zayne-labs/callapi";
+import { callApi, createFetchClient, definePlugin, defineSchema } from "@zayne-labs/callapi";
 
 import * as z from "zod/v4";
 
@@ -9,8 +9,36 @@ const { data } = await callApi("https://dummyjson.com/products/:id", {
 
 console.info(data);
 
+const foo = definePlugin({
+	id: "ds",
+	name: "asa",
+	schema: defineSchema({
+		"/school": {
+			data: z.object({
+				id: z.number(),
+				name: z.string(),
+			}),
+		},
+	}),
+});
+
+const foo2 = definePlugin({
+	id: "ds",
+	name: "asa",
+	schema: defineSchema({
+		"/class": {
+			data: z.object({
+				id: z.number(),
+				student: z.string(),
+			}),
+		},
+	}),
+});
+
 const callBackendApi = createFetchClient({
 	baseURL: "https://api.example.com",
+
+	plugins: [foo, foo2],
 
 	schema: defineSchema({
 		"/products/:id": {
@@ -18,25 +46,8 @@ const callBackendApi = createFetchClient({
 				category: z.string(),
 				id: z.number(),
 			}),
-			params: z
-				.object({
-					id: z.number(),
-				})
-				.optional(),
+			params: z.object({ id: z.number() }).optional(),
 		},
-
-		// Using params validator
-		// "/products/:id/:category": {
-		// 	// data: z.object({
-		// 	// 	category: z.string(),
-		// 	// 	id: z.number(),
-		// 	// }),
-		// 	// params: z.object({
-		// 	// 	category: z.string(),
-		// 	// 	id: z.string(),
-		// 	// 	name: z.string(),
-		// 	// }),
-		// },
 	}),
 });
 
@@ -52,3 +63,5 @@ const result = await callBackendApi("/products/:id", {
 	// 	name: "product",
 	// },
 });
+
+console.info(result);

@@ -3,7 +3,7 @@ import type { CallApiPlugin } from "../plugins";
 import type { ResultModeUnion } from "../result";
 import type { AllowedQueryParamValues, Params, Query } from "../url";
 import type {
-	BaseCallApiSchema,
+	BaseCallApiSchemaRoutes,
 	CallApiSchema,
 	CallApiSchemaConfig,
 	InferSchemaResult,
@@ -29,46 +29,57 @@ type MakeSchemaOptionRequiredIfDefined<TSchemaOption extends CallApiSchema[keyof
 
 export type ApplyURLBasedConfig<
 	TSchemaConfig extends CallApiSchemaConfig,
-	TCurrentRouteKeys extends string,
+	TCurrentRouteSchemaKeys extends string,
 > =
-	TSchemaConfig["baseURL"] extends string ? `${TSchemaConfig["baseURL"]}${TCurrentRouteKeys}`
-	:	TCurrentRouteKeys;
+	TSchemaConfig["prefix"] extends string ? `${TSchemaConfig["prefix"]}${TCurrentRouteSchemaKeys}`
+	: TSchemaConfig["baseURL"] extends string ? `${TSchemaConfig["baseURL"]}${TCurrentRouteSchemaKeys}`
+	: TCurrentRouteSchemaKeys;
 
 export type ApplyStrictConfig<
 	TSchemaConfig extends CallApiSchemaConfig,
-	TCurrentRouteKeys extends string,
+	TCurrentRouteSchemaKeys extends string,
 	// eslint-disable-next-line perfectionist/sort-union-types -- Don't sort union
-> = TSchemaConfig["strict"] extends true ? TCurrentRouteKeys : TCurrentRouteKeys | AnyString;
+> = TSchemaConfig["strict"] extends true ? TCurrentRouteSchemaKeys : TCurrentRouteSchemaKeys | AnyString;
 
 export type ApplySchemaConfiguration<
 	TSchemaConfig extends CallApiSchemaConfig,
-	TCurrentRouteKeys extends string,
-> = ApplyStrictConfig<TSchemaConfig, ApplyURLBasedConfig<TSchemaConfig, TCurrentRouteKeys>>;
+	TCurrentRouteSchemaKeys extends string,
+> = ApplyStrictConfig<TSchemaConfig, ApplyURLBasedConfig<TSchemaConfig, TCurrentRouteSchemaKeys>>;
 
 export type InferAllRouteKeys<
-	TBaseSchema extends BaseCallApiSchema,
+	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
 	TSchemaConfig extends CallApiSchemaConfig,
-> = ApplySchemaConfiguration<TSchemaConfig, keyof TBaseSchema extends string ? keyof TBaseSchema : never>;
+> = ApplySchemaConfiguration<
+	TSchemaConfig,
+	keyof TBaseSchemaRoutes extends string ? keyof TBaseSchemaRoutes : never
+>;
 
 export type InferInitURL<
-	TBaseSchema extends BaseCallApiSchema,
+	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
 	TSchemaConfig extends CallApiSchemaConfig,
-> = InferAllRouteKeys<TBaseSchema, TSchemaConfig> | URL;
+> = InferAllRouteKeys<TBaseSchemaRoutes, TSchemaConfig> | URL;
 
-export type GetCurrentRouteKey<TSchemaConfig extends CallApiSchemaConfig, TPath> =
-	TSchemaConfig["baseURL"] extends string ?
+export type GetCurrentRouteSchemaKey<TSchemaConfig extends CallApiSchemaConfig, TPath> =
+	TPath extends URL ? string
+	: TSchemaConfig["baseURL"] extends string ?
 		TPath extends `${TSchemaConfig["baseURL"]}${infer TCurrentRoute}` ?
 			TCurrentRoute extends string ?
 				TCurrentRoute
 			:	string
+		: TPath extends `${TSchemaConfig["prefix"]}${infer TCurrentRoute}` ?
+			TCurrentRoute extends string ?
+				TCurrentRoute
+			:	string
 		:	string
-	: TPath extends URL ? string
-	: TPath;
+	:	TPath;
 
 export type GetCurrentRouteSchema<
-	TBaseSchema extends BaseCallApiSchema,
-	TCurrentRouteKey extends string,
-> = NonNullable<Writeable<TBaseSchema[TCurrentRouteKey], "deep">>;
+	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
+	TCurrentRouteSchemaKey extends string,
+> =
+	TBaseSchemaRoutes[TCurrentRouteSchemaKey] extends CallApiSchema ?
+		NonNullable<Writeable<TBaseSchemaRoutes[TCurrentRouteSchemaKey], "deep">>
+	:	CallApiSchema;
 
 type JsonPrimitive = boolean | number | string | null | undefined;
 
@@ -157,7 +168,7 @@ export type InferHeadersOption<TSchema extends CallApiSchema> = MakeSchemaOption
 export type InferRequestOptions<
 	TSchema extends CallApiSchema,
 	TSchemaConfig extends CallApiSchemaConfig,
-	TInitURL extends InferInitURL<BaseCallApiSchema, CallApiSchemaConfig>,
+	TInitURL extends InferInitURL<BaseCallApiSchemaRoutes, CallApiSchemaConfig>,
 > = InferBodyOption<TSchema>
 	& InferHeadersOption<TSchema>
 	& InferMethodOption<TSchema, TSchemaConfig, TInitURL>;
@@ -213,22 +224,22 @@ export type InferQueryOption<TSchema extends CallApiSchema> = MakeSchemaOptionRe
 type EmptyString = "";
 
 /* eslint-disable perfectionist/sort-union-types -- I need to preserve the order of the types */
-export type InferParamFromRoute<TCurrentRoute> =
+export type InferParamsFromRoute<TCurrentRoute> =
 	TCurrentRoute extends `${infer IgnoredPrefix}:${infer TCurrentParam}/${infer TRemainingPath}` ?
 		TCurrentParam extends EmptyString ?
-			InferParamFromRoute<TRemainingPath>
+			InferParamsFromRoute<TRemainingPath>
 		:	| Prettify<
 					Record<
 						| TCurrentParam
-						| (Params extends InferParamFromRoute<TRemainingPath> ? never
-						  :	keyof Extract<InferParamFromRoute<TRemainingPath>, Record<string, unknown>>),
+						| (Params extends InferParamsFromRoute<TRemainingPath> ? never
+						  :	keyof Extract<InferParamsFromRoute<TRemainingPath>, Record<string, unknown>>),
 						AllowedQueryParamValues
 					>
 			  >
 			| [
 					AllowedQueryParamValues,
-					...(Params extends InferParamFromRoute<TRemainingPath> ? []
-					:	Extract<InferParamFromRoute<TRemainingPath>, unknown[]>),
+					...(Params extends InferParamsFromRoute<TRemainingPath> ? []
+					:	Extract<InferParamsFromRoute<TRemainingPath>, unknown[]>),
 			  ]
 	: TCurrentRoute extends `${infer IgnoredPrefix}:${infer TCurrentParam}` ?
 		TCurrentParam extends EmptyString ?
@@ -239,13 +250,13 @@ export type InferParamFromRoute<TCurrentRoute> =
 
 type MakeParamsOptionRequired<
 	TParamsSchemaOption extends CallApiSchema["params"],
-	TBaseSchema extends BaseCallApiSchema,
-	TCurrentRouteKey extends string,
+	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
+	TCurrentRouteSchemaKey extends string,
 	TObject,
 > = MakeSchemaOptionRequiredIfDefined<
 	TParamsSchemaOption,
-	TCurrentRouteKey extends `${string}:${string}${"" | "/"}${"" | AnyString}` ?
-		TCurrentRouteKey extends Extract<keyof TBaseSchema, TCurrentRouteKey> ?
+	TCurrentRouteSchemaKey extends `${string}:${string}${"" | "/"}${"" | AnyString}` ?
+		TCurrentRouteSchemaKey extends Extract<keyof TBaseSchemaRoutes, TCurrentRouteSchemaKey> ?
 			// == If ParamsSchema option is defined but has undefined in the union, it should take precedence to remove the required flag
 			undefined extends InferSchemaResult<TParamsSchemaOption, null> ?
 				TObject
@@ -256,26 +267,26 @@ type MakeParamsOptionRequired<
 
 export type InferParamsOption<
 	TSchema extends CallApiSchema,
-	TBaseSchema extends BaseCallApiSchema,
-	TCurrentRouteKey extends string,
+	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
+	TCurrentRouteSchemaKey extends string,
 > = MakeParamsOptionRequired<
 	TSchema["params"],
-	TBaseSchema,
-	TCurrentRouteKey,
+	TBaseSchemaRoutes,
+	TCurrentRouteSchemaKey,
 	{
 		/**
 		 * Parameters to be appended to the URL (i.e: /:id)
 		 */
-		params?: InferSchemaResult<TSchema["params"], InferParamFromRoute<TCurrentRouteKey>>;
+		params?: InferSchemaResult<TSchema["params"], InferParamsFromRoute<TCurrentRouteSchemaKey>>;
 	}
 >;
 
 export type InferExtraOptions<
 	TSchema extends CallApiSchema,
-	TBaseSchema extends BaseCallApiSchema,
-	TCurrentRouteKey extends string,
+	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
+	TCurrentRouteSchemaKey extends string,
 > = InferMetaOption<TSchema>
-	& InferParamsOption<TSchema, TBaseSchema, TCurrentRouteKey>
+	& InferParamsOption<TSchema, TBaseSchemaRoutes, TCurrentRouteSchemaKey>
 	& InferQueryOption<TSchema>;
 
 export type InferPluginOptions<TPluginArray extends CallApiPlugin[]> = UnionToIntersection<

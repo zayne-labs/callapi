@@ -7,7 +7,12 @@ import type { CallApiPlugin } from "../plugins";
 import type { GetCallApiResult, ResponseTypeUnion, ResultModeUnion } from "../result";
 import type { RetryOptions } from "../retry";
 import type { URLOptions } from "../url";
-import type { BaseCallApiSchema, CallApiSchema, CallApiSchemaConfig } from "../validation";
+import type {
+	BaseCallApiSchemaRoutes,
+	BaseCallApiSchemaAndConfig,
+	CallApiSchema,
+	CallApiSchemaConfig,
+} from "../validation";
 import type {
 	Body,
 	GetCurrentRouteSchema,
@@ -186,8 +191,7 @@ export type BaseCallApiExtraOptions<
 	TBaseThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
 	TBaseResponseType extends ResponseTypeUnion = ResponseTypeUnion,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
-	TBaseSchema extends BaseCallApiSchema = BaseCallApiSchema,
-	TBaseSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
+	TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
 > = SharedExtraOptions<
 	TBaseData,
 	TBaseErrorData,
@@ -204,12 +208,7 @@ export type BaseCallApiExtraOptions<
 	/**
 	 * Base schemas for the client.
 	 */
-	schema?: Writeable<TBaseSchema, "deep">;
-
-	/**
-	 * Schema Configuration
-	 */
-	schemaConfig?: Writeable<TBaseSchemaConfig, "deep">;
+	schema?: TBaseSchemaAndConfig;
 
 	/**
 	 * Specifies which configuration parts should skip automatic merging between base and main configs.
@@ -242,35 +241,37 @@ export type CallApiExtraOptions<
 	TResponseType extends ResponseTypeUnion = ResponseTypeUnion,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
-	TBaseSchema extends BaseCallApiSchema = BaseCallApiSchema,
+	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes = BaseCallApiSchemaRoutes,
 	TSchema extends CallApiSchema = CallApiSchema,
 	TBaseSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
 	TSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
-	TCurrentRouteKey extends string = string,
+	TCurrentRouteSchemaKey extends string = string,
 > = SharedExtraOptions<TData, TErrorData, TResultMode, TThrowOnError, TResponseType, TPluginArray> & {
 	/**
 	 * An array of instance CallApi plugins. It allows you to extend the behavior of the library.
 	 */
-	plugins?: TPluginArray | ((context: { basePlugins: TBasePluginArray }) => TPluginArray);
+	plugins?:
+		| TPluginArray
+		| ((context: { basePlugins: Writeable<TBasePluginArray, "deep"> }) => TPluginArray);
 
 	/**
 	 * Schemas for the callapi instance
 	 */
 	schema?:
-		| Writeable<TSchema, "deep">
+		| TSchema
 		| ((context: {
-				baseSchema: Writeable<TBaseSchema, "deep">;
-				currentRouteSchema: GetCurrentRouteSchema<TBaseSchema, TCurrentRouteKey>;
-		  }) => Writeable<TSchema, "deep">);
+				baseSchema: Writeable<TBaseSchemaRoutes, "deep">;
+				currentRouteSchema: GetCurrentRouteSchema<TBaseSchemaRoutes, TCurrentRouteSchemaKey>;
+		  }) => TSchema);
 
 	/**
 	 * Schema config for the callapi instance
 	 */
 	schemaConfig?:
-		| Writeable<TSchemaConfig, "deep">
+		| TSchemaConfig
 		| ((context: {
 				baseSchemaConfig: NonNullable<Writeable<TBaseSchemaConfig, "deep">>;
-		  }) => Writeable<TSchemaConfig, "deep">);
+		  }) => TSchemaConfig);
 };
 
 export type CallApiExtraOptionsForHooks = Hooks & Omit<CallApiExtraOptions, keyof Hooks>;
@@ -281,8 +282,7 @@ export type BaseCallApiConfig<
 	TBaseResultMode extends ResultModeUnion = ResultModeUnion,
 	TBaseThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
 	TBaseResponseType extends ResponseTypeUnion = ResponseTypeUnion,
-	TBaseSchema extends BaseCallApiSchema = BaseCallApiSchema,
-	TBaseSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
+	TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 > =
 	| (CallApiRequestOptions // eslint-disable-next-line perfectionist/sort-intersection-types -- Allow
@@ -293,8 +293,7 @@ export type BaseCallApiConfig<
 				TBaseThrowOnError,
 				TBaseResponseType,
 				TBasePluginArray,
-				TBaseSchema,
-				TBaseSchemaConfig
+				TBaseSchemaAndConfig
 			>)
 	| ((context: {
 			initURL: string;
@@ -308,8 +307,7 @@ export type BaseCallApiConfig<
 				TBaseThrowOnError,
 				TBaseResponseType,
 				TBasePluginArray,
-				TBaseSchema,
-				TBaseSchemaConfig
+				TBaseSchemaAndConfig
 			>);
 
 export type CallApiConfig<
@@ -318,18 +316,18 @@ export type CallApiConfig<
 	TResultMode extends ResultModeUnion = ResultModeUnion,
 	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
 	TResponseType extends ResponseTypeUnion = ResponseTypeUnion,
-	TBaseSchema extends BaseCallApiSchema = BaseCallApiSchema,
+	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes = BaseCallApiSchemaRoutes,
 	TSchema extends CallApiSchema = CallApiSchema,
 	TBaseSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
 	TSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
-	TInitURL extends InferInitURL<BaseCallApiSchema, TSchemaConfig> = InferInitURL<
-		BaseCallApiSchema,
+	TInitURL extends InferInitURL<BaseCallApiSchemaRoutes, TSchemaConfig> = InferInitURL<
+		BaseCallApiSchemaRoutes,
 		TSchemaConfig
 	>,
-	TCurrentRouteKey extends string = string,
+	TCurrentRouteSchemaKey extends string = string,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
-> = InferExtraOptions<TSchema, TBaseSchema, TCurrentRouteKey>
+> = InferExtraOptions<TSchema, TBaseSchemaRoutes, TCurrentRouteSchemaKey>
 	& InferRequestOptions<TSchema, TSchemaConfig, TInitURL>
 	& Omit<
 		CallApiExtraOptions<
@@ -340,13 +338,13 @@ export type CallApiConfig<
 			TResponseType,
 			TBasePluginArray,
 			TPluginArray,
-			TBaseSchema,
+			TBaseSchemaRoutes,
 			TSchema,
 			TBaseSchemaConfig,
 			TSchemaConfig,
-			TCurrentRouteKey
+			TCurrentRouteSchemaKey
 		>,
-		keyof InferExtraOptions<CallApiSchema, BaseCallApiSchema, string>
+		keyof InferExtraOptions<CallApiSchema, BaseCallApiSchemaRoutes, string>
 	>
 	& Omit<CallApiRequestOptions, keyof InferRequestOptions<CallApiSchema, CallApiSchemaConfig, string>>;
 
@@ -356,15 +354,15 @@ export type CallApiParameters<
 	TResultMode extends ResultModeUnion = ResultModeUnion,
 	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
 	TResponseType extends ResponseTypeUnion = ResponseTypeUnion,
-	TBaseSchema extends BaseCallApiSchema = BaseCallApiSchema,
+	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes = BaseCallApiSchemaRoutes,
 	TSchema extends CallApiSchema = CallApiSchema,
 	TBaseSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
 	TSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
-	TInitURL extends InferInitURL<BaseCallApiSchema, TSchemaConfig> = InferInitURL<
-		BaseCallApiSchema,
+	TInitURL extends InferInitURL<BaseCallApiSchemaRoutes, TSchemaConfig> = InferInitURL<
+		BaseCallApiSchemaRoutes,
 		TSchemaConfig
 	>,
-	TCurrentRouteKey extends string = string,
+	TCurrentRouteSchemaKey extends string = string,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
 > = [
@@ -375,12 +373,12 @@ export type CallApiParameters<
 		TResultMode,
 		TThrowOnError,
 		TResponseType,
-		TBaseSchema,
+		TBaseSchemaRoutes,
 		TSchema,
 		TBaseSchemaConfig,
 		TSchemaConfig,
 		TInitURL,
-		TCurrentRouteKey,
+		TCurrentRouteSchemaKey,
 		TBasePluginArray,
 		TPluginArray
 	>,
