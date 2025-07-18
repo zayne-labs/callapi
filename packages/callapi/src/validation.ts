@@ -1,5 +1,6 @@
 import { ValidationError } from "./error";
 import type {
+	BaseCallApiExtraOptions,
 	Body,
 	CallApiExtraOptions,
 	CallApiRequestOptions,
@@ -76,7 +77,7 @@ export const standardSchemaParser = async <
 
 export interface CallApiSchemaConfig {
 	/**
-	 * The base url of the schema. By default it's the baseURL of the fetch instance.
+	 * The base url of the schema. By default it's the baseURL of the callApi instance.
 	 */
 	baseURL?: string;
 
@@ -94,6 +95,14 @@ export interface CallApiSchemaConfig {
 	disableValidationOutputApplication?: boolean;
 
 	/**
+	 * Optional url prefix that will be substituted for the `baseURL` of the schemaConfig at runtime.
+	 *
+	 * This allows you to reuse the same schema against different base URLs (for example,
+	 * swapping between `/api/v1` and `/api/v2`) without redefining the entire schema.
+	 */
+	prefix?: string;
+
+	/**
 	 *Determines the inference or requirement of the method option based on the route modifiers (`@get/`, `@post/`, `@put/`, `@patch/`, `@delete/`).
 	 *
 	 * - When `true`, the method option is made required on the type level and is not automatically added to the request options.
@@ -106,8 +115,8 @@ export interface CallApiSchemaConfig {
 	 * Controls the strictness of API route validation.
 	 *
 	 * When true:
-	 * - Only routes explicitly defined in the schema will be considered valid to typescript and runtime.
-	 * - Attempting to call undefined routes will result in type errors and runtime validation errors.
+	 * - Only routes explicitly defined in the schema will be considered valid to typescript and the runtime.
+	 * - Attempting to call routes not defined in the schema will result in both type errors and runtime validation errors.
 	 * - Useful for ensuring API calls conform exactly to your schema definition
 	 *
 	 * When false or undefined (default):
@@ -170,10 +179,36 @@ export type RouteKeyMethods = (typeof routeKeyMethods)[number];
 
 type PossibleRouteKey = `@${RouteKeyMethods}/` | AnyString;
 
-export type BaseCallApiSchema = Partial<Record<PossibleRouteKey, CallApiSchema>>;
+export type BaseCallApiSchemaRoutes = Partial<Record<PossibleRouteKey, CallApiSchema>>;
 
-export const defineSchema = <const TBaseSchema extends BaseCallApiSchema>(baseSchema: TBaseSchema) => {
-	return baseSchema as Writeable<typeof baseSchema, "deep">;
+export type BaseCallApiSchemaAndConfig = {
+	config?: CallApiSchemaConfig;
+	routes: BaseCallApiSchemaRoutes;
+};
+
+export const defineSchema = <
+	const TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
+	const TSchemaConfig extends CallApiSchemaConfig,
+>(
+	routes: TBaseSchemaRoutes,
+	config?: TSchemaConfig
+) => {
+	return {
+		config,
+		routes: routes as Writeable<typeof routes, "deep">,
+	} satisfies BaseCallApiSchemaAndConfig;
+};
+
+export const defineSchemaConfig = <const TConfig extends CallApiExtraOptions["schemaConfig"]>(
+	config: TConfig
+) => {
+	return config as Writeable<typeof config, "deep">;
+};
+
+export const defineSchemaRoutes = <const TBaseSchemaRoutes extends BaseCallApiSchemaRoutes>(
+	routes: TBaseSchemaRoutes
+) => {
+	return routes as Writeable<typeof routes, "deep">;
 };
 
 type ValidationOptions<
@@ -290,22 +325,117 @@ const handleRequestOptionsValidation = async (validationOptions: RequestOptionsV
 	return validatedResultObject;
 };
 
-export const handleOptionsValidation = async (
-	validationOptions: ExtraOptionsValidationOptions & RequestOptionsValidationOptions
+export const handleConfigValidation = async (
+	validationOptions: GetResolvedSchemaContext
+		& Omit<ExtraOptionsValidationOptions & RequestOptionsValidationOptions, "schema" | "schemaConfig">
 ) => {
-	const { extraOptions, requestOptions, schema, schemaConfig } = validationOptions;
+	const { baseExtraOptions, currentRouteSchemaKey, extraOptions, requestOptions } = validationOptions;
 
-	if (schemaConfig?.disableRuntimeValidation) {
+	const { currentRouteSchema, resolvedSchema } = getResolvedSchema({
+		baseExtraOptions,
+		currentRouteSchemaKey,
+		extraOptions,
+	});
+
+	const resolvedSchemaConfig = getResolvedSchemaConfig({ baseExtraOptions, extraOptions });
+
+	if (!currentRouteSchema && resolvedSchemaConfig?.strict === true) {
+		throw new ValidationError({
+			issues: [{ message: `Strict Mode - No schema found for route '${currentRouteSchemaKey}' ` }],
+			response: null,
+		});
+	}
+
+	if (resolvedSchemaConfig?.disableRuntimeValidation) {
 		return {
 			extraOptionsValidationResult: null,
 			requestOptionsValidationResult: null,
+			resolvedSchema,
+			resolvedSchemaConfig,
+			shouldApplySchemaOutput: false,
 		};
 	}
 
 	const [extraOptionsValidationResult, requestOptionsValidationResult] = await Promise.all([
-		handleExtraOptionsValidation({ extraOptions, schema, schemaConfig }),
-		handleRequestOptionsValidation({ requestOptions, schema, schemaConfig }),
+		handleExtraOptionsValidation({
+			extraOptions,
+			schema: resolvedSchema,
+			schemaConfig: resolvedSchemaConfig,
+		}),
+		handleRequestOptionsValidation({
+			requestOptions,
+			schema: resolvedSchema,
+			schemaConfig: resolvedSchemaConfig,
+		}),
 	]);
 
-	return { extraOptionsValidationResult, requestOptionsValidationResult };
+	const shouldApplySchemaOutput =
+		(Boolean(extraOptionsValidationResult) || Boolean(requestOptionsValidationResult))
+		&& !resolvedSchemaConfig?.disableValidationOutputApplication;
+
+	return {
+		extraOptionsValidationResult,
+		requestOptionsValidationResult,
+		resolvedSchema,
+		resolvedSchemaConfig,
+		shouldApplySchemaOutput,
+	};
+};
+
+type GetResolvedSchemaContext = {
+	baseExtraOptions: BaseCallApiExtraOptions;
+	currentRouteSchemaKey: string;
+	extraOptions: CallApiExtraOptions;
+};
+
+export const getResolvedSchema = (context: GetResolvedSchemaContext) => {
+	const { baseExtraOptions, currentRouteSchemaKey, extraOptions } = context;
+
+	const currentRouteSchema = baseExtraOptions.schema?.routes[currentRouteSchemaKey];
+
+	const resolvedSchema =
+		isFunction(extraOptions.schema) ?
+			extraOptions.schema({
+				baseSchema: baseExtraOptions.schema?.routes ?? {},
+				currentRouteSchema: currentRouteSchema ?? {},
+			})
+		:	(extraOptions.schema ?? currentRouteSchema);
+
+	return { currentRouteSchema, resolvedSchema };
+};
+
+export const getResolvedSchemaConfig = (
+	context: Omit<GetResolvedSchemaContext, "currentRouteSchemaKey">
+) => {
+	const { baseExtraOptions, extraOptions } = context;
+
+	const resolvedSchemaConfig =
+		isFunction(extraOptions.schemaConfig) ?
+			extraOptions.schemaConfig({ baseSchemaConfig: baseExtraOptions.schema?.config ?? {} })
+		:	(extraOptions.schemaConfig ?? baseExtraOptions.schema?.config);
+
+	return resolvedSchemaConfig;
+};
+
+export const getCurrentRouteSchemaKeyAndMainInitURL = (
+	context: Pick<GetResolvedSchemaContext, "baseExtraOptions" | "extraOptions"> & { initURL: string }
+) => {
+	const { baseExtraOptions, extraOptions, initURL } = context;
+
+	const schemaConfig = getResolvedSchemaConfig({ baseExtraOptions, extraOptions });
+
+	let currentRouteSchemaKey = initURL;
+	let mainInitURL = initURL;
+
+	if (schemaConfig?.prefix && currentRouteSchemaKey.startsWith(schemaConfig.prefix)) {
+		currentRouteSchemaKey = currentRouteSchemaKey.replace(schemaConfig.prefix, "");
+
+		mainInitURL = mainInitURL.replace(schemaConfig.prefix, schemaConfig.baseURL ?? "");
+	}
+
+	if (schemaConfig?.baseURL && currentRouteSchemaKey.startsWith(schemaConfig.baseURL)) {
+		currentRouteSchemaKey = currentRouteSchemaKey.replace(schemaConfig.baseURL, "");
+	}
+
+	return { currentRouteSchemaKey, mainInitURL };
 };

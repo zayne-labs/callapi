@@ -56,16 +56,6 @@ const mergeUrlWithQuery = (url: string, query: CallApiExtraOptions["query"]): st
 	return `${url}${questionMark}${queryString}`;
 };
 
-export const getCurrentRouteKey = (url: string, schemaConfig: CallApiSchemaConfig | undefined) => {
-	let currentRouteKey = url;
-
-	if (schemaConfig?.baseURL && currentRouteKey.startsWith(schemaConfig.baseURL)) {
-		currentRouteKey = currentRouteKey.replace(schemaConfig.baseURL, "");
-	}
-
-	return currentRouteKey;
-};
-
 /**
  * @description
  * Extracts the method from the URL if it is a schema modifier.
@@ -101,7 +91,7 @@ export const getMethod = (options: GetMethodOptions) => {
 	);
 };
 
-export const normalizeURL = (initURL: string) => {
+const normalizeURL = (initURL: string) => {
 	const methodFromURL = extractMethodFromURL(initURL);
 
 	if (!methodFromURL) {
@@ -123,17 +113,21 @@ type GetFullURLOptions = {
 export const getFullURL = (options: GetFullURLOptions) => {
 	const { baseURL, initURL, params, query } = options;
 
-	const normalizedURL = normalizeURL(initURL);
+	const normalizedInitURL = normalizeURL(initURL);
 
-	const urlWithMergedParams = mergeUrlWithParams(normalizedURL, params);
+	const urlWithMergedParams = mergeUrlWithParams(normalizedInitURL, params);
 
 	const urlWithMergedQueryAndParams = mergeUrlWithQuery(urlWithMergedParams, query);
 
-	if (urlWithMergedQueryAndParams.startsWith("http") || !baseURL) {
-		return urlWithMergedQueryAndParams;
-	}
+	const shouldNotPrependBaseURL = urlWithMergedQueryAndParams.startsWith("http") || !baseURL;
 
-	return `${baseURL}${urlWithMergedQueryAndParams}`;
+	const fullURL =
+		shouldNotPrependBaseURL ? urlWithMergedQueryAndParams : `${baseURL}${urlWithMergedQueryAndParams}`;
+
+	return {
+		fullURL,
+		normalizedInitURL,
+	};
 };
 
 export type AllowedQueryParamValues = UnmaskType<boolean | number | string>;

@@ -50,16 +50,18 @@ export type {
 	CallApiRequestOptions,
 	CallApiRequestOptionsForHooks,
 	CallApiResult,
-	InferParamFromRoute,
+	InferParamsFromRoute,
 	Register,
 } from "./types";
 
 export type { URLOptions } from "./url";
 
 export {
-	type BaseCallApiSchema,
+	type BaseCallApiSchemaRoutes,
 	type CallApiSchema,
 	type CallApiSchemaConfig,
 	defineSchema,
+	defineSchemaConfig,
+	defineSchemaRoutes,
 	type InferSchemaResult,
 } from "./validation";

@@ -2,7 +2,7 @@ import type { CallApiPlugin } from "./plugins";
 import type { ResponseTypeUnion, ResultModeUnion } from "./result";
 import type { CallApiParameters, InferInitURL, ThrowOnErrorUnion } from "./types";
 import type { DefaultDataType, DefaultPluginArray, DefaultThrowOnError } from "./types/default-types";
-import type { BaseCallApiSchema, CallApiSchema, CallApiSchemaConfig } from "./validation";
+import type { BaseCallApiSchemaRoutes, CallApiSchema, CallApiSchemaConfig } from "./validation";
 
 const defineParameters = <
 	TData = DefaultDataType,
@@ -10,15 +10,15 @@ const defineParameters = <
 	TResultMode extends ResultModeUnion = ResultModeUnion,
 	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
 	TResponseType extends ResponseTypeUnion = ResponseTypeUnion,
-	TBaseSchema extends BaseCallApiSchema = BaseCallApiSchema,
+	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes = BaseCallApiSchemaRoutes,
 	TSchema extends CallApiSchema = CallApiSchema,
 	TBaseSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
 	TSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
-	TInitURL extends InferInitURL<BaseCallApiSchema, TSchemaConfig> = InferInitURL<
-		BaseCallApiSchema,
+	TInitURL extends InferInitURL<BaseCallApiSchemaRoutes, TSchemaConfig> = InferInitURL<
+		BaseCallApiSchemaRoutes,
 		TSchemaConfig
 	>,
-	TCurrentRouteKey extends string = string,
+	TCurrentRouteSchemaKey extends string = string,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
 >(
@@ -28,12 +28,12 @@ const defineParameters = <
 		TResultMode,
 		TThrowOnError,
 		TResponseType,
-		TBaseSchema,
+		TBaseSchemaRoutes,
 		TSchema,
 		TBaseSchemaConfig,
 		TSchemaConfig,
 		TInitURL,
-		TCurrentRouteKey,
+		TCurrentRouteSchemaKey,
 		TBasePluginArray,
 		TPluginArray
 	>

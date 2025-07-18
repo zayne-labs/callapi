@@ -8,28 +8,28 @@ import {
 	type ResultModeUnion,
 	type SuccessContext,
 } from "@zayne-labs/callapi";
-import { loggerPlugin } from "@zayne-labs/callapi-plugins";
-import * as z from "zod/v3";
+import * as z from "zod";
+import * as zv3 from "zod/v3";
 
-const newOptionSchema1 = z.object({
-	onUpload: z.function().args(
-		z.object({
-			loaded: z.number(),
-			total: z.number(),
+const newOptionSchema1 = zv3.object({
+	onUpload: zv3.function().args(
+		zv3.object({
+			loaded: zv3.number(),
+			total: zv3.number(),
 		})
 	),
 });
 
-const newOptionSchema2 = z.object({
-	onUploadSuccess: z.function().args(
-		z.object({
-			load: z.number(),
-			tots: z.number(),
+const newOptionSchema2 = zv3.object({
+	onUploadSuccess: zv3.function().args(
+		zv3.object({
+			load: zv3.number(),
+			tots: zv3.number(),
 		})
 	),
 });
 
-type Plugin2Options = z.infer<typeof newOptionSchema2>;
+type Plugin2Options = zv3.infer<typeof newOptionSchema2>;
 
 const pluginOne = definePlugin({
 	defineExtraOptions: () => newOptionSchema1,
@@ -75,26 +75,16 @@ const callMainApi = createFetchClient({
 	onRequest: [() => console.info("OnRequest1 - BASE"), () => console.info("OnRequest2 - BASE")],
 	onUpload: (_progress) => {},
 	onUploadSuccess: (_progress) => {},
-	plugins: [pluginOne, pluginTwo, loggerPlugin()],
+	plugins: [pluginOne, pluginTwo],
 
 	schema: defineSchema({
 		"@delete/products/:id": {
-			data: z.object({
-				id: z.number(),
-			}),
-			headers: z
-				.object({
-					Authorization: z.string(),
-				})
-				.optional(),
+			data: z.object({ id: z.number() }),
+			headers: z.object({ Authorization: z.string() }).optional(),
 		},
 
 		"/products/:id": {
-			data: z.object({
-				id: z.number(),
-				price: z.number(),
-				title: z.string(),
-			}),
+			data: z.object({ id: z.number(), price: z.number(), title: z.string() }),
 		},
 	}),
 });
@@ -118,7 +108,7 @@ const stream = new ReadableStream({
 }).pipeThrough(new TextEncoderStream());
 
 const [result1, result2, result3, result4, result5, result6] = await Promise.all([
-	callMainApi<{ foo: string }>("/products/:id", {
+	callMainApi("/products/:id", {
 		onRequest: () => console.info("OnRequest - INSTANCE"),
 		params: [1],
 	}),

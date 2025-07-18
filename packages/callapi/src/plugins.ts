@@ -8,9 +8,10 @@ import {
 	type RequestContext,
 } from "./hooks";
 import type { CallApiRequestOptions, CallApiRequestOptionsForHooks } from "./types/common";
-import type { AnyFunction, Awaitable } from "./types/type-helpers";
+import type { AnyFunction, Awaitable, Writeable } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
 import { isArray, isFunction, isPlainObject, isString } from "./utils/guards";
+import { type BaseCallApiSchemaAndConfig, getCurrentRouteSchemaKeyAndMainInitURL } from "./validation";
 
 export type PluginInitContext<TPluginExtraOptions = unknown> = RequestContext // eslint-disable-next-line perfectionist/sort-intersection-types -- Allow
 	& PluginExtraOptions<TPluginExtraOptions> & { initURL: string };
@@ -66,6 +67,11 @@ export interface CallApiPlugin {
 	name: string;
 
 	/**
+	 * Base schema for the client.
+	 */
+	schema?: BaseCallApiSchemaAndConfig;
+
+	/**
 	 *  A version for the plugin
 	 */
 	version?: string;
@@ -73,11 +79,22 @@ export interface CallApiPlugin {
 
 export const definePlugin = <
 	// eslint-disable-next-line perfectionist/sort-union-types -- Let the first one be first
-	TPlugin extends CallApiPlugin | AnyFunction<CallApiPlugin>,
+	const TPlugin extends CallApiPlugin | AnyFunction<CallApiPlugin>,
 >(
 	plugin: TPlugin
 ) => {
-	return plugin;
+	return plugin as Writeable<TPlugin, "deep">;
+};
+
+export const getResolvedPlugins = (context: Pick<RequestContext, "baseConfig" | "options">) => {
+	const { baseConfig, options } = context;
+
+	const resolvedPlugins =
+		isFunction(options.plugins) ?
+			options.plugins({ basePlugins: baseConfig.plugins ?? [] })
+		:	(options.plugins ?? []);
+
+	return resolvedPlugins;
 };
 
 export const initializePlugins = async (context: PluginInitContext) => {
@@ -118,12 +135,14 @@ export const initializePlugins = async (context: PluginInitContext) => {
 		addMainHooks();
 	}
 
-	const resolvedPlugins =
-		isFunction(options.plugins) ?
-			options.plugins({ basePlugins: baseConfig.plugins ?? [] })
-		:	(options.plugins ?? []);
+	const { currentRouteSchemaKey, mainInitURL } = getCurrentRouteSchemaKeyAndMainInitURL({
+		baseExtraOptions: baseConfig,
+		extraOptions: config,
+		initURL,
+	});
 
-	let resolvedInitURL = initURL;
+	let resolvedCurrentRouteSchemaKey = currentRouteSchemaKey;
+	let resolvedInitURL = mainInitURL;
 	let resolvedOptions = options;
 	let resolvedRequestOptions = request;
 
@@ -143,7 +162,14 @@ export const initializePlugins = async (context: PluginInitContext) => {
 		const urlString = initResult.initURL?.toString();
 
 		if (isString(urlString)) {
-			resolvedInitURL = urlString;
+			const newResult = getCurrentRouteSchemaKeyAndMainInitURL({
+				baseExtraOptions: baseConfig,
+				extraOptions: config,
+				initURL: urlString,
+			});
+
+			resolvedCurrentRouteSchemaKey = newResult.currentRouteSchemaKey;
+			resolvedInitURL = newResult.mainInitURL;
 		}
 
 		if (isPlainObject(initResult.request)) {
@@ -154,6 +180,8 @@ export const initializePlugins = async (context: PluginInitContext) => {
 			resolvedOptions = initResult.options;
 		}
 	};
+
+	const resolvedPlugins = getResolvedPlugins({ baseConfig, options });
 
 	for (const plugin of resolvedPlugins) {
 		// eslint-disable-next-line no-await-in-loop -- Await is necessary in this case.
@@ -187,6 +215,7 @@ export const initializePlugins = async (context: PluginInitContext) => {
 	}
 
 	return {
+		resolvedCurrentRouteSchemaKey,
 		resolvedHooks,
 		resolvedInitURL,
 		resolvedOptions,

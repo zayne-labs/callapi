@@ -492,7 +492,7 @@ When creating a schema with `defineSchema`, you can configure various validation
 | `disableRuntimeValidation`           | `boolean` | `false`     | When `true`, disables all runtime validation (TypeScript types will still be checked)                                                                                                         |
 | `disableValidationOutputApplication` | `boolean` | `false`     | When `true`, prevents validation results from being automatically applied to the response                                                                                                     |
 | `requireHttpMethodProvision`         | `boolean` | `false`     | When `true`, requires that you explicitly provide the HTTP method in the request options instead of allowing it to be inferred and applied automatically from the schema path method modifier |
-| `strict`                             | `boolean` | `false`     | When `true`, only allows requests to paths explicitly defined in the schema. Any path not defined in the schema will result in in a typescript error                                          |
+| `strict`                             | `boolean` | `false`     | When `true`, only allows requests to paths explicitly defined in the schema. Any path not defined in the schema will result in both a typescript error and a runtime validation error         |
 
 ### Strict Mode
 
@@ -503,21 +503,22 @@ import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
 import * as z from "zod/v4";
 
 const callApi = createFetchClient({
-	schema: defineSchema({
-		"/user": {
-			data: z.object({
-				userId: z.string(),
-				id: z.number(),
-				title: z.string(),
-				completed: z.boolean(),
-			}),
+	schema: defineSchema(
+		{
+			"/user": {
+				data: z.object({
+					userId: z.string(),
+					id: z.number(),
+					title: z.string(),
+					completed: z.boolean(),
+				}),
+			},
 		},
-	}),
-
-	schemaConfig: {
-		// [!code highlight]
-		strict: true, // [!code highlight]
-	},
+		{
+			// [!code highlight]
+			strict: true, // [!code highlight]
+		}
+	),
 });
 
 // @errors: 2345
