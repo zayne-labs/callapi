@@ -61,6 +61,7 @@ export {
 	type CallApiSchema,
 	type CallApiSchemaConfig,
 	defineSchema,
+	defineSchemaConfig,
 	defineSchemaRoutes,
 	type InferSchemaResult,
 } from "./validation";

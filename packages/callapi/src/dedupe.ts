@@ -21,8 +21,8 @@ export const getAbortErrorMessage = (
 	fullURL: DedupeContext["options"]["fullURL"]
 ) => {
 	return dedupeKey ?
-			`Duplicate request detected - Aborting previous request with key '${dedupeKey}' as a new request was initiated`
-		:	`Duplicate request detected - Aborting previous request to '${fullURL}' as a new request with identical options was initiated`;
+			`Duplicate request detected - Aborted previous request with key '${dedupeKey}' as a new request was initiated`
+		:	`Duplicate request detected - Aborted previous request to '${fullURL}' as a new request with identical options was initiated`;
 };
 
 export const createDedupeStrategy = async (context: DedupeContext) => {

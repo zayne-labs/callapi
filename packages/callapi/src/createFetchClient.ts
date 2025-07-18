@@ -12,11 +12,11 @@ import { type CallApiPlugin, initializePlugins } from "./plugins";
 import {
 	type ErrorInfo,
 	getCustomizedErrorResult,
+	type ResponseTypeUnion,
+	type ResultModeUnion,
 	resolveErrorResult,
 	resolveResponseData,
 	resolveSuccessResult,
-	type ResponseTypeUnion,
-	type ResultModeUnion,
 } from "./result";
 import { createRetryStrategy } from "./retry";
 import type {
@@ -37,7 +37,7 @@ import type {
 	CallApiResult,
 } from "./types/common";
 import type { DefaultDataType, DefaultPluginArray, DefaultThrowOnError } from "./types/default-types";
-import type { AnyFunction } from "./types/type-helpers";
+import type { AnyFunction, Writeable } from "./types/type-helpers";
 import { getFullURL, getMethod } from "./url";
 import {
 	createCombinedSignal,
@@ -51,6 +51,7 @@ import {
 import { isFunction, isHTTPErrorInstance, isValidationErrorInstance } from "./utils/guards";
 import {
 	type BaseCallApiSchemaAndConfig,
+	type BaseCallApiSchemaRoutes,
 	type CallApiSchema,
 	type CallApiSchemaConfig,
 	handleConfigValidation,
@@ -68,6 +69,12 @@ export const createFetchClient = <
 	TBaseResponseType extends ResponseTypeUnion = ResponseTypeUnion,
 	const TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
 	const TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
+	TComputedBaseSchemaConfig extends CallApiSchemaConfig = NonNullable<
+		Writeable<TBaseSchemaAndConfig["config"], "deep">
+	>,
+	TComputedBaseSchemaRoutes extends BaseCallApiSchemaRoutes = NonNullable<
+		Writeable<TBaseSchemaAndConfig["routes"], "deep">
+	>,
 >(
 	initBaseConfig: BaseCallApiConfig<
 		TBaseData,
@@ -87,19 +94,19 @@ export const createFetchClient = <
 		TResultMode extends ResultModeUnion = TBaseResultMode,
 		TThrowOnError extends ThrowOnErrorUnion = TBaseThrowOnError,
 		TResponseType extends ResponseTypeUnion = TBaseResponseType,
-		const TSchemaConfig extends CallApiSchemaConfig = NonNullable<TBaseSchemaAndConfig["config"]>,
-		TInitURL extends InferInitURL<
-			NonNullable<TBaseSchemaAndConfig["routes"]>,
+		const TSchemaConfig extends CallApiSchemaConfig = TComputedBaseSchemaConfig,
+		TInitURL extends InferInitURL<TComputedBaseSchemaRoutes, TSchemaConfig> = InferInitURL<
+			TComputedBaseSchemaRoutes,
 			TSchemaConfig
-		> = InferInitURL<NonNullable<TBaseSchemaAndConfig["routes"]>, TSchemaConfig>,
+		>,
 		TCurrentRouteSchemaKey extends GetCurrentRouteSchemaKey<
 			TSchemaConfig,
 			TInitURL
 		> = GetCurrentRouteSchemaKey<TSchemaConfig, TInitURL>,
-		const TSchema extends CallApiSchema = GetCurrentRouteSchema<
-			NonNullable<TBaseSchemaAndConfig["routes"]>,
+		const TSchema extends GetCurrentRouteSchema<
+			TComputedBaseSchemaRoutes,
 			TCurrentRouteSchemaKey
-		>,
+		> = GetCurrentRouteSchema<TComputedBaseSchemaRoutes, TCurrentRouteSchemaKey>,
 		const TPluginArray extends CallApiPlugin[] = TBasePluginArray,
 	>(
 		...parameters: CallApiParameters<
@@ -108,9 +115,9 @@ export const createFetchClient = <
 			TResultMode,
 			TThrowOnError,
 			TResponseType,
-			NonNullable<TBaseSchemaAndConfig["routes"]>,
+			TComputedBaseSchemaRoutes,
 			TSchema,
-			NonNullable<TBaseSchemaAndConfig["config"]>,
+			TComputedBaseSchemaConfig,
 			TSchemaConfig,
 			TInitURL,
 			TCurrentRouteSchemaKey,

@@ -119,10 +119,10 @@ export const getFullURL = (options: GetFullURLOptions) => {
 
 	const urlWithMergedQueryAndParams = mergeUrlWithQuery(urlWithMergedParams, query);
 
-	const shouldPrependBaseURL = urlWithMergedQueryAndParams.startsWith("http") || !baseURL;
+	const shouldNotPrependBaseURL = urlWithMergedQueryAndParams.startsWith("http") || !baseURL;
 
 	const fullURL =
-		shouldPrependBaseURL ? `${baseURL}${urlWithMergedQueryAndParams}` : urlWithMergedQueryAndParams;
+		shouldNotPrependBaseURL ? urlWithMergedQueryAndParams : `${baseURL}${urlWithMergedQueryAndParams}`;
 
 	return {
 		fullURL,

@@ -8,8 +8,8 @@ import type { GetCallApiResult, ResponseTypeUnion, ResultModeUnion } from "../re
 import type { RetryOptions } from "../retry";
 import type { URLOptions } from "../url";
 import type {
-	BaseCallApiSchemaRoutes,
 	BaseCallApiSchemaAndConfig,
+	BaseCallApiSchemaRoutes,
 	CallApiSchema,
 	CallApiSchemaConfig,
 } from "../validation";

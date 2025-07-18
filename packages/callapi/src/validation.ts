@@ -199,6 +199,12 @@ export const defineSchema = <
 	} satisfies BaseCallApiSchemaAndConfig;
 };
 
+export const defineSchemaConfig = <const TConfig extends CallApiExtraOptions["schemaConfig"]>(
+	config: TConfig
+) => {
+	return config as Writeable<typeof config, "deep">;
+};
+
 export const defineSchemaRoutes = <const TBaseSchemaRoutes extends BaseCallApiSchemaRoutes>(
 	routes: TBaseSchemaRoutes
 ) => {
@@ -335,9 +341,7 @@ export const handleConfigValidation = async (
 
 	if (!currentRouteSchema && resolvedSchemaConfig?.strict === true) {
 		throw new ValidationError({
-			issues: [
-				{ message: `No schema found for route '${currentRouteSchema}' and strict mode is enabled` },
-			],
+			issues: [{ message: `Strict Mode - No schema found for route '${currentRouteSchemaKey}' ` }],
 			response: null,
 		});
 	}
@@ -426,8 +430,7 @@ export const getCurrentRouteSchemaKeyAndMainInitURL = (
 	if (schemaConfig?.prefix && currentRouteSchemaKey.startsWith(schemaConfig.prefix)) {
 		currentRouteSchemaKey = currentRouteSchemaKey.replace(schemaConfig.prefix, "");
 
-		schemaConfig.baseURL
-			&& (mainInitURL = mainInitURL.replace(schemaConfig.prefix, schemaConfig.baseURL));
+		mainInitURL = mainInitURL.replace(schemaConfig.prefix, schemaConfig.baseURL ?? "");
 	}
 
 	if (schemaConfig?.baseURL && currentRouteSchemaKey.startsWith(schemaConfig.baseURL)) {

@@ -1,9 +1,9 @@
 import { hookDefaults } from "./constants/default-options";
 import {
 	composeAllHooks,
-	hookRegistries,
 	type Hooks,
 	type HooksOrHooksArray,
+	hookRegistries,
 	type PluginExtraOptions,
 	type RequestContext,
 } from "./hooks";
@@ -11,7 +11,7 @@ import type { CallApiRequestOptions, CallApiRequestOptionsForHooks } from "./typ
 import type { AnyFunction, Awaitable, Writeable } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
 import { isArray, isFunction, isPlainObject, isString } from "./utils/guards";
-import { getCurrentRouteSchemaKeyAndMainInitURL, type BaseCallApiSchemaAndConfig } from "./validation";
+import { type BaseCallApiSchemaAndConfig, getCurrentRouteSchemaKeyAndMainInitURL } from "./validation";
 
 export type PluginInitContext<TPluginExtraOptions = unknown> = RequestContext // eslint-disable-next-line perfectionist/sort-intersection-types -- Allow
 	& PluginExtraOptions<TPluginExtraOptions> & { initURL: string };
@@ -135,8 +135,14 @@ export const initializePlugins = async (context: PluginInitContext) => {
 		addMainHooks();
 	}
 
-	let resolvedCurrentRouteSchemaKey = initURL;
-	let resolvedInitURL = initURL;
+	const { currentRouteSchemaKey, mainInitURL } = getCurrentRouteSchemaKeyAndMainInitURL({
+		baseExtraOptions: baseConfig,
+		extraOptions: config,
+		initURL,
+	});
+
+	let resolvedCurrentRouteSchemaKey = currentRouteSchemaKey;
+	let resolvedInitURL = mainInitURL;
 	let resolvedOptions = options;
 	let resolvedRequestOptions = request;
 
@@ -156,14 +162,14 @@ export const initializePlugins = async (context: PluginInitContext) => {
 		const urlString = initResult.initURL?.toString();
 
 		if (isString(urlString)) {
-			const { currentRouteSchemaKey, mainInitURL } = getCurrentRouteSchemaKeyAndMainInitURL({
+			const newResult = getCurrentRouteSchemaKeyAndMainInitURL({
 				baseExtraOptions: baseConfig,
 				extraOptions: config,
 				initURL: urlString,
 			});
 
-			resolvedInitURL = mainInitURL;
-			resolvedCurrentRouteSchemaKey = currentRouteSchemaKey;
+			resolvedCurrentRouteSchemaKey = newResult.currentRouteSchemaKey;
+			resolvedInitURL = newResult.mainInitURL;
 		}
 
 		if (isPlainObject(initResult.request)) {
