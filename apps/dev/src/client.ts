@@ -108,7 +108,7 @@ const stream = new ReadableStream({
 }).pipeThrough(new TextEncoderStream());
 
 const [result1, result2, result3, result4, result5, result6] = await Promise.all([
-	callMainApi("/products/:id", {
+	callMainApi<{ price: number }>("/products/:id", {
 		onRequest: () => console.info("OnRequest - INSTANCE"),
 		params: [1],
 	}),
