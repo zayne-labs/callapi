@@ -1,5 +1,12 @@
 # @zayne-labs/callapi
 
+## 1.8.18
+
+### Patch Changes
+
+- 6e259a6: fix(cache): optimize global cache scope check in dedupe strategy
+   - Simplify the global cache scope check condition
+
 ## 1.8.17
 
 ### Patch Changes
