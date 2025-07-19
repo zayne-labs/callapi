@@ -8,7 +8,6 @@ import type {
 	CallApiSchemaConfig,
 	InferSchemaResult,
 	RouteKeyMethods,
-	RouteKeyMethodsURLUnion,
 } from "../validation";
 import type {
 	AnyFunction,
@@ -50,10 +49,7 @@ export type ApplySchemaConfiguration<
 export type InferAllRouteKeys<
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
 	TSchemaConfig extends CallApiSchemaConfig,
-> = ApplySchemaConfiguration<
-	TSchemaConfig,
-	Exclude<keyof TBaseSchemaRoutes, number | symbol | RouteKeyMethodsURLUnion>
->;
+> = ApplySchemaConfiguration<TSchemaConfig, Exclude<keyof TBaseSchemaRoutes, number | symbol>>;
 
 export type InferInitURL<
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
