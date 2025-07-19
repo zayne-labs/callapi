@@ -1,4 +1,9 @@
-import { createDedupeStrategy, getAbortErrorMessage, type RequestInfoCache } from "./dedupe";
+import {
+	createDedupeStrategy,
+	type GlobalRequestInfoCache,
+	getAbortErrorMessage,
+	type RequestInfoCache,
+} from "./dedupe";
 import { HTTPError } from "./error";
 import {
 	type ErrorContext,
@@ -59,7 +64,7 @@ import {
 	type InferSchemaResult,
 } from "./validation";
 
-const $GlobalRequestInfoCache: RequestInfoCache = new Map();
+const $GlobalRequestInfoCache: GlobalRequestInfoCache = new Map();
 
 export const createFetchClient = <
 	TBaseData = DefaultDataType,

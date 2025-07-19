@@ -1,4 +1,4 @@
-import type { CallApiExtraOptions } from "../types/common";
+import type { CallApiConfig, CallApiExtraOptions } from "../types/common";
 import { defineEnum } from "../types/type-helpers";
 
 export const retryDefaults = defineEnum({
@@ -24,25 +24,26 @@ export const defaultRetryStatusCodesLookup = defineEnum({
 
 export const commonDefaults = defineEnum({
 	bodySerializer: JSON.stringify,
-	defaultErrorMessage: "An unexpected error occurred during the HTTP request.",
-});
+	defaultHTTPErrorMessage: "An unexpected error occurred during the HTTP request.",
+} satisfies CallApiConfig);
 
 export const responseDefaults = defineEnum({
 	responseParser: JSON.parse,
 	responseType: "json",
 	resultMode: "all",
-});
+} satisfies CallApiConfig);
 
 export const hookDefaults = defineEnum({
 	mergedHooksExecutionMode: "parallel",
 	mergedHooksExecutionOrder: "mainHooksAfterPlugins",
-});
+}) satisfies CallApiConfig;
 
 export const dedupeDefaults = defineEnum({
 	dedupeCacheScope: "local",
+	dedupeCacheScopeKey: "default",
 	dedupeStrategy: "cancel",
-});
+} satisfies CallApiConfig);
 
 export const requestOptionDefaults = defineEnum({
 	method: "GET",
-});
+} satisfies CallApiConfig);

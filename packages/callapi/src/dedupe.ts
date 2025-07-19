@@ -1,6 +1,7 @@
 import { dedupeDefaults } from "./constants/default-options";
 import type { RequestContext } from "./hooks";
 import { toStreamableRequest, toStreamableResponse } from "./stream";
+import type { AnyString } from "./types/type-helpers";
 import { deterministicHashFn, getFetchImpl, waitFor } from "./utils/common";
 
 type RequestInfo = {
@@ -10,8 +11,10 @@ type RequestInfo = {
 
 export type RequestInfoCache = Map<string | null, RequestInfo>;
 
+export type GlobalRequestInfoCache = Map<DedupeOptions["dedupeCacheScopeKey"], RequestInfoCache>;
+
 type DedupeContext = RequestContext & {
-	$GlobalRequestInfoCache: RequestInfoCache;
+	$GlobalRequestInfoCache: GlobalRequestInfoCache;
 	$LocalRequestInfoCache: RequestInfoCache;
 	newFetchController: AbortController;
 };
@@ -52,12 +55,16 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 	const dedupeCacheScope = globalOptions.dedupeCacheScope ?? dedupeDefaults.dedupeCacheScope;
 
-	const $RequestInfoCache = (
-		{
-			global: $GlobalRequestInfoCache,
-			local: $LocalRequestInfoCache,
-		} satisfies Record<NonNullable<DedupeOptions["dedupeCacheScope"]>, RequestInfoCache>
-	)[dedupeCacheScope];
+	const dedupeCacheScopeKey = globalOptions.dedupeCacheScopeKey ?? dedupeDefaults.dedupeCacheScopeKey;
+
+	if (dedupeCacheScope === "global") {
+		$GlobalRequestInfoCache.set(dedupeCacheScopeKey, new Map());
+	}
+
+	const $RequestInfoCache =
+		dedupeCacheScope === "global" ?
+			$GlobalRequestInfoCache.get(dedupeCacheScopeKey)
+		:	$LocalRequestInfoCache;
 
 	// == This is to ensure cache operations only occur when key is available
 	const $RequestInfoCacheOrNull = dedupeKey !== null ? $RequestInfoCache : null;
@@ -144,7 +151,15 @@ export type DedupeOptions = {
 	dedupeCacheScope?: "global" | "local";
 
 	/**
-	 * Custom request key to be used to identify a request in the fetch deduplication strategy.
+	 * Unique key to namespace the deduplication cache when `dedupeCacheScope` is set to `"global"`.
+	 *
+	 * CallApi instances sharing this key will use the same cache for deduplication.
+	 * @default "default"
+	 */
+	dedupeCacheScopeKey?: "default" | AnyString;
+
+	/**
+	 * Custom request key to be used to identify a request within the selected deduplication cache.
 	 * @default the full request url + string formed from the request options
 	 */
 	dedupeKey?: string;
