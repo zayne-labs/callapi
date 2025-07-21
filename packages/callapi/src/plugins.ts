@@ -8,7 +8,7 @@ import {
 	type RequestContext,
 } from "./hooks";
 import type { CallApiRequestOptions, CallApiRequestOptionsForHooks } from "./types/common";
-import type { AnyFunction, Awaitable, Writeable } from "./types/type-helpers";
+import type { Awaitable } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
 import { isArray, isFunction, isPlainObject, isString } from "./utils/guards";
 import { type BaseCallApiSchemaAndConfig, getCurrentRouteSchemaKeyAndMainInitURL } from "./validation";
@@ -76,15 +76,6 @@ export interface CallApiPlugin {
 	 */
 	version?: string;
 }
-
-export const definePlugin = <
-	// eslint-disable-next-line perfectionist/sort-union-types -- Let the first one be first
-	const TPlugin extends CallApiPlugin | AnyFunction<CallApiPlugin>,
->(
-	plugin: TPlugin
-) => {
-	return plugin as Writeable<TPlugin, "deep">;
-};
 
 export const getResolvedPlugins = (context: Pick<RequestContext, "baseConfig" | "options">) => {
 	const { baseConfig, options } = context;

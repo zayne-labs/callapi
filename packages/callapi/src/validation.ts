@@ -16,7 +16,6 @@ import {
 	defineEnum,
 	type Prettify,
 	type UnionToIntersection,
-	type Writeable,
 } from "./types/type-helpers";
 import type { Params, Query } from "./url";
 import { isFunction } from "./utils/guards";
@@ -187,32 +186,6 @@ export type BaseCallApiSchemaAndConfig = {
 	config?: CallApiSchemaConfig;
 	routes: BaseCallApiSchemaRoutes;
 };
-
-export const defineSchema = <
-	const TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
-	const TSchemaConfig extends CallApiSchemaConfig,
->(
-	routes: TBaseSchemaRoutes,
-	config?: TSchemaConfig
-) => {
-	return {
-		config,
-		routes: routes as Writeable<typeof routes, "deep">,
-	} satisfies BaseCallApiSchemaAndConfig;
-};
-
-export const defineSchemaConfig = <const TConfig extends CallApiExtraOptions["schemaConfig"]>(
-	config: TConfig
-) => {
-	return config as Writeable<typeof config, "deep">;
-};
-
-export const defineSchemaRoutes = <const TBaseSchemaRoutes extends BaseCallApiSchemaRoutes>(
-	routes: TBaseSchemaRoutes
-) => {
-	return routes as Writeable<typeof routes, "deep">;
-};
-
 type ValidationOptions<
 	TSchema extends CallApiSchema[keyof CallApiSchema] = CallApiSchema[keyof CallApiSchema],
 > = {

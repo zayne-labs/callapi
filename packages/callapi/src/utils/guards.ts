@@ -80,7 +80,7 @@ export const isPlainObject = <TPlainObject extends Record<string, unknown>>(
 	return true;
 };
 
-export const isJsonString = (value: unknown): value is string => {
+export const isValidJsonString = (value: unknown): value is string => {
 	if (!isString(value)) {
 		return false;
 	}

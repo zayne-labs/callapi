@@ -2,7 +2,7 @@ import { getAuthHeader } from "../auth";
 import { fetchSpecificKeys } from "../constants/common";
 import { commonDefaults } from "../constants/default-options";
 import type { BaseCallApiExtraOptions, CallApiExtraOptions, CallApiRequestOptions } from "../types/common";
-import { isFunction, isJsonString, isPlainObject, isQueryString, isSerializable } from "./guards";
+import { isFunction, isPlainObject, isQueryString, isSerializable, isValidJsonString } from "./guards";
 
 export const omitKeys = <
 	TObject extends Record<string, unknown>,
@@ -106,7 +106,7 @@ export const getHeaders = async (options: GetHeadersOptions) => {
 		return headersObject;
 	}
 
-	if (isSerializable(body) || isJsonString(body)) {
+	if (isSerializable(body) || isValidJsonString(body)) {
 		headersObject["Content-Type"] = "application/json";
 		headersObject.Accept = "application/json";
 	}

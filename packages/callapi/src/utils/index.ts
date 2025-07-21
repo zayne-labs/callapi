@@ -2,7 +2,7 @@ export { toQueryString } from "./common";
 export {
 	isHTTPError,
 	isHTTPErrorInstance,
+	isJavascriptError,
 	isValidationError,
 	isValidationErrorInstance,
-	isJavascriptError,
 } from "./guards";
