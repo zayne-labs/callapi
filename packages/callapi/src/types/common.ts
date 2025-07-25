@@ -6,7 +6,7 @@ import type { Hooks, HooksOrHooksArray } from "../hooks";
 import type { CallApiPlugin } from "../plugins";
 import type { GetCallApiResult, ResponseTypeUnion, ResultModeUnion } from "../result";
 import type { RetryOptions } from "../retry";
-import type { URLOptions } from "../url";
+import type { InitURLOrURLObject, URLOptions } from "../url";
 import type {
 	BaseCallApiSchemaAndConfig,
 	BaseCallApiSchemaRoutes,
@@ -19,7 +19,6 @@ import type {
 	GlobalMeta,
 	HeadersOption,
 	InferExtraOptions,
-	InferInitURL,
 	InferPluginOptions,
 	InferRequestOptions,
 	MethodUnion,
@@ -269,9 +268,7 @@ export type CallApiExtraOptions<
 	 */
 	schemaConfig?:
 		| TSchemaConfig
-		| ((context: {
-				baseSchemaConfig: NonNullable<Writeable<TBaseSchemaConfig, "deep">>;
-		  }) => TSchemaConfig);
+		| ((context: { baseSchemaConfig: Writeable<TBaseSchemaConfig, "deep"> }) => TSchemaConfig);
 };
 
 export type CallApiExtraOptionsForHooks = Hooks & Omit<CallApiExtraOptions, keyof Hooks>;
@@ -320,10 +317,7 @@ export type CallApiConfig<
 	TSchema extends CallApiSchema = CallApiSchema,
 	TBaseSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
 	TSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
-	TInitURL extends InferInitURL<BaseCallApiSchemaRoutes, TSchemaConfig> = InferInitURL<
-		BaseCallApiSchemaRoutes,
-		TSchemaConfig
-	>,
+	TInitURL extends InitURLOrURLObject = InitURLOrURLObject,
 	TCurrentRouteSchemaKey extends string = string,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
@@ -358,10 +352,7 @@ export type CallApiParameters<
 	TSchema extends CallApiSchema = CallApiSchema,
 	TBaseSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
 	TSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
-	TInitURL extends InferInitURL<BaseCallApiSchemaRoutes, TSchemaConfig> = InferInitURL<
-		BaseCallApiSchemaRoutes,
-		TSchemaConfig
-	>,
+	TInitURL extends InitURLOrURLObject = InitURLOrURLObject,
 	TCurrentRouteSchemaKey extends string = string,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,

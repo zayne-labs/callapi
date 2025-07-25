@@ -77,16 +77,19 @@ const callMainApi = createFetchClient({
 	onUploadSuccess: (_progress) => {},
 	plugins: [pluginOne, pluginTwo],
 
-	schema: defineSchema({
-		"@delete/products/:id": {
-			data: z.object({ id: z.number() }),
-			headers: z.object({ Authorization: z.string() }).optional(),
-		},
+	schema: defineSchema(
+		{
+			"@delete/products/:id": {
+				data: z.object({ id: z.number() }),
+				headers: z.object({ Authorization: z.string() }).optional(),
+			},
 
-		"/products/:id": {
-			data: z.object({ id: z.number(), price: z.number(), title: z.string() }),
-		},
-	}),
+			"/products/:id": {
+				data: z.object({ id: z.number(), price: z.number(), title: z.string() }),
+			},
+		}
+		// { strict: true }
+	),
 });
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -138,6 +141,9 @@ const [result1, result2, result3, result4, result5, result6] = await Promise.all
 	callMainApi("https://api.github.com/repos/zayne-labs/ui/commits?per_page=50", {
 		onRequestStream: (ctx) => console.info("OnRequestStream", { event: ctx.event }),
 		onResponseStream: (ctx) => console.info("OnResponseStream", { event: ctx.event }),
+		// schemaConfig: (ctx) => ({
+		// 	strict: false,
+		// }),
 	}),
 ]);
 
@@ -197,3 +203,98 @@ export const callBackendApiForQuery = <TData = unknown>(
 		...config,
 	});
 };
+
+// const getAllowedDomains = async () => {
+// 	await wait(1000);
+// 	return ["example.com", "company.com"];
+// };
+
+// const callApi = createFetchClient({
+// 	baseURL: "https://api.example.com",
+
+// 	schema: defineSchema({
+// 		"/users": {
+// 			// Async body validator with custom validation
+// 			body: async (body) => {
+// 				if (!body || typeof body !== "object") {
+// 					throw new Error("Invalid request body");
+// 				}
+
+// 				// Required fields
+// 				if (!("name" in body) || typeof body.name !== "string") {
+// 					throw new Error("Name is required");
+// 				}
+
+// 				if (!("email" in body) || typeof body.email !== "string" || !body.email.includes("@")) {
+// 					throw new Error("Valid email required");
+// 				}
+
+// 				// Validate domain against allowed list
+// 				const domain = body.email.split("@")[1] ?? "";
+// 				const allowed = await getAllowedDomains();
+
+// 				if (!allowed.includes(domain)) {
+// 					throw new Error(`Email domain ${domain} not allowed`);
+// 				}
+
+// 				return {
+// 					email: body.email.toLowerCase(),
+// 					name: body.name.trim(),
+// 				};
+// 			},
+
+// 			// Response data validator
+// 			data: (data) => {
+// 				if (
+// 					!data
+// 					|| typeof data !== "object"
+// 					|| !("id" in data)
+// 					|| !("name" in data)
+// 					|| !("email" in data)
+// 				) {
+// 					throw new Error("Invalid response data");
+// 				}
+
+// 				return data; // Type will be narrowed to { id: number; name: string; email: string }
+// 			},
+// 		},
+// 	}),
+// });
+
+// // @annotate: Types are inferred from validator return types
+// // eslint-disable-next-line ts-eslint/no-unused-vars
+// const { data } = await callApi("/users", {
+// 	body: {
+// 		email: "JOHN@example.com",
+// 		name: " John ", // Will be trimmed & lowercased.
+// 	},
+// });
+
+// const callBApi = createFetchClient({
+// 	baseURL: "https://api.example.com",
+// 	schema: defineSchema(
+// 		{
+// 			"/user": {
+// 				data: z.object({
+// 					id: z.number(),
+// 					name: z.string(),
+// 				}),
+// 			},
+// 		},
+// 		{
+// 			// strict: true,
+// 			disableRuntimeValidation: true,
+// 		}
+// 	),
+// });
+
+// const mad = await callBApi(new URL("/user/f", "https://api.example.com"), {
+// 	schema: (ctx) => ({
+// 		data: z.null(),
+// 	}),
+// 	// @annotate: This will override the base schema for this specific path
+// 	schemaConfig: defineSchemaConfig((ctx) => ({
+// 		disableRuntimeValidation: false,
+// 		strict: false,
+// 	})),
+// });

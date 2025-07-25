@@ -1,14 +1,18 @@
 import { createMDX } from "fumadocs-mdx/next";
+import type { NextConfig } from "next";
 
 const withMDX = createMDX();
 
-/**
- * @type {import('next').NextConfig}
- */
 const config = {
 	devIndicators: {
 		position: "bottom-right",
 	},
+
+	experimental: {
+		devtoolNewPanelUI: true,
+		devtoolSegmentExplorer: true,
+	},
+
 	eslint: {
 		ignoreDuringBuilds: true,
 	},
@@ -22,6 +26,6 @@ const config = {
 		];
 	},
 	serverExternalPackages: ["twoslash", "typescript", "shiki"],
-};
+} satisfies NextConfig;
 
 export default withMDX(config);

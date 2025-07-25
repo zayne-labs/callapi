@@ -1,6 +1,6 @@
 import { requestOptionDefaults } from "./constants/default-options";
 import type { CallApiExtraOptions, CallApiRequestOptions } from "./types/common";
-import type { UnmaskType } from "./types/type-helpers";
+import type { AnyString, UnmaskType } from "./types/type-helpers";
 import { toQueryString } from "./utils";
 import { isArray } from "./utils/guards";
 import { type CallApiSchemaConfig, routeKeyMethods } from "./validation";
@@ -139,7 +139,7 @@ export type Params = UnmaskType<
 
 export type Query = UnmaskType<Record<string, AllowedQueryParamValues>>;
 
-export type InitURLOrURLObject = string | URL;
+export type InitURLOrURLObject = AnyString | URL;
 
 export interface URLOptions {
 	/**

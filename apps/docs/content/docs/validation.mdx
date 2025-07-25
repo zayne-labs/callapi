@@ -338,11 +338,11 @@ These functions receive the input value and can perform custom validation or tra
 ```ts twoslash title="client.ts"
 import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
 
-const wait = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
-
 // Simulation: Get allowed domains from config/API
 const getAllowedDomains = async () => {
+	const wait = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 	await wait(1000);
+
 	return ["example.com", "company.com"];
 };
 
@@ -350,7 +350,7 @@ const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
 
 	schema: defineSchema({
-		"users/:id": {
+		"/users": {
 			// Async body validator with custom validation
 			body: async (body) => {
 				if (!body || typeof body !== "object") {
@@ -399,7 +399,7 @@ const callApi = createFetchClient({
 });
 
 // @annotate: Types are inferred from validator return types
-const { data } = await callApi("users/:id", {
+const { data } = await callApi("/users", {
 	body: {
 		email: "JOHN@example.com",
 		name: " John ", // Will be trimmed & lowercased.
@@ -420,28 +420,28 @@ Custom validators allow you to:
 You can override the base schema by passing a schema to the `schema` option:
 
 ```ts twoslash title="api.ts"
-import { createFetchClient } from "@zayne-labs/callapi";
+import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
 import * as z from "zod/v4";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
-	schema: {
+	schema: defineSchema({
 		"/user": {
 			data: z.object({
+				name: z.string(),
 				id: z.number(),
 			}),
 		},
-	},
+	}),
 });
 
 const { data, error } = await callApi("/user", {
 	// @annotate: This will override the base schema for this specific path
 	schema: {
 		data: z.object({
-			userId: z.string(),
 			id: z.number(),
-			title: z.string(),
-			completed: z.boolean(),
+			address: z.string(),
+			isVerified: z.boolean(),
 		}),
 	},
 });
@@ -452,12 +452,12 @@ const { data, error } = await callApi("/user", {
 In case you want to extend the base schema instead of overriding it, you can pass a callback to schema option of the instance, which will be called with the base schema and the specific schema for current path:
 
 ```ts twoslash title="api.ts"
-import { createFetchClient } from "@zayne-labs/callapi";
+import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
 import * as z from "zod/v4";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
-	schema: {
+	schema: defineSchema({
 		"/user": {
 			data: z.object({
 				userId: z.string(),
@@ -466,14 +466,13 @@ const callApi = createFetchClient({
 				completed: z.boolean(),
 			}),
 		},
-	},
+	}),
 });
 
 const { data, error } = await callApi("/user", {
 	// @annotate: This will extend the base schema for this specific path
 	schema: ({ currentRouteSchema }) => ({
 		...currentRouteSchema,
-
 		errorData: z.object({
 			code: z.string(),
 			message: z.string(),

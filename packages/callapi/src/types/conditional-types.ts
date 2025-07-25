@@ -1,7 +1,7 @@
 import type { ErrorContext } from "../hooks";
 import type { CallApiPlugin } from "../plugins";
 import type { ResultModeUnion } from "../result";
-import type { AllowedQueryParamValues, Params, Query } from "../url";
+import type { AllowedQueryParamValues, InitURLOrURLObject, Params, Query } from "../url";
 import type {
 	BaseCallApiSchemaRoutes,
 	CallApiSchema,
@@ -29,32 +29,32 @@ type MakeSchemaOptionRequiredIfDefined<TSchemaOption extends CallApiSchema[keyof
 
 export type ApplyURLBasedConfig<
 	TSchemaConfig extends CallApiSchemaConfig,
-	TCurrentRouteSchemaKeys extends string,
+	TSchemaRouteKeys extends string,
 > =
-	TSchemaConfig["prefix"] extends string ? `${TSchemaConfig["prefix"]}${TCurrentRouteSchemaKeys}`
-	: TSchemaConfig["baseURL"] extends string ? `${TSchemaConfig["baseURL"]}${TCurrentRouteSchemaKeys}`
-	: TCurrentRouteSchemaKeys;
+	TSchemaConfig["prefix"] extends string ? `${TSchemaConfig["prefix"]}${TSchemaRouteKeys}`
+	: TSchemaConfig["baseURL"] extends string ? `${TSchemaConfig["baseURL"]}${TSchemaRouteKeys}`
+	: TSchemaRouteKeys;
 
-export type ApplyStrictConfig<
-	TSchemaConfig extends CallApiSchemaConfig,
-	TCurrentRouteSchemaKeys extends string,
-	// eslint-disable-next-line perfectionist/sort-union-types -- Don't sort union
-> = TSchemaConfig["strict"] extends true ? TCurrentRouteSchemaKeys : TCurrentRouteSchemaKeys | AnyString;
+export type ApplyStrictConfig<TSchemaConfig extends CallApiSchemaConfig, TSchemaRouteKeys extends string> =
+	// eslint-disable-next-line perfectionist/sort-union-types -- Don't sort union types
+	TSchemaConfig["strict"] extends true ? TSchemaRouteKeys : TSchemaRouteKeys | InitURLOrURLObject;
 
 export type ApplySchemaConfiguration<
 	TSchemaConfig extends CallApiSchemaConfig,
-	TCurrentRouteSchemaKeys extends string,
-> = ApplyStrictConfig<TSchemaConfig, ApplyURLBasedConfig<TSchemaConfig, TCurrentRouteSchemaKeys>>;
+	TSchemaRouteKeys extends string,
+> = ApplyStrictConfig<TSchemaConfig, ApplyURLBasedConfig<TSchemaConfig, TSchemaRouteKeys>>;
 
 export type InferAllRouteKeys<
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
 	TSchemaConfig extends CallApiSchemaConfig,
-> = ApplySchemaConfiguration<TSchemaConfig, Exclude<keyof TBaseSchemaRoutes, number | symbol>>;
+> = ApplySchemaConfiguration<TSchemaConfig, Extract<keyof TBaseSchemaRoutes, string>>;
 
 export type InferInitURL<
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
 	TSchemaConfig extends CallApiSchemaConfig,
-> = InferAllRouteKeys<TBaseSchemaRoutes, TSchemaConfig> | URL;
+> =
+	keyof TBaseSchemaRoutes extends never ? InitURLOrURLObject
+	:	InferAllRouteKeys<TBaseSchemaRoutes, TSchemaConfig>;
 
 export type GetCurrentRouteSchemaKey<TSchemaConfig extends CallApiSchemaConfig, TPath> =
 	TPath extends URL ? string

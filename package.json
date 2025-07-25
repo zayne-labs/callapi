@@ -36,20 +36,20 @@
 	},
 	"devDependencies": {
 		"@changesets/cli": "2.29.5",
-		"@eslint-react/eslint-plugin": "^1.52.2",
-		"@next/eslint-plugin-next": "^15.3.5",
-		"@types/node": "^24.0.13",
-		"@zayne-labs/eslint-config": "0.9.4",
-		"@zayne-labs/prettier-config": "0.9.4",
-		"eslint": "9.30.1",
-		"eslint-plugin-better-tailwindcss": "^3.5.2",
+		"@eslint-react/eslint-plugin": "^1.52.3",
+		"@next/eslint-plugin-next": "^15.4.3",
+		"@types/node": "^24.1.0",
+		"@zayne-labs/eslint-config": "0.9.7",
+		"@zayne-labs/prettier-config": "0.9.7",
+		"eslint": "9.31.0",
+		"eslint-plugin-better-tailwindcss": "^3.6.3",
 		"eslint-plugin-react-hooks": "^5.2.0",
 		"eslint-plugin-react-refresh": "^0.4.20",
 		"husky": "9.1.7",
 		"lint-staged": "16.1.2",
 		"prettier": "3.6.2",
 		"tailwindcss": "^4.1.11",
-		"turbo": "^2.5.4",
+		"turbo": "^2.5.5",
 		"typescript": "^5.8.3"
 	}
 }
