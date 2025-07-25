@@ -58,7 +58,7 @@
 		"@zayne-labs/toolkit-type-helpers": "^0.10.6",
 		"@zayne-labs/tsconfig": "0.9.7",
 		"concurrently": "^9.2.0",
-		"cross-env": "^7.0.3",
+		"cross-env": "^10.0.0",
 		"publint": "^0.3.12",
 		"size-limit": "11.2.0",
 		"tsdown": "^0.12.9",
