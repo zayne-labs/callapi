@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.8.21
+
+### Patch Changes
+
+- 9f3b938: feat: update jsdocs and allow dedupe key to accept a callback
+
 ## 1.8.20
 
 ### Patch Changes
