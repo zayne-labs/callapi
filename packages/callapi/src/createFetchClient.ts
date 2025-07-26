@@ -453,7 +453,7 @@ export const createFetchClient = <
 			let message: string | undefined = (error as Error | undefined)?.message;
 
 			if (error instanceof DOMException && error.name === "AbortError") {
-				message = getAbortErrorMessage(options.dedupeKey, options.fullURL);
+				message = getAbortErrorMessage(options.dedupeKey, errorContext);
 
 				!shouldThrowOnError && console.error(`${error.name}:`, message);
 			}

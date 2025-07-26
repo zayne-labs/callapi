@@ -3,6 +3,7 @@ import type { RequestContext } from "./hooks";
 import { toStreamableRequest, toStreamableResponse } from "./stream";
 import type { AnyString } from "./types/type-helpers";
 import { deterministicHashFn, getFetchImpl, waitFor } from "./utils/common";
+import { isFunction } from "./utils/guards";
 
 type RequestInfo = {
 	controller: AbortController;
@@ -19,13 +20,20 @@ type DedupeContext = RequestContext & {
 	newFetchController: AbortController;
 };
 
-export const getAbortErrorMessage = (
-	dedupeKey: DedupeOptions["dedupeKey"],
-	fullURL: DedupeContext["options"]["fullURL"]
-) => {
-	return dedupeKey ?
-			`Duplicate request detected - Aborted previous request with key '${dedupeKey}' as a new request was initiated`
-		:	`Duplicate request detected - Aborted previous request to '${fullURL}' as a new request with identical options was initiated`;
+const resolveDedupeKey = (dedupeKey: DedupeOptions["dedupeKey"], context: RequestContext) => {
+	if (isFunction(dedupeKey)) {
+		return dedupeKey(context);
+	}
+
+	return dedupeKey ?? null;
+};
+
+export const getAbortErrorMessage = (dedupeKey: DedupeOptions["dedupeKey"], context: RequestContext) => {
+	if (dedupeKey) {
+		return `Duplicate request detected - Aborted previous request with key '${resolveDedupeKey(dedupeKey, context)}' as a new request was initiated`;
+	}
+
+	return `Duplicate request detected - Aborted previous request to '${context.options.fullURL}' as a new request with identical options was initiated`;
 };
 
 export const createDedupeStrategy = async (context: DedupeContext) => {
@@ -41,17 +49,21 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 	const dedupeStrategy = globalOptions.dedupeStrategy ?? dedupeDefaults.dedupeStrategy;
 
-	const generateDedupeKey = () => {
+	const getDedupeKey = () => {
 		const shouldHaveDedupeKey = dedupeStrategy === "cancel" || dedupeStrategy === "defer";
 
 		if (!shouldHaveDedupeKey) {
 			return null;
 		}
 
+		if (globalOptions.dedupeKey) {
+			return resolveDedupeKey(globalOptions.dedupeKey, context);
+		}
+
 		return `${globalOptions.fullURL}-${deterministicHashFn({ options: globalOptions, request: globalRequest })}`;
 	};
 
-	const dedupeKey = globalOptions.dedupeKey ?? generateDedupeKey();
+	const dedupeKey = getDedupeKey();
 
 	const dedupeCacheScope = globalOptions.dedupeCacheScope ?? dedupeDefaults.dedupeCacheScope;
 
@@ -84,7 +96,7 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 		if (!shouldCancelRequest) return;
 
-		const message = getAbortErrorMessage(globalOptions.dedupeKey, globalOptions.fullURL);
+		const message = getAbortErrorMessage(globalOptions.dedupeKey, context);
 
 		const reason = new DOMException(message, "AbortError");
 
@@ -143,32 +155,85 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 export type DedupeOptions = {
 	/**
-	 * Defines the scope of the deduplication cache, can be set to "global" | "local".
-	 * - If set to "global", the deduplication cache will be shared across all requests, regardless of whether they shared the same `createFetchClient` or not.
-	 * - If set to "local", the deduplication cache will be scoped to the current request.
+	 * Controls the scope of request deduplication caching.
+	 *
+	 * - `"global"`: Shares deduplication cache across all `createFetchClient` instances with the same `dedupeCacheScopeKey`
+	 * - `"local"`: Limits deduplication to requests within the same `createFetchClient` instance
+	 *
+	 * @example
+	 * ```ts
+	 * // Share cache across all instances with the same scope key
+	 * const userClient = createFetchClient({
+	 *   dedupeCacheScope: "global",
+	 * });
+	 * ```
+	 *
 	 * @default "local"
 	 */
 	dedupeCacheScope?: "global" | "local";
 
 	/**
-	 * Unique key to namespace the deduplication cache when `dedupeCacheScope` is set to `"global"`.
+	 * Unique namespace for the global deduplication cache when using `dedupeCacheScope: "global"`.
 	 *
-	 * CallApi instances sharing this key will use the same cache for deduplication.
+	 * Use this to create logical groupings of deduplication caches. All instances with the same key will share the same cache namespace.
+	 *
+	 * @example
+	 * ```ts
+	 * // Group related API clients together
+	 * const userClient = createFetchClient({
+	 *   dedupeCacheScope: "global",
+	 *   dedupeCacheScopeKey: "user-service"
+	 * });
+	 * ```
+	 *
 	 * @default "default"
 	 */
 	dedupeCacheScopeKey?: "default" | AnyString;
 
 	/**
-	 * Custom request key to be used to identify a request within the selected deduplication cache.
-	 * @default the full request url + string formed from the request options
+	 * Custom key generator function for request deduplication.
+	 *
+	 * Override the default key generation strategy to control exactly which requests
+	 * are considered duplicates. The default combines:
+	 * - Request URL
+	 * - Method (GET, POST, etc.)
+	 * - Request body
+	 * - Headers (excluding common volatile ones like 'Date' or 'Authorization')
+	 *
+	 * @example
+	 * ```ts
+	 * import { callApi } from "@zayne-labs/callapi";
+	 *
+	 * // Simple static key
+	 * const result = callApi("https://api.example.com/data", {
+	 *   dedupeKey: "some-key",
+	 * });
+	 *
+	 * // Custom key that only considers URL and method
+	 * const result = callApi("https://api.example.com/data", {
+	 *   dedupeKey: (context) => `${context.options.method}:${context.options.fullURL}`,
+	 * });
+	 * ```
+	 *
+	 * @default Auto-generated from request details
 	 */
-	dedupeKey?: string;
+	dedupeKey?: string | ((context: RequestContext) => string);
 
 	/**
-	 * Defines the deduplication strategy for the request, can be set to "none" | "defer" | "cancel".
-	 * - If set to "cancel", the previous pending request with the same request key will be cancelled and lets the new request through.
-	 * - If set to "defer", all new request with the same request key will be share the same response, until the previous one is completed.
-	 * - If set to "none", deduplication is disabled.
+	 * Strategy for handling duplicate requests.
+	 *
+	 * - `"cancel"`: (Default) Cancels any in-flight request with the same key and processes the new one
+	 * - `"defer"`: Returns the pending promise for duplicate requests, sharing the same response
+	 * - `"none"`: Disables request deduplication entirely
+	 *
+	 * @example
+	 * ```ts
+	 * // Share responses for identical requests
+	 * const callNewApi = createFetchClient({
+	 *   dedupeStrategy: "defer"
+	 * });
+	 * ```
+	 *
 	 * @default "cancel"
 	 */
 	dedupeStrategy?: "cancel" | "defer" | "none";
