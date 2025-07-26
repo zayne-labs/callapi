@@ -43,7 +43,7 @@ import type {
 } from "./types/common";
 import type { DefaultDataType, DefaultPluginArray, DefaultThrowOnError } from "./types/default-types";
 import type { AnyFunction, Writeable } from "./types/type-helpers";
-import { getFullURL, getMethod } from "./url";
+import { getFullAndNormalizedURL, getMethod } from "./url";
 import {
 	createCombinedSignal,
 	createTimeoutSignal,
@@ -189,7 +189,7 @@ export const createFetchClient = <
 			request: mergedRequestOptions as CallApiRequestOptionsForHooks,
 		});
 
-		const { fullURL, normalizedInitURL } = getFullURL({
+		const { fullURL, normalizedInitURL } = getFullAndNormalizedURL({
 			baseURL: resolvedOptions.baseURL,
 			initURL: resolvedInitURL,
 			params: resolvedOptions.params,

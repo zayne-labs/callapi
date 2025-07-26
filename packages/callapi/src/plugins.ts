@@ -119,10 +119,9 @@ export const initializePlugins = async (context: PluginInitContext) => {
 		}
 	};
 
-	const mergedHooksExecutionOrder =
-		options.mergedHooksExecutionOrder ?? hookDefaults.mergedHooksExecutionOrder;
+	const hookRegistrationOrder = options.hooksRegistrationOrder ?? hookDefaults.hooksRegistrationOrder;
 
-	if (mergedHooksExecutionOrder === "mainHooksBeforePlugins") {
+	if (hookRegistrationOrder === "mainFirst") {
 		addMainHooks();
 	}
 
@@ -183,7 +182,7 @@ export const initializePlugins = async (context: PluginInitContext) => {
 		addPluginHooks(plugin.hooks);
 	}
 
-	if (mergedHooksExecutionOrder === "mainHooksAfterPlugins") {
+	if (hookRegistrationOrder === "pluginsFirst") {
 		addMainHooks();
 	}
 
@@ -197,10 +196,9 @@ export const initializePlugins = async (context: PluginInitContext) => {
 
 		if (flattenedHookArray.length === 0) continue;
 
-		const mergedHooksExecutionMode =
-			options.mergedHooksExecutionMode ?? hookDefaults.mergedHooksExecutionMode;
+		const hooksExecutionMode = options.hooksExecutionMode ?? hookDefaults.hooksExecutionMode;
 
-		const composedHook = composeAllHooks(flattenedHookArray, mergedHooksExecutionMode);
+		const composedHook = composeAllHooks(flattenedHookArray, hooksExecutionMode);
 
 		resolvedHooks[key as keyof Hooks] = composedHook;
 	}

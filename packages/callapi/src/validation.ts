@@ -176,11 +176,9 @@ export const routeKeyMethods = defineEnum(["delete", "get", "patch", "post", "pu
 
 export type RouteKeyMethods = (typeof routeKeyMethods)[number];
 
-export type RouteKeyMethodsURLUnion = `${RouteKeyMethods}/`;
+export type RouteKeyMethodsURLUnion = `@${RouteKeyMethods}/`;
 
-type PossibleRouteKey = AnyString | RouteKeyMethodsURLUnion;
-
-export type BaseCallApiSchemaRoutes = Partial<Record<PossibleRouteKey, CallApiSchema>>;
+export type BaseCallApiSchemaRoutes = Partial<Record<AnyString | RouteKeyMethodsURLUnion, CallApiSchema>>;
 
 export type BaseCallApiSchemaAndConfig = {
 	config?: CallApiSchemaConfig;

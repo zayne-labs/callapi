@@ -11,6 +11,7 @@ export type {
 	CallApiSchema,
 	CallApiSchemaConfig,
 	DedupeOptions,
+	HookConfigOptions,
 	Hooks,
 	RetryOptions,
 	URLOptions,

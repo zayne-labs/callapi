@@ -34,9 +34,9 @@ export const responseDefaults = defineEnum({
 } satisfies CallApiConfig);
 
 export const hookDefaults = defineEnum({
-	mergedHooksExecutionMode: "parallel",
-	mergedHooksExecutionOrder: "mainHooksAfterPlugins",
-}) satisfies CallApiConfig;
+	hooksExecutionMode: "parallel",
+	hooksRegistrationOrder: "pluginsFirst",
+} satisfies CallApiConfig);
 
 export const dedupeDefaults = defineEnum({
 	dedupeCacheScope: "local",

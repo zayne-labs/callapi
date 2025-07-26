@@ -8,6 +8,7 @@ import type {
 	CallApiSchemaConfig,
 	InferSchemaResult,
 	RouteKeyMethods,
+	RouteKeyMethodsURLUnion,
 } from "../validation";
 import type {
 	AnyFunction,
@@ -36,8 +37,9 @@ export type ApplyURLBasedConfig<
 	: TSchemaRouteKeys;
 
 export type ApplyStrictConfig<TSchemaConfig extends CallApiSchemaConfig, TSchemaRouteKeys extends string> =
-	// eslint-disable-next-line perfectionist/sort-union-types -- Don't sort union types
-	TSchemaConfig["strict"] extends true ? TSchemaRouteKeys : TSchemaRouteKeys | InitURLOrURLObject;
+	TSchemaConfig["strict"] extends true ? TSchemaRouteKeys
+	:	// eslint-disable-next-line perfectionist/sort-union-types -- Don't sort union types
+		TSchemaRouteKeys | Exclude<InitURLOrURLObject, RouteKeyMethodsURLUnion>;
 
 export type ApplySchemaConfiguration<
 	TSchemaConfig extends CallApiSchemaConfig,

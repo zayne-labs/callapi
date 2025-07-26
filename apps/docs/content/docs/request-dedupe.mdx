@@ -115,13 +115,49 @@ const { data } = await callMainApi("/users/123", {
 
 ## Custom deduplication key
 
-By default, callApi generates a dedupeKey based on the request URL and parameters. You can customize this by using the `dedupeKey` option:
+By default, callApi generates a dedupeKey based on the request URL and parameters. You can customize this by providing either a static string or a callback function using the `dedupeKey` option:
+
+### Static deduplication key
 
 ```ts title="api.ts"
 const { data } = await callMainApi("/users/123", {
 	dedupeKey: "custom-key",
 });
 ```
+
+### Dynamic deduplication key with callback
+
+For more advanced use cases, you can provide a callback function that receives the request context and returns a custom key:
+
+```ts title="api.ts"
+// URL and method only - ignore headers and body
+await callMainApi("/api/user/123", {
+	dedupeKey: (context) => `${context.options.method}:${context.options.fullURL}`,
+});
+
+// Include specific headers in deduplication
+await callMainApi("/api/data", {
+	dedupeKey: (context) => {
+		const authHeader = context.request.headers.get("Authorization");
+		return `${context.options.fullURL}-${authHeader}`;
+	},
+});
+
+// User-specific deduplication
+await callMainApi("/api/dashboard", {
+	dedupeKey: (context) => {
+		const userId = context.options.fullURL.match(/user\/(\d+)/)?.[1];
+		return `dashboard-${userId}`;
+	},
+});
+```
+
+The callback receives a `RequestContext` object with the following properties:
+
+- `context.options` - Merged options including URL, method, and other configuration
+- `context.request` - The request object with headers, body, etc.
+- `context.baseConfig` - Base configuration from `createFetchClient`
+- `context.config` - Instance-specific configuration
 
 ## Recommendations
 
