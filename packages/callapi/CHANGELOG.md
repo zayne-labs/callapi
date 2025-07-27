@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.8.22
+
+### Patch Changes
+
+- 00c0d7f: refactor: update to internal dedupe structure
+
 ## 1.8.21
 
 ### Patch Changes
