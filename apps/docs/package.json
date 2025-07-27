@@ -4,7 +4,7 @@
 	"version": "0.0.23",
 	"private": true,
 	"scripts": {
-		"build": "pnpm -w build:callapi && next build",
+		"build": "pnpm -w build:callapi && next build --turbo",
 		"dev": "next dev --turbo",
 		"postinstall": "fumadocs-mdx",
 		"start": "next start"
