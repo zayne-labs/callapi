@@ -24,15 +24,15 @@ export const defineSchema = <
 	config?: TSchemaConfig
 ) => {
 	return {
-		config,
-		routes: routes as Writeable<typeof routes, "deep">,
+		config: defineSchemaConfig(config),
+		routes: defineSchemaRoutes(routes),
 	} satisfies BaseCallApiSchemaAndConfig;
 };
 
 export const defineSchemaConfig = <const TConfig extends CallApiExtraOptions["schemaConfig"]>(
 	config: TConfig
 ) => {
-	return config as Writeable<typeof config, "deep">;
+	return config as NonNullable<Writeable<typeof config, "deep">>;
 };
 
 export const defineSchemaRoutes = <const TBaseSchemaRoutes extends BaseCallApiSchemaRoutes>(
