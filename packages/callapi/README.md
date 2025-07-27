@@ -14,7 +14,8 @@
    <a href="https://github.com/zayne-labs/callapi/graphs/commit-activity"><img src="https://img.shields.io/github/commit-activity/m/zayne-labs/callapi?style=flat&color=EFBA5F" alt="commit activity"></a>
    <a href="https://www.npmjs.com/package/@zayne-labs/callapi"><img src="https://img.shields.io/npm/dm/@zayne-labs/callapi?style=flat&color=EFBA5F" alt="downloads per month"></a>
  <a href="https://deepwiki.com/zayne-labs/callapi"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
-</p>
+   <a href="https://code2tutorial.com/tutorial/02b6c57c-4847-4e76-b91e-d64dde370609/index.md"><img src="https://img.shields.io/badge/Code2Tutorial-blue?color=blue&logo=victoriametrics" alt="Code2Tutorial"></a>
+ </p>
 
 <p align="center">
 CallApi Fetch is an extra-lightweight wrapper over fetch that provides quality of life improvements beyond the bare fetch api, while keeping the API familiar.</p>
@@ -51,11 +52,11 @@ To do this, you first need to set your `script`'s type to `module`, then import 
 
 ```html
 <script type="module">
-	import { callApi } from "https://esm.run/@zayne-labs/callapi";
+ import { callApi } from "https://esm.run/@zayne-labs/callapi";
 </script>
 
 <!-- Locked to a specific version -->
 <script type="module">
-	import { callApi } from "https://esm.run/@zayne-labs/callapi@1.8.9";
+ import { callApi } from "https://esm.run/@zayne-labs/callapi@1.8.9";
 </script>
 ```
