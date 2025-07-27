@@ -51,11 +51,11 @@ To do this, you first need to set your `script`'s type to `module`, then import 
 
 ```html
 <script type="module">
- import { callApi } from "https://esm.run/@zayne-labs/callapi";
+	import { callApi } from "https://esm.run/@zayne-labs/callapi";
 </script>
 
 <!-- Locked to a specific version -->
 <script type="module">
- import { callApi } from "https://esm.run/@zayne-labs/callapi@1.8.9";
+	import { callApi } from "https://esm.run/@zayne-labs/callapi@1.8.9";
 </script>
 ```
