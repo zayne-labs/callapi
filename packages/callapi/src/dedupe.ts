@@ -65,64 +65,6 @@ type DedupeContext = RequestContext & {
 	newFetchController: AbortController;
 };
 
-const resolveDedupeKey = (dedupeKey: DedupeOptions["dedupeKey"], context: RequestContext) => {
-	if (isFunction(dedupeKey)) {
-		return dedupeKey(context);
-	}
-
-	return dedupeKey ?? null;
-};
-
-export const getAbortErrorMessage = (dedupeKey: DedupeOptions["dedupeKey"], context: RequestContext) => {
-	if (dedupeKey) {
-		return `Duplicate request detected - Aborted previous request with key '${resolveDedupeKey(dedupeKey, context)}' as a new request was initiated`;
-	}
-
-	return `Duplicate request detected - Aborted previous request to '${context.options.fullURL}' as a new request with identical options was initiated`;
-};
-
-/**
- * @description Creates and manages the deduplication strategy for a request.
- *
- * This is the core function that implements request deduplication logic. It handles
- * cache management, key generation, and provides strategy-specific handlers for
- * cancel and defer operations.
- *
- * **Key Responsibilities:**
- * - Generates or resolves deduplication keys
- * - Manages cache scope (local vs global)
- * - Provides strategy handlers (cancel, defer)
- * - Handles cache cleanup operations
- *
- * **Performance Optimizations:**
- * - Includes a small delay (0.1ms) for simultaneous request handling
- * - Lazy cache creation for global scopes
- * - Efficient cache key resolution
- *
- * **Internal Usage:**
- * This function is used internally by the CallApi system and is not intended
- * for direct use in application code. It's called automatically during request
- * processing when deduplication is enabled.
- *
- * @param context - Extended request context with deduplication-specific properties
- * @returns Promise resolving to deduplication strategy handlers and metadata
- *
- * @example
- * ```ts
- * // This is used internally, but conceptually:
- * const strategy = await createDedupeStrategy({
- *   ...requestContext,
- *   $GlobalRequestInfoCache: globalCache,
- *   $LocalRequestInfoCache: localCache,
- *   newFetchController: new AbortController()
- * });
- *
- * // Use the returned strategy
- * await strategy.handleRequestCancelStrategy();
- * const response = await strategy.handleRequestDeferStrategy({ options, request });
- * strategy.removeDedupeKeyFromCache();
- * ```
- */
 export const createDedupeStrategy = async (context: DedupeContext) => {
 	const {
 		$GlobalRequestInfoCache,
@@ -144,7 +86,12 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 		}
 
 		if (globalOptions.dedupeKey) {
-			return resolveDedupeKey(globalOptions.dedupeKey, context);
+			const resolvedDedupeKey =
+				isFunction(globalOptions.dedupeKey) ?
+					globalOptions.dedupeKey(context)
+				:	globalOptions.dedupeKey;
+
+			return resolvedDedupeKey;
 		}
 
 		return `${globalOptions.fullURL}-${deterministicHashFn({ options: globalOptions, request: globalRequest })}`;
@@ -178,12 +125,20 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 	const prevRequestInfo = $RequestInfoCacheOrNull?.get(dedupeKey);
 
+	const getAbortErrorMessage = () => {
+		if (dedupeKey) {
+			return `Duplicate request detected - Aborted previous request with key '${dedupeKey}' as a new request was initiated`;
+		}
+
+		return `Duplicate request detected - Aborted previous request to '${globalOptions.fullURL}' as a new request with identical options was initiated`;
+	};
+
 	const handleRequestCancelStrategy = () => {
 		const shouldCancelRequest = prevRequestInfo && dedupeStrategy === "cancel";
 
 		if (!shouldCancelRequest) return;
 
-		const message = getAbortErrorMessage(globalOptions.dedupeKey, context);
+		const message = getAbortErrorMessage();
 
 		const reason = new DOMException(message, "AbortError");
 
@@ -234,6 +189,7 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 	return {
 		dedupeStrategy,
+		getAbortErrorMessage,
 		handleRequestCancelStrategy,
 		handleRequestDeferStrategy,
 		removeDedupeKeyFromCache,

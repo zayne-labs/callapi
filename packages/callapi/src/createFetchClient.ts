@@ -1,9 +1,4 @@
-import {
-	createDedupeStrategy,
-	type GlobalRequestInfoCache,
-	getAbortErrorMessage,
-	type RequestInfoCache,
-} from "./dedupe";
+import { createDedupeStrategy, type GlobalRequestInfoCache, type RequestInfoCache } from "./dedupe";
 import { HTTPError } from "./error";
 import {
 	type ErrorContext,
@@ -223,6 +218,7 @@ export const createFetchClient = <
 
 		const {
 			dedupeStrategy,
+			getAbortErrorMessage,
 			handleRequestCancelStrategy,
 			handleRequestDeferStrategy,
 			removeDedupeKeyFromCache,
@@ -453,7 +449,7 @@ export const createFetchClient = <
 			let message: string | undefined = (error as Error | undefined)?.message;
 
 			if (error instanceof DOMException && error.name === "AbortError") {
-				message = getAbortErrorMessage(options.dedupeKey, errorContext);
+				message = getAbortErrorMessage();
 
 				!shouldThrowOnError && console.error(`${error.name}:`, message);
 			}
