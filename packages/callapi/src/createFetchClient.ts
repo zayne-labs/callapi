@@ -217,11 +217,11 @@ export const createFetchClient = <
 		} satisfies CallApiRequestOptionsForHooks;
 
 		const {
-			dedupeStrategy,
 			getAbortErrorMessage,
 			handleRequestCancelStrategy,
 			handleRequestDeferStrategy,
 			removeDedupeKeyFromCache,
+			resolvedDedupeStrategy,
 		} = await createDedupeStrategy({
 			$GlobalRequestInfoCache,
 			$LocalRequestInfoCache,
@@ -292,7 +292,7 @@ export const createFetchClient = <
 			const response = await handleRequestDeferStrategy({ options, request });
 
 			// == Also clone response when dedupeStrategy is set to "defer" to avoid error thrown from reading response.(whatever) more than once
-			const shouldCloneResponse = dedupeStrategy === "defer" || options.cloneResponse;
+			const shouldCloneResponse = resolvedDedupeStrategy === "defer" || options.cloneResponse;
 
 			if (!response.ok) {
 				const errorData = await resolveResponseData<TErrorData>(

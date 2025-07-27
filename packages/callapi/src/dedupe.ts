@@ -1,7 +1,7 @@
 import { dedupeDefaults } from "./constants/default-options";
 import type { RequestContext } from "./hooks";
 import { toStreamableRequest, toStreamableResponse } from "./stream";
-import type { AnyString } from "./types/type-helpers";
+import type { AnyString, UnmaskType } from "./types/type-helpers";
 import { deterministicHashFn, getFetchImpl, waitFor } from "./utils/common";
 import { isFunction } from "./utils/guards";
 
@@ -78,8 +78,11 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 	const dedupeStrategy = globalOptions.dedupeStrategy ?? dedupeDefaults.dedupeStrategy;
 
+	const resolvedDedupeStrategy = isFunction(dedupeStrategy) ? dedupeStrategy(context) : dedupeStrategy;
+
 	const getDedupeKey = () => {
-		const shouldHaveDedupeKey = dedupeStrategy === "cancel" || dedupeStrategy === "defer";
+		const shouldHaveDedupeKey =
+			resolvedDedupeStrategy === "cancel" || resolvedDedupeStrategy === "defer";
 
 		if (!shouldHaveDedupeKey) {
 			return null;
@@ -134,7 +137,7 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 	};
 
 	const handleRequestCancelStrategy = () => {
-		const shouldCancelRequest = prevRequestInfo && dedupeStrategy === "cancel";
+		const shouldCancelRequest = prevRequestInfo && resolvedDedupeStrategy === "cancel";
 
 		if (!shouldCancelRequest) return;
 
@@ -157,7 +160,7 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 		const fetchApi = getFetchImpl(localOptions.customFetchImpl);
 
-		const shouldUsePromiseFromCache = prevRequestInfo && dedupeStrategy === "defer";
+		const shouldUsePromiseFromCache = prevRequestInfo && resolvedDedupeStrategy === "defer";
 
 		const streamableContext = {
 			baseConfig,
@@ -188,13 +191,15 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 	};
 
 	return {
-		dedupeStrategy,
 		getAbortErrorMessage,
 		handleRequestCancelStrategy,
 		handleRequestDeferStrategy,
 		removeDedupeKeyFromCache,
+		resolvedDedupeStrategy,
 	};
 };
+
+type DedupeStrategyUnion = UnmaskType<"cancel" | "defer" | "none">;
 
 export type DedupeOptions = {
 	/**
@@ -355,93 +360,54 @@ export type DedupeOptions = {
 	dedupeKey?: string | ((context: RequestContext) => string);
 
 	/**
-	 * Strategy for handling duplicate requests.
+	 * Strategy for handling duplicate requests. Can be a static string or callback function.
 	 *
-	 * **Strategy Details:**
-	 * - `"cancel"`: Aborts any in-flight request with the same key when a new request starts.
-	 *   The previous request will throw an AbortError, and the new request proceeds normally.
-	 *   Best for scenarios where only the latest request matters.
-	 *
-	 * - `"defer"`: Returns the existing promise for duplicate requests, effectively sharing
-	 *   the same response across multiple callers. All callers receive the same result.
-	 *   Ideal for expensive operations that shouldn't be repeated.
-	 *
-	 * - `"none"`: Disables request deduplication entirely. Every request executes independently
-	 *   regardless of similarity. Use when you need guaranteed request execution.
-	 *
-	 * **Real-world Use Cases:**
-	 *
-	 * **Cancel Strategy:**
-	 * - Search-as-you-type functionality (cancel previous searches)
-	 * - Real-time data updates (only latest request matters)
-	 * - User navigation (cancel previous page loads)
-	 * - Form submissions where rapid clicks should cancel previous attempts
-	 *
-	 * **Defer Strategy:**
-	 * - Configuration/settings loading (share across components)
-	 * - User profile data (multiple components need same data)
-	 * - Expensive computations or reports
-	 * - Authentication token refresh (prevent multiple refresh attempts)
-	 *
-	 * **None Strategy:**
-	 * - Analytics events (every event should be sent)
-	 * - Logging requests (each log entry is unique)
-	 * - File uploads (each upload is independent)
-	 * - Critical business operations that must not be deduplicated
-	 *
+	 * **Available Strategies:**
+	 * - `"cancel"`: Cancel previous request when new one starts (good for search)
+	 * - `"defer"`: Share response between duplicate requests (good for config loading)
+	 * - `"none"`: No deduplication, all requests execute independently
 	 *
 	 * @example
 	 * ```ts
-	 * // Cancel strategy - search functionality
+	 * // Static strategies
 	 * const searchClient = createFetchClient({
-	 *   baseURL: "/api/search",
 	 *   dedupeStrategy: "cancel" // Cancel previous searches
 	 * });
 	 *
-	 * // Defer strategy - shared configuration
 	 * const configClient = createFetchClient({
 	 *   dedupeStrategy: "defer" // Share config across components
 	 * });
 	 *
-	 * // Multiple components requesting config simultaneously
-	 * const config1 = configClient("/api/config"); // Makes actual request
-	 * const config2 = configClient("/api/config"); // Returns same promise as config1
-	 * const config3 = configClient("/api/config"); // Returns same promise as config1
-	 * // All three will resolve with the same response
-	 *
-	 * // None strategy - analytics
-	 * const analyticsClient = createFetchClient({
-	 *   baseURL: "/api/analytics",
-	 *   dedupeStrategy: "none" // Every event must be sent
+	 * // Dynamic strategy based on request
+	 * const smartClient = createFetchClient({
+	 *   dedupeStrategy: (context) => {
+	 *     return context.options.method === "GET" ? "defer" : "cancel";
+	 *   }
 	 * });
 	 *
-	 * // Real-world search example with cancel
+	 * // Search-as-you-type with cancel strategy
 	 * const handleSearch = async (query: string) => {
 	 *   try {
-	 *     const results = await callApi("/api/search", {
+	 *     const { data } = await callApi("/api/search", {
 	 *       method: "POST",
 	 *       body: { query },
 	 *       dedupeStrategy: "cancel",
-	 *       dedupeKey: "search" // All searches share the same key
+	 *       dedupeKey: "search" // Cancel previous searches, only latest one goes through
 	 *     });
-	 *     updateUI(results);
+	 *
+	 *     updateSearchResults(data);
 	 *   } catch (error) {
 	 *     if (error.name === "AbortError") {
-	 *       // Previous search was cancelled - this is expected
+	 *       // Previous search cancelled - (expected behavior)
 	 *       return;
 	 *     }
-	 *     handleError(error);
+	 *     console.error("Search failed:", error);
 	 *   }
 	 * };
 	 *
-	 * // Authentication token refresh with defer
-	 * const refreshToken = () => callApi("/api/auth/refresh", {
-	 *   dedupeStrategy: "defer",
-	 *   dedupeKey: "token-refresh" // Ensure only one refresh happens
-	 * });
 	 * ```
 	 *
 	 * @default "cancel"
 	 */
-	dedupeStrategy?: "cancel" | "defer" | "none";
+	dedupeStrategy?: DedupeStrategyUnion | ((context: RequestContext) => DedupeStrategyUnion);
 };
