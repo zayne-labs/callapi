@@ -77,19 +77,16 @@ const callMainApi = createFetchClient({
 	onUploadSuccess: (_progress) => {},
 	plugins: [pluginOne, pluginTwo],
 
-	schema: defineSchema(
-		{
-			"@delete/products/:id": {
-				data: z.object({ id: z.number() }),
-				headers: z.object({ Authorization: z.string() }).optional(),
-			},
+	schema: defineSchema({
+		"@delete/products/:id": {
+			data: z.object({ id: z.number() }),
+			headers: z.object({ Authorization: z.string() }).optional(),
+		},
 
-			"/products/:id": {
-				data: z.object({ id: z.number(), price: z.number(), title: z.string() }),
-			},
-		}
-		// { strict: true }
-	),
+		"/products/:id": {
+			data: z.object({ id: z.number(), price: z.number(), title: z.string() }),
+		},
+	}),
 });
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -121,7 +118,6 @@ const [result1, result2, result3, result4, result5, result6] = await Promise.all
 	}),
 
 	callMainApi("@delete/products/:id", {
-		method: "DELETE",
 		params: {
 			id: "beans",
 		},

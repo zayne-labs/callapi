@@ -3,7 +3,7 @@ import type { AnyFunction } from "@zayne-labs/toolkit-type-helpers";
 import { createConsola } from "consola";
 import { getStatusText } from "./utils";
 
-type ConsoleLike = {
+type ConsoleLikeObject = {
 	error: AnyFunction<void>;
 	fail?: AnyFunction<void>;
 	log: AnyFunction<void>;
@@ -25,7 +25,7 @@ export type LoggerOptions = {
 	/**
 	 * Custom console object
 	 */
-	consoleObject?: ConsoleLike;
+	consoleObject?: ConsoleLikeObject;
 	/**
 	 * Enable or disable the logger
 	 * @default true
@@ -38,7 +38,7 @@ export type LoggerOptions = {
 };
 
 /* eslint-disable ts-eslint/no-unsafe-argument -- Ignore for now */
-export const defaultConsole: ConsoleLike = {
+export const defaultConsoleObject: ConsoleLikeObject = {
 	error: (...args) => consola.error("", ...args),
 	fail: (...args) => consola.fail("", ...args),
 	log: (...args) => consola.info("", ...args),
@@ -48,7 +48,7 @@ export const defaultConsole: ConsoleLike = {
 /* eslint-enable ts-eslint/no-unsafe-argument -- Ignore for now */
 
 export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
-	const { consoleObject = defaultConsole, enabled = true, verbose } = options ?? {};
+	const { consoleObject = defaultConsoleObject, enabled = true, verbose } = options ?? {};
 
 	return {
 		/* eslint-disable perfectionist/sort-objects -- Ignore for now */

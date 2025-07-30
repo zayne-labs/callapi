@@ -1,6 +1,6 @@
 import { callApi, createFetchClient, definePlugin, defineSchema } from "@zayne-labs/callapi";
 
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const { data } = await callApi("https://dummyjson.com/products/:id", {
 	method: "GET",

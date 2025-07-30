@@ -1,0 +1,116 @@
+---
+title: Logger
+description: Comprehensive HTTP request/response logging with beautiful console output
+---
+
+The logger plugin provides detailed, structured logging for all HTTP request/response lifecycle events. Built on top of <Link href="https://github.com/unjs/consola" target="_blank">consola</Link>.
+
+## Features
+
+- Logs all HTTP requests and responses
+- Tracks errors and retries
+- Color-coded console output
+- Customizable logging options
+
+## Installation
+
+```package-install
+@zayne-labs/callapi-plugins
+```
+
+## Quick Start
+
+```ts title="api.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+import { loggerPlugin } from "@zayne-labs/callapi-plugins";
+
+const callMainApi = createFetchClient({
+	baseURL: "https://api.example.com",
+	plugins: [
+		loggerPlugin({
+			enabled: process.env.NODE_ENV === "development",
+			verbose: process.env.DEBUG === "true",
+		}),
+	],
+});
+```
+
+## Configuration
+
+### `enabled`
+
+Type: `boolean`
+Default: `true`
+
+Toggle logging on/off.
+
+```ts
+export const client = createClient({
+	plugins: [
+		loggerPlugin({
+			enabled: process.env.NODE_ENV === "development",
+		}),
+	],
+});
+```
+
+### `consoleObject`
+
+Type: `ConsoleLikeObject`
+Default: A pre-configured `consola` instance
+
+Allows you to provide a custom console-like object that implements the following interface:
+
+```ts
+interface ConsoleLike {
+	error: (...args: any[]) => void;
+	fail?: (...args: any[]) => void;
+	log: (...args: any[]) => void;
+	success?: (...args: any[]) => void;
+	warn?: (...args: any[]) => void;
+}
+```
+
+Whatever you provide will be used instead of the default `consola` instance.
+
+```ts title="api.ts"
+import { loggerPlugin, type ConsoleLikeObject } from "@zayne-labs/callapi-plugins";
+
+const customLogger: ConsoleLikeObject = {
+	log: (...args) => console.log("[API]", ...args),
+	error: (...args) => console.error("[API ERROR]", ...args),
+	warn: (...args) => console.warn("[API WARN]", ...args),
+	success: (...args) => console.log("[API SUCCESS]", ...args),
+};
+
+export const client = createClient({
+	plugins: [loggerPlugin({ consoleObject: customConsole })],
+});
+```
+
+### `verbose`
+
+Type: `boolean`
+Default: `false`
+
+Enable for detailed debugging:
+
+- Full request/response payloads
+- Error stacks
+- Headers and timing
+
+```ts
+export const client = createClient({
+	plugins: [loggerPlugin({ verbose: true })],
+});
+```
+
+## Logged Events
+
+The logger plugin will log the following events:
+
+- **Request Started**: When a request is initiated
+- **Request Error**: When a request fails to be sent
+- **Response Error**: When a response is received with an error status
+- **Retry**: When a request is being retried (with attempt count)
+- **Success**: When a request completes successfully

@@ -114,7 +114,7 @@ You can use the `isValidationError` utility to check specifically for this error
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
 import { isValidationError } from "@zayne-labs/callapi/utils";
-import * as z from "zod/v4";
+import * as z from "zod";
 
 const dataSchema = z.object({
 	id: z.number(),

@@ -1,8 +1,23 @@
-import { requestOptionDefaults, retryDefaults } from "./constants/default-options";
+import { extraOptionDefaults } from "./constants/default-options";
 import type { ErrorContext, RequestContext } from "./hooks";
 import type { MethodUnion } from "./types";
-import type { Awaitable } from "./types/type-helpers";
+import { type AnyNumber, type Awaitable, defineEnum, type UnmaskType } from "./types/type-helpers";
 import { isFunction } from "./utils/guards";
+
+// eslint-disable-next-line ts-eslint/no-unused-vars -- Ignore
+const defaultRetryStatusCodesLookup = () =>
+	defineEnum({
+		408: "Request Timeout",
+		409: "Conflict",
+		425: "Too Early",
+		429: "Too Many Requests",
+		500: "Internal Server Error",
+		502: "Bad Gateway",
+		503: "Service Unavailable",
+		504: "Gateway Timeout",
+	});
+
+type RetryStatusCodes = UnmaskType<AnyNumber | keyof ReturnType<typeof defaultRetryStatusCodesLookup>>;
 
 type RetryCondition<TErrorData> = (context: ErrorContext<TErrorData>) => Awaitable<boolean>;
 
@@ -63,7 +78,7 @@ export interface RetryOptions<TErrorData> {
 	/**
 	 * HTTP status codes that trigger a retry
 	 */
-	retryStatusCodes?: number[];
+	retryStatusCodes?: RetryStatusCodes[];
 
 	/**
 	 * Strategy to use when retrying
@@ -76,17 +91,19 @@ const getLinearDelay = (currentAttemptCount: number, options: RetryOptions<unkno
 	const retryDelay = options.retryDelay ?? options.retry?.delay;
 
 	const resolveRetryDelay =
-		(isFunction(retryDelay) ? retryDelay(currentAttemptCount) : retryDelay) ?? retryDefaults.delay;
+		(isFunction(retryDelay) ? retryDelay(currentAttemptCount) : retryDelay)
+		?? extraOptionDefaults().retryDelay;
 
 	return resolveRetryDelay;
 };
 
 const getExponentialDelay = (currentAttemptCount: number, options: RetryOptions<unknown>) => {
-	const retryDelay = options.retryDelay ?? options.retry?.delay ?? retryDefaults.delay;
+	const retryDelay = options.retryDelay ?? options.retry?.delay ?? extraOptionDefaults().retryDelay;
 
 	const resolvedRetryDelay = isFunction(retryDelay) ? retryDelay(currentAttemptCount) : retryDelay;
 
-	const maxDelay = options.retryMaxDelay ?? options.retry?.maxDelay ?? retryDefaults.maxDelay;
+	const maxDelay =
+		options.retryMaxDelay ?? options.retry?.maxDelay ?? extraOptionDefaults().retryMaxDelay;
 
 	const exponentialDelay = resolvedRetryDelay * 2 ** currentAttemptCount;
 
@@ -99,7 +116,8 @@ export const createRetryStrategy = (ctx: ErrorContext<unknown> & RequestContext)
 	// eslint-disable-next-line ts-eslint/no-deprecated -- Allowed for internal use
 	const currentAttemptCount = options["~retryAttemptCount"] ?? 1;
 
-	const retryStrategy = options.retryStrategy ?? options.retry?.strategy ?? retryDefaults.strategy;
+	const retryStrategy =
+		options.retryStrategy ?? options.retry?.strategy ?? extraOptionDefaults().retryStrategy;
 
 	const getDelay = () => {
 		switch (retryStrategy) {
@@ -116,10 +134,11 @@ export const createRetryStrategy = (ctx: ErrorContext<unknown> & RequestContext)
 	};
 
 	const shouldAttemptRetry = async () => {
-		const retryCondition = options.retryCondition ?? options.retry?.condition ?? retryDefaults.condition;
+		const retryCondition =
+			options.retryCondition ?? options.retry?.condition ?? extraOptionDefaults().retryCondition;
 
 		const maximumRetryAttempts =
-			options.retryAttempts ?? options.retry?.attempts ?? retryDefaults.attempts;
+			options.retryAttempts ?? options.retry?.attempts ?? extraOptionDefaults().retryAttempts;
 
 		const customRetryCondition = await retryCondition(ctx);
 
@@ -130,12 +149,11 @@ export const createRetryStrategy = (ctx: ErrorContext<unknown> & RequestContext)
 		}
 
 		const retryMethods = new Set(
-			options.retryMethods ?? options.retry?.methods ?? retryDefaults.methods
+			options.retryMethods ?? options.retry?.methods ?? extraOptionDefaults().retryMethods
 		);
 
-		const resolvedMethod = ctx.request.method ?? requestOptionDefaults.method;
-
-		const includesMethod = retryMethods.has(resolvedMethod);
+		// eslint-disable-next-line ts-eslint/no-non-null-assertion -- Allowed because default value is "GET" internally
+		const includesMethod = retryMethods.has(ctx.request.method!);
 
 		const retryStatusCodes = new Set(options.retryStatusCodes ?? options.retry?.statusCodes ?? []);
 

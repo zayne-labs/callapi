@@ -1,4 +1,4 @@
-import { responseDefaults } from "./constants/default-options";
+import { extraOptionDefaults } from "./constants/default-options";
 import type { HTTPError, ValidationError } from "./error";
 import type { CallApiExtraOptions, ThrowOnErrorUnion } from "./types";
 import type { DefaultDataType } from "./types/default-types";
@@ -41,8 +41,8 @@ export const resolveResponseData = <TResponse>(
 	responseType?: ResponseTypeUnion,
 	parser?: Parser
 ) => {
-	const selectedParser = parser ?? responseDefaults.responseParser;
-	const selectedResponseType = responseType ?? responseDefaults.responseType;
+	const selectedParser = parser ?? extraOptionDefaults().responseParser;
+	const selectedResponseType = responseType ?? extraOptionDefaults().responseType;
 
 	const RESPONSE_TYPE_LOOKUP = getResponseType<TResponse>(response, selectedParser);
 

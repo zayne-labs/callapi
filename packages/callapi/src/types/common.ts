@@ -720,7 +720,7 @@ export type CallApiConfig<
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
 > = InferExtraOptions<TSchema, TBaseSchemaRoutes, TCurrentRouteSchemaKey>
-	& InferRequestOptions<TSchema, TSchemaConfig, TInitURL>
+	& InferRequestOptions<TSchema, TInitURL>
 	& Omit<
 		CallApiExtraOptions<
 			TData,
@@ -738,7 +738,7 @@ export type CallApiConfig<
 		>,
 		keyof InferExtraOptions<CallApiSchema, BaseCallApiSchemaRoutes, string>
 	>
-	& Omit<CallApiRequestOptions, keyof InferRequestOptions<CallApiSchema, CallApiSchemaConfig, string>>;
+	& Omit<CallApiRequestOptions, keyof InferRequestOptions<CallApiSchema, string>>;
 
 export type CallApiParameters<
 	TData = DefaultDataType,

@@ -1,12 +1,11 @@
 import { callApi } from "@zayne-labs/callapi";
-import { assertDefined } from "@zayne-labs/toolkit-type-helpers";
 import { GithubInfo } from "fumadocs-ui/components/github-info";
 import type { DocsLayoutProps, LinkItemType } from "fumadocs-ui/layouts/docs";
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 import { TagIcon } from "lucide-react";
 import Image from "next/image";
 import Logo from "public/logo.png";
-import z from "zod/v4";
+import { z } from "zod";
 import { source } from "@/lib/source";
 
 /**
@@ -43,7 +42,9 @@ export const baseOptions: BaseLayoutProps = {
 };
 
 const callApiNpmDataPromise = callApi("https://registry.npmjs.org/@zayne-labs/callapi/latest", {
-	schema: { data: z.object({ version: z.string() }) },
+	schema: {
+		data: z.object({ version: z.string() }),
+	},
 });
 
 export const docsOptions: DocsLayoutProps = {

@@ -98,7 +98,7 @@ export const extractMethodFromURL = (initURL: string | undefined) => {
 	return method;
 };
 
-export type GetMethodOptions = {
+export type GetMethodContext = {
 	/** The URL string that may contain method modifiers like "@get/" or "@post/" */
 	initURL: string | undefined;
 	/** Explicitly specified HTTP method */
@@ -107,15 +107,13 @@ export type GetMethodOptions = {
 	schemaConfig?: CallApiSchemaConfig;
 };
 
-export const getMethod = (options: GetMethodOptions) => {
-	const { initURL, method, schemaConfig } = options;
-
-	if (schemaConfig?.requireMethodProvision === true) {
-		return method?.toUpperCase() ?? requestOptionDefaults.method;
-	}
+export const getMethod = (ctx: GetMethodContext) => {
+	const { initURL, method } = ctx;
 
 	return (
-		method?.toUpperCase() ?? extractMethodFromURL(initURL)?.toUpperCase() ?? requestOptionDefaults.method
+		method?.toUpperCase()
+		?? extractMethodFromURL(initURL)?.toUpperCase()
+		?? requestOptionDefaults().method
 	);
 };
 
@@ -183,32 +181,27 @@ export interface URLOptions {
 	baseURL?: string;
 
 	/**
-	 * Resolved request URL after processing baseURL, parameters, and query strings.
+	 * Resolved request URL after processing baseURL, parameters, and query strings (readonly)
 	 *
 	 * This is the final URL that will be used for the HTTP request, computed from
 	 * baseURL, initURL, params, and query parameters.
 	 *
-	 * @readonly
 	 */
 	readonly fullURL?: string;
 
 	/**
-	 * The original URL string passed to the callApi instance.
+	 * The original URL string passed to the callApi instance (readonly)
 	 *
 	 * This preserves the original URL as provided, including any method modifiers like "@get/" or "@post/".
 	 *
-	 * @readonly
 	 */
 	readonly initURL?: string;
 
 	/**
-	 * The URL string after normalization, with method modifiers removed.
+	 * The URL string after normalization, with method modifiers removed(readonly)
 	 *
 	 * Method modifiers like "@get/", "@post/" are stripped to create a clean URL
 	 * for parameter substitution and final URL construction.
-	 *
-	 * @readonly
-	 *
 	 *
 	 */
 	readonly initURLNormalized?: string;

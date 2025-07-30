@@ -20,6 +20,9 @@
 		"hooks",
 		"plugins",
 
+		"---Plugins---",
+		"plugins/utility",
+
 		"---API Reference---",
 		"extra-options",
 		"base-extra-options",

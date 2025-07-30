@@ -1,4 +1,4 @@
-import { commonDefaults } from "./constants/default-options";
+import { extraOptionDefaults } from "./constants/default-options";
 import type { CallApiExtraOptions } from "./types";
 import type { StandardSchemaV1 } from "./types/standard-schema";
 import { isObject, isString } from "./utils/guards";
@@ -31,7 +31,7 @@ export class HTTPError<TErrorData = Record<string, unknown>> extends Error {
 
 		const selectedDefaultErrorMessage =
 			resolvedDefaultHTTPErrorMessage
-			?? (response.statusText || commonDefaults.defaultHTTPErrorMessage);
+			?? (response.statusText || extraOptionDefaults().defaultHTTPErrorMessage);
 
 		const message =
 			(errorData as { message?: string } | undefined)?.message ?? selectedDefaultErrorMessage;
@@ -40,7 +40,6 @@ export class HTTPError<TErrorData = Record<string, unknown>> extends Error {
 
 		this.errorData = errorData;
 		this.response = response;
-		Error.captureStackTrace(this, this.constructor);
 	}
 
 	/**
@@ -104,8 +103,6 @@ export class ValidationError extends Error {
 
 		this.errorData = issues;
 		this.response = response;
-
-		Error.captureStackTrace(this, this.constructor);
 	}
 
 	/**

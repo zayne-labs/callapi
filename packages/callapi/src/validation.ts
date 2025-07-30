@@ -102,15 +102,6 @@ export interface CallApiSchemaConfig {
 	prefix?: string;
 
 	/**
-	 *Determines the inference or requirement of the method option based on the route modifiers (`@get/`, `@post/`, `@put/`, `@patch/`, `@delete/`).
-	 *
-	 * - When `true`, the method option is made required on the type level and is not automatically added to the request options.
-	 * - When `false` or `undefined` (default), the method option is not required on the type level, and is automatically added to the request options.
-	 *
-	 */
-	requireMethodProvision?: boolean;
-
-	/**
 	 * Controls the strictness of API route validation.
 	 *
 	 * When true:

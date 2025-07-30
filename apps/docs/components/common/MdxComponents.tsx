@@ -1,3 +1,4 @@
+import Link from "fumadocs-core/link";
 import * as Twoslash from "fumadocs-twoslash/ui";
 import * as Tabs from "fumadocs-ui/components/tabs";
 import * as TypeTable from "fumadocs-ui/components/type-table";
@@ -10,7 +11,7 @@ export const getMDXComponents = (extraComponents?: MDXComponents): MDXComponents
 		...Twoslash,
 		...Tabs,
 		...TypeTable,
-
+		Link,
 		...extraComponents,
 	};
 };

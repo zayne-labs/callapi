@@ -1,4 +1,4 @@
-import { hookDefaults } from "./constants/default-options";
+import { extraOptionDefaults } from "./constants/default-options";
 import {
 	composeAllHooks,
 	type Hooks,
@@ -119,7 +119,8 @@ export const initializePlugins = async (context: PluginInitContext) => {
 		}
 	};
 
-	const hookRegistrationOrder = options.hooksRegistrationOrder ?? hookDefaults.hooksRegistrationOrder;
+	const hookRegistrationOrder =
+		options.hooksRegistrationOrder ?? extraOptionDefaults().hooksRegistrationOrder;
 
 	if (hookRegistrationOrder === "mainFirst") {
 		addMainHooks();
@@ -196,7 +197,7 @@ export const initializePlugins = async (context: PluginInitContext) => {
 
 		if (flattenedHookArray.length === 0) continue;
 
-		const hooksExecutionMode = options.hooksExecutionMode ?? hookDefaults.hooksExecutionMode;
+		const hooksExecutionMode = options.hooksExecutionMode ?? extraOptionDefaults().hooksExecutionMode;
 
 		const composedHook = composeAllHooks(flattenedHookArray, hooksExecutionMode);
 

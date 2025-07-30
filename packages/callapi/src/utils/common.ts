@@ -1,6 +1,6 @@
 import { getAuthHeader } from "../auth";
 import { fetchSpecificKeys } from "../constants/common";
-import { commonDefaults } from "../constants/default-options";
+import { extraOptionDefaults } from "../constants/default-options";
 import type { BaseCallApiExtraOptions, CallApiExtraOptions, CallApiRequestOptions } from "../types/common";
 import { isFunction, isPlainObject, isQueryString, isSerializable, isValidJsonString } from "./guards";
 
@@ -123,7 +123,7 @@ export const getBody = (options: GetBodyOptions) => {
 	const { body, bodySerializer } = options;
 
 	if (isSerializable(body)) {
-		const selectedBodySerializer = bodySerializer ?? commonDefaults.bodySerializer;
+		const selectedBodySerializer = bodySerializer ?? extraOptionDefaults().bodySerializer;
 
 		return selectedBodySerializer(body);
 	}

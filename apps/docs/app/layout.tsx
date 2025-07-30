@@ -5,6 +5,7 @@ import { baseURL, createMetadata } from "@/lib/metadata";
 import { cnJoin } from "@/lib/utils/cn";
 import { Providers } from "./Providers";
 import "../tailwind.css";
+import type { Metadata } from "next";
 
 const geistSans = Geist({
 	subsets: ["latin"],
@@ -16,7 +17,7 @@ const geistMono = Geist_Mono({
 	variable: "--font-geist-mono",
 });
 
-export const metadata = createMetadata({
+export const metadata: Metadata = createMetadata({
 	description: "A lightweight, type-safe Fetch API wrapper with dozens of convenience features.",
 	keywords: ["fetch", "type-safe", "interceptors", "callapi", "dedupe"],
 	metadataBase: new URL(baseURL),

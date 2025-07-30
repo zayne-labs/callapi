@@ -109,29 +109,8 @@ type InferMethodFromURL<TInitURL> =
 	: TInitURL extends `@${infer TMethod extends RouteKeyMethods}/${string}` ? Uppercase<TMethod>
 	: MethodUnion;
 
-type MakeMethodOptionRequired<
-	TMethodSchemaOption extends CallApiSchema["method"],
-	TInitURL,
-	TSchemaConfig extends CallApiSchemaConfig,
-	TObject,
-> = MakeSchemaOptionRequiredIfDefined<
-	TMethodSchemaOption,
-	undefined extends TSchemaConfig ? TObject
-	: TInitURL extends `@${string}/${string}` ?
-		TSchemaConfig["requireMethodProvision"] extends true ?
-			Required<TObject>
-		:	TObject
-	:	TObject
->;
-
-export type InferMethodOption<
-	TSchema extends CallApiSchema,
-	TSchemaConfig extends CallApiSchemaConfig,
-	TInitURL,
-> = MakeMethodOptionRequired<
+export type InferMethodOption<TSchema extends CallApiSchema, TInitURL> = MakeSchemaOptionRequiredIfDefined<
 	TSchema["method"],
-	TInitURL,
-	TSchemaConfig,
 	{
 		/**
 		 * HTTP method for the request.
@@ -166,11 +145,8 @@ export type InferHeadersOption<TSchema extends CallApiSchema> = MakeSchemaOption
 
 export type InferRequestOptions<
 	TSchema extends CallApiSchema,
-	TSchemaConfig extends CallApiSchemaConfig,
 	TInitURL extends InferInitURL<BaseCallApiSchemaRoutes, CallApiSchemaConfig>,
-> = InferBodyOption<TSchema>
-	& InferHeadersOption<TSchema>
-	& InferMethodOption<TSchema, TSchemaConfig, TInitURL>;
+> = InferBodyOption<TSchema> & InferHeadersOption<TSchema> & InferMethodOption<TSchema, TInitURL>;
 
 // eslint-disable-next-line ts-eslint/no-empty-object-type -- This needs to be empty to allow users to register their own meta
 export interface Register {

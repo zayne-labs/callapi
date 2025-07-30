@@ -71,6 +71,54 @@ const { data } = await callApi("https://api.example.com/users/123/posts", {
 // @annotate: The resolved URL will be: "https://api.example.com/users/123/posts?page=1&limit=10&sort=latest"
 ```
 
+## Method Prefixes
+
+CallApi provides a convenient way to specify HTTP methods directly in the URL using the `@method/` prefix. This feature allows you to:
+
+- Write more concise API calls by embedding the HTTP method in the URL
+- Make your code more readable by keeping the HTTP method close to the endpoint
+
+### Usage
+
+```ts title="api.ts"
+import { callApi } from "@zayne-labs/callapi";
+
+// Using method prefix
+const result = await callApi("@delete/users/123");
+
+// Equivalent to:
+const result2 = await callApi("users/123", {
+	method: "DELETE",
+});
+```
+
+### How It Works
+
+When you prefix a URL with `@method/` (e.g., `@get/users`):
+
+1. The method (e.g., `get`, `post`, `put`, etc.) is extracted from the URL
+2. The extracted method is automatically set as the request method
+3. The remaining part of the URL is used as the endpoint
+
+### Supported Methods
+
+CallApi supports the following HTTP methods via URL prefixes:
+
+- `@get/` → GET requests
+- `@post/` → POST requests
+- `@put/` → PUT requests
+- `@delete/` → DELETE requests
+- `@patch/` → PATCH requests
+
+Any other method prefix (like `@head/`, `@options/`, `@trace/`) will be ignored and the URL will fall back to the default GET method.
+
+{/* prettier-ignore */}
+<Callout type="warn">
+	- Always include a forward slash after the method prefix (e.g., `@get/` not `@get`)
+	- If both a method prefix and explicit `method` option are provided, the explicit method will be used
+</Callout>
+
 ## Types
 
 <auto-type-table path="../../lib/callapi-options.ts" name="URLOptions" />
+```

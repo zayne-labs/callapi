@@ -1,4 +1,4 @@
-import { dedupeDefaults } from "./constants/default-options";
+import { extraOptionDefaults } from "./constants/default-options";
 import type { RequestContext } from "./hooks";
 import { toStreamableRequest, toStreamableResponse } from "./stream";
 import type { AnyString, UnmaskType } from "./types/type-helpers";
@@ -76,7 +76,7 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 		request: globalRequest,
 	} = context;
 
-	const dedupeStrategy = globalOptions.dedupeStrategy ?? dedupeDefaults.dedupeStrategy;
+	const dedupeStrategy = globalOptions.dedupeStrategy ?? extraOptionDefaults().dedupeStrategy;
 
 	const resolvedDedupeStrategy = isFunction(dedupeStrategy) ? dedupeStrategy(context) : dedupeStrategy;
 
@@ -102,9 +102,10 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 	const dedupeKey = getDedupeKey();
 
-	const dedupeCacheScope = globalOptions.dedupeCacheScope ?? dedupeDefaults.dedupeCacheScope;
+	const dedupeCacheScope = globalOptions.dedupeCacheScope ?? extraOptionDefaults().dedupeCacheScope;
 
-	const dedupeCacheScopeKey = globalOptions.dedupeCacheScopeKey ?? dedupeDefaults.dedupeCacheScopeKey;
+	const dedupeCacheScopeKey =
+		globalOptions.dedupeCacheScopeKey ?? extraOptionDefaults().dedupeCacheScopeKey;
 
 	if (dedupeCacheScope === "global" && !$GlobalRequestInfoCache.has(dedupeCacheScopeKey)) {
 		$GlobalRequestInfoCache.set(dedupeCacheScopeKey, new Map());
