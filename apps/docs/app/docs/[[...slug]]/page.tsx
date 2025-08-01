@@ -1,7 +1,9 @@
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/page";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { LLMCopyButton, ViewOptions } from "@/components/ai/page-actions";
 import { getMDXComponents } from "@/components/common";
+import { owner, repo } from "@/lib/github";
 import { createMetadata } from "@/lib/metadata";
 import { source } from "@/lib/source";
 
@@ -36,8 +38,15 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
 			full={page.data.full}
 		>
 			<DocsTitle>{page.data.title}</DocsTitle>
-			<DocsDescription>{page.data.description}</DocsDescription>
+			<DocsDescription className="mb-0">{page.data.description}</DocsDescription>
 			<DocsBody>
+				<div className="flex flex-row items-center gap-2 border-b pt-2 pb-6">
+					<LLMCopyButton markdownUrl={`${page.url}.mdx`} />
+					<ViewOptions
+						markdownUrl={`${page.url}.mdx`}
+						githubUrl={`https://github.com/${owner}/${repo}/blob/dev/apps/docs/content/docs/${page.path}`}
+					/>
+				</div>
 				<MDX components={getMDXComponents()} />
 			</DocsBody>
 		</DocsPage>

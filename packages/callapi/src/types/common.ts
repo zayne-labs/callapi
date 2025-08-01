@@ -295,13 +295,16 @@ type SharedExtraOptions<
 		meta?: GlobalMeta;
 
 		/**
-		 * Custom function to parse response strings into objects.
+		 * Custom function to parse response strings into objects instead of the default response.json().
 		 *
-		 * Useful when the API returns non-JSON responses or when you need
-		 * custom parsing logic for specific response formats.
+		 * Useful when you need custom parsing logic for specific response formats.
 		 *
 		 * @example
 		 * ```ts
+		 * responseParser: (responseString) => {
+		 *   return JSON.parse(responseString);
+		 * }
+		 *
 		 * // Parse XML responses
 		 * responseParser: (responseString) => {
 		 *   const parser = new DOMParser();
@@ -320,22 +323,12 @@ type SharedExtraOptions<
 		 *       return obj;
 		 *     }, {});
 		 *   });
-		 *   return { data };
+		 *   return data;
 		 * }
 		 *
-		 * // Parse custom format with error handling
-		 * responseParser: async (responseString) => {
-		 *   try {
-		 *     // Custom parsing logic
-		 *     const parsed = customFormat.parse(responseString);
-		 *     return { success: true, data: parsed };
-		 *   } catch (error) {
-		 *     return { success: false, error: error.message };
-		 *   }
-		 * }
 		 * ```
 		 */
-		responseParser?: (responseString: string) => Awaitable<Record<string, unknown>>;
+		responseParser?: (responseString: string) => Awaitable<TData>;
 
 		/**
 		 * Expected response type, determines how the response body is parsed.

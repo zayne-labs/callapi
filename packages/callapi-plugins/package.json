@@ -20,8 +20,8 @@
 	},
 	"scripts": {
 		"build": "tsdown",
-		"build:dev": "cross-env NODE_ENV=development tsup",
-		"build:test": "concurrently --prefix-colors \"yellow.bold,#7da4f8.bold,magenta\" --names PUBLINT,TSUP 'pnpm:lint:publint' 'pnpm:build:dev'",
+		"build:dev": "cross-env NODE_ENV=development tsdown",
+		"build:test": "concurrently --prefix-colors \"yellow.bold,#7da4f8.bold,magenta\" --names PUBLINT,TSDOWN 'pnpm:lint:publint' 'pnpm:build:dev'",
 		"dev": "pnpm build:dev --watch",
 		"lint:attw": "attw --pack . --profile esm-only --format table-flipped --ignore-rules=cjs-resolves-to-esm --ignore-rules=named-exports",
 		"lint:eslint": "pnpm build && pnpm lint:eslint:dev",

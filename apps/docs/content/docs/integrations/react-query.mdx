@@ -30,8 +30,8 @@ const { data, isPending, isError, error } = useQuery({
 
 The two key options we're using here are:
 
-- [throwOnError](../extra-options.mdx): true - This setting makes CallApi throw errors instead of returning them in the result object
-- [resultMode](../extra-options.mdx): "onlySuccessWithException" - This setting makes CallApi return just the data property with its exact type (i.e. `Todo[]` instead of `Todo[] | null`), since that's mostly all we care about in this scenario.
+- `throwOnError`: true - This setting makes CallApi throw errors instead of returning them in the result object
+- `resultMode`: "onlySuccessWithException" - This setting makes CallApi return just the data property with its exact type (i.e. `Todo[]` instead of `Todo[] | null`), since that's mostly all we care about in this scenario.
 
 However, due to current TypeScript limitations with partial generic inference (see [TypeScript#26242](https://github.com/microsoft/TypeScript/issues/26242)), we also had to manually specify `"onlySuccessWithException"` as the third `type argument` in order to get the expected return type.
 

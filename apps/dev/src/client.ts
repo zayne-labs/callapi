@@ -4,7 +4,7 @@ import {
 	definePlugin,
 	defineSchema,
 	type PluginHooksWithMoreOptions,
-	type PluginInitContext,
+	type PluginSetupContext,
 	type ResultModeUnion,
 	type SuccessContext,
 } from "@zayne-labs/callapi";
@@ -53,7 +53,9 @@ const pluginTwo = definePlugin({
 
 	id: "2",
 
-	init: ({ options, request }: PluginInitContext<Plugin2Options>) => {
+	name: "plugin",
+
+	setup: ({ options, request }: PluginSetupContext<Plugin2Options>) => {
 		options.onUploadSuccess?.({ load: 0, tots: 0 });
 
 		return {
@@ -66,8 +68,6 @@ const pluginTwo = definePlugin({
 			},
 		};
 	},
-
-	name: "plugin",
 });
 
 const callMainApi = createFetchClient({
@@ -137,6 +137,7 @@ const [result1, result2, result3, result4, result5, result6] = await Promise.all
 	callMainApi("https://api.github.com/repos/zayne-labs/ui/commits?per_page=50", {
 		onRequestStream: (ctx) => console.info("OnRequestStream", { event: ctx.event }),
 		onResponseStream: (ctx) => console.info("OnResponseStream", { event: ctx.event }),
+		responseParser: (responseString) => JSON.parse(responseString) as { foo: string },
 		// schemaConfig: (ctx) => ({
 		// 	strict: false,
 		// }),

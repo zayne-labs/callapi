@@ -18,7 +18,7 @@ const envPlugin = definePlugin({
 	description: "Adds environment-specific headers to requests",
 	version: "1.0.0",
 
-	init: ({ request, options, initURL }) => {
+	setup: ({ request, options, initURL }) => {
 		const env = process.env.NODE_ENV || "development";
 
 		const updatedRequest = {
@@ -61,7 +61,7 @@ const envPlugin = {
 	description: "Adds environment-specific headers to requests",
 	version: "1.0.0",
 
-	init: ({ request }) => {
+	setup: ({ request }) => {
 		const env = process.env.NODE_ENV || "development";
 
 		const updatedRequest = {
@@ -76,9 +76,9 @@ const envPlugin = {
 } satisfies CallApiPlugin;
 ```
 
-### Init Function
+### Setup Function
 
-The init function is called before the request is made and any of CallApi's internal functions are called. It takes the url, options, and request as arguments and is expected to return the modified url, options and request if necessary.
+The `setup` function is called before the request is made and any of CallApi's internal functions are called. It takes the url, options, and request as arguments and is expected to return the modified url, options and request if necessary.
 
 ```ts twoslash title="plugins.ts"
 import { definePlugin } from "@zayne-labs/callapi";
@@ -90,7 +90,7 @@ const envPlugin = definePlugin({
 	description: "A plugin that adds environment-specific headers to requests",
 	version: "1.0.0",
 
-	init: ({ request }) => {
+	setup: ({ request }) => {
 		const env = process.env.NODE_ENV ?? "development";
 		const platform = typeof window !== "undefined" ? "browser" : "node";
 		const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -144,7 +144,7 @@ const callBackendApi = createFetchClient({
 ```
 
 <Callout type="info">
-	If more than one plugin is registered, the `init` and `hooks` for each plugin will be called in the
+	If more than one plugin is registered, the `setup` and `hooks` for each plugin will be called in the
 	order they are registered.
 </Callout>
 
@@ -155,7 +155,7 @@ Sometimes your plugin needs to define additional callapi options beyond what is 
 For example, let's create a plugin that tracks upload progress and defines a custom option `onUploadProgress`:
 
 ```ts twoslash title="plugins.ts"
-import { createFetchClient, definePlugin, type PluginInitContext } from "@zayne-labs/callapi";
+import { createFetchClient, definePlugin, type PluginSetupContext } from "@zayne-labs/callapi";
 import { z } from "zod/v3";
 
 const pluginOptionsSchema = z.object({
@@ -170,12 +170,12 @@ const uploadProgressPlugin = definePlugin({
 
 	defineExtraOptions: () => pluginOptionsSchema,
 
-	init: ({ request, options }: PluginInitContext<z.infer<typeof pluginOptionsSchema>>) => {
+	setup: ({ request, options }: PluginSetupContext<z.infer<typeof pluginOptionsSchema>>) => {
 		const xhr = new XMLHttpRequest();
 
 		xhr.open(request.method!, options.fullURL!);
 
-		xhr.send(request.body as XMLHttpRequestBodyInit);
+		xhr.send(request.body as XMLHttpRequestBodySetup);
 
 		xhr.upload.addEventListener("progress", (event) => {
 			if (!event.lengthComputable) {
@@ -200,7 +200,7 @@ const { data } = await callBackendApi("/api/users", {
 });
 ```
 
-Here we use Zod schemas to define the custom callapi option `onUploadProgress`, which is then called inside the `init` function to set up progress tracking for XMLHttpRequest uploads.
+Here we use Zod schemas to define the custom callapi option `onUploadProgress`, which is then called inside the `setup` function to set up progress tracking for XMLHttpRequest uploads.
 
 ## Using Plugins
 
@@ -262,7 +262,7 @@ const metricsPlugin = definePlugin({
 	name: "Metrics Plugin",
 	description: "Tracks API response times and success rates",
 
-	init: ({ initURL, options }) => {
+	setup: ({ initURL, options }) => {
 		console.info(`Starting request to ${initURL}`);
 
 		const startTime = performance.now();

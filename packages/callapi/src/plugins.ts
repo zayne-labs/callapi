@@ -13,11 +13,11 @@ import type { InitURLOrURLObject } from "./url";
 import { isArray, isFunction, isPlainObject, isString } from "./utils/guards";
 import { type BaseCallApiSchemaAndConfig, getCurrentRouteSchemaKeyAndMainInitURL } from "./validation";
 
-export type PluginInitContext<TPluginExtraOptions = unknown> = RequestContext // eslint-disable-next-line perfectionist/sort-intersection-types -- Allow
+export type PluginSetupContext<TPluginExtraOptions = unknown> = RequestContext // eslint-disable-next-line perfectionist/sort-intersection-types -- Allow
 	& PluginExtraOptions<TPluginExtraOptions> & { initURL: string };
 
 export type PluginInitResult = Partial<
-	Omit<PluginInitContext, "initURL" | "request"> & {
+	Omit<PluginSetupContext, "initURL" | "request"> & {
 		initURL: InitURLOrURLObject;
 		request: CallApiRequestOptions;
 	}
@@ -57,11 +57,6 @@ export interface CallApiPlugin {
 	id: string;
 
 	/**
-	 * A function that will be called when the plugin is initialized. This will be called before the any of the other internal functions.
-	 */
-	init?: (context: PluginInitContext) => Awaitable<PluginInitResult> | Awaitable<void>;
-
-	/**
 	 * A name for the plugin
 	 */
 	name: string;
@@ -70,6 +65,11 @@ export interface CallApiPlugin {
 	 * Base schema for the client.
 	 */
 	schema?: BaseCallApiSchemaAndConfig;
+
+	/**
+	 * A function that will be called when the plugin is initialized. This will be called before the any of the other internal functions.
+	 */
+	setup?: (context: PluginSetupContext) => Awaitable<PluginInitResult> | Awaitable<void>;
 
 	/**
 	 *  A version for the plugin
@@ -88,7 +88,7 @@ export const getResolvedPlugins = (context: Pick<RequestContext, "baseConfig" | 
 	return resolvedPlugins;
 };
 
-export const initializePlugins = async (context: PluginInitContext) => {
+export const initializePlugins = async (context: PluginSetupContext) => {
 	const { baseConfig, config, initURL, options, request } = context;
 
 	const clonedHookRegistries = structuredClone(hookRegistries);
@@ -137,10 +137,10 @@ export const initializePlugins = async (context: PluginInitContext) => {
 	let resolvedOptions = options;
 	let resolvedRequestOptions = request;
 
-	const executePluginInit = async (pluginInit: CallApiPlugin["init"]) => {
-		if (!pluginInit) return;
+	const executePluginSetupFn = async (pluginSetupFn: CallApiPlugin["setup"]) => {
+		if (!pluginSetupFn) return;
 
-		const initResult = await pluginInit({
+		const initResult = await pluginSetupFn({
 			baseConfig,
 			config,
 			initURL,
@@ -176,7 +176,7 @@ export const initializePlugins = async (context: PluginInitContext) => {
 
 	for (const plugin of resolvedPlugins) {
 		// eslint-disable-next-line no-await-in-loop -- Await is necessary in this case.
-		await executePluginInit(plugin.init);
+		await executePluginSetupFn(plugin.setup);
 
 		if (!plugin.hooks) continue;
 

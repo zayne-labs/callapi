@@ -295,7 +295,7 @@ export const createFetchClient = <
 			const shouldCloneResponse = resolvedDedupeStrategy === "defer" || options.cloneResponse;
 
 			if (!response.ok) {
-				const errorData = await resolveResponseData<TErrorData>(
+				const errorData = await resolveResponseData(
 					shouldCloneResponse ? response.clone() : response,
 					options.responseType,
 					options.responseParser
@@ -318,7 +318,7 @@ export const createFetchClient = <
 				);
 			}
 
-			const successData = await resolveResponseData<TData>(
+			const successData = await resolveResponseData(
 				shouldCloneResponse ? response.clone() : response,
 				options.responseType,
 				options.responseParser

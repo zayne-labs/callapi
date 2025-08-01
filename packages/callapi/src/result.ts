@@ -5,15 +5,15 @@ import type { DefaultDataType } from "./types/default-types";
 import type { AnyString, Awaitable, UnmaskType } from "./types/type-helpers";
 import { isHTTPErrorInstance, isValidationErrorInstance } from "./utils/guards";
 
-type Parser = (responseString: string) => Awaitable<Record<string, unknown>>;
+type Parser<TData> = (responseString: string) => Awaitable<TData>;
 
-export const getResponseType = <TResponse>(response: Response, parser: Parser) => ({
+export const getResponseType = <TResponse>(response: Response, parser: Parser<TResponse>) => ({
 	arrayBuffer: () => response.arrayBuffer(),
 	blob: () => response.blob(),
 	formData: () => response.formData(),
-	json: async () => {
+	json: async (): Promise<TResponse> => {
 		const text = await response.text();
-		return parser(text) as TResponse;
+		return parser(text);
 	},
 	stream: () => response.body,
 	text: () => response.text(),
@@ -39,7 +39,7 @@ export type GetResponseType<
 export const resolveResponseData = <TResponse>(
 	response: Response,
 	responseType?: ResponseTypeUnion,
-	parser?: Parser
+	parser?: Parser<TResponse>
 ) => {
 	const selectedParser = parser ?? extraOptionDefaults().responseParser;
 	const selectedResponseType = responseType ?? extraOptionDefaults().responseType;

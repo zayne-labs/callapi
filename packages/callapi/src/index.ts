@@ -19,7 +19,7 @@ export {
 	type CallApiPlugin,
 	type PluginHooks,
 	type PluginHooksWithMoreOptions,
-	type PluginInitContext,
+	type PluginSetupContext,
 } from "./plugins";
 export {
 	type CallApiResultErrorVariant,
