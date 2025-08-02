@@ -8,15 +8,17 @@ const config = {
 		position: "bottom-right",
 	},
 
+	eslint: {
+		ignoreDuringBuilds: true,
+	},
+
 	experimental: {
 		devtoolNewPanelUI: true,
 		devtoolSegmentExplorer: true,
 	},
-
-	eslint: {
-		ignoreDuringBuilds: true,
-	},
 	reactStrictMode: true,
+
+	// eslint-disable-next-line ts-eslint/require-await
 	async rewrites() {
 		return [
 			{
@@ -25,7 +27,7 @@ const config = {
 			},
 		];
 	},
-	serverExternalPackages: ["twoslash", "typescript", "shiki"],
+	serverExternalPackages: ["twoslash", "typescript"],
 } satisfies NextConfig;
 
 export default withMDX(config);

@@ -28,13 +28,9 @@ function Providers(props: { children: React.ReactNode }) {
 	});
 
 	useEffectOnce(() => {
-		mutationObserver?.observe(document.documentElement, {
-			attributes: true,
-		});
+		mutationObserver?.observe(document.documentElement, { attributes: true });
 
-		return () => {
-			mutationObserver?.disconnect();
-		};
+		return () => mutationObserver?.disconnect();
 	});
 
 	return (

@@ -198,30 +198,86 @@ export type InferQueryOption<TSchema extends CallApiSchema> = MakeSchemaOptionRe
 
 type EmptyString = "";
 
-/* eslint-disable perfectionist/sort-union-types -- I need to preserve the order of the types */
-export type InferParamsFromRoute<TCurrentRoute> =
-	TCurrentRoute extends `${infer IgnoredPrefix}:${infer TCurrentParam}/${infer TRemainingPath}` ?
-		TCurrentParam extends EmptyString ?
-			InferParamsFromRoute<TRemainingPath>
-		:	| Prettify<
-					Record<
-						| TCurrentParam
-						| (Params extends InferParamsFromRoute<TRemainingPath> ? never
-						  :	keyof Extract<InferParamsFromRoute<TRemainingPath>, Record<string, unknown>>),
-						AllowedQueryParamValues
+type EmptyTuple = readonly [];
+
+type StringTuple = readonly string[];
+
+type ExtractRouteParamNames<TCurrentRoute, TParamNamesAccumulator extends StringTuple = EmptyTuple> =
+	// Check if there are any parameters left to process
+	TCurrentRoute extends `${string}:${string}` | `${string}{${string}}${string}` ?
+		// Process :param style patterns first
+		TCurrentRoute extends `${infer TRoutePrefix}:${infer TParamAndRemainingRoute}` ?
+			// Extract parameter name from :param
+			TParamAndRemainingRoute extends `${infer TCurrentParam}/${infer TRemainingRoute}` ?
+				TCurrentParam extends EmptyString ?
+					ExtractRouteParamNames<`${TRoutePrefix}/${TRemainingRoute}`, TParamNamesAccumulator>
+				:	ExtractRouteParamNames<
+						`${TRoutePrefix}/${TRemainingRoute}`,
+						[...TParamNamesAccumulator, TCurrentParam]
 					>
-			  >
-			| [
-					AllowedQueryParamValues,
-					...(Params extends InferParamsFromRoute<TRemainingPath> ? []
-					:	Extract<InferParamsFromRoute<TRemainingPath>, unknown[]>),
-			  ]
-	: TCurrentRoute extends `${infer IgnoredPrefix}:${infer TCurrentParam}` ?
-		TCurrentParam extends EmptyString ?
+			: TParamAndRemainingRoute extends `${infer TCurrentParam}` ?
+				TCurrentParam extends EmptyString ?
+					ExtractRouteParamNames<TRoutePrefix, TParamNamesAccumulator>
+				:	ExtractRouteParamNames<TRoutePrefix, [...TParamNamesAccumulator, TCurrentParam]>
+			:	ExtractRouteParamNames<TRoutePrefix, TParamNamesAccumulator>
+		: // Process {param} style patterns
+		TCurrentRoute extends `${infer TRoutePrefix}{${infer TCurrentParam}}${infer TRemainingRoute}` ?
+			TCurrentParam extends EmptyString ?
+				ExtractRouteParamNames<`${TRoutePrefix}${TRemainingRoute}`, TParamNamesAccumulator>
+			:	ExtractRouteParamNames<
+					`${TRoutePrefix}${TRemainingRoute}`,
+					[...TParamNamesAccumulator, TCurrentParam]
+				>
+		:	TParamNamesAccumulator
+	:	// No more parameters found
+		TParamNamesAccumulator;
+
+// Helper type to convert array of param names to record type
+type ConvertParamNamesToRecord<TParamNames extends StringTuple> = Prettify<
+	TParamNames extends (
+		readonly [infer TFirstParamName extends string, ...infer TRemainingParamNames extends StringTuple]
+	) ?
+		// eslint-disable-next-line perfectionist/sort-intersection-types -- Allow
+		Record<TFirstParamName, AllowedQueryParamValues> & ConvertParamNamesToRecord<TRemainingParamNames>
+	:	NonNullable<unknown>
+>;
+
+// Helper type to convert array of param names to clean tuple type
+type ConvertParamNamesToTuple<TParamNames extends StringTuple> =
+	TParamNames extends readonly [string, ...infer TRemainingParamNames extends StringTuple] ?
+		[AllowedQueryParamValues, ...ConvertParamNamesToTuple<TRemainingParamNames>]
+	:	[];
+
+export type InferParamsFromRoute<TCurrentRoute> =
+	ExtractRouteParamNames<TCurrentRoute> extends StringTuple ?
+		ExtractRouteParamNames<TCurrentRoute> extends EmptyTuple ?
 			Params
-		:	Prettify<Record<TCurrentParam, AllowedQueryParamValues>> | [AllowedQueryParamValues]
+		:	| ConvertParamNamesToRecord<ExtractRouteParamNames<TCurrentRoute>>
+			| ConvertParamNamesToTuple<ExtractRouteParamNames<TCurrentRoute>>
 	:	Params;
-/* eslint-enable perfectionist/sort-union-types -- I need to preserve the order of the types */
+
+// export type InferParamsFromRoute<TCurrentRoute> =
+// 	TCurrentRoute extends `${infer IgnoredPrefix}:${infer TCurrentParam}/${infer TRemainingPath}` ?
+// 		TCurrentParam extends EmptyString ?
+// 			InferParamsFromRoute<TRemainingPath>
+// 		:	| Prettify<
+// 					Record<
+// 						| TCurrentParam
+// 						| (Params extends InferParamsFromRoute<TRemainingPath> ? never
+// 						  :	keyof Extract<InferParamsFromRoute<TRemainingPath>, Record<string, unknown>>),
+// 						AllowedQueryParamValues
+// 					>
+// 			  >
+// 			| [
+// 					AllowedQueryParamValues,
+// 					...(Params extends InferParamsFromRoute<TRemainingPath> ? []
+// 					:	Extract<InferParamsFromRoute<TRemainingPath>, unknown[]>),
+// 			  ]
+// 	: TCurrentRoute extends `${infer IgnoredPrefix}:${infer TCurrentParam}` ?
+// 		TCurrentParam extends EmptyString ?
+// 			Params
+// 		:	Prettify<Record<TCurrentParam, AllowedQueryParamValues>> | [AllowedQueryParamValues]
+// 	:	Params;
 
 type MakeParamsOptionRequired<
 	TParamsSchemaOption extends CallApiSchema["params"],
@@ -230,7 +286,10 @@ type MakeParamsOptionRequired<
 	TObject,
 > = MakeSchemaOptionRequiredIfDefined<
 	TParamsSchemaOption,
-	TCurrentRouteSchemaKey extends `${string}:${string}${"" | "/"}${"" | AnyString}` ?
+	TCurrentRouteSchemaKey extends (
+		| `${string}:${string}${"" | "/"}${"" | AnyString}`
+		| `${string}{${string}}${"" | "/"}${"" | AnyString}`
+	) ?
 		TCurrentRouteSchemaKey extends Extract<keyof TBaseSchemaRoutes, TCurrentRouteSchemaKey> ?
 			// == If ParamsSchema option is defined but has undefined in the union, it should take precedence to remove the required flag
 			undefined extends InferSchemaResult<TParamsSchemaOption, null> ?

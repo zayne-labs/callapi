@@ -1,4 +1,5 @@
 "use client";
+import { callApi } from "@zayne-labs/callapi";
 import { buttonVariants } from "fumadocs-ui/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "fumadocs-ui/components/ui/popover";
 import { useCopyButton } from "fumadocs-ui/utils/use-copy-button";
@@ -18,21 +19,28 @@ export function LLMCopyButton({
 	markdownUrl: string;
 }) {
 	const [isLoading, setLoading] = useState(false);
+
 	const [checked, onClick] = useCopyButton(async () => {
 		const cached = cache.get(markdownUrl);
-		if (cached) return navigator.clipboard.writeText(cached);
+
+		if (cached) {
+			return navigator.clipboard.writeText(cached);
+		}
 
 		setLoading(true);
+
+		const markDownPromise = callApi(markdownUrl, {
+			responseType: "text",
+			resultMode: "onlySuccessWithException",
+		}).then((content) => {
+			cache.set(markdownUrl, content);
+			return content;
+		});
 
 		try {
 			await navigator.clipboard.write([
 				new ClipboardItem({
-					"text/plain": fetch(markdownUrl).then(async (res) => {
-						const content = await res.text();
-						cache.set(markdownUrl, content);
-
-						return content;
-					}),
+					"text/plain": markDownPromise,
 				}),
 			]);
 		} finally {

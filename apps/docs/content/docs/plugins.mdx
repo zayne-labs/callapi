@@ -175,7 +175,7 @@ const uploadProgressPlugin = definePlugin({
 
 		xhr.open(request.method!, options.fullURL!);
 
-		xhr.send(request.body as XMLHttpRequestBodySetup);
+		xhr.send(request.body as XMLHttpRequestBodyInit);
 
 		xhr.upload.addEventListener("progress", (event) => {
 			if (!event.lengthComputable) {

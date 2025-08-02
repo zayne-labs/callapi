@@ -44,7 +44,7 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
 					<LLMCopyButton markdownUrl={`${page.url}.mdx`} />
 					<ViewOptions
 						markdownUrl={`${page.url}.mdx`}
-						githubUrl={`https://github.com/${owner}/${repo}/blob/dev/apps/docs/content/docs/${page.path}`}
+						githubUrl={`https://github.com/${owner}/${repo}/blob/main/apps/docs/content/docs/${page.path}`}
 					/>
 				</div>
 				<MDX components={getMDXComponents()} />

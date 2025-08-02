@@ -3,11 +3,15 @@ title: React Query
 description: Learn how to use CallApi with React Query
 ---
 
-## Basic Usage
+This guide covers the essential patterns and best practices for using CallApi within <Link href="https://tanstack.com/query/v5/docs/framework/react" target="_blank">React Query</Link>, allowing you to use CallApi's many features alongside React Query's caching and synchronization capabilities.
 
-By default, CallApi returns errors as values in the result object instead of throwing them. However, React Query works differently - it expects either a resolved promise with data or a rejected promise with an error. To bridge this gap, we need to configure CallApi properly:
+## Quick Start
 
-```ts title="todo.tsx"
+By default, CallApi returns errors as values in the result object instead of throwing them. However, React Query expects either a resolved promise with data or a rejected promise with an error.
+
+You configure callApi to align with that expectation:
+
+```ts title="api/todos.ts"
 import { callApi } from "@zayne-labs/callapi";
 import { useQuery } from "@tanstack/react-query";
 
@@ -17,56 +21,92 @@ type Todo = {
 	completed: boolean;
 };
 
-const { data, isPending, isError, error } = useQuery({
-	queryKey: ["todos"],
-	queryFn: () => {
-		return callApi<Todo[], unknown, "onlySuccessWithException">("https://my-api.com/api/v1/todos", {
-			throwOnError: true,
-			resultMode: "onlySuccessWithException",
-		});
-	},
-});
+export const useTodos = () => {
+	return useQuery({
+		queryKey: ["todos"],
+		queryFn: () => {
+			return callApi<Todo[], false>("/todos", {
+				throwOnError: true,
+				resultMode: "onlySuccessWithException",
+			});
+		},
+	});
+};
+
+// @annotate: Using method prefixes with React Query for cleaner code
 ```
 
-The two key options we're using here are:
+## Configuration Options
 
-- `throwOnError`: true - This setting makes CallApi throw errors instead of returning them in the result object
-- `resultMode`: "onlySuccessWithException" - This setting makes CallApi return just the data property with its exact type (i.e. `Todo[]` instead of `Todo[] | null`), since that's mostly all we care about in this scenario.
+The key options for React Query integration include:
 
-However, due to current TypeScript limitations with partial generic inference (see [TypeScript#26242](https://github.com/microsoft/TypeScript/issues/26242)), we also had to manually specify `"onlySuccessWithException"` as the third `type argument` in order to get the expected return type.
+- **`throwOnError: true`** - Makes CallApi throw errors instead of returning them in the result object
+- **`resultMode: "onlySuccessWithException"`** - Returns just the data property with its exact type, perfect for React Query
 
-To avoid this, you can either:
+<Callout type="info">
+	These settings ensure CallApi behaves exactly like React Query expects: throwing errors for failures and
+	returning clean data for successes.
+</Callout>
 
-1. Use validation libraries like zod to [validate the response data and infer the type](/docs/validation)
+## Centralized Configuration
 
-```ts title="todo.tsx"
+```ts title="api/client.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+export const callApiForQuery = createFetchClient({
+	baseURL: "https://api.example.com",
+	// Default to React Query compatible settings
+	throwOnError: true,
+	resultMode: "onlySuccessWithException",
+});
+
+// Use the configured client in queries
+export const useTodos = () => {
+	return useQuery({
+		queryKey: ["todos"],
+		queryFn: () => callApiForQuery<Todo[]>("/todos"),
+	});
+};
+```
+
+## Data Inference via typescript
+
+### Option 1: Schema Validation (Recommended)
+
+Using validation libraries like Zod provides both runtime safety and automatic type inference:
+
+```ts title="hooks/useTodos.ts"
 import { callApi } from "@zayne-labs/callapi";
 import { useQuery } from "@tanstack/react-query";
-import * as z from "zod";
+import { z } from "zod";
 
-const dataSchema = z.object({
-	id: z.number(),
-	title: z.string(),
-	completed: z.boolean(),
-});
+const todosSchema = z.array(
+	z.object({
+		id: z.number(),
+		title: z.string(),
+		completed: z.boolean(),
+	})
+);
 
-const { data, isPending, isError, error } = useQuery({
-	queryKey: ["todos"],
-	queryFn: () => {
-		return callApi("https://my-api.com/api/v1/todos", {
-			schemas: {
-				data: dataSchema,
-			},
-			throwOnError: true,
-			resultMode: "onlySuccessWithException",
-		});
-	},
-});
+export const useTodos = () => {
+	return useQuery({
+		queryKey: ["todos"],
+		queryFn: () => {
+			return callApi("/todos", {
+				schemas: { data: todosSchema },
+				throwOnError: true,
+				resultMode: "onlySuccessWithException",
+			});
+		},
+	});
+};
+
+// @annotate: Type of the data is automatically inferred from the schema
 ```
 
-2. Pass `false` as the second generic argument to signal that errors will be thrown
+### Option 2: Manual Type Specification
 
-```ts title="todo.tsx"
+```ts title="hooks/useTodos.ts"
 import { callApi } from "@zayne-labs/callapi";
 import { useQuery } from "@tanstack/react-query";
 
@@ -76,13 +116,44 @@ type Todo = {
 	completed: boolean;
 };
 
-const { data, isPending, isError, error } = useQuery({
-	queryKey: ["todos"],
-	queryFn: () => {
-		return callApi<Todo[], false>("https://my-api.com/api/v1/todos", {
-			throwOnError: true,
-			resultMode: "onlySuccessWithException",
-		});
-	},
-});
+export const useTodos = () => {
+	return useQuery({
+		queryKey: ["todos"],
+		queryFn: () => {
+			// Pass `false` as second generic to signal errors will be thrown allow callApi to return the expected type
+			// This is needed due to TypeScript limitations with partial generic inference
+			// See: https://github.com/microsoft/TypeScript/issues/26242
+			return callApi<Todo[], false>("@get/todos", {
+				throwOnError: true,
+				resultMode: "onlySuccessWithException",
+			});
+		},
+	});
+};
+```
+
+## Error Handling
+
+React Query's error handling works seamlessly with CallApi when `throwOnError: true` is set:
+
+```ts title="components/TodoList.tsx"
+import { useTodos } from "../hooks/useTodos";
+
+export const TodoList = () => {
+	const { data: todos, isLoading, error, isError } = useTodos();
+
+	if (isLoading) return <div>Loading...</div>;
+
+	if (isError) {
+		return <div>Error: {error instanceof Error ? error.message : "Something went wrong"}</div>;
+	}
+
+	return (
+		<ul>
+			{todos?.map((todo) => (
+				<li key={todo.id}>{todo.title}</li>
+			))}
+		</ul>
+	);
+};
 ```

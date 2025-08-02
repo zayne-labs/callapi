@@ -86,6 +86,10 @@ const callMainApi = createFetchClient({
 		"/products/:id": {
 			data: z.object({ id: z.number(), price: z.number(), title: z.string() }),
 		},
+
+		"/products/{id}": {
+			data: z.object({ id: z.number(), price: z.number(), title: z.string() }),
+		},
 	}),
 });
 
@@ -117,14 +121,22 @@ const [result1, result2, result3, result4, result5, result6] = await Promise.all
 		params: [1],
 	}),
 
+	callMainApi("/products/:id", {
+		params: [1],
+	}),
+
+	callMainApi("/products/{id}", {
+		params: [1],
+	}),
+
 	callMainApi("@delete/products/:id", {
 		params: {
 			id: "beans",
 		},
 	}),
 
-	callMainApi("/products/:id", {
-		params: [1302],
+	callMainApi("/products/{id}", {
+		params: [1],
 	}),
 
 	callMainApi("/products/:id", {

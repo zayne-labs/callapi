@@ -6,7 +6,10 @@ import { isArray } from "./utils/guards";
 import { type CallApiSchemaConfig, type RouteKeyMethodsURLUnion, routeKeyMethods } from "./validation";
 
 const slash = "/";
-const column = ":";
+const colon = ":";
+const openBrace = "{";
+const closeBrace = "}";
+
 const mergeUrlWithParams = (url: string, params: CallApiExtraOptions["params"]) => {
 	if (!params) {
 		return url;
@@ -15,9 +18,14 @@ const mergeUrlWithParams = (url: string, params: CallApiExtraOptions["params"]) 
 	let newUrl = url;
 
 	if (isArray(params)) {
-		const matchedParamArray = newUrl.split(slash).filter((param) => param.startsWith(column));
+		const urlParts = newUrl.split(slash);
 
-		for (const [index, matchedParam] of matchedParamArray.entries()) {
+		// Find all parameters in order (both :param and {param} patterns)
+		const matchedParamsArray = urlParts.filter(
+			(part) => part.startsWith(colon) || (part.startsWith(openBrace) && part.endsWith(closeBrace))
+		);
+
+		for (const [index, matchedParam] of matchedParamsArray.entries()) {
 			const realParam = params[index] as string;
 			newUrl = newUrl.replace(matchedParam, realParam);
 		}
@@ -25,8 +33,18 @@ const mergeUrlWithParams = (url: string, params: CallApiExtraOptions["params"]) 
 		return newUrl;
 	}
 
+	// Handle object params - replace both :param and {param} patterns
 	for (const [key, value] of Object.entries(params)) {
-		newUrl = newUrl.replace(`${column}${key}`, String(value));
+		const stringValue = String(value);
+		const colonPattern = `${colon}${key}` as const;
+		const bracePattern = `${openBrace}${key}${closeBrace}` as const;
+
+		// Only replace if the pattern exists in the URL
+		if (newUrl.includes(colonPattern)) {
+			newUrl = newUrl.replace(colonPattern, stringValue);
+		} else if (newUrl.includes(bracePattern)) {
+			newUrl = newUrl.replace(bracePattern, stringValue);
+		}
 	}
 
 	return newUrl;
@@ -162,10 +180,11 @@ export const getFullAndNormalizedURL = (options: GetFullURLOptions) => {
 
 export type AllowedQueryParamValues = UnmaskType<boolean | number | string>;
 
-export type Params = UnmaskType<
-	// eslint-disable-next-line perfectionist/sort-union-types -- I need the Record to be first
-	Record<string, AllowedQueryParamValues> | AllowedQueryParamValues[]
->;
+export type RecordStyleParams = UnmaskType<Record<string, AllowedQueryParamValues>>;
+
+export type TupleStyleParams = UnmaskType<AllowedQueryParamValues[]>;
+
+export type Params = UnmaskType<RecordStyleParams | TupleStyleParams>;
 
 export type Query = UnmaskType<Record<string, AllowedQueryParamValues>>;
 

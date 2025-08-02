@@ -130,7 +130,7 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 	const prevRequestInfo = $RequestInfoCacheOrNull?.get(dedupeKey);
 
 	const getAbortErrorMessage = () => {
-		if (dedupeKey) {
+		if (globalOptions.dedupeKey) {
 			return `Duplicate request detected - Aborted previous request with key '${dedupeKey}' as a new request was initiated`;
 		}
 
