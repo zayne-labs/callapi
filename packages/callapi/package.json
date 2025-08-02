@@ -27,7 +27,6 @@
 		".": "./dist/esm/index.js",
 		"./utils": "./dist/esm/utils/index.js"
 	},
-	"main": "./dist/esm/index.js",
 	"files": [
 		"dist"
 	],
