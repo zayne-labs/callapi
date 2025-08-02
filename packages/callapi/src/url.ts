@@ -192,7 +192,8 @@ export type InitURLOrURLObject = AnyString | RouteKeyMethodsURLUnion | URL;
 
 export interface URLOptions {
 	/**
-	 * Base URL for all API requests. Will be prepended to relative URLs.
+	 * Base URL for all API requests. Will only be prepended to relative URLs.
+	 *
 	 * Absolute URLs (starting with http/https) will not be prepended by the baseURL.
 	 *
 	 * @example
