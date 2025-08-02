@@ -43,7 +43,7 @@
 		"@zayne-labs/eslint-config": "0.9.9",
 		"@zayne-labs/prettier-config": "0.9.9",
 		"eslint": "9.32.0",
-		"eslint-plugin-better-tailwindcss": "^3.7.2",
+		"eslint-plugin-better-tailwindcss": "^3.7.3",
 		"eslint-plugin-react-hooks": "^5.2.0",
 		"eslint-plugin-react-refresh": "^0.4.20",
 		"husky": "9.1.7",
@@ -51,6 +51,6 @@
 		"prettier": "3.6.2",
 		"tailwindcss": "^4.1.11",
 		"turbo": "^2.5.5",
-		"typescript": "^5.8.3"
+		"typescript": "^5.9.2"
 	}
 }

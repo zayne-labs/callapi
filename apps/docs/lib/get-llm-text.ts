@@ -1,4 +1,4 @@
-import { remarkInstall } from "fumadocs-docgen";
+import { remarkNpm } from "fumadocs-core/mdx-plugins";
 import { remarkInclude } from "fumadocs-mdx/config";
 import { remarkAutoTypeTable } from "fumadocs-typescript";
 import { remark } from "remark";
@@ -11,7 +11,7 @@ const processor = remark()
 	.use(remarkInclude)
 	.use(remarkGfm)
 	.use(remarkAutoTypeTable)
-	.use(remarkInstall);
+	.use(remarkNpm);
 
 export async function getLLMText(page: Page) {
 	const category = "CallApi";

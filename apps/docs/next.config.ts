@@ -27,7 +27,6 @@ const config = {
 			},
 		];
 	},
-	serverExternalPackages: ["twoslash", "typescript"],
 } satisfies NextConfig;
 
 export default withMDX(config);

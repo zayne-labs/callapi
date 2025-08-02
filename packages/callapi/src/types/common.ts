@@ -102,26 +102,6 @@ type SharedExtraOptions<
 		auth?: string | Auth | null;
 
 		/**
-		 * Base URL for all API requests. Will be prepended to relative URLs.
-		 *
-		 * @example
-		 * ```ts
-		 * // Set base URL for all requests
-		 * baseURL: "https://api.example.com/v1"
-		 *
-		 * // Then use relative URLs in requests
-		 * callApi("/users") // → https://api.example.com/v1/users
-		 * callApi("/posts/123") // → https://api.example.com/v1/posts/123
-		 *
-		 * // Environment-specific base URLs
-		 * baseURL: process.env.NODE_ENV === "production"
-		 *   ? "https://api.example.com"
-		 *   : "http://localhost:3000/api"
-		 * ```
-		 */
-		baseURL?: string;
-
-		/**
 		 * Custom function to serialize request body objects into strings.
 		 *
 		 * Useful for custom serialization formats or when the default JSON

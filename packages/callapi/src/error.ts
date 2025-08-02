@@ -47,7 +47,7 @@ export class HTTPError<TErrorData = Record<string, unknown>> extends Error {
 	 * @param error - The error to check
 	 * @returns true if the error is an instance of HTTPError, false otherwise
 	 */
-	static isError<TErrorData>(error: unknown): error is HTTPError<TErrorData> {
+	static override isError<TErrorData>(error: unknown): error is HTTPError<TErrorData> {
 		if (!isObject<Record<string, unknown>>(error)) {
 			return false;
 		}
@@ -110,7 +110,7 @@ export class ValidationError extends Error {
 	 * @param error - The error to check
 	 * @returns true if the error is an instance of HTTPError, false otherwise
 	 */
-	static isError(error: unknown): error is ValidationError {
+	static override isError(error: unknown): error is ValidationError {
 		if (!isObject<Record<string, unknown>>(error)) {
 			return false;
 		}

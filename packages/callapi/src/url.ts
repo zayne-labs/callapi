@@ -167,10 +167,10 @@ export const getFullAndNormalizedURL = (options: GetFullURLOptions) => {
 
 	const urlWithMergedQueryAndParams = mergeUrlWithQuery(urlWithMergedParams, query);
 
-	const shouldNotPrependBaseURL = urlWithMergedQueryAndParams.startsWith("http") || !baseURL;
+	const shouldPrependBaseURL = !urlWithMergedQueryAndParams.startsWith("http") && baseURL;
 
 	const fullURL =
-		shouldNotPrependBaseURL ? urlWithMergedQueryAndParams : `${baseURL}${urlWithMergedQueryAndParams}`;
+		shouldPrependBaseURL ? `${baseURL}${urlWithMergedQueryAndParams}` : urlWithMergedQueryAndParams;
 
 	return {
 		fullURL,
@@ -192,10 +192,23 @@ export type InitURLOrURLObject = AnyString | RouteKeyMethodsURLUnion | URL;
 
 export interface URLOptions {
 	/**
-	 * Base URL to be prepended to all request URLs.
+	 * Base URL for all API requests. Will be prepended to relative URLs.
+	 * Absolute URLs (starting with http/https) will not be prepended by the baseURL.
 	 *
-	 * When provided, this will be prepended to relative URLs. Absolute URLs (starting with http/https) will not be prepended by the baseURL.
+	 * @example
+	 * ```ts
+	 * // Set base URL for all requests
+	 * baseURL: "https://api.example.com/v1"
 	 *
+	 * // Then use relative URLs in requests
+	 * callApi("/users") // → https://api.example.com/v1/users
+	 * callApi("/posts/123") // → https://api.example.com/v1/posts/123
+	 *
+	 * // Environment-specific base URLs
+	 * baseURL: process.env.NODE_ENV === "production"
+	 *   ? "https://api.example.com"
+	 *   : "http://localhost:3000/api"
+	 * ```
 	 */
 	baseURL?: string;
 

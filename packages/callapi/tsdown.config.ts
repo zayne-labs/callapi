@@ -1,10 +1,10 @@
-import { type Options, defineConfig } from "tsdown";
+import { defineConfig, type Options } from "tsdown";
 
 const isDevMode = process.env.NODE_ENV === "development";
 
 const commonOptions = {
 	clean: true, // clean up dist folder,
-	dts: true,
+	dts: { newContext: true },
 	entry: ["src/index.ts", "src/utils/index.ts"],
 	sourcemap: !isDevMode,
 	tsconfig: "tsconfig.json",
