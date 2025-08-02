@@ -63,14 +63,7 @@ const result = await callBackendApi("/api/users", {
 Waits a fixed amount of time between retries:
 
 ```ts title="api.ts"
-import { createFetchClient } from "@zayne-labs/callapi";
-
-const callBackendApi = createFetchClient({
-	baseURL: "http://localhost:3000",
-});
-
-// ---cut---
-const result = await callBackendApi("/api/users", {
+const result = await callApi("/api/users", {
 	retryStrategy: "linear",
 	retryAttempts: 3,
 	retryDelay: 1000,
@@ -82,14 +75,7 @@ const result = await callBackendApi("/api/users", {
 Increases the delay between retries exponentially:
 
 ```ts title="api.ts"
-import { createFetchClient } from "@zayne-labs/callapi";
-
-const callBackendApi = createFetchClient({
-	baseURL: "http://localhost:3000",
-});
-
-// ---cut---
-const result = await callBackendApi("/api/users", {
+const result = await callApi("/api/users", {
 	retryStrategy: "exponential",
 	retryAttempts: 5, // Retry up to 5 times
 	retryDelay: 1000, // Start with 1 second delay
@@ -106,14 +92,7 @@ You can customize when to retry a request with the `retryMethods` and `retryStat
 2. **Retry Status Codes**: This option allows you to specify which HTTP status codes should be retried. There are no default values for this option.
 
 ```ts title="api.ts"
-import { createFetchClient } from "@zayne-labs/callapi";
-
-const callBackendApi = createFetchClient({
-	baseURL: "http://localhost:3000",
-});
-
-// ---cut---
-const result = await callBackendApi("/api/users", {
+const result = await callApi("/api/users", {
 	retryStrategy: "linear",
 	retryAttempts: 3,
 	retryDelay: 1000,
@@ -127,14 +106,7 @@ const result = await callBackendApi("/api/users", {
 Use `retryCondition` to implement custom retry logic:
 
 ```ts title="api.ts"
-import { createFetchClient } from "@zayne-labs/callapi";
-
-const callBackendApi = createFetchClient({
-	baseURL: "https://localhost:3000",
-});
-
-// ---cut---
-const result = await callBackendApi("/api/users", {
+const result = await callApi("/api/users", {
 	retryStrategy: "linear",
 	retryAttempts: 3,
 
@@ -149,13 +121,7 @@ const result = await callBackendApi("/api/users", {
 Listen to retry attempts using the `onRetry` hook:
 
 ```ts title="api.ts"
-import { createFetchClient } from "@zayne-labs/callapi";
-
-const callApi = createFetchClient({
-	baseURL: "https://jsonplaceholder.typicode.com",
-});
-
-const res = await callApi("/todos/1", {
+const result = await callApi("/todos/1", {
 	retryAttempts: 3,
 
 	onRetry: (response) => {
