@@ -33,7 +33,6 @@ export const useTodos = () => {
 	});
 };
 
-// @annotate: Using method prefixes with React Query for cleaner code
 ```
 
 ## Configuration Options
@@ -101,7 +100,6 @@ export const useTodos = () => {
 	});
 };
 
-// @annotate: Type of the data is automatically inferred from the schema
 ```
 
 ### Option 2: Manual Type Specification
@@ -132,28 +130,3 @@ export const useTodos = () => {
 };
 ```
 
-## Error Handling
-
-React Query's error handling works seamlessly with CallApi when `throwOnError: true` is set:
-
-```ts title="components/TodoList.tsx"
-import { useTodos } from "../hooks/useTodos";
-
-export const TodoList = () => {
-	const { data: todos, isLoading, error, isError } = useTodos();
-
-	if (isLoading) return <div>Loading...</div>;
-
-	if (isError) {
-		return <div>Error: {error instanceof Error ? error.message : "Something went wrong"}</div>;
-	}
-
-	return (
-		<ul>
-			{todos?.map((todo) => (
-				<li key={todo.id}>{todo.title}</li>
-			))}
-		</ul>
-	);
-};
-```
