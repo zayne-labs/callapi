@@ -308,7 +308,7 @@ type SharedExtraOptions<
 		 *
 		 * ```
 		 */
-		responseParser?: (responseString: string) => Awaitable<TData>;
+		responseParser?: (responseString: string) => Awaitable<unknown>;
 
 		/**
 		 * Expected response type, determines how the response body is parsed.
