@@ -25,14 +25,7 @@ const result = await callBackendApi("/api/users", {
 You can set the retry attempts and interval in milliseconds.
 
 ```ts title="api.ts"
-import { createFetchClient } from "@zayne-labs/callapi";
-
-const callBackendApi = createFetchClient({
-	baseURL: "http://localhost:3000",
-});
-
-// ---cut---
-const result = await callBackendApi("/api/users", {
+const result = await callApi("/api/users", {
 	// Retry up to 3 times
 	retryAttempts: 3,
 });
@@ -45,14 +38,7 @@ CallApi provides flexible retry mechanisms with both linear and exponential back
 ### Basic Retry with only number of attempts
 
 ```ts title="api.ts"
-import { createFetchClient } from "@zayne-labs/callapi";
-
-const callBackendApi = createFetchClient({
-	baseURL: "http://localhost:3000",
-});
-
-// ---cut---
-const result = await callBackendApi("/api/users", {
+const result = await callApi("/api/users", {
 	// Retry up to 3 times
 	retryAttempts: 3,
 });
