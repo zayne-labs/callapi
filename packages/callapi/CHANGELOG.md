@@ -1,5 +1,13 @@
 # @zayne-labs/callapi
 
+## 1.9.2
+
+### Patch Changes
+
+- 991ac01: refactor(callapi/hooks): make hook registries use lazy instantiation instead of having to deep copy with structured clone🧩
+
+   chore(deps): update workspace package.json files and sync pnpm-lock.yaml 📦🔒
+
 ## 1.9.0
 
 ### Minor Changes
