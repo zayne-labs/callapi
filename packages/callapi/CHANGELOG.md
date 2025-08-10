@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.9.3
+
+### Patch Changes
+
+- 7d4765f: fix(route-method): fixed issue with route method extraction
+
 ## 1.9.2
 
 ### Patch Changes
