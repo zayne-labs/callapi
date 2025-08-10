@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.9.4
+
+### Patch Changes
+
+- 5c6900d: fix: faulty error resolution
+
 ## 1.9.3
 
 ### Patch Changes
