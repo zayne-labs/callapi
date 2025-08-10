@@ -20,31 +20,27 @@ const mergeUrlWithParams = (url: string, params: CallApiExtraOptions["params"]) 
 	if (isArray(params)) {
 		const urlParts = newUrl.split(slash);
 
-		// Find all parameters in order (both :param and {param} patterns)
+		// == Find all parameters in order (both :param and {param} patterns)
 		const matchedParamsArray = urlParts.filter(
 			(part) => part.startsWith(colon) || (part.startsWith(openBrace) && part.endsWith(closeBrace))
 		);
 
-		for (const [index, matchedParam] of matchedParamsArray.entries()) {
-			const realParam = params[index] as string;
-			newUrl = newUrl.replace(matchedParam, realParam);
+		for (const [paramIndex, matchedParam] of matchedParamsArray.entries()) {
+			const stringParamValue = String(params[paramIndex]);
+			newUrl = newUrl.replace(matchedParam, stringParamValue);
 		}
 
 		return newUrl;
 	}
 
-	// Handle object params - replace both :param and {param} patterns
-	for (const [key, value] of Object.entries(params)) {
-		const stringValue = String(value);
-		const colonPattern = `${colon}${key}` as const;
-		const bracePattern = `${openBrace}${key}${closeBrace}` as const;
+	// == Handle object params - replace both :param and {param} patterns
+	for (const [paramKey, paramValue] of Object.entries(params)) {
+		const colonPattern = `${colon}${paramKey}` as const;
+		const bracePattern = `${openBrace}${paramKey}${closeBrace}` as const;
+		const stringValue = String(paramValue);
 
-		// Only replace if the pattern exists in the URL
-		if (newUrl.includes(colonPattern)) {
-			newUrl = newUrl.replace(colonPattern, stringValue);
-		} else if (newUrl.includes(bracePattern)) {
-			newUrl = newUrl.replace(bracePattern, stringValue);
-		}
+		newUrl = newUrl.replace(colonPattern, stringValue);
+		newUrl = newUrl.replace(bracePattern, stringValue);
 	}
 
 	return newUrl;

@@ -275,7 +275,7 @@ type SharedExtraOptions<
 		meta?: GlobalMeta;
 
 		/**
-		 * Custom function to parse response strings into objects instead of the default response.json().
+		 * Custom function to parse response strings into actual value instead of the default response.json().
 		 *
 		 * Useful when you need custom parsing logic for specific response formats.
 		 *

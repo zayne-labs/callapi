@@ -175,6 +175,7 @@ export type BaseCallApiSchemaAndConfig = {
 	config?: CallApiSchemaConfig;
 	routes: BaseCallApiSchemaRoutes;
 };
+
 type ValidationOptions<
 	TSchema extends CallApiSchema[keyof CallApiSchema] = CallApiSchema[keyof CallApiSchema],
 > = {

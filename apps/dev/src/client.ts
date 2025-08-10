@@ -111,7 +111,7 @@ const stream = new ReadableStream({
 	},
 }).pipeThrough(new TextEncoderStream());
 
-const [result1, result2, result3, result4, result5, result6] = await Promise.all([
+const [result1, result2, result3, result4, result5, result6, result7, result8] = await Promise.all([
 	callMainApi<{ price: number }>("/products/:id", {
 		onRequest: () => console.info("OnRequest - INSTANCE"),
 		params: [1],
@@ -149,7 +149,9 @@ const [result1, result2, result3, result4, result5, result6] = await Promise.all
 	callMainApi("https://api.github.com/repos/zayne-labs/ui/commits?per_page=50", {
 		onRequestStream: (ctx) => console.info("OnRequestStream", { event: ctx.event }),
 		onResponseStream: (ctx) => console.info("OnResponseStream", { event: ctx.event }),
-		responseParser: (responseString) => JSON.parse(responseString) as { foo: string },
+		schema: {
+			data: () => ({}) as { foo: string },
+		},
 		// schemaConfig: (ctx) => ({
 		// 	strict: false,
 		// }),

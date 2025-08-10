@@ -415,35 +415,43 @@ type HookRegistries = Required<{
 	[Key in keyof Hooks]: Set<Hooks[Key]>;
 }>;
 
-export const hookRegistries = {
-	onError: new Set(),
-	onRequest: new Set(),
-	onRequestError: new Set(),
-	onRequestStream: new Set(),
-	onResponse: new Set(),
-	onResponseError: new Set(),
-	onResponseStream: new Set(),
-	onRetry: new Set(),
-	onSuccess: new Set(),
-	onValidationError: new Set(),
-} satisfies HookRegistries;
+export const getHookRegistries = (): HookRegistries => {
+	return {
+		onError: new Set(),
+		onRequest: new Set(),
+		onRequestError: new Set(),
+		onRequestStream: new Set(),
+		onResponse: new Set(),
+		onResponseError: new Set(),
+		onResponseStream: new Set(),
+		onRetry: new Set(),
+		onSuccess: new Set(),
+		onValidationError: new Set(),
+	};
+};
 
 export const composeAllHooks = (
 	hooksArray: Array<AnyFunction | undefined>,
 	hooksExecutionMode: CallApiExtraOptionsForHooks["hooksExecutionMode"]
 ) => {
 	const mergedHook = async (ctx: unknown) => {
-		if (hooksExecutionMode === "sequential") {
-			for (const hook of hooksArray) {
-				// eslint-disable-next-line no-await-in-loop -- This is necessary in this case
-				await hook?.(ctx);
+		switch (hooksExecutionMode) {
+			case "parallel": {
+				await Promise.all(hooksArray.map((uniqueHook) => uniqueHook?.(ctx)));
+				break;
 			}
 
-			return;
-		}
+			case "sequential": {
+				for (const hook of hooksArray) {
+					// eslint-disable-next-line no-await-in-loop -- This is necessary in this case
+					await hook?.(ctx);
+				}
+				break;
+			}
 
-		if (hooksExecutionMode === "parallel") {
-			await Promise.all(hooksArray.map((uniqueHook) => uniqueHook?.(ctx)));
+			default: {
+				hooksExecutionMode satisfies undefined;
+			}
 		}
 	};
 

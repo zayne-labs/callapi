@@ -1,9 +1,9 @@
 import { extraOptionDefaults } from "./constants/default-options";
 import {
 	composeAllHooks,
+	getHookRegistries,
 	type Hooks,
 	type HooksOrHooksArray,
-	hookRegistries,
 	type PluginExtraOptions,
 	type RequestContext,
 } from "./hooks";
@@ -91,10 +91,10 @@ export const getResolvedPlugins = (context: Pick<RequestContext, "baseConfig" | 
 export const initializePlugins = async (context: PluginSetupContext) => {
 	const { baseConfig, config, initURL, options, request } = context;
 
-	const clonedHookRegistries = structuredClone(hookRegistries);
+	const hookRegistries = getHookRegistries();
 
 	const addMainHooks = () => {
-		for (const key of Object.keys(clonedHookRegistries) as Array<keyof Hooks>) {
+		for (const key of Object.keys(hookRegistries) as Array<keyof Hooks>) {
 			const overriddenHook = options[key];
 			const baseHook = baseConfig[key];
 			const instanceHook = config[key];
@@ -105,17 +105,17 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 
 			if (!mainHook) continue;
 
-			clonedHookRegistries[key].add(mainHook as never);
+			hookRegistries[key].add(mainHook as never);
 		}
 	};
 
 	const addPluginHooks = (pluginHooks: Required<CallApiPlugin>["hooks"]) => {
-		for (const key of Object.keys(clonedHookRegistries) as Array<keyof Hooks>) {
+		for (const key of Object.keys(hookRegistries) as Array<keyof Hooks>) {
 			const pluginHook = pluginHooks[key];
 
 			if (!pluginHook) continue;
 
-			clonedHookRegistries[key].add(pluginHook as never);
+			hookRegistries[key].add(pluginHook as never);
 		}
 	};
 
@@ -189,7 +189,7 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 
 	const resolvedHooks: Hooks = {};
 
-	for (const [key, hookRegistry] of Object.entries(clonedHookRegistries)) {
+	for (const [key, hookRegistry] of Object.entries(hookRegistries)) {
 		if (hookRegistry.size === 0) continue;
 
 		// == Flatten the hook registry to remove any nested arrays, incase an array of hooks is passed to any of the hooks
