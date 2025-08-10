@@ -80,7 +80,7 @@ const callMainApi = createFetchClient({
 	schema: defineSchema({
 		"@delete/products/:id": {
 			data: z.object({ id: z.number() }),
-			headers: z.object({ Authorization: z.string() }).optional(),
+			// headers: z.object({ Authorization: z.string() }).optional(),
 		},
 
 		"/products/:id": {

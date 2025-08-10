@@ -103,7 +103,7 @@ const mergeUrlWithQuery = (url: string, query: CallApiExtraOptions["query"]): st
  * ```
  */
 export const extractMethodFromURL = (initURL: string | undefined) => {
-	if (!initURL || initURL.startsWith("@")) return;
+	if (!initURL?.startsWith("@")) return;
 
 	const method = initURL.split("@")[1]?.split("/")[0];
 
