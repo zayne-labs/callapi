@@ -55,7 +55,7 @@ import {
 	type CallApiSchema,
 	type CallApiSchemaConfig,
 	handleConfigValidation,
-	handleValidation,
+	handleSchemaValidation,
 	type InferSchemaResult,
 } from "./validation";
 
@@ -301,7 +301,7 @@ export const createFetchClient = <
 					options.responseParser
 				);
 
-				const validErrorData = await handleValidation(resolvedSchema?.errorData, {
+				const validErrorData = await handleSchemaValidation(resolvedSchema?.errorData, {
 					inputValue: errorData,
 					response,
 					schemaConfig: resolvedSchemaConfig,
@@ -324,7 +324,7 @@ export const createFetchClient = <
 				options.responseParser
 			);
 
-			const validSuccessData = await handleValidation(resolvedSchema?.data, {
+			const validSuccessData = await handleSchemaValidation(resolvedSchema?.data, {
 				inputValue: successData,
 				response,
 				schemaConfig: resolvedSchemaConfig,
@@ -359,15 +359,15 @@ export const createFetchClient = <
 				resultMode: options.resultMode,
 			} satisfies ErrorInfo;
 
-			const generalErrorResult = resolveErrorResult(error, errorInfo);
+			const { errorDetails, generalErrorResult } = resolveErrorResult(error, errorInfo);
 
 			const errorContext = {
 				baseConfig,
 				config,
-				error: generalErrorResult?.error as never,
+				error: errorDetails.error as never,
 				options,
 				request,
-				response: generalErrorResult?.response as never,
+				response: errorDetails.response as never,
 			} satisfies ErrorContext<unknown>;
 
 			const shouldThrowOnError = (
@@ -420,12 +420,12 @@ export const createFetchClient = <
 				return generalErrorResult;
 			};
 
-			if (isHTTPErrorInstance<TErrorData>(error)) {
+			if (isValidationErrorInstance(error)) {
 				const hookError = await executeHooksInCatchBlock(
 					[
-						options.onResponseError?.(errorContext),
+						options.onValidationError?.(errorContext),
+						options.onRequestError?.(errorContext),
 						options.onError?.(errorContext),
-						options.onResponse?.({ ...errorContext, data: null }),
 					],
 					hookInfo
 				);
@@ -433,12 +433,12 @@ export const createFetchClient = <
 				return (hookError ?? (await handleRetryOrGetErrorResult())) as never;
 			}
 
-			if (isValidationErrorInstance(error)) {
+			if (isHTTPErrorInstance<TErrorData>(error)) {
 				const hookError = await executeHooksInCatchBlock(
 					[
-						options.onValidationError?.(errorContext),
-						options.onRequestError?.(errorContext),
+						options.onResponseError?.(errorContext),
 						options.onError?.(errorContext),
+						options.onResponse?.({ ...errorContext, data: null }),
 					],
 					hookInfo
 				);

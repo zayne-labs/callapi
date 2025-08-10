@@ -478,7 +478,7 @@ export const executeHooksInCatchBlock = async (
 
 		return null;
 	} catch (hookError) {
-		const hookErrorResult = resolveErrorResult(hookError, errorInfo);
+		const { generalErrorResult: hookErrorResult } = resolveErrorResult(hookError, errorInfo);
 
 		if (shouldThrowOnError) {
 			throw hookError;

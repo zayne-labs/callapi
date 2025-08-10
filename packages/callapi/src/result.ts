@@ -185,12 +185,15 @@ export type ErrorInfo = {
 	resultMode: CallApiExtraOptions["resultMode"];
 };
 
-type ErrorResult = CallApiResultErrorVariant<unknown> | null;
+type ErrorResult = {
+	errorDetails: CallApiResultErrorVariant<unknown>;
+	generalErrorResult: CallApiResultErrorVariant<unknown> | null;
+};
 
 export const resolveErrorResult = (error: unknown, info: ErrorInfo): ErrorResult => {
 	const { cloneResponse, message: customErrorMessage, resultMode } = info;
 
-	let details = {
+	let errorDetails = {
 		data: null,
 		error: {
 			errorData: false,
@@ -204,7 +207,7 @@ export const resolveErrorResult = (error: unknown, info: ErrorInfo): ErrorResult
 	if (isValidationErrorInstance(error)) {
 		const { errorData, message, response } = error;
 
-		details = {
+		errorDetails = {
 			data: null,
 			error: { errorData, message, name: "ValidationError", originalError: error },
 			response,
@@ -214,24 +217,27 @@ export const resolveErrorResult = (error: unknown, info: ErrorInfo): ErrorResult
 	if (isHTTPErrorInstance<never>(error)) {
 		const { errorData, message, name, response } = error;
 
-		details = {
+		errorDetails = {
 			data: null,
 			error: { errorData, message, name, originalError: error },
 			response: cloneResponse ? response.clone() : response,
 		};
 	}
 
-	const resultModeMap = getResultModeMap(details);
+	const resultModeMap = getResultModeMap(errorDetails);
 
-	const errorResult = resultModeMap[resultMode ?? "all"]();
+	const generalErrorResult = resultModeMap[resultMode ?? "all"]() as never;
 
-	return errorResult as ErrorResult;
+	return {
+		errorDetails,
+		generalErrorResult,
+	};
 };
 
 export const getCustomizedErrorResult = (
-	errorResult: ErrorResult,
+	errorResult: ErrorResult["generalErrorResult"],
 	customErrorInfo: { message: string | undefined }
-): ErrorResult => {
+): ErrorResult["generalErrorResult"] => {
 	if (!errorResult) {
 		return null;
 	}
@@ -243,6 +249,6 @@ export const getCustomizedErrorResult = (
 		error: {
 			...errorResult.error,
 			message,
-		} satisfies NonNullable<ErrorResult>["error"] as never,
+		} satisfies NonNullable<ErrorResult["generalErrorResult"]>["error"] as never,
 	};
 };

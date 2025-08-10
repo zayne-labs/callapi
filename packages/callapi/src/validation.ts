@@ -184,7 +184,7 @@ type ValidationOptions<
 	schemaConfig: CallApiSchemaConfig | undefined;
 };
 
-export const handleValidation = async <TSchema extends CallApiSchema[keyof CallApiSchema]>(
+export const handleSchemaValidation = async <TSchema extends CallApiSchema[keyof CallApiSchema]>(
 	schema: TSchema | undefined,
 	validationOptions: ValidationOptions<TSchema>
 ): Promise<InferSchemaResult<TSchema>> => {
@@ -231,7 +231,7 @@ const handleExtraOptionsValidation = async (validationOptions: ExtraOptionsValid
 
 	const validationResultArray = await Promise.all(
 		extraOptionsToBeValidated.map((propertyKey) =>
-			handleValidation(schema?.[propertyKey], {
+			handleSchemaValidation(schema?.[propertyKey], {
 				inputValue: extraOptions[propertyKey],
 				schemaConfig,
 			})
@@ -268,7 +268,7 @@ const handleRequestOptionsValidation = async (validationOptions: RequestOptionsV
 
 	const validationResultArray = await Promise.all(
 		requestOptionsToBeValidated.map((propertyKey) =>
-			handleValidation(schema?.[propertyKey], {
+			handleSchemaValidation(schema?.[propertyKey], {
 				inputValue: requestOptions[propertyKey],
 				schemaConfig,
 			})
