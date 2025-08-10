@@ -149,16 +149,10 @@ const [result1, result2, result3, result4, result5, result6, result7, result8] =
 	callMainApi("https://api.github.com/repos/zayne-labs/ui/commits?per_page=50", {
 		onRequestStream: (ctx) => console.info("OnRequestStream", { event: ctx.event }),
 		onResponseStream: (ctx) => console.info("OnResponseStream", { event: ctx.event }),
-		schema: {
-			data: () => ({}) as { foo: string },
-		},
-		// schemaConfig: (ctx) => ({
-		// 	strict: false,
-		// }),
 	}),
 ]);
 
-console.info(result1, result2, result3, result4, result5, result6);
+console.info(result1, result2, result3, result4, result5, result6, result7, result8);
 
 export type ApiSuccessResponse<TData> = {
 	data?: TData;
