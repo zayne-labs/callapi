@@ -11,14 +11,13 @@ import { cn } from "@/lib/cn";
 
 const cache = new Map<string, string>();
 
-export function LLMCopyButton({
-	/**
-	 * A URL to fetch the raw Markdown/MDX content of page
-	 */
-	markdownUrl,
-}: {
+type CopyBtnProps = {
 	markdownUrl: string;
-}) {
+};
+
+export function LLMCopyButton(props: CopyBtnProps) {
+	const { markdownUrl } = props;
+
 	const [isLoading, setLoading] = useState(false);
 
 	const [checked, onClick] = useCopyButton(async () => {
@@ -38,12 +37,10 @@ export function LLMCopyButton({
 			return content;
 		});
 
+		const clipboardItem = new ClipboardItem({ "text/plain": markDownPromise });
+
 		try {
-			await navigator.clipboard.write([
-				new ClipboardItem({
-					"text/plain": markDownPromise,
-				}),
-			]);
+			await navigator.clipboard.write([clipboardItem]);
 		} finally {
 			setLoading(false);
 		}
@@ -93,6 +90,7 @@ export function ViewOptions(props: ViewOptionsProps) {
 		const fullMarkdownUrl =
 			// eslint-disable-next-line ts-eslint/no-unnecessary-condition
 			globalThis.window !== undefined ? new URL(markdownUrl, globalThis.location.origin) : "loading";
+
 		const q = `Read ${fullMarkdownUrl}, I want to ask questions about it.`;
 
 		return [
@@ -107,10 +105,7 @@ export function ViewOptions(props: ViewOptionsProps) {
 				title: "Open in GitHub",
 			},
 			{
-				href: `https://chatgpt.com/?${new URLSearchParams({
-					hints: "search",
-					q,
-				})}`,
+				href: `https://chatgpt.com/?${new URLSearchParams({ hints: "search", q })}`,
 				icon: (
 					<svg role="img" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
 						<title>OpenAI</title>
@@ -120,9 +115,7 @@ export function ViewOptions(props: ViewOptionsProps) {
 				title: "Open in ChatGPT",
 			},
 			{
-				href: `https://claude.ai/new?${new URLSearchParams({
-					q,
-				})}`,
+				href: `https://claude.ai/new?${new URLSearchParams({ q })}`,
 				icon: (
 					<svg fill="currentColor" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
 						<title>Anthropic</title>
@@ -132,9 +125,7 @@ export function ViewOptions(props: ViewOptionsProps) {
 				title: "Open in Claude",
 			},
 			{
-				href: `https://t3.chat/new?${new URLSearchParams({
-					q,
-				})}`,
+				href: `https://t3.chat/new?${new URLSearchParams({ q })}`,
 				icon: <MessageCircleIcon />,
 				title: "Open in T3 Chat",
 			},

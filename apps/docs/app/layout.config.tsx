@@ -1,11 +1,13 @@
 import { callApi } from "@zayne-labs/callapi";
 import { GithubInfo } from "fumadocs-ui/components/github-info";
+import { LargeSearchToggle } from "fumadocs-ui/components/layout/search-toggle";
 import type { DocsLayoutProps, LinkItemType } from "fumadocs-ui/layouts/docs";
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
-import { TagIcon } from "lucide-react";
+import { Sparkles, TagIcon } from "lucide-react";
 import Image from "next/image";
 import Logo from "public/logo.png";
 import { z } from "zod";
+import { AISearchTrigger } from "@/components/ai";
 import { source } from "@/lib/source";
 
 /**
@@ -73,6 +75,24 @@ export const docsOptions: DocsLayoutProps = {
 			</>
 		),
 		transparentMode: "top",
+	},
+
+	searchToggle: {
+		components: {
+			lg: (
+				<div className="flex gap-1.5 max-md:hidden">
+					<LargeSearchToggle className="grow" />
+					<AISearchTrigger
+						aria-label="Ask AI"
+						theme="outline"
+						size="icon"
+						className="text-fd-muted-foreground"
+					>
+						<Sparkles className="size-4" />
+					</AISearchTrigger>
+				</div>
+			),
+		},
 	},
 
 	sidebar: {
