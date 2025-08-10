@@ -341,7 +341,7 @@ export type ValidationErrorContext = UnmaskType<
 export type SuccessContext<TData> = UnmaskType<
 	RequestContext & {
 		/** Parsed response data with the expected success type */
-		data: NoInfer<TData>;
+		data: TData;
 		/** HTTP response object for the successful request */
 		response: Response;
 	}
