@@ -2,7 +2,14 @@ import { getAuthHeader } from "../auth";
 import { fetchSpecificKeys } from "../constants/common";
 import { extraOptionDefaults } from "../constants/default-options";
 import type { BaseCallApiExtraOptions, CallApiExtraOptions, CallApiRequestOptions } from "../types/common";
-import { isFunction, isPlainObject, isQueryString, isSerializable, isValidJsonString } from "./guards";
+import {
+	isArray,
+	isFunction,
+	isPlainObject,
+	isQueryString,
+	isSerializable,
+	isValidJsonString,
+} from "./guards";
 
 export const omitKeys = <
 	TObject extends Record<string, unknown>,
@@ -192,3 +199,5 @@ export const deterministicHashFn = (value: unknown): string => {
 		return result;
 	});
 };
+
+export const toArray = (value: unknown) => (isArray(value) ? value : [value]);

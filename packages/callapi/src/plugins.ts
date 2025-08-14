@@ -93,8 +93,10 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 
 	const hookRegistries = getHookRegistries();
 
+	const hookRegistryKeyArray = Object.keys(hookRegistries) as Array<keyof Hooks>;
+
 	const addMainHooks = () => {
-		for (const key of Object.keys(hookRegistries) as Array<keyof Hooks>) {
+		for (const key of hookRegistryKeyArray) {
 			const overriddenHook = options[key];
 			const baseHook = baseConfig[key];
 			const instanceHook = config[key];
@@ -110,7 +112,7 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 	};
 
 	const addPluginHooks = (pluginHooks: Required<CallApiPlugin>["hooks"]) => {
-		for (const key of Object.keys(hookRegistries) as Array<keyof Hooks>) {
+		for (const key of hookRegistryKeyArray) {
 			const pluginHook = pluginHooks[key];
 
 			if (!pluginHook) continue;

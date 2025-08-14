@@ -18,6 +18,7 @@ import {
 	type UnionToIntersection,
 } from "./types/type-helpers";
 import type { Params, Query } from "./url";
+import { toArray } from "./utils/common";
 import { isFunction } from "./utils/guards";
 
 type InferSchemaInput<TSchema extends CallApiSchema[keyof CallApiSchema]> =
@@ -39,15 +40,9 @@ const handleValidatorFunction = async <TInput>(
 	try {
 		const result = await validator(inputData as never);
 
-		return {
-			issues: undefined,
-			value: result as never,
-		};
+		return { issues: undefined, value: result as never };
 	} catch (error) {
-		return {
-			issues: error as never,
-			value: undefined,
-		};
+		return { issues: toArray(error) as never, value: undefined };
 	}
 };
 

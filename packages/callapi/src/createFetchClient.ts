@@ -246,7 +246,7 @@ export const createFetchClient = <
 			} = await handleConfigValidation({
 				baseExtraOptions,
 				currentRouteSchemaKey: resolvedCurrentRouteSchemaKey,
-				extraOptions,
+				extraOptions: options,
 				requestOptions: request,
 			});
 
