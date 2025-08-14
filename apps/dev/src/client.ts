@@ -78,6 +78,11 @@ const callMainApi = createFetchClient({
 	plugins: [pluginOne, pluginTwo],
 
 	schema: defineSchema({
+		".": {
+			// data: z.object({ random: z.number() }),
+			// params: z.object({ per_page: z.number() }).optional(),
+		},
+
 		"@delete/products/:id": {
 			data: z.object({ id: z.number() }),
 			// headers: z.object({ Authorization: z.string() }).optional(),
@@ -89,6 +94,10 @@ const callMainApi = createFetchClient({
 
 		"/products/{id}": {
 			data: z.object({ id: z.number(), price: z.number(), title: z.string() }),
+		},
+
+		"https://api.github.com/repos/zayne-labs/ui/commits": {
+			// data: z.array(z.object({ version: z.string() })),
 		},
 	}),
 });
@@ -114,7 +123,7 @@ const stream = new ReadableStream({
 const [result1, result2, result3, result4, result5, result6, result7, result8] = await Promise.all([
 	callMainApi<{ price: number }>("/products/:id", {
 		onRequest: () => console.info("OnRequest - INSTANCE"),
-		params: [1],
+		params: { id: 1 },
 	}),
 
 	callMainApi("/products/:id", {
@@ -146,9 +155,10 @@ const [result1, result2, result3, result4, result5, result6, result7, result8] =
 		params: [1],
 	}),
 
-	callMainApi("https://api.github.com/repos/zayne-labs/ui/commits?per_page=50", {
+	callMainApi("https://api.github.com/repos/zayne-labs/ui/commits", {
 		onRequestStream: (ctx) => console.info("OnRequestStream", { event: ctx.event }),
 		onResponseStream: (ctx) => console.info("OnResponseStream", { event: ctx.event }),
+		query: { per_page: 50 },
 	}),
 ]);
 

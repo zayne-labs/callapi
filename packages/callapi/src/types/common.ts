@@ -615,26 +615,25 @@ export type CallApiExtraOptions<
 		| ((context: { basePlugins: Writeable<TBasePluginArray, "deep"> }) => TPluginArray);
 
 	/**
-	 * Instance-specific validation schemas or a function to configure schemas.
+	 * For instance-specific validation schemas
 	 *
-	 * Defines validation rules specific to this API instance, extending or
-	 * overriding base schemas. Can be a static schema object or a function
-	 * that receives base schema context and returns instance schemas.
+	 * Defines validation rules specific to this API instance, extending or overriding the base schema.
+	 *
+	 * Can be a static schema object or a function that receives base schema context and returns instance schemas.
 	 *
 	 */
 	schema?:
 		| TSchema
 		| ((context: {
-				baseSchema: Writeable<TBaseSchemaRoutes, "deep">;
+				baseSchemaRoutes: Writeable<TBaseSchemaRoutes, "deep">;
 				currentRouteSchema: GetCurrentRouteSchema<TBaseSchemaRoutes, TCurrentRouteSchemaKey>;
 		  }) => TSchema);
 
 	/**
 	 * Instance-specific schema configuration or a function to configure schema behavior.
 	 *
-	 * Controls how validation schemas are applied and behave for this specific
-	 * API instance. Can override base schema configuration or extend it with
-	 * instance-specific validation rules.
+	 * Controls how validation schemas are applied and behave for this specific API instance.
+	 * Can override base schema configuration or extend it with instance-specific validation rules.
 	 *
 	 */
 	schemaConfig?:

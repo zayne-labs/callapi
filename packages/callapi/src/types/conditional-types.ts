@@ -6,6 +6,7 @@ import type {
 	BaseCallApiSchemaRoutes,
 	CallApiSchema,
 	CallApiSchemaConfig,
+	FallBackRouteSchemaKey,
 	InferSchemaResult,
 	RouteKeyMethods,
 	RouteKeyMethodsURLUnion,
@@ -49,7 +50,10 @@ export type ApplySchemaConfiguration<
 export type InferAllRouteKeys<
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
 	TSchemaConfig extends CallApiSchemaConfig,
-> = ApplySchemaConfiguration<TSchemaConfig, Extract<keyof TBaseSchemaRoutes, string>>;
+> = ApplySchemaConfiguration<
+	TSchemaConfig,
+	Exclude<Extract<keyof TBaseSchemaRoutes, string>, FallBackRouteSchemaKey>
+>;
 
 export type InferInitURL<
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
@@ -72,13 +76,28 @@ export type GetCurrentRouteSchemaKey<TSchemaConfig extends CallApiSchemaConfig, 
 		:	string
 	:	TPath;
 
+// export type GetCurrentRouteSchema<
+// 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
+// 	TCurrentRouteSchemaKey extends string,
+// > =
+// 	TBaseSchemaRoutes[TCurrentRouteSchemaKey] extends CallApiSchema ?
+// 		NonNullable<Writeable<TBaseSchemaRoutes[TCurrentRouteSchemaKey], "deep">>
+// 	: TBaseSchemaRoutes[FallBackRouteSchemaKey] extends CallApiSchema ?
+// 		NonNullable<Writeable<TBaseSchemaRoutes[FallBackRouteSchemaKey], "deep">>
+// 	:	CallApiSchema;
+
 export type GetCurrentRouteSchema<
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
 	TCurrentRouteSchemaKey extends string,
-> =
-	TBaseSchemaRoutes[TCurrentRouteSchemaKey] extends CallApiSchema ?
-		NonNullable<Writeable<TBaseSchemaRoutes[TCurrentRouteSchemaKey], "deep">>
-	:	CallApiSchema;
+	TComputedRouteSchema extends CallApiSchema = Omit<
+		TBaseSchemaRoutes[FallBackRouteSchemaKey],
+		keyof TBaseSchemaRoutes[TCurrentRouteSchemaKey]
+	>
+		& TBaseSchemaRoutes[TCurrentRouteSchemaKey],
+	TComputedWriteableRouteSchema extends CallApiSchema = NonNullable<
+		Writeable<TComputedRouteSchema, "deep">
+	>,
+> = TComputedWriteableRouteSchema extends CallApiSchema ? TComputedWriteableRouteSchema : CallApiSchema;
 
 type JsonPrimitive = boolean | number | string | null | undefined;
 
@@ -202,12 +221,15 @@ type EmptyTuple = readonly [];
 
 type StringTuple = readonly string[];
 
+type PossibleParamNamePatterns =
+	| `${string}:${string}${"" | "/"}${"" | AnyString}`
+	| `${string}{${string}}${"" | "/"}${"" | AnyString}`;
+
 type ExtractRouteParamNames<TCurrentRoute, TParamNamesAccumulator extends StringTuple = EmptyTuple> =
 	// Check if there are any parameters left to process
-	TCurrentRoute extends `${string}:${string}` | `${string}{${string}}${string}` ?
+	TCurrentRoute extends PossibleParamNamePatterns ?
 		// Process :param style patterns first
 		TCurrentRoute extends `${infer TRoutePrefix}:${infer TParamAndRemainingRoute}` ?
-			// Extract parameter name from :param
 			TParamAndRemainingRoute extends `${infer TCurrentParam}/${infer TRemainingRoute}` ?
 				TCurrentParam extends EmptyString ?
 					ExtractRouteParamNames<`${TRoutePrefix}/${TRemainingRoute}`, TParamNamesAccumulator>
@@ -220,7 +242,7 @@ type ExtractRouteParamNames<TCurrentRoute, TParamNamesAccumulator extends String
 					ExtractRouteParamNames<TRoutePrefix, TParamNamesAccumulator>
 				:	ExtractRouteParamNames<TRoutePrefix, [...TParamNamesAccumulator, TCurrentParam]>
 			:	ExtractRouteParamNames<TRoutePrefix, TParamNamesAccumulator>
-		: // Process {param} style patterns
+		: // Process {param} style patterns next
 		TCurrentRoute extends `${infer TRoutePrefix}{${infer TCurrentParam}}${infer TRemainingRoute}` ?
 			TCurrentParam extends EmptyString ?
 				ExtractRouteParamNames<`${TRoutePrefix}${TRemainingRoute}`, TParamNamesAccumulator>
@@ -286,13 +308,10 @@ type MakeParamsOptionRequired<
 	TObject,
 > = MakeSchemaOptionRequiredIfDefined<
 	TParamsSchemaOption,
-	TCurrentRouteSchemaKey extends (
-		| `${string}:${string}${"" | "/"}${"" | AnyString}`
-		| `${string}{${string}}${"" | "/"}${"" | AnyString}`
-	) ?
+	TCurrentRouteSchemaKey extends PossibleParamNamePatterns ?
 		TCurrentRouteSchemaKey extends Extract<keyof TBaseSchemaRoutes, TCurrentRouteSchemaKey> ?
 			// == If ParamsSchema option is defined but has undefined in the union, it should take precedence to remove the required flag
-			undefined extends InferSchemaResult<TParamsSchemaOption, null> ?
+			undefined extends InferSchemaResult<TParamsSchemaOption, undefined> ?
 				TObject
 			:	Required<TObject>
 		:	TObject

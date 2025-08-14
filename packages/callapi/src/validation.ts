@@ -348,18 +348,29 @@ type GetResolvedSchemaContext = {
 	extraOptions: CallApiExtraOptions;
 };
 
+const fallBackRouteSchemaKey = ".";
+
+export type FallBackRouteSchemaKey = typeof fallBackRouteSchemaKey;
+
 export const getResolvedSchema = (context: GetResolvedSchemaContext) => {
 	const { baseExtraOptions, currentRouteSchemaKey, extraOptions } = context;
 
+	const fallbackRouteSchema = baseExtraOptions.schema?.routes[fallBackRouteSchemaKey];
 	const currentRouteSchema = baseExtraOptions.schema?.routes[currentRouteSchemaKey];
+
+	const resolvedRouteSchema = {
+		...fallbackRouteSchema,
+		// == Current route schema takes precedence over fallback route schema
+		...currentRouteSchema,
+	} satisfies CallApiSchema as CallApiSchema | undefined;
 
 	const resolvedSchema =
 		isFunction(extraOptions.schema) ?
 			extraOptions.schema({
-				baseSchema: baseExtraOptions.schema?.routes ?? {},
-				currentRouteSchema: currentRouteSchema ?? {},
+				baseSchemaRoutes: baseExtraOptions.schema?.routes ?? {},
+				currentRouteSchema: resolvedRouteSchema ?? {},
 			})
-		:	(extraOptions.schema ?? currentRouteSchema);
+		:	(extraOptions.schema ?? resolvedRouteSchema);
 
 	return { currentRouteSchema, resolvedSchema };
 };
