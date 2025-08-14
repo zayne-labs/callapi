@@ -61,6 +61,17 @@ export const docsOptions: DocsLayoutProps = {
 	],
 
 	nav: {
+		children: (
+			<AISearchTrigger
+				theme="secondary"
+				size="sm"
+				className="absolute top-1/2 left-1/2 -translate-1/2 gap-2 rounded-full text-fd-muted-foreground
+					md:hidden"
+			>
+				<Sparkles className="size-4.5 fill-current" />
+				Ask AI
+			</AISearchTrigger>
+		),
 		title: (
 			<>
 				<Image
