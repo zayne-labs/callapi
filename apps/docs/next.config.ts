@@ -12,10 +12,6 @@ const config = {
 		ignoreDuringBuilds: true,
 	},
 
-	experimental: {
-		devtoolNewPanelUI: true,
-		devtoolSegmentExplorer: true,
-	},
 	reactStrictMode: true,
 
 	// eslint-disable-next-line ts-eslint/require-await

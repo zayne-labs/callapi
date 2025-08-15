@@ -58,13 +58,13 @@ const { data } = await callMainApi("/users/123", {
 });
 ```
 
-![Cancel Strategy Visualization](public/media/cancel.webp)
+![Cancel Strategy Visualization](/media/cancel.webp)
 
 ### 2. Defer Strategy
 
 The `defer` strategy shares the same response promise between duplicate requests. If a request is made while an identical one is still in-flight, it will receive the same response.
 
-![Defer Strategy Visualization](public/media/defer.svg)
+![Defer Strategy Visualization](/media/defer.svg)
 
 Example: Multiple components requesting user data simultaneously
 
