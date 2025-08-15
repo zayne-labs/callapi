@@ -1,8 +1,11 @@
 export { callApi, createFetchClient } from "./createFetchClient";
 
 export type { DedupeOptions } from "./dedupe";
+
 export * from "./defineHelpers";
+
 export { HTTPError, ValidationError } from "./error";
+
 export type {
 	ErrorContext,
 	Hooks,
@@ -15,12 +18,14 @@ export type {
 	ResponseStreamContext,
 	SuccessContext,
 } from "./hooks";
+
 export {
 	type CallApiPlugin,
 	type PluginHooks,
 	type PluginHooksWithMoreOptions,
 	type PluginSetupContext,
 } from "./plugins";
+
 export {
 	type CallApiResultErrorVariant,
 	type CallApiResultSuccessVariant,
@@ -31,7 +36,9 @@ export {
 	type ResponseTypeUnion,
 	type ResultModeUnion,
 } from "./result";
+
 export type { RetryOptions } from "./retry";
+
 export type {
 	BaseCallApiConfig,
 	BaseCallApiExtraOptions,
@@ -45,10 +52,13 @@ export type {
 	InferParamsFromRoute,
 	Register,
 } from "./types";
+
 export type { URLOptions } from "./url";
+
 export {
 	type BaseCallApiSchemaRoutes,
 	type CallApiSchema,
 	type CallApiSchemaConfig,
+	fallBackRouteSchemaKey,
 	type InferSchemaResult,
 } from "./validation";

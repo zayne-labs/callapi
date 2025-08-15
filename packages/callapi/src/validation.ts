@@ -348,7 +348,7 @@ type GetResolvedSchemaContext = {
 	extraOptions: CallApiExtraOptions;
 };
 
-const fallBackRouteSchemaKey = ".";
+export const fallBackRouteSchemaKey = ".";
 
 export type FallBackRouteSchemaKey = typeof fallBackRouteSchemaKey;
 
