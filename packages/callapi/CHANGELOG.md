@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.9.7
+
+### Patch Changes
+
+- b47396f: feat(callapi/validation): export fallBackRouteSchemaKey constant and type to enable external access to fallback route resolution ✨
+
 ## 1.9.6
 
 ### Patch Changes
