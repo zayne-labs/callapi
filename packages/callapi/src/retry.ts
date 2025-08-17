@@ -142,7 +142,7 @@ export const createRetryStrategy = (ctx: ErrorContext<unknown> & RequestContext)
 
 		const customRetryCondition = await retryCondition(ctx);
 
-		const baseShouldRetry = maximumRetryAttempts >= currentAttemptCount && customRetryCondition;
+		const baseShouldRetry = currentAttemptCount <= maximumRetryAttempts && customRetryCondition;
 
 		if (!baseShouldRetry) {
 			return false;

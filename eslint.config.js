@@ -2,7 +2,7 @@ import { zayne } from "@zayne-labs/eslint-config";
 
 export default zayne(
 	{
-		ignores: ["packages/**/dist/**", "apps/docs/.source/**"],
+		ignores: ["packages/**/dist/**", "apps/docs/.source/**", "packages/callapi/tests/**"],
 		react: {
 			// compiler: true,
 			files: ["apps/docs/**/*.{ts,tsx}"],

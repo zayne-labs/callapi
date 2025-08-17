@@ -1,7 +1,7 @@
 {
 	"name": "@zayne-labs/callapi",
 	"type": "module",
-	"version": "1.9.7",
+	"version": "1.9.8",
 	"description": "A lightweight wrapper over fetch with quality of life improvements like built-in request cancellation, retries, interceptors and more",
 	"author": "Ryan Zayne",
 	"license": "MIT",
@@ -47,7 +47,10 @@
 		"lint:size": "size-limit",
 		"lint:type-check": "tsc --pretty  -p tsconfig.json",
 		"release": "pnpm publish --no-git-checks",
-		"release:test": "pnpx pkg-pr-new publish"
+		"release:test": "pnpx pkg-pr-new publish",
+		"test": "vitest",
+		"test:coverage": "vitest run --coverage",
+		"test:run": "vitest run"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "0.18.2",
@@ -63,7 +66,8 @@
 		"size-limit": "11.2.0",
 		"tsdown": "^0.14.1",
 		"typescript": "5.9.2",
-		"vitest": "^3.2.4"
+		"vitest": "^3.2.4",
+		"zod": "^4.0.17"
 	},
 	"publishConfig": {
 		"access": "public",

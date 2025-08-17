@@ -2,7 +2,7 @@ import type { Auth } from "../auth";
 import type { fetchSpecificKeys } from "../constants/common";
 import type { DedupeOptions } from "../dedupe";
 import type { HTTPError } from "../error";
-import type { HookConfigOptions, Hooks, HooksOrHooksArray } from "../hooks";
+import type { ErrorContext, HookConfigOptions, Hooks, HooksOrHooksArray } from "../hooks";
 import type { CallApiPlugin } from "../plugins";
 import type { GetCallApiResult, ResponseTypeUnion, ResultModeUnion } from "../result";
 import type { RetryOptions } from "../retry";
@@ -442,7 +442,7 @@ type SharedExtraOptions<
 		 * }
 		 * ```
 		 */
-		throwOnError?: TThrowOnError;
+		throwOnError?: TThrowOnError | ((context: ErrorContext<TErrorData>) => TThrowOnError);
 
 		/**
 		 * Request timeout in milliseconds. Request will be aborted if it takes longer.
