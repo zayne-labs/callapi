@@ -10,12 +10,12 @@ const mockFetch = vi.fn();
 
 // Set up global fetch mock
 beforeEach(() => {
-    // Reset all mocks and their implementations before each test
-    // This prevents mockResolvedValueOnce/mockRejectedValueOnce leakage across tests
-    vi.resetAllMocks();
+	// Reset all mocks and their implementations before each test
+	// This prevents mockResolvedValueOnce/mockRejectedValueOnce leakage across tests
+	vi.resetAllMocks();
 
-    // Mock global fetch to intercept network calls
-    globalThis.fetch = mockFetch;
+	// Mock global fetch to intercept network calls
+	globalThis.fetch = mockFetch;
 });
 
 // Export the mock fetch for use in tests
