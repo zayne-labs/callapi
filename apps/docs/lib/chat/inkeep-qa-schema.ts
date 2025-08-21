@@ -41,10 +41,6 @@ const KnownAnswerConfidence = z.enum([
 
 const AnswerConfidence = z.union([KnownAnswerConfidence, z.string()]); // evolvable
 
-const AIAnnotationsToolSchema = z.looseObject({
-	answerConfidence: AnswerConfidence,
-});
+const AIAnnotationsToolSchema = z.looseObject({ answerConfidence: AnswerConfidence });
 
-export const ProvideAIAnnotationsToolSchema = z.object({
-	aiAnnotations: AIAnnotationsToolSchema,
-});
+export const ProvideAIAnnotationsToolSchema = z.object({ aiAnnotations: AIAnnotationsToolSchema });
