@@ -446,7 +446,7 @@ export const createFetchClient = <
 				return (hookError ?? (await handleRetryOrGetErrorResult())) as never;
 			}
 
-			let message: string | undefined = (error as Error | undefined)?.message;
+			let message = (error as Error | undefined)?.message;
 
 			if (error instanceof DOMException && error.name === "AbortError") {
 				message = getAbortErrorMessage();
