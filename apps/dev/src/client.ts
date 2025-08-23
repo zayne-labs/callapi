@@ -97,6 +97,7 @@ const callMainApi = createFetchClient({
 		},
 
 		"https://api.github.com/repos/zayne-labs/ui/commits": {
+			// params: z.object({ per_page: z.number() }).optional(),
 			// data: z.array(z.object({ version: z.string() })),
 		},
 	}),

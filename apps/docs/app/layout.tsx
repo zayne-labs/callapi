@@ -1,4 +1,4 @@
-/* eslint-disable react-refresh/only-export-components -- Not relevant in Next.js */
+/* eslint-disable react-refresh/only-export-components */
 
 import { Geist, Geist_Mono } from "next/font/google";
 import { baseURL, createMetadata } from "@/lib/metadata";

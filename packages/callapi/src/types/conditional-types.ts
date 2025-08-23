@@ -221,9 +221,7 @@ type EmptyTuple = readonly [];
 
 type StringTuple = readonly string[];
 
-type PossibleParamNamePatterns =
-	| `${string}:${string}${"" | "/"}${"" | AnyString}`
-	| `${string}{${string}}${"" | "/"}${"" | AnyString}`;
+type PossibleParamNamePatterns = `${string}:${string}` | `${string}{${string}}${"" | AnyString}`;
 
 type ExtractRouteParamNames<TCurrentRoute, TParamNamesAccumulator extends StringTuple = EmptyTuple> =
 	// Check if there are any parameters left to process
@@ -308,13 +306,12 @@ type MakeParamsOptionRequired<
 	TObject,
 > = MakeSchemaOptionRequiredIfDefined<
 	TParamsSchemaOption,
-	TCurrentRouteSchemaKey extends PossibleParamNamePatterns ?
-		TCurrentRouteSchemaKey extends Extract<keyof TBaseSchemaRoutes, TCurrentRouteSchemaKey> ?
-			// == If ParamsSchema option is defined but has undefined in the union, it should take precedence to remove the required flag
-			undefined extends InferSchemaResult<TParamsSchemaOption, undefined> ?
-				TObject
-			:	Required<TObject>
-		:	TObject
+	Params extends InferParamsFromRoute<TCurrentRouteSchemaKey> ? TObject
+	: TCurrentRouteSchemaKey extends Extract<keyof TBaseSchemaRoutes, TCurrentRouteSchemaKey> ?
+		// == If ParamsSchema option is defined but has undefined in the union, it should take precedence to remove the required flag
+		undefined extends InferSchemaResult<TParamsSchemaOption, null> ?
+			TObject
+		:	Required<TObject>
 	:	TObject
 >;
 

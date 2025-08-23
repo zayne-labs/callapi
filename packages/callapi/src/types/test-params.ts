@@ -1,6 +1,6 @@
 /* eslint-disable ts-eslint/no-unused-vars -- allow */
 // Test file to verify the InferParamsFromRoute type works with mixed patterns
-import type { InferParamsFromRoute } from "./types/conditional-types";
+import type { InferParamsFromRoute } from "./conditional-types";
 
 // Test cases
 type Test1 = InferParamsFromRoute<"users/{id}/:version">;
@@ -9,6 +9,7 @@ type Test3 = InferParamsFromRoute<"users/:userId/posts/{postId}">;
 type Test4 = InferParamsFromRoute<"users/{id}">;
 type Test5 = InferParamsFromRoute<"users/:id">;
 type Test6 = InferParamsFromRoute<"users/static/path">;
+type Test7 = InferParamsFromRoute<"https://api.github.com/repos/zayne-labs/ui/commit">;
 
 // Debug: Let's see what Test3 actually resolves to
 type Test3Debug = Test3;
