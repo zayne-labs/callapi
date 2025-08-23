@@ -1,5 +1,12 @@
 # docs
 
+## 0.0.31
+
+### Patch Changes
+
+- Updated dependencies [fc435f4]
+   - @zayne-labs/callapi@1.9.9
+
 ## 0.0.30
 
 ### Patch Changes
