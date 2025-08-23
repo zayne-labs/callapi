@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.9.9
+
+### Patch Changes
+
+- fc435f4: refactor: update parameter patterns in conditional-types and clean up client.ts comments; remove unused test-params file
+
 ## 1.9.7
 
 ### Patch Changes
