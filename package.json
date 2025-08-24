@@ -17,6 +17,7 @@
 		"dev:callapi": "turbo run --filter=./packages/callapi dev",
 		"dev:callapi-plugins": "turbo run --filter=./packages/callapi-plugins dev",
 		"dev:docs": "turbo run --filter=./apps/docs dev",
+		"dev:dev": "turbo run --filter=./apps/dev dev",
 		"inspect:eslint-config": "pnpx @eslint/config-inspector@latest",
 		"lint:attw": "turbo run --filter=./packages/* lint:attw",
 		"lint:eslint": "turbo run --filter=./packages/* lint:eslint",
