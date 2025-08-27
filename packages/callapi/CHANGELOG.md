@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.9.10
+
+### Patch Changes
+
+- 40c8a4e: fix: validation bug due to wrong arguments passed
+
 ## 1.9.9
 
 ### Patch Changes
