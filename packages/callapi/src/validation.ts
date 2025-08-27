@@ -216,18 +216,18 @@ const extraOptionsToBeValidated = ["meta", "params", "query"] satisfies Tuple<
 >;
 
 type ExtraOptionsValidationOptions = {
-	extraOptions: CallApiExtraOptions;
+	options: CallApiExtraOptions;
 	schema: CallApiSchema | undefined;
 	schemaConfig: CallApiSchemaConfig | undefined;
 };
 
 const handleExtraOptionsValidation = async (validationOptions: ExtraOptionsValidationOptions) => {
-	const { extraOptions, schema, schemaConfig } = validationOptions;
+	const { options, schema, schemaConfig } = validationOptions;
 
 	const validationResultArray = await Promise.all(
 		extraOptionsToBeValidated.map((propertyKey) =>
 			handleSchemaValidation(schema?.[propertyKey], {
-				inputValue: extraOptions[propertyKey],
+				inputValue: options[propertyKey],
 				schemaConfig,
 			})
 		)
@@ -289,7 +289,8 @@ export const handleConfigValidation = async (
 	validationOptions: GetResolvedSchemaContext
 		& Omit<ExtraOptionsValidationOptions & RequestOptionsValidationOptions, "schema" | "schemaConfig">
 ) => {
-	const { baseExtraOptions, currentRouteSchemaKey, extraOptions, requestOptions } = validationOptions;
+	const { baseExtraOptions, currentRouteSchemaKey, extraOptions, options, requestOptions } =
+		validationOptions;
 
 	const { currentRouteSchema, resolvedSchema } = getResolvedSchema({
 		baseExtraOptions,
@@ -318,7 +319,7 @@ export const handleConfigValidation = async (
 
 	const [extraOptionsValidationResult, requestOptionsValidationResult] = await Promise.all([
 		handleExtraOptionsValidation({
-			extraOptions,
+			options,
 			schema: resolvedSchema,
 			schemaConfig: resolvedSchemaConfig,
 		}),
