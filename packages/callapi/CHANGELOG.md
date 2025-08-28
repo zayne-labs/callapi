@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.9.11
+
+### Patch Changes
+
+- 4a9fcdf: fix: properly infer response types
+
 ## 1.9.10
 
 ### Patch Changes
