@@ -11,6 +11,7 @@ import {
 import { type CallApiPlugin, initializePlugins } from "./plugins";
 import {
 	type ErrorInfo,
+	type GetResponseType,
 	getCustomizedErrorResult,
 	type ResponseTypeUnion,
 	type ResultModeUnion,
@@ -111,8 +112,8 @@ export const createFetchClient = <
 		const TPluginArray extends CallApiPlugin[] = TBasePluginArray,
 	>(
 		...parameters: CallApiParameters<
-			InferSchemaResult<TSchema["data"], TData>,
-			InferSchemaResult<TSchema["errorData"], TErrorData>,
+			InferSchemaResult<TSchema["data"], GetResponseType<TData, TResponseType>>,
+			InferSchemaResult<TSchema["errorData"], GetResponseType<TErrorData, TResponseType>>,
 			TResultMode,
 			TThrowOnError,
 			TResponseType,
