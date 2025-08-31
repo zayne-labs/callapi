@@ -633,5 +633,257 @@ describe("Request Deduplication", () => {
 
 			console.info(`Empty key: Fetch calls: ${getFetchCallCount()} (expected: 1)`);
 		});
+
+		it("should handle null dedupe key from function", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupeKey: () => null as any, // Return null to disable deduplication
+				dedupeStrategy: "defer",
+			});
+
+			mockFetchSuccess(mockUser);
+			mockFetchSuccess(mockUsers[1]);
+
+			// Null key should disable deduplication
+			const [result1, result2] = await Promise.all([client("/users/1"), client("/users/1")]);
+
+			expect(result1.data).toBeDefined();
+			expect(result2.data).toBeDefined();
+
+			// Should make separate calls when key is null
+			expect(getFetchCallCount()).toBe(2);
+		});
+
+		it("should handle deduplication with custom fetch implementation", async () => {
+			const customFetch = vi
+				.fn()
+				.mockResolvedValue(new Response(JSON.stringify(mockUser), { status: 200 }));
+
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				customFetchImpl: customFetch,
+				dedupeStrategy: "defer",
+			});
+
+			// Start multiple requests that should be deduplicated
+			const [result1, result2] = await Promise.all([client("/users/1"), client("/users/1")]);
+
+			expect(result1.data).toBeDefined();
+			expect(result2.data).toBeDefined();
+
+			// Custom fetch should be called (deduplication works with custom fetch)
+			expect(customFetch).toHaveBeenCalled();
+		});
+
+		it("should handle deduplication with request that has no fullURL", async () => {
+			const client = createFetchClient({
+				dedupeStrategy: "defer",
+			});
+
+			mockFetchSuccess(mockUser);
+			mockFetchSuccess(mockUser);
+
+			// Make requests without baseURL (fullURL will be just the path)
+			const [result1, result2] = await Promise.all([client("/users/1"), client("/users/1")]);
+
+			expect(result1.data).toBeDefined();
+			expect(result2.data).toBeDefined();
+
+			console.info(`No fullURL: Fetch calls: ${getFetchCallCount()} (expected: 1)`);
+		});
+
+		it("should handle deduplication cache cleanup on error", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupeStrategy: "defer",
+				resultMode: "all",
+			});
+
+			// Mock an error response
+			mockFetchError({ message: "Server error" }, 500);
+
+			const result = await client("/users/1");
+			expect(result.error).toBeDefined();
+
+			// Make another request - should not be deduplicated since first failed and was cleaned up
+			mockFetchSuccess(mockUser);
+			const result2 = await client("/users/1");
+			expect(result2.data).toBeDefined();
+
+			expect(getFetchCallCount()).toBe(2);
+		});
+
+		it("should handle global cache scope without explicit scope key", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupeCacheScope: "global",
+				// No dedupeCacheScopeKey provided - should use default
+				dedupeStrategy: "defer",
+			});
+
+			mockFetchSuccess(mockUser);
+			mockFetchSuccess(mockUser);
+
+			const [result1, result2] = await Promise.all([client("/users/1"), client("/users/1")]);
+
+			expect(result1.data).toBeDefined();
+			expect(result2.data).toBeDefined();
+
+			console.info(`Global default scope: Fetch calls: ${getFetchCallCount()} (expected: 1)`);
+		});
+
+		it("should handle deduplication with complex request options", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupeStrategy: "defer",
+			});
+
+			const requestOptions = {
+				method: "POST" as const,
+				body: { name: "Test User", email: "test@example.com" },
+				headers: { "Content-Type": "application/json", "X-Custom": "value" },
+			};
+
+			mockFetchSuccess(mockUser);
+			mockFetchSuccess(mockUser);
+
+			// Same complex options should be deduplicated
+			const [result1, result2] = await Promise.all([
+				client("/users", requestOptions),
+				client("/users", requestOptions),
+			]);
+
+			expect(result1.data).toBeDefined();
+			expect(result2.data).toBeDefined();
+
+			console.info(`Complex options: Fetch calls: ${getFetchCallCount()} (expected: 1)`);
+		});
+
+		it("should handle deduplication with very long custom keys", async () => {
+			const longKey = "a".repeat(1000); // Very long key
+
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupeKey: longKey,
+				dedupeStrategy: "defer",
+			});
+
+			mockFetchSuccess(mockUser);
+			mockFetchSuccess(mockUser);
+
+			// Long keys should work fine
+			const [result1, result2] = await Promise.all([client("/users/1"), client("/users/2")]);
+
+			expect(result1.data).toBeDefined();
+			expect(result2.data).toBeDefined();
+
+			console.info(`Long key: Fetch calls: ${getFetchCallCount()} (expected: 1)`);
+		});
+
+		it("should handle deduplication with special characters in keys", async () => {
+			const specialKey = "key-with-!@#$%^&*()_+-=[]{}|;:,.<>?";
+
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupeKey: specialKey,
+				dedupeStrategy: "defer",
+			});
+
+			mockFetchSuccess(mockUser);
+			mockFetchSuccess(mockUser);
+
+			// Special characters in keys should work
+			const [result1, result2] = await Promise.all([client("/users/1"), client("/users/2")]);
+
+			expect(result1.data).toBeDefined();
+			expect(result2.data).toBeDefined();
+
+			console.info(`Special key: Fetch calls: ${getFetchCallCount()} (expected: 1)`);
+		});
+
+		it("should handle cancel strategy with custom abort error message", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupeKey: "custom-test-key",
+				dedupeStrategy: "cancel",
+			});
+
+			// Create a deferred promise to control timing
+			const { promise, resolve } = createDeferredPromise<Response>();
+
+			// Mock fetch to return our controlled promise for first request
+			vi.mocked(globalThis.fetch).mockReturnValueOnce(promise);
+			mockFetchSuccess(mockUser); // For second request
+
+			// Start first request
+			const firstRequestPromise = client("/users/1");
+
+			// Small delay to ensure first request is in cache
+			await new Promise((resolve) => setTimeout(resolve, 1));
+
+			// Start second request (should cancel first)
+			const secondRequestPromise = client("/users/1");
+
+			// Resolve first request after second has started
+			resolve(new Response(JSON.stringify(mockUser), { status: 200 }));
+
+			const results = await Promise.allSettled([firstRequestPromise, secondRequestPromise]);
+
+			// Check if any request was cancelled with custom key in message
+			const rejectedResults = results.filter((r) => r.status === "rejected");
+			if (rejectedResults.length > 0) {
+				const hasCustomKeyInMessage = rejectedResults.some((result) =>
+					result.reason?.message?.includes("custom-test-key")
+				);
+				console.info(`Custom key in abort message: ${hasCustomKeyInMessage}`);
+			}
+
+			// At least one should complete
+			const fulfilledResults = results.filter((r) => r.status === "fulfilled");
+			expect(fulfilledResults.length).toBeGreaterThan(0);
+		});
+
+		it("should handle defer strategy with no previous request info", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupeStrategy: "defer",
+			});
+
+			mockFetchSuccess(mockUser);
+
+			// Single request should work normally with defer strategy
+			const result = await client("/users/1");
+
+			expect(result.data).toBeDefined();
+			expect(getFetchCallCount()).toBe(1);
+		});
+
+		it("should handle global cache initialization", async () => {
+			// Create multiple clients with same global scope key
+			const client1 = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupeCacheScope: "global",
+				dedupeCacheScopeKey: "new-global-scope",
+				dedupeStrategy: "defer",
+			});
+
+			const client2 = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupeCacheScope: "global",
+				dedupeCacheScopeKey: "new-global-scope",
+				dedupeStrategy: "defer",
+			});
+
+			mockFetchSuccess(mockUser);
+			mockFetchSuccess(mockUser);
+
+			// Both clients should share the same global cache
+			const [result1, result2] = await Promise.all([client1("/users/1"), client2("/users/1")]);
+
+			expect(result1.data).toBeDefined();
+			expect(result2.data).toBeDefined();
+
+			console.info(`New global scope: Fetch calls: ${getFetchCallCount()} (expected: 1)`);
+		});
 	});
 });

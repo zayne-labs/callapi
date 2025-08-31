@@ -59,6 +59,7 @@ export const standardSchemaParser = async <
 		:	await schema["~standard"].validate(inputData);
 
 	// == If the `issues` field exists, it means the validation failed
+
 	if (result.issues) {
 		throw new ValidationError(
 			{ issues: result.issues, response: response ?? null },
