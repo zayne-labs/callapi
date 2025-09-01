@@ -2,7 +2,7 @@ import { extraOptionDefaults } from "./constants/default-options";
 import type { ErrorContext, RequestContext } from "./hooks";
 import type { MethodUnion } from "./types";
 import { type AnyNumber, type Awaitable, defineEnum, type UnmaskType } from "./types/type-helpers";
-import { isFunction } from "./utils/guards";
+import { isBoolean, isFunction, isString } from "./utils/guards";
 
 // eslint-disable-next-line ts-eslint/no-unused-vars -- Ignore
 const defaultRetryStatusCodesLookup = () =>
@@ -111,7 +111,7 @@ const getExponentialDelay = (currentAttemptCount: number, options: RetryOptions<
 };
 
 export const createRetryStrategy = (ctx: ErrorContext<unknown> & RequestContext) => {
-	const { options } = ctx;
+	const { options, request } = ctx;
 
 	// eslint-disable-next-line ts-eslint/no-deprecated -- Allowed for internal use
 	const currentAttemptCount = options["~retryAttemptCount"] ?? 1;
@@ -134,6 +134,10 @@ export const createRetryStrategy = (ctx: ErrorContext<unknown> & RequestContext)
 	};
 
 	const shouldAttemptRetry = async () => {
+		if (isBoolean(request.signal) && request.signal.aborted) {
+			return false;
+		}
+
 		const retryCondition =
 			options.retryCondition ?? options.retry?.condition ?? extraOptionDefaults().retryCondition;
 
@@ -152,14 +156,19 @@ export const createRetryStrategy = (ctx: ErrorContext<unknown> & RequestContext)
 			options.retryMethods ?? options.retry?.methods ?? extraOptionDefaults().retryMethods
 		);
 
-		// eslint-disable-next-line ts-eslint/no-non-null-assertion -- Allowed because default value is "GET" internally
-		const includesMethod = retryMethods.has(ctx.request.method!);
+		const includesMethod =
+			isString(ctx.request.method) && retryMethods.size > 0 ?
+				retryMethods.has(ctx.request.method)
+			:	true;
 
-		const retryStatusCodes = new Set(options.retryStatusCodes ?? options.retry?.statusCodes ?? []);
+		const retryStatusCodes = new Set(
+			options.retryStatusCodes ?? options.retry?.statusCodes ?? extraOptionDefaults().retryStatusCodes
+		);
 
 		const includesStatusCodes =
-			Boolean(ctx.response?.status)
-			&& (retryStatusCodes.size > 0 ? retryStatusCodes.has(ctx.response.status) : true);
+			Boolean(ctx.response) && retryStatusCodes.size > 0 ?
+				retryStatusCodes.has(ctx.response.status)
+			:	true;
 
 		const shouldRetry = includesMethod && includesStatusCodes;
 

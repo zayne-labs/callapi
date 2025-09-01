@@ -386,7 +386,7 @@ export const createFetchClient = <
 				const { currentAttemptCount, getDelay, shouldAttemptRetry } =
 					createRetryStrategy(errorContext);
 
-				const shouldRetry = !combinedSignal.aborted && (await shouldAttemptRetry());
+				const shouldRetry = await shouldAttemptRetry();
 
 				if (shouldRetry) {
 					const retryContext = {

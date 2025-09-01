@@ -13,6 +13,13 @@
 		"lint:size": {},
 		"lint:publint": {},
 		"lint:eslint": {},
+		"test": {},
+		"test:browser": {},
+		"test:dev": {
+			"cache": false,
+			"persistent": true
+		},
+		"test:coverage": {},
 		"lint:eslint:dev": {},
 		"knip": {},
 		"lint:type-check": {}

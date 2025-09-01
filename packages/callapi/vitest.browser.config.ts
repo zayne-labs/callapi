@@ -2,6 +2,13 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
 	test: {
+		browser: {
+			enabled: true,
+			// https://vitest.dev/guide/browser/playwright
+			instances: [{ browser: "chromium" }],
+			provider: "playwright",
+		},
+
 		coverage: {
 			exclude: ["node_modules/", "dist/", "tests/", "**/*.d.ts", "**/*.config.*"],
 			provider: "v8",
@@ -15,10 +22,5 @@ export default defineConfig({
 				},
 			},
 		},
-
-		environment: "node",
-		globals: true,
-		setupFiles: ["./tests/setup.ts"],
-		typecheck: { enabled: true },
 	},
 });

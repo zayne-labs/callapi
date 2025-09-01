@@ -16,8 +16,8 @@
 		"build:test": "turbo run --filter=./packages/* build:test",
 		"dev:callapi": "turbo run --filter=./packages/callapi dev",
 		"dev:callapi-plugins": "turbo run --filter=./packages/callapi-plugins dev",
-		"dev:docs": "turbo run --filter=./apps/docs dev",
 		"dev:dev": "turbo run --filter=./apps/dev dev",
+		"dev:docs": "turbo run --filter=./apps/docs dev",
 		"inspect:eslint-config": "pnpx @eslint/config-inspector@latest",
 		"lint:attw": "turbo run --filter=./packages/* lint:attw",
 		"lint:eslint": "turbo run --filter=./packages/* lint:eslint",
@@ -34,7 +34,10 @@
 		"prepare": "husky",
 		"release": "changeset publish",
 		"release:rc": "pnpm build && changeset publish --tag rc",
-		"release:test": "pnpx pkg-pr-new publish ./packages/*"
+		"release:test": "pnpx pkg-pr-new publish ./packages/*",
+		"test:coverage": "turbo --filter \"./packages/*\" test:coverage",
+		"test:dev": "turbo --filter \"./packages/*\" test:dev",
+		"test": "turbo --filter \"./packages/*\" test"
 	},
 	"devDependencies": {
 		"@changesets/cli": "2.29.6",

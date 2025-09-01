@@ -2,40 +2,28 @@
 
 import type { CallApiExtraOptions } from "./types/common";
 import type { Awaitable } from "./types/type-helpers";
-import { isFunction, isString } from "./utils/guards";
+import { isFunction, isObject } from "./utils/guards";
 
-type ValueOrFunctionResult<TValue> = TValue | (() => TValue);
+type PossibleAuthValue = Awaitable<string | null | undefined>;
 
-type ValidAuthValue = ValueOrFunctionResult<Awaitable<string | null | undefined>>;
+type PossibleAuthValueOrGetter = PossibleAuthValue | (() => PossibleAuthValue);
 
-/**
- * Bearer Or Token authentication
- *
- * The value of `bearer` will be added to a header as
- * `auth: Bearer some-auth-token`,
- *
- * The value of `token` will be added to a header as
- * `auth: Token some-auth-token`,
- */
 export type BearerOrTokenAuth =
 	| {
 			type?: "Bearer";
-			bearer?: ValidAuthValue;
+			bearer?: PossibleAuthValueOrGetter;
 			token?: never;
 	  }
 	| {
 			type?: "Token";
 			bearer?: never;
-			token?: ValidAuthValue;
+			token?: PossibleAuthValueOrGetter;
 	  };
 
-/**
- * Basic auth
- */
 export type BasicAuth = {
 	type: "Basic";
-	username: ValidAuthValue;
-	password: ValidAuthValue;
+	username: PossibleAuthValueOrGetter;
+	password: PossibleAuthValueOrGetter;
 };
 
 /**
@@ -55,34 +43,32 @@ export type BasicAuth = {
  */
 export type CustomAuth = {
 	type: "Custom";
-	prefix: ValidAuthValue;
-	value: ValidAuthValue;
+	prefix: PossibleAuthValueOrGetter;
+	value: PossibleAuthValueOrGetter;
 };
 
 // eslint-disable-next-line perfectionist/sort-union-types -- Let the first one be first
 export type Auth = BearerOrTokenAuth | BasicAuth | CustomAuth;
 
-const getValue = (value: ValidAuthValue) => {
-	return isFunction(value) ? value() : value;
-};
+const resolveAuthValue = (value: PossibleAuthValueOrGetter) => (isFunction(value) ? value() : value);
 
-type AuthorizationHeader = {
-	Authorization: string;
-};
+type AuthHeaderObject = { Authorization: string };
 
 export const getAuthHeader = async (
 	auth: CallApiExtraOptions["auth"]
-): Promise<AuthorizationHeader | undefined> => {
+): Promise<AuthHeaderObject | undefined> => {
 	if (auth === undefined) return;
 
-	if (isString(auth) || auth === null) {
+	if (!isObject(auth)) {
 		return { Authorization: `Bearer ${auth}` };
 	}
 
 	switch (auth.type) {
 		case "Basic": {
-			const username = await getValue(auth.username);
-			const password = await getValue(auth.password);
+			const [username, password] = await Promise.all([
+				resolveAuthValue(auth.username),
+				resolveAuthValue(auth.password),
+			]);
 
 			if (username === undefined || password === undefined) return;
 
@@ -92,11 +78,12 @@ export const getAuthHeader = async (
 		}
 
 		case "Custom": {
-			const value = await getValue(auth.value);
+			const [prefix, value] = await Promise.all([
+				resolveAuthValue(auth.prefix),
+				resolveAuthValue(auth.value),
+			]);
 
 			if (value === undefined) return;
-
-			const prefix = await getValue(auth.prefix);
 
 			return {
 				Authorization: `${prefix} ${value}`,
@@ -104,8 +91,10 @@ export const getAuthHeader = async (
 		}
 
 		default: {
-			const bearer = await getValue(auth.bearer);
-			const token = await getValue(auth.token);
+			const [bearer, token] = await Promise.all([
+				resolveAuthValue(auth.bearer),
+				resolveAuthValue(auth.token),
+			]);
 
 			if ("token" in auth && token !== undefined) {
 				return { Authorization: `Token ${token}` };

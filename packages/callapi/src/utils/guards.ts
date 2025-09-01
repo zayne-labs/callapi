@@ -35,6 +35,8 @@ export const isJavascriptError = (
 
 export const isArray = <TArrayItem>(value: unknown): value is TArrayItem[] => Array.isArray(value);
 
+export const isBoolean = (value: unknown): value is boolean => typeof value === "boolean";
+
 export const isObject = <TObject extends object>(value: unknown): value is TObject => {
 	return typeof value === "object" && value !== null;
 };

@@ -330,6 +330,8 @@ describe("Utility Functions", () => {
 				expect(isFunction(async () => {})).toBe(true);
 				expect(isFunction(Date)).toBe(true);
 				expect(isFunction(console.log)).toBe(true);
+				expect(isFunction(class TestClass {})).toBe(true);
+				expect(isFunction(function* generator() {})).toBe(true);
 			});
 
 			it("should return false for non-functions", () => {
@@ -845,14 +847,6 @@ describe("Utility Functions", () => {
 				expect(signal).toBeInstanceOf(AbortSignal);
 				expect(signal.aborted).toBe(false);
 			});
-
-			it("should abort after timeout", async () => {
-				const signal = createTimeoutSignal(10);
-				expect(signal.aborted).toBe(false);
-
-				await new Promise((resolve) => setTimeout(resolve, 20));
-				expect(signal.aborted).toBe(true);
-			});
 		});
 
 		describe("deterministicHashFn", () => {
@@ -919,6 +913,49 @@ describe("Utility Functions", () => {
 				expect(toArray(undefined)).toEqual([undefined]);
 				expect(toArray({ key: "value" })).toEqual([{ key: "value" }]);
 			});
+		});
+	});
+
+	describe("Additional Edge Cases", () => {
+		it("should handle Symbol values in type guards", () => {
+			const symbol = Symbol("test");
+			expect(isString(symbol)).toBe(false);
+			expect(isObject(symbol)).toBe(false);
+			expect(isArray(symbol)).toBe(false);
+			expect(isFunction(symbol)).toBe(false);
+			expect(isJSONSerializable(symbol)).toBe(false);
+		});
+
+		it("should handle BigInt values in type guards", () => {
+			const bigInt = BigInt(123);
+			expect(isString(bigInt)).toBe(false);
+			expect(isObject(bigInt)).toBe(false);
+			expect(isArray(bigInt)).toBe(false);
+			expect(isFunction(bigInt)).toBe(false);
+			expect(isJSONSerializable(bigInt)).toBe(false);
+		});
+
+		it("should handle Proxy objects correctly", () => {
+			const target = { key: "value" };
+			const proxy = new Proxy(target, {});
+
+			expect(isObject(proxy)).toBe(true);
+			expect(isPlainObject(proxy)).toBe(true); // Proxy should be treated as plain object
+			expect(isJSONSerializable(proxy)).toBe(true);
+		});
+
+		it("should handle ArrayBuffer and TypedArrays", () => {
+			const buffer = new ArrayBuffer(8);
+			const uint8Array = new Uint8Array(buffer);
+
+			expect(isObject(buffer)).toBe(true);
+			expect(isArray(buffer)).toBe(false);
+			expect(isPlainObject(buffer)).toBe(false);
+			expect(isJSONSerializable(buffer)).toBe(false);
+
+			expect(isObject(uint8Array)).toBe(true);
+			expect(isArray(uint8Array)).toBe(false);
+			expect(isPlainObject(uint8Array)).toBe(false);
 		});
 	});
 

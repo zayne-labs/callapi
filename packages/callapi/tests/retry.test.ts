@@ -11,7 +11,7 @@ describe("Retry Logic", () => {
 	beforeEach(() => {
 		resetFetchMock();
 		vi.clearAllTimers();
-		vi.useFakeTimers();
+		vi.useFakeTimers({ shouldAdvanceTime: true });
 	});
 
 	afterEach(() => {
@@ -540,16 +540,16 @@ describe("Retry Logic", () => {
 			});
 
 			// Mock a network error (no response)
-			vi.mocked(globalThis.fetch).mockRejectedValueOnce(new Error("Network error"));
+			vi.mocked(globalThis.fetch).mockRejectedValueOnce(new TypeError("Network error"));
 			mockFetchSequence([{ data: { success: true }, status: 200 }]);
 
 			const promise = client("/test");
 			await vi.runAllTimersAsync();
 			const result = await promise;
 
-			// Should not retry network errors without status codes
-			expect(result.error).toBeDefined();
-			expectFetchCallCount(1); // No retry should occur
+			// Should retry non-http errors - all errors retry by default unless response has status code not in retryStatusCodes
+			expect(result.data).toEqual({ success: true });
+			expectFetchCallCount(2); // Should retry network error and succeed
 		});
 
 		it("should handle retry with empty status codes array", async () => {

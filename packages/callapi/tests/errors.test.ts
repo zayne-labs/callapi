@@ -591,5 +591,35 @@ describe("Error Handling", () => {
 			const httpError = result.error.originalError as HTTPError;
 			expect(httpError.errorData).toEqual(largeError);
 		});
+
+		it("should handle response with circular reference in error data", async () => {
+			// Create a response that would cause circular reference issues
+			const response = new Response('{"message": "Circular error", "self": "[Circular]"}', {
+				status: 400,
+				headers: { "Content-Type": "application/json" },
+			});
+
+			mockFetch.mockResolvedValueOnce(response);
+
+			const result = await callApi("/users", { resultMode: "all" });
+
+			expectErrorResult(result);
+			expectHTTPError(result.error.originalError, 400);
+		});
+
+		it("should handle error with non-serializable properties", async () => {
+			const errorWithFunction = {
+				message: "Error with function",
+				callback: () => console.log("test"),
+				symbol: Symbol("error"),
+			};
+
+			mockFetch.mockResolvedValueOnce(createMockErrorResponse(errorWithFunction, 400));
+
+			const result = await callApi("/users", { resultMode: "all" });
+
+			expectErrorResult(result);
+			expectHTTPError(result.error.originalError, 400);
+		});
 	});
 });
