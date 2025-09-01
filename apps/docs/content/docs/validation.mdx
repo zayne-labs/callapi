@@ -415,7 +415,7 @@ Custom validators allow you to:
 4. Can throw errors for invalid data
 5. Return the validated data (From which TypeScript infers the return type)
 
-### Overriding the base schema for a specific path
+## Overriding the base schema for a specific path
 
 You can override the base schema by passing a schema to the `schema` option:
 
@@ -447,7 +447,7 @@ const { data, error } = await callApi("/user", {
 });
 ```
 
-### Extending the base schema for a specific path
+## Extending the base schema for a specific path
 
 In case you want to extend the base schema instead of overriding it, you can pass a callback to schema option of the instance, which will be called with the base schema and the specific schema for current path:
 
