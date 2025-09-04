@@ -110,6 +110,8 @@ export const isQueryString = (value: unknown): value is string => isString(value
 
 export const isString = (value: unknown) => typeof value === "string";
 
+export const isPromise = (value: unknown) => value instanceof Promise;
+
 export const isReadableStream = (value: unknown): value is ReadableStream<unknown> => {
 	return value instanceof ReadableStream;
 };

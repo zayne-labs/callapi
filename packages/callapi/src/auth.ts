@@ -2,7 +2,7 @@
 
 import type { CallApiExtraOptions } from "./types/common";
 import type { Awaitable } from "./types/type-helpers";
-import { isFunction, isObject } from "./utils/guards";
+import { isFunction, isObject, isPromise } from "./utils/guards";
 
 type PossibleAuthValue = Awaitable<string | null | undefined>;
 
@@ -48,7 +48,7 @@ export type CustomAuth = {
 };
 
 // eslint-disable-next-line perfectionist/sort-union-types -- Let the first one be first
-export type Auth = BearerOrTokenAuth | BasicAuth | CustomAuth;
+export type Auth = PossibleAuthValueOrGetter | BearerOrTokenAuth | BasicAuth | CustomAuth;
 
 const resolveAuthValue = (value: PossibleAuthValueOrGetter) => (isFunction(value) ? value() : value);
 
@@ -59,8 +59,14 @@ export const getAuthHeader = async (
 ): Promise<AuthHeaderObject | undefined> => {
 	if (auth === undefined) return;
 
-	if (!isObject(auth)) {
-		return { Authorization: `Bearer ${auth}` };
+	if (isPromise(auth) || isFunction(auth) || !isObject(auth)) {
+		const authValue = await resolveAuthValue(auth);
+
+		if (authValue === undefined) return;
+
+		return {
+			Authorization: `Bearer ${authValue}`,
+		};
 	}
 
 	switch (auth.type) {

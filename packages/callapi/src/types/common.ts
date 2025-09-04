@@ -79,27 +79,10 @@ type SharedExtraOptions<
 		 * Supports multiple authentication patterns:
 		 * - String: Direct authorization header value
 		 * - Auth object: Structured authentication configuration
-		 * - null: Explicitly removes authorization
 		 *
-		 * @example
-		 * ```ts
-		 * // Bearer token authentication
-		 * auth: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-		 *
-		 * // Basic authentication
-		 * auth: "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
-		 *
-		 * // Using Auth object for dynamic authentication
-		 * auth: {
-		 *   type: "bearer",
-		 *   token: () => getAccessToken()
-		 * }
-		 *
-		 * // Remove inherited auth from base config
-		 * auth: null
 		 * ```
 		 */
-		auth?: string | Auth | null;
+		auth?: Auth;
 
 		/**
 		 * Custom function to serialize request body objects into strings.
