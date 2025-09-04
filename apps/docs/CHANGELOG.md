@@ -1,5 +1,12 @@
 # docs
 
+## 0.0.35
+
+### Patch Changes
+
+- Updated dependencies [e78a454]
+   - @zayne-labs/callapi@1.10.0
+
 ## 0.0.34
 
 ### Patch Changes

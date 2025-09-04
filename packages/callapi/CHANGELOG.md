@@ -1,5 +1,14 @@
 # @zayne-labs/callapi
 
+## 1.10.0
+
+### Minor Changes
+
+- e78a454: 🐛 feat(result): improve response type detection for better content handling
+
+   ✅ test(errors): add test for successful response with invalid JSON content
+   🔧 chore(package): increase size limit from 5.8kb to 6kb
+
 ## 1.9.12
 
 ### Patch Changes
