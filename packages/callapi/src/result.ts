@@ -5,6 +5,8 @@ import type { DefaultDataType } from "./types/default-types";
 import type { AnyString, Awaitable, UnmaskType } from "./types/type-helpers";
 import { isHTTPErrorInstance, isValidationErrorInstance } from "./utils/guards";
 
+export type ResponseType = "blob" | "json" | "text";
+
 type Parser<TData> = (responseString: string) => Awaitable<TData>;
 
 export const getResponseType = <TResponse>(response: Response, parser: Parser<TResponse>) => ({
@@ -36,13 +38,36 @@ export type GetResponseType<
 	: TResponseType extends NonNullable<ResponseTypeUnion> ? TComputedResponseTypeMap[TResponseType]
 	: never;
 
+const textTypes = new Set(["image/svg", "application/xml", "application/xhtml", "application/html"]);
+const JSON_REGEX = /^application\/(?:[\w!#$%&*.^`~-]*\+)?json(;.+)?$/i;
+
+const detectResponseType = (response: Response): Extract<ResponseTypeUnion, "blob" | "json" | "text"> => {
+	const initContentType = response.headers.get("content-type");
+
+	if (!initContentType) {
+		return extraOptionDefaults().responseType;
+	}
+
+	const contentType = initContentType.split(";")[0] ?? "";
+
+	if (JSON_REGEX.test(contentType)) {
+		return "json";
+	}
+
+	if (textTypes.has(contentType) || contentType.startsWith("text/")) {
+		return "text";
+	}
+
+	return "blob";
+};
+
 export const resolveResponseData = <TResponse>(
 	response: Response,
-	responseType?: ResponseTypeUnion,
-	parser?: Parser<TResponse>
+	responseType: ResponseTypeUnion | undefined,
+	parser: Parser<TResponse> | undefined
 ) => {
 	const selectedParser = parser ?? extraOptionDefaults().responseParser;
-	const selectedResponseType = responseType ?? extraOptionDefaults().responseType;
+	const selectedResponseType = responseType ?? detectResponseType(response);
 
 	const RESPONSE_TYPE_LOOKUP = getResponseType<TResponse>(response, selectedParser);
 

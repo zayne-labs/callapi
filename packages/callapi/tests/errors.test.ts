@@ -279,7 +279,24 @@ describe("Error Handling", () => {
 			const result = await callApi("/users", { resultMode: "all" });
 
 			expectErrorResult(result);
-			// This will be a parsing error, not an HTTPError because the response is 500 but parsing fails
+			// This will be an HTTPError because the response has 500 status, even with wrong content-type
+			// The new detectResponseType logic correctly handles text/html as text, not JSON
+			expect(result.error.name).toBe("HTTPError");
+			expectHTTPError(result.error.originalError, 500);
+		});
+
+		it("should handle successful response with JSON content-type but invalid JSON content", async () => {
+			// Create a 200 response with JSON content-type but invalid JSON content
+			const invalidJsonResponse = new Response("<html><body>Success</body></html>", {
+				status: 200,
+				headers: { "Content-Type": "application/json" },
+			});
+			mockFetch.mockResolvedValueOnce(invalidJsonResponse);
+
+			const result = await callApi("/users", { resultMode: "all" });
+
+			expectErrorResult(result);
+			// This will be a SyntaxError because the response is 200 but JSON parsing fails
 			expect(result.error.name).toBe("SyntaxError");
 		});
 

@@ -82,7 +82,7 @@
 	"size-limit": [
 		{
 			"path": "./src/index.ts",
-			"limit": "5.8 kb"
+			"limit": "6 kb"
 		},
 		{
 			"path": "./src/utils/index.ts",
