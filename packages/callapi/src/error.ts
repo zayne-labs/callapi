@@ -13,9 +13,7 @@ const httpErrorSymbol = Symbol("HTTPError");
 export class HTTPError<TErrorData = Record<string, unknown>> extends Error {
 	errorData: HTTPErrorDetails<TErrorData>["errorData"];
 
-	httpErrorSymbol = httpErrorSymbol;
-
-	isHTTPError = true;
+	readonly httpErrorSymbol = httpErrorSymbol;
 
 	override name = "HTTPError" as const;
 
@@ -48,7 +46,7 @@ export class HTTPError<TErrorData = Record<string, unknown>> extends Error {
 	 * @returns true if the error is an instance of HTTPError, false otherwise
 	 */
 	static override isError<TErrorData>(error: unknown): error is HTTPError<TErrorData> {
-		if (!isObject<Record<string, unknown>>(error)) {
+		if (!isObject<HTTPError>(error)) {
 			return false;
 		}
 
@@ -56,7 +54,13 @@ export class HTTPError<TErrorData = Record<string, unknown>> extends Error {
 			return true;
 		}
 
-		return error.httpErrorSymbol === httpErrorSymbol && error.isHTTPError === true;
+		const actualError = error as HTTPError;
+
+		return (
+			actualError.httpErrorSymbol === httpErrorSymbol
+			// eslint-disable-next-line ts-eslint/no-unnecessary-condition -- Allow
+			&& actualError.name === "HTTPError"
+		);
 	}
 }
 
@@ -88,11 +92,11 @@ const validationErrorSymbol = Symbol("validationErrorSymbol");
 export class ValidationError extends Error {
 	errorData: ValidationErrorDetails["issues"];
 
-	override name = "ValidationError";
+	override name = "ValidationError" as const;
 
 	response: ValidationErrorDetails["response"];
 
-	validationErrorSymbol = validationErrorSymbol;
+	readonly validationErrorSymbol = validationErrorSymbol;
 
 	constructor(details: ValidationErrorDetails, errorOptions?: ErrorOptions) {
 		const { issues, response } = details;
@@ -106,12 +110,12 @@ export class ValidationError extends Error {
 	}
 
 	/**
-	 * @description Checks if the given error is an instance of HTTPError
+	 * @description Checks if the given error is an instance of ValidationError
 	 * @param error - The error to check
-	 * @returns true if the error is an instance of HTTPError, false otherwise
+	 * @returns true if the error is an instance of ValidationError, false otherwise
 	 */
 	static override isError(error: unknown): error is ValidationError {
-		if (!isObject<Record<string, unknown>>(error)) {
+		if (!isObject<ValidationError>(error)) {
 			return false;
 		}
 
@@ -119,6 +123,12 @@ export class ValidationError extends Error {
 			return true;
 		}
 
-		return error.validationErrorSymbol === validationErrorSymbol && error.name === "ValidationError";
+		const actualError = error as ValidationError;
+
+		return (
+			actualError.validationErrorSymbol === validationErrorSymbol
+			// eslint-disable-next-line ts-eslint/no-unnecessary-condition -- Allow
+			&& actualError.name === "ValidationError"
+		);
 	}
 }

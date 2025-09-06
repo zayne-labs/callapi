@@ -30,7 +30,6 @@ describe("Error Handling", () => {
 
 			const httpError = result.error.originalError as HTTPError;
 			expect(httpError.name).toBe("HTTPError");
-			expect(httpError.isHTTPError).toBe(true);
 			expect(httpError.errorData).toEqual(mockHTTPError);
 			expect(httpError.response.status).toBe(404);
 			expect(httpError.message).toContain("The requested resource was not found");
