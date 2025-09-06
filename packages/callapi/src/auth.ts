@@ -102,13 +102,13 @@ export const getAuthHeader = async (
 				resolveAuthValue(auth.token),
 			]);
 
-			if ("token" in auth && token !== undefined) {
-				return { Authorization: `Token ${token}` };
+			if (bearer !== undefined) {
+				return { Authorization: `Bearer ${bearer}` };
 			}
 
-			if (bearer === undefined) return;
+			if (token === undefined) return;
 
-			return { Authorization: `Bearer ${bearer}` };
+			return { Authorization: `Token ${token}` };
 		}
 	}
 };
