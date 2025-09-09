@@ -20,6 +20,6 @@
 		"@zayne-labs/tsconfig": "0.9.14",
 		"tsx": "^4.20.5",
 		"typescript": "5.9.2",
-		"vite": "^7.1.4"
+		"vite": "^7.1.5"
 	}
 }
