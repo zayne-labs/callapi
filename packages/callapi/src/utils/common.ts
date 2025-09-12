@@ -188,7 +188,7 @@ export const deterministicHashFn = (value: unknown): string => {
 			return val;
 		}
 
-		const sortedKeys = Object.keys(val).sort();
+		const sortedKeys = Object.keys(val).toSorted();
 
 		const result: Record<string, unknown> = {};
 
