@@ -372,10 +372,9 @@ export const createFetchClient = <
 				response: errorDetails.response as never,
 			} satisfies ErrorContext<unknown>;
 
-			const shouldThrowOnError = (
-				isFunction(options.throwOnError) ?
-					options.throwOnError(errorContext)
-				:	options.throwOnError) as boolean;
+			const shouldThrowOnError = Boolean(
+				isFunction(options.throwOnError) ? options.throwOnError(errorContext) : options.throwOnError
+			);
 
 			const hookInfo = {
 				errorInfo,

@@ -1,7 +1,7 @@
 import { extraOptionDefaults } from "./constants/default-options";
 import type { HTTPError, ValidationError } from "./error";
 import type { CallApiExtraOptions, ThrowOnErrorUnion } from "./types";
-import type { DefaultDataType } from "./types/default-types";
+import type { DefaultDataType, DefaultThrowOnError } from "./types/default-types";
 import type { AnyString, Awaitable, UnmaskType } from "./types/type-helpers";
 import { isHTTPErrorInstance, isValidationErrorInstance } from "./utils/guards";
 
@@ -148,7 +148,7 @@ export type ResultModeMap<
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,
 	TResponseType extends ResponseTypeUnion = ResponseTypeUnion,
-	TThrowOnError extends ThrowOnErrorUnion = false,
+	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
 > =
 	TThrowOnError extends true ? ResultModeMapWithException<TData, TResponseType>
 	:	ResultModeMapWithoutException<TData, TErrorData, TResponseType>;

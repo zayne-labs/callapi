@@ -357,7 +357,11 @@ export type ResultModeOption<TErrorData, TResultMode extends ResultModeUnion> =
 
 export type ThrowOnErrorUnion = boolean;
 
+export type ThrowOnErrorType<TErrorData, TThrowOnError extends ThrowOnErrorUnion> =
+	| TThrowOnError
+	| ((context: ErrorContext<TErrorData>) => TThrowOnError);
+
 export type ThrowOnErrorOption<TErrorData, TThrowOnError extends ThrowOnErrorUnion> =
 	TErrorData extends false ? { throwOnError: true }
 	: TErrorData extends false | undefined ? { throwOnError?: true }
-	: { throwOnError?: TThrowOnError | ((context: ErrorContext<TErrorData>) => TThrowOnError) };
+	: { throwOnError?: ThrowOnErrorType<TErrorData, TThrowOnError> };
