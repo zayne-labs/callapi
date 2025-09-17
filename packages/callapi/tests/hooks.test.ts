@@ -84,8 +84,9 @@ describe("Hook System", () => {
 			expect(timestamps[1]).toBeLessThan(timestamps[2]!);
 
 			// Each hook should take at least 50ms, so total should be ~150ms+
+			// Using >= instead of > to account for timing precision in CI environments
 			const totalTime = timestamps[2]! - timestamps[0]!;
-			expect(totalTime).toBeGreaterThan(100);
+			expect(totalTime).toBeGreaterThanOrEqual(100);
 		});
 	});
 
