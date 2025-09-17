@@ -37,7 +37,6 @@ jobs:
               pnpm build:callapi
               pnpm lint:type-check
               pnpm lint:eslint
-              pnpm test
 
          - name: Run actual tests
            run: pnpm test
