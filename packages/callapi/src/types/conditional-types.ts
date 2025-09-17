@@ -350,15 +350,10 @@ export type InferPluginOptions<TPluginArray extends CallApiPlugin[]> = UnionToIn
 	:	never
 >;
 
-// == DID THIS FOR AUTOCOMPLETION
-type ExtractKeys<TUnion, TSelectedUnion extends TUnion> = Extract<TUnion, TSelectedUnion>;
-
 export type ResultModeOption<TErrorData, TResultMode extends ResultModeUnion> =
-	TErrorData extends false ? { resultMode: "onlySuccessWithException" }
-	: TErrorData extends false | undefined ? { resultMode?: "onlySuccessWithException" }
-	: TErrorData extends false | null ?
-		{ resultMode?: ExtractKeys<ResultModeUnion, "onlySuccess" | "onlySuccessWithException"> }
-	:	{ resultMode?: TResultMode };
+	TErrorData extends false ? { resultMode: "onlyData" }
+	: TErrorData extends false | undefined ? { resultMode?: "onlyData" }
+	: { resultMode?: TResultMode };
 
 export type ThrowOnErrorUnion = boolean;
 

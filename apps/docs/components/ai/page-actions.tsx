@@ -32,7 +32,7 @@ export function LLMCopyButton(props: CopyBtnProps) {
 
 		const markDownPromise = callApi(markdownUrl, {
 			responseType: "text",
-			resultMode: "onlySuccessWithException",
+			resultMode: "onlyData",
 		}).then((content) => {
 			cache.set(markdownUrl, content);
 			return content;

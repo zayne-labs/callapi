@@ -27,12 +27,11 @@ export const useTodos = () => {
 		queryFn: () => {
 			return callApi<Todo[], false>("/todos", {
 				throwOnError: true,
-				resultMode: "onlySuccessWithException",
+				resultMode: "onlyData",
 			});
 		},
 	});
 };
-
 ```
 
 ## Configuration Options
@@ -40,7 +39,7 @@ export const useTodos = () => {
 The key options for React Query integration include:
 
 - **`throwOnError: true`** - Makes CallApi throw errors instead of returning them in the result object
-- **`resultMode: "onlySuccessWithException"`** - Returns just the data property with its exact type, perfect for React Query
+- **`resultMode: "onlyData"`** - Returns just the data property with its exact type, perfect for React Query
 
 <Callout type="info">
 	These settings ensure CallApi behaves exactly like React Query expects: throwing errors for failures and
@@ -56,7 +55,7 @@ export const callApiForQuery = createFetchClient({
 	baseURL: "https://api.example.com",
 	// Default to React Query compatible settings
 	throwOnError: true,
-	resultMode: "onlySuccessWithException",
+	resultMode: "onlyData",
 });
 
 // Use the configured client in queries
@@ -94,12 +93,11 @@ export const useTodos = () => {
 			return callApi("/todos", {
 				schemas: { data: todosSchema },
 				throwOnError: true,
-				resultMode: "onlySuccessWithException",
+				resultMode: "onlyData",
 			});
 		},
 	});
 };
-
 ```
 
 ### Option 2: Manual Type Specification
@@ -123,10 +121,9 @@ export const useTodos = () => {
 			// See: https://github.com/microsoft/TypeScript/issues/26242
 			return callApi<Todo[], false>("@get/todos", {
 				throwOnError: true,
-				resultMode: "onlySuccessWithException",
+				resultMode: "onlyData",
 			});
 		},
 	});
 };
 ```
-

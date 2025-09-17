@@ -121,27 +121,42 @@ export type CallApiResultErrorVariant<TErrorData> =
 			response: Response | null;
 	  };
 
+export type ResultModeMapWithoutException<
+	TData,
+	TErrorData,
+	TResponseType extends ResponseTypeUnion,
+	TComputedData = GetResponseType<TData, TResponseType>,
+	TComputedErrorData = GetResponseType<TErrorData, TResponseType>,
+> = UnmaskType<{
+	all: CallApiResultErrorVariant<TComputedErrorData> | CallApiResultSuccessVariant<TComputedData>;
+
+	onlyData:
+		| CallApiResultErrorVariant<TComputedErrorData>["data"]
+		| CallApiResultSuccessVariant<TComputedData>["data"];
+}>;
+
+type ResultModeMapWithException<
+	TData,
+	TResponseType extends ResponseTypeUnion,
+	TComputedData = GetResponseType<TData, TResponseType>,
+> = {
+	all: CallApiResultSuccessVariant<TComputedData>;
+	onlyData: CallApiResultSuccessVariant<TComputedData>["data"];
+};
+
 export type ResultModeMap<
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,
 	TResponseType extends ResponseTypeUnion = ResponseTypeUnion,
-	TComputedData = GetResponseType<TData, TResponseType>,
-	TComputedErrorData = GetResponseType<TErrorData, TResponseType>,
-> = UnmaskType<{
-	/* eslint-disable perfectionist/sort-union-types -- I need the first one to be first */
-	all: CallApiResultSuccessVariant<TComputedData> | CallApiResultErrorVariant<TComputedErrorData>;
+	TThrowOnError extends ThrowOnErrorUnion = false,
+> =
+	TThrowOnError extends true ? ResultModeMapWithException<TData, TResponseType>
+	:	ResultModeMapWithoutException<TData, TErrorData, TResponseType>;
 
-	allWithException: CallApiResultSuccessVariant<TComputedData>;
+type ResultModePlaceholder = null;
 
-	onlySuccess:
-		| CallApiResultErrorVariant<TComputedErrorData>["data"]
-		| CallApiResultSuccessVariant<TComputedData>["data"];
-
-	onlySuccessWithException: CallApiResultSuccessVariant<TComputedData>["data"];
-	/* eslint-enable perfectionist/sort-union-types -- I need the first one to be first */
-}>;
-
-export type ResultModeUnion = keyof ResultModeMap | null;
+// eslint-disable-next-line perfectionist/sort-union-types -- Allow
+export type ResultModeUnion = keyof ResultModeMap | ResultModePlaceholder;
 
 export type GetCallApiResult<
 	TData,
@@ -150,16 +165,12 @@ export type GetCallApiResult<
 	TThrowOnError extends ThrowOnErrorUnion,
 	TResponseType extends ResponseTypeUnion,
 > =
-	TErrorData extends false ? ResultModeMap<TData, TErrorData, TResponseType>["onlySuccessWithException"]
-	: TErrorData extends false | undefined ?
-		ResultModeMap<TData, TErrorData, TResponseType>["onlySuccessWithException"]
-	: TErrorData extends false | null ? ResultModeMap<TData, TErrorData, TResponseType>["onlySuccess"]
-	: null extends TResultMode ?
-		TThrowOnError extends true ?
-			ResultModeMap<TData, TErrorData, TResponseType>["allWithException"]
-		:	ResultModeMap<TData, TErrorData, TResponseType>["all"]
-	: TResultMode extends NonNullable<ResultModeUnion> ?
-		ResultModeMap<TData, TErrorData, TResponseType>[TResultMode]
+	TErrorData extends false ? ResultModeMapWithException<TData, TResponseType>["onlyData"]
+	: TErrorData extends false | undefined ? ResultModeMapWithException<TData, TResponseType>["onlyData"]
+	: ResultModePlaceholder extends TResultMode ?
+		ResultModeMap<TData, TErrorData, TResponseType, TThrowOnError>["all"]
+	: TResultMode extends Exclude<ResultModeUnion, ResultModePlaceholder> ?
+		ResultModeMap<TData, TErrorData, TResponseType, TThrowOnError>[TResultMode]
 	:	never;
 
 type SuccessInfo = {
@@ -171,17 +182,11 @@ type LazyResultModeMap = {
 	[key in keyof ResultModeMap]: () => ResultModeMap[key];
 };
 
-const getResultModeMap = (
-	details: CallApiResultErrorVariant<unknown> | CallApiResultSuccessVariant<unknown>
-) => {
-	const resultModeMap = {
+const getResultModeMap = (details: ResultModeMap["all"]): LazyResultModeMap => {
+	return {
 		all: () => details,
-		allWithException: () => resultModeMap.all() as never,
-		onlySuccess: () => details.data,
-		onlySuccessWithException: () => resultModeMap.onlySuccess(),
-	} satisfies LazyResultModeMap as LazyResultModeMap;
-
-	return resultModeMap;
+		onlyData: () => details.data,
+	};
 };
 
 type SuccessResult = CallApiResultSuccessVariant<unknown> | null;

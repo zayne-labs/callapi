@@ -97,8 +97,8 @@ const callMainApi = createFetchClient({
 		},
 
 		"https://api.github.com/repos/zayne-labs/ui/commits": {
+			query: z.object({ per_page: z.number() }),
 			// body: z.object({ flow: z.string() }),
-			// params: z.object({ per_page: z.number() }).optional(),
 			// data: z.array(z.object({ version: z.string() })),
 		},
 	}),
@@ -215,7 +215,7 @@ export const callBackendApiForQuery = <TData = unknown>(
 	const [url, config] = parameters;
 
 	return sharedFetchClient(url, {
-		resultMode: "onlySuccessWithException",
+		resultMode: "onlyData",
 		throwOnError: true,
 		...config,
 	});

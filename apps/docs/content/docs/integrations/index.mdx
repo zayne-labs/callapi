@@ -28,7 +28,7 @@ import { isHTTPErrorInstance } from "@zayne-labs/callapi/utils";
 
 const callMainApi = createFetchClient({
 	baseURL: "https://api.example.com",
-	resultMode: "onlySuccessWithException", // Only data is needed, errors are thrown
+	resultMode: "onlyData", // Only data is needed
 	throwOnError: true, // Most libraries expect errors to be thrown
 });
 

@@ -328,12 +328,12 @@ describe("Error Handling", () => {
 			expectHTTPError(result.error.originalError, 400);
 		});
 
-		it("should throw errors in 'allWithException' result mode with throwOnError", async () => {
+		it("should throw errors in 'all' result mode with throwOnError", async () => {
 			mockFetch.mockResolvedValueOnce(createMockErrorResponse(mockError, 400));
 
 			try {
 				await callApi("/users", {
-					resultMode: "allWithException",
+					resultMode: "all",
 					throwOnError: true,
 				});
 				expect.fail("Should have thrown an error");
@@ -342,20 +342,20 @@ describe("Error Handling", () => {
 			}
 		});
 
-		it("should return null in 'onlySuccess' result mode for errors", async () => {
+		it("should return null in 'onlyData' result mode for errors", async () => {
 			mockFetch.mockResolvedValueOnce(createMockErrorResponse(mockError, 400));
 
-			const result = await callApi("/users", { resultMode: "onlySuccess" });
+			const result = await callApi("/users", { resultMode: "onlyData" });
 
 			expect(result).toBeNull();
 		});
 
-		it("should throw errors in 'onlySuccessWithException' result mode with throwOnError", async () => {
+		it("should throw errors in 'onlyData' result mode with throwOnError", async () => {
 			mockFetch.mockResolvedValueOnce(createMockErrorResponse(mockError, 400));
 
 			try {
 				await callApi("/users", {
-					resultMode: "onlySuccessWithException",
+					resultMode: "onlyData",
 					throwOnError: true,
 				});
 				expect.fail("Should have thrown an error");
@@ -372,16 +372,16 @@ describe("Error Handling", () => {
 			const resultAll = await callApi("/users", { resultMode: "all" });
 			expectErrorResult(resultAll);
 
-			// Test 'onlySuccess' mode
+			// Test 'onlyData' mode
 			mockFetch.mockRejectedValueOnce(networkError);
-			const resultSuccess = await callApi("/users", { resultMode: "onlySuccess" });
+			const resultSuccess = await callApi("/users", { resultMode: "onlyData" });
 			expect(resultSuccess).toBeNull();
 
 			// Test exception modes with throwOnError
 			mockFetch.mockRejectedValueOnce(networkError);
 			try {
 				await callApi("/users", {
-					resultMode: "allWithException",
+					resultMode: "all",
 					throwOnError: true,
 				});
 				expect.fail("Should have thrown an error");

@@ -630,23 +630,23 @@ describe("callApi (default client)", () => {
 		});
 
 		it("should handle different result modes", async () => {
-			// Test "onlySuccess" mode
+			// Test "onlyData" mode
 			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
 
 			const successResult = await callApi("https://api.example.com/users/1", {
-				resultMode: "onlySuccess",
+				resultMode: "onlyData",
 			});
 
 			expect(successResult).toEqual(mockUser);
 
-			// Test "onlySuccess" mode with error
+			// Test "onlyData" mode with error
 			mockFetch.mockResolvedValueOnce(createMockErrorResponse(mockHTTPError, 404));
 
-			const errorResult = await callApi("https://api.example.com/users/999", {
-				resultMode: "onlySuccess",
+			const result = await callApi("https://api.example.com/users/999", {
+				resultMode: "onlyData",
 			});
 
-			expect(errorResult).toBeNull();
+			expect(result).toBeNull();
 		});
 
 		it("should handle throwOnError option", async () => {

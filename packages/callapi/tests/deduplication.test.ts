@@ -182,22 +182,22 @@ describe("Request Deduplication", () => {
 			mockFetchSuccess(mockUser);
 
 			// Start requests with different result modes in the same tick
-			const [allResult, onlySuccessResult] = await Promise.all([
+			const [allResult, onlyDataResult] = await Promise.all([
 				client("/users/1", { resultMode: "all" }),
-				client("/users/1", { resultMode: "onlySuccess" }),
+				client("/users/1", { resultMode: "onlyData" }),
 			]);
 
 			// Both should get data (in different formats)
 			expect(allResult.data).toBeDefined();
-			expect(onlySuccessResult).toBeDefined();
+			expect(onlyDataResult).toBeDefined();
 
 			// The underlying data should be the same
 			const allResultData = allResult.data;
-			const onlySuccessData = onlySuccessResult;
+			const onlyDataData = onlyDataResult;
 
 			// For "all" mode, data is in .data property
-			// For "onlySuccess" mode, data is the direct result
-			expect(allResultData).toEqual(onlySuccessData);
+			// For "onlyData" mode, data is the direct result
+			expect(allResultData).toEqual(onlyDataData);
 		});
 
 		it("should share error responses between deferred requests", async () => {

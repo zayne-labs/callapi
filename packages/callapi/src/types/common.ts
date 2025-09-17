@@ -334,46 +334,50 @@ type SharedExtraOptions<
 		 *
 		 * Different modes return different combinations of data, error, and response:
 		 * - **"all"**: Returns { data, error, response } - complete result information
-		 * - **"allWithException"**: Returns { data, error, response } but throws on errors
-		 * - **"onlySuccess"**: Returns only data (null for errors), never throws
-		 * - **"onlySuccessWithException"**: Returns only data but throws on errors
+		 * - **"onlyData"**: Returns only data (null for errors)
+		 *
+		 * When combined with throwOnError: true, null/error variants are automatically removed:
+		 * - **"all" + throwOnError: true**: Returns { data, response } (no error, throws instead)
+		 * - **"onlyData" + throwOnError: true**: Returns data (never null, throws on error)
 		 *
 		 * @default "all"
 		 *
 		 * @example
 		 * ```ts
 		 * // Complete result with all information (default)
-		 * resultMode: "all"
-		 * const { data, error, response } = await callApi("/users");
+		 * const { data, error, response } = await callApi("/users", { resultMode: "all" });
 		 * if (error) {
 		 *   console.error("Request failed:", error);
 		 * } else {
 		 *   console.log("Users:", data);
 		 * }
 		 *
-		 * // Complete result but throws on errors
-		 * resultMode: "allWithException"
+		 * // Complete result but throws on errors (throwOnError removes error from type)
 		 * try {
-		 *   const { data, response } = await callApi("/users", { resultMode: "allWithException" });
-		 *   console.log("Users:", data);
+		 *   const { data, response } = await callApi("/users", {
+		 *     resultMode: "all",
+		 *     throwOnError: true
+		 *   });
+		 *   console.log("Users:", data); // data is never null here
 		 * } catch (error) {
 		 *   console.error("Request failed:", error);
 		 * }
 		 *
 		 * // Only data, returns null on errors
-		 * resultMode: "onlySuccess"
-		 * const users = await callApi("/users", { resultMode: "onlySuccess" });
+		 * const users = await callApi("/users", { resultMode: "onlyData" });
 		 * if (users) {
 		 *   console.log("Users:", users);
 		 * } else {
 		 *   console.log("Request failed");
 		 * }
 		 *
-		 * // Only data with null, throws on errors
-		 * resultMode: "onlySuccessWithException"
+		 * // Only data, throws on errors (throwOnError removes null from type)
 		 * try {
-		 *   const users = await callApi("/users", { resultMode: "onlySuccessWithException" });
-		 *   console.log("Users:", users);
+		 *   const users = await callApi("/users", {
+		 *     resultMode: "onlyData",
+		 *     throwOnError: true
+		 *   });
+		 *   console.log("Users:", users); // users is never null here
 		 * } catch (error) {
 		 *   console.error("Request failed:", error);
 		 * }

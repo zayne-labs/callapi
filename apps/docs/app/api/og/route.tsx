@@ -16,12 +16,12 @@ export async function GET(req: Request) {
 		const [geist, geistMono] = await Promise.all([
 			callApi(new URL("../../../assets/Geist.ttf", import.meta.url), {
 				responseType: "arrayBuffer",
-				resultMode: "onlySuccessWithException",
+				resultMode: "onlyData",
 				throwOnError: true,
 			}),
 			callApi(new URL("../../../assets/GeistMono.ttf", import.meta.url), {
 				responseType: "arrayBuffer",
-				resultMode: "onlySuccessWithException",
+				resultMode: "onlyData",
 				throwOnError: true,
 			}),
 		]);

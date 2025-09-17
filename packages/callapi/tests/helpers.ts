@@ -4,7 +4,7 @@
 
 import { expect } from "vitest";
 import { HTTPError, ValidationError } from "../src/error";
-import type { CallApiResultErrorVariant, CallApiResultSuccessVariant } from "../src/result";
+import type { CallApiResultSuccessVariant, CallApiResultErrorVariant } from "../src/result";
 
 // Simple mock response creator
 export function createMockResponse(
