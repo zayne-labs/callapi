@@ -337,7 +337,7 @@ type SharedExtraOptions<
 		 * - **"onlyData"**: Returns only data (null for errors)
 		 *
 		 * When combined with throwOnError: true, null/error variants are automatically removed:
-		 * - **"all" + throwOnError: true**: Returns { data, response } (no error, throws instead)
+		 * - **"all" + throwOnError: true**: Returns { data, error: null, response } (error property is null, throws instead)
 		 * - **"onlyData" + throwOnError: true**: Returns data (never null, throws on error)
 		 *
 		 * @default "all"
