@@ -62,17 +62,17 @@
 		"@vitest/browser": "^3.2.4",
 		"@vitest/coverage-v8": "3.2.4",
 		"@zayne-labs/prettier-config": "^0.9.15",
-		"@zayne-labs/toolkit-type-helpers": "^0.10.26",
+		"@zayne-labs/toolkit-type-helpers": "^0.11.7",
 		"@zayne-labs/tsconfig": "0.9.15",
 		"concurrently": "^9.2.1",
 		"cross-env": "^10.0.0",
 		"playwright": "^1.55.0",
 		"publint": "^0.3.12",
 		"size-limit": "11.2.0",
-		"tsdown": "^0.15.1",
+		"tsdown": "^0.15.2",
 		"typescript": "5.9.2",
 		"vitest": "^3.2.4",
-		"zod": "^4.1.8"
+		"zod": "^4.1.9"
 	},
 	"publishConfig": {
 		"access": "public",

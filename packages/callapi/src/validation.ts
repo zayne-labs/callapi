@@ -22,14 +22,19 @@ import { toArray } from "./utils/common";
 import { isFunction } from "./utils/guards";
 
 type InferSchemaInput<TSchema extends CallApiSchema[keyof CallApiSchema]> =
-	TSchema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<TSchema>
-	: TSchema extends (value: infer TInput) => unknown ? TInput
-	: never;
+	TSchema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<TSchema> : never;
 
-export type InferSchemaResult<TSchema, TFallbackResult = unknown> =
+export type InferSchemaOutputResult<TSchema, TFallbackResult = unknown> =
 	// == Checking for undefined first and returning fallback to avoid type errors when passing the config around (weird tbh)
 	undefined extends TSchema ? TFallbackResult
 	: TSchema extends StandardSchemaV1 ? StandardSchemaV1.InferOutput<TSchema>
+	: TSchema extends AnyFunction<infer TResult> ? Awaited<TResult>
+	: TFallbackResult;
+
+export type InferSchemaInputResult<TSchema, TFallbackResult = unknown> =
+	// == Checking for undefined first and returning fallback to avoid type errors when passing the config around (weird tbh)
+	undefined extends TSchema ? TFallbackResult
+	: TSchema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<TSchema>
 	: TSchema extends AnyFunction<infer TResult> ? Awaited<TResult>
 	: TFallbackResult;
 
@@ -52,7 +57,7 @@ export const standardSchemaParser = async <
 	schema: TSchema,
 	inputData: InferSchemaInput<TSchema>,
 	response?: Response | null
-): Promise<InferSchemaResult<TSchema>> => {
+): Promise<InferSchemaOutputResult<TSchema>> => {
 	const result =
 		isFunction(schema) ?
 			await handleValidatorFunction(schema, inputData)
@@ -183,7 +188,7 @@ type ValidationOptions<
 export const handleSchemaValidation = async <TSchema extends CallApiSchema[keyof CallApiSchema]>(
 	schema: TSchema | undefined,
 	validationOptions: ValidationOptions<TSchema>
-): Promise<InferSchemaResult<TSchema>> => {
+): Promise<InferSchemaOutputResult<TSchema>> => {
 	const { inputValue, response, schemaConfig } = validationOptions;
 
 	if (!schema || schemaConfig?.disableRuntimeValidation) {

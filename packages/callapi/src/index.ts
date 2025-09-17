@@ -60,5 +60,5 @@ export {
 	type CallApiSchema,
 	type CallApiSchemaConfig,
 	fallBackRouteSchemaKey,
-	type InferSchemaResult,
+	type InferSchemaOutputResult,
 } from "./validation";
