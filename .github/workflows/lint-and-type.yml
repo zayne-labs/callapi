@@ -30,9 +30,14 @@ jobs:
               cache: pnpm
 
          - name: Install dependencies and run tests
+           run: pnpm install --frozen-lockfile
+
+         - name: Run linting tests
            run: |
-              pnpm install --frozen-lockfile
               pnpm build:callapi
               pnpm lint:type-check
               pnpm lint:eslint
               pnpm test
+
+         - name: Run actual tests
+           run: pnpm test
