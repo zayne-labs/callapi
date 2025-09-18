@@ -1,5 +1,5 @@
 import { definePlugin } from "@zayne-labs/callapi";
-import type { AnyFunction } from "@zayne-labs/toolkit-type-helpers";
+import { type AnyFunction, isBoolean } from "@zayne-labs/toolkit-type-helpers";
 import { createConsola } from "consola";
 import { getStatusText } from "./utils";
 
@@ -30,7 +30,17 @@ export type LoggerOptions = {
 	 * Enable or disable the logger
 	 * @default true
 	 */
-	enabled?: boolean;
+	enabled?:
+		| boolean
+		| {
+				onRequest?: boolean;
+				onRequestError?: boolean;
+				onResponse?: boolean;
+				onResponseError?: boolean;
+				onRetry?: boolean;
+				onSuccess?: boolean;
+				onValidationError?: boolean;
+		  };
 	/**
 	 * Enable or disable verbose mode
 	 */
@@ -54,18 +64,22 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 		/* eslint-disable perfectionist/sort-objects -- Ignore for now */
 		id: "logger",
 		name: "Logger",
-		version: "1.0.0",
+		version: "1.1.0",
 
 		hooks: {
 			/* eslint-enable perfectionist/sort-objects -- Ignore */
 			onRequest: (ctx) => {
-				if (!enabled) return;
+				const isEnabled = isBoolean(enabled) ? enabled : enabled.onRequest === true;
+
+				if (!isEnabled) return;
 
 				consoleObject.log(`Request being sent to: ${ctx.options.fullURL}`);
 			},
 
 			onRequestError: (ctx) => {
-				if (!enabled) return;
+				const isEnabled = isBoolean(enabled) ? enabled : enabled.onRequestError === true;
+
+				if (!isEnabled) return;
 
 				const log = consoleObject.fail ?? consoleObject.error;
 
@@ -75,7 +89,9 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 			},
 
 			onResponseError: (ctx) => {
-				if (!enabled) return;
+				const isEnabled = isBoolean(enabled) ? enabled : enabled.onResponseError === true;
+
+				if (!isEnabled) return;
 
 				const log = consoleObject.fail ?? consoleObject.error;
 
@@ -89,7 +105,9 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 			},
 
 			onRetry: (ctx) => {
-				if (!enabled) return;
+				const isEnabled = isBoolean(enabled) ? enabled : enabled.onRetry === true;
+
+				if (!isEnabled) return;
 
 				const log = consoleObject.warn ?? consoleObject.log;
 
@@ -97,11 +115,25 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 			},
 
 			onSuccess: (ctx) => {
-				if (!enabled) return;
+				const isEnabled = isBoolean(enabled) ? enabled : enabled.onSuccess === true;
+
+				if (!isEnabled) return;
 
 				const log = consoleObject.success ?? consoleObject.log;
 
 				log("Request succeeded", ctx.data);
+			},
+
+			onValidationError: (ctx) => {
+				const isEnabled = isBoolean(enabled) ? enabled : enabled.onValidationError === true;
+
+				if (!isEnabled) return;
+
+				const log = consoleObject.fail ?? consoleObject.error;
+
+				log(`Request validation failed with error: ${ctx.error.name}`);
+
+				verbose && consoleObject.error(ctx.error.errorData);
 			},
 		},
 	};
