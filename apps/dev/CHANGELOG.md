@@ -1,5 +1,12 @@
 # dev
 
+## 0.0.50
+
+### Patch Changes
+
+- Updated dependencies [1b53dd1]
+   - @zayne-labs/callapi-plugins@3.1.0
+
 ## 0.0.49
 
 ### Patch Changes
