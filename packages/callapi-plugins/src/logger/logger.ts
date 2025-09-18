@@ -83,7 +83,7 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 
 				const log = consoleObject.fail ?? consoleObject.error;
 
-				log(`Request to failed with error: ${ctx.error.name}`);
+				log(`Request to failed with error: ${ctx.error.name}`, ctx.error.message);
 
 				verbose && consoleObject.error(ctx.error.errorData);
 			},
@@ -98,7 +98,8 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 				log(
 					"Request failed with status: ",
 					ctx.response.status,
-					`(${ctx.response.statusText || getStatusText(ctx.response.status)})`
+					`(${ctx.response.statusText || getStatusText(ctx.response.status)})`,
+					ctx.error.message
 				);
 
 				verbose && consoleObject.error(ctx.error.errorData);
@@ -121,7 +122,7 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 
 				const log = consoleObject.success ?? consoleObject.log;
 
-				log("Request succeeded", ctx.data);
+				log("Request succeeded!", ctx.data);
 			},
 
 			onValidationError: (ctx) => {
@@ -131,7 +132,7 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 
 				const log = consoleObject.fail ?? consoleObject.error;
 
-				log(`Request validation failed with error: ${ctx.error.name}`);
+				log(`Validation failed with error: ${ctx.error.name}`, ctx.error.message);
 
 				verbose && consoleObject.error(ctx.error.errorData);
 			},
