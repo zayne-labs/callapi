@@ -1,6 +1,7 @@
 import type {
 	BaseCallApiExtraOptions as InitBaseCallApiExtraOptions,
 	CallApiExtraOptions as InitCallApiExtraOptions,
+	RetryOptions as InitRetryOptions,
 } from "@zayne-labs/callapi";
 
 export type TimeoutOptions = Pick<InitCallApiExtraOptions, "timeout">;
@@ -12,9 +13,10 @@ export type {
 	CallApiSchemaConfig,
 	DedupeOptions,
 	Hooks,
-	RetryOptions,
 	URLOptions,
 } from "@zayne-labs/callapi";
+
+export type RetryOptions = Omit<InitRetryOptions<unknown>, "retryAttemptCount">;
 
 export type BaseCallApiExtraOptions = Omit<InitBaseCallApiExtraOptions, "~retryAttemptCount">;
 

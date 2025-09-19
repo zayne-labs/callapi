@@ -46,7 +46,7 @@
 		"@types/node": "^24.5.2",
 		"@zayne-labs/eslint-config": "0.9.15",
 		"@zayne-labs/prettier-config": "0.9.15",
-		"eslint": "9.35.0",
+		"eslint": "9.36.0",
 		"eslint-plugin-better-tailwindcss": "^3.7.9",
 		"eslint-plugin-react-hooks": "^5.2.0",
 		"eslint-plugin-react-refresh": "^0.4.20",

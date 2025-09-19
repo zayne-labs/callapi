@@ -32,11 +32,17 @@ export function LLMCopyButton(props: CopyBtnProps) {
 
 		const markDownPromise = callApi(markdownUrl, {
 			responseType: "text",
+			throwOnError: true,
 			resultMode: "onlyData",
-		}).then((content) => {
-			cache.set(markdownUrl, content);
-			return content;
-		});
+		})
+			.then((content) => {
+				cache.set(markdownUrl, content);
+				return content;
+			})
+			.catch((error) => {
+				console.error(error);
+				return "";
+			});
 
 		const clipboardItem = new ClipboardItem({ "text/plain": markDownPromise });
 
