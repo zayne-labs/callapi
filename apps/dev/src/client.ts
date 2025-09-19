@@ -99,7 +99,7 @@ const callMainApi = createFetchClient({
 
 		"https://api.github.com/repos/zayne-labs/ui/commits": {
 			// body: z.object({ flow: z.string() }),
-			data: z.array(z.object({ version: z.string() })),
+			// data: z.array(z.object({ version: z.string() })),
 			query: z.object({ per_page: z.number() }),
 		},
 	}),
