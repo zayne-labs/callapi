@@ -1,5 +1,12 @@
 # docs
 
+## 0.0.38
+
+### Patch Changes
+
+- Updated dependencies [edf52fb]
+   - @zayne-labs/callapi@1.10.3
+
 ## 0.0.37
 
 ### Patch Changes
