@@ -1,5 +1,19 @@
 # @zayne-labs/callapi-plugins
 
+## 3.1.2
+
+### Patch Changes
+
+- edf52fb: feat(validation): add issueCause to ValidationError and improve schema validation
+   - Add issueCause field to ValidationError to track validation failure source
+   - Refactor schema validation to use full schema context
+   - Update logger plugin to support basic and verbose modes
+   - Fix package.json exports configuration
+   - Update tests to include new issueCause field
+
+- Updated dependencies [edf52fb]
+   - @zayne-labs/callapi@1.10.3
+
 ## 3.1.0
 
 ### Minor Changes
