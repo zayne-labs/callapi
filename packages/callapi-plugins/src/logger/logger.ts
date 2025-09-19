@@ -44,7 +44,7 @@ export type LoggerOptions = {
 	/**
 	 * Enable or disable verbose mode
 	 */
-	verbose?: boolean;
+	mode?: "basic" | "verbose";
 };
 
 /* eslint-disable ts-eslint/no-unsafe-argument -- Ignore for now */
@@ -58,7 +58,16 @@ export const defaultConsoleObject: ConsoleLikeObject = {
 /* eslint-enable ts-eslint/no-unsafe-argument -- Ignore for now */
 
 export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
-	const { consoleObject = defaultConsoleObject, enabled = true, verbose } = options ?? {};
+	const { consoleObject = defaultConsoleObject, enabled = true, mode = "basic" } = options ?? {};
+
+	const isBasicMode = mode === "basic";
+	const isVerboseMode = mode === "verbose";
+
+	const lineBreak = "\n\n";
+
+	const successLog = consoleObject.success ?? consoleObject.log;
+
+	const errorLog = consoleObject.fail ?? consoleObject.error;
 
 	return {
 		/* eslint-disable perfectionist/sort-objects -- Ignore for now */
@@ -81,11 +90,12 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 
 				if (!isEnabled) return;
 
-				const log = consoleObject.fail ?? consoleObject.error;
+				const message = [
+					`(${ctx.request.method}) Request to ${ctx.options.fullURL} failed!`,
+					`${ctx.error.name}: ${ctx.error.message}`,
+				].join(lineBreak);
 
-				log(`Request to failed with error: ${ctx.error.name}`, ctx.error.message);
-
-				verbose && consoleObject.error(ctx.error.errorData);
+				errorLog(message);
 			},
 
 			onResponseError: (ctx) => {
@@ -93,16 +103,18 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 
 				if (!isEnabled) return;
 
-				const log = consoleObject.fail ?? consoleObject.error;
+				const message = [
+					`(${ctx.request.method}) Request to ${ctx.options.fullURL} failed with status:
+					${ctx.response.status} (${ctx.response.statusText || getStatusText(ctx.response.status)})`,
 
-				log(
-					"Request failed with status: ",
-					ctx.response.status,
-					`(${ctx.response.statusText || getStatusText(ctx.response.status)})`,
-					ctx.error.message
-				);
+					`${ctx.error.name}: ${ctx.error.message}`,
+				].join(lineBreak);
 
-				verbose && consoleObject.error(ctx.error.errorData);
+				isBasicMode && errorLog(message);
+
+				const verboseMessage = [message, "ErrorData: "].join(lineBreak);
+
+				isVerboseMode && consoleObject.error(verboseMessage, ctx.error.errorData);
 			},
 
 			onRetry: (ctx) => {
@@ -120,9 +132,7 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 
 				if (!isEnabled) return;
 
-				const log = consoleObject.success ?? consoleObject.log;
-
-				log("Request succeeded!", ctx.data);
+				successLog("Request succeeded!", ctx.data);
 			},
 
 			onValidationError: (ctx) => {
@@ -130,11 +140,23 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 
 				if (!isEnabled) return;
 
-				const log = consoleObject.fail ?? consoleObject.error;
+				const getMessage = (limit: number | null = null) => {
+					const errorMessage =
+						limit === null ?
+							ctx.error.message
+						:	`${ctx.error.message.slice(0, limit).trimEnd()}${ctx.error.message.length > limit ? "..." : ""}`;
 
-				log(`Validation failed with error: ${ctx.error.name}`, ctx.error.message);
+					return [
+						`(${ctx.error.issueCause.toUpperCase()}) Validation for request to ${ctx.options.fullURL} failed!`,
+						`${ctx.error.name}: ${errorMessage}`,
+					].join(lineBreak);
+				};
 
-				verbose && consoleObject.error(ctx.error.errorData);
+				isBasicMode && errorLog(getMessage(150));
+
+				const verboseMessage = [getMessage(), "Issues: "].join(lineBreak);
+
+				isVerboseMode && consoleObject.error(verboseMessage, ctx.error.errorData);
 			},
 		},
 	};

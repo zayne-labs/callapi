@@ -100,6 +100,7 @@ export type PossibleHTTPError<TErrorData> = UnmaskType<{
 
 export type PossibleValidationError = UnmaskType<{
 	errorData: ValidationError["errorData"];
+	issueCause: ValidationError["issueCause"];
 	message: string;
 	name: "ValidationError";
 	originalError: ValidationError;
@@ -239,7 +240,13 @@ export const resolveErrorResult = (error: unknown, info: ErrorInfo): ErrorResult
 
 		errorDetails = {
 			data: null,
-			error: { errorData, message, name: "ValidationError", originalError: error },
+			error: {
+				errorData,
+				issueCause: error.issueCause,
+				message,
+				name: "ValidationError",
+				originalError: error,
+			},
 			response,
 		};
 	}

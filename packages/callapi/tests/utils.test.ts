@@ -79,7 +79,8 @@ describe("Utility Functions", () => {
 				const validationError: CallApiResultErrorVariant<unknown>["error"] = {
 					name: "ValidationError",
 					message: "Validation error",
-					originalError: new ValidationError({ issues: [], response: null }),
+					issueCause: "unknown",
+					originalError: new ValidationError({ issues: [], response: null, issueCause: "unknown" }),
 					errorData: [],
 				};
 
@@ -109,7 +110,8 @@ describe("Utility Functions", () => {
 				const validationError: CallApiResultErrorVariant<unknown>["error"] = {
 					name: "ValidationError",
 					message: "Validation error",
-					originalError: new ValidationError({ issues: [], response: null }),
+					issueCause: "unknown",
+					originalError: new ValidationError({ issues: [], response: null, issueCause: "unknown" }),
 					errorData: [],
 				};
 
@@ -146,7 +148,11 @@ describe("Utility Functions", () => {
 
 		describe("isValidationErrorInstance", () => {
 			it("should correctly identify ValidationError instances using static method", () => {
-				const validationError = new ValidationError({ issues: [], response: null });
+				const validationError = new ValidationError({
+					issues: [],
+					response: null,
+					issueCause: "unknown",
+				});
 
 				expect(isValidationErrorInstance(validationError)).toBe(true);
 				expect(isValidationErrorInstance(new Error("Regular error"))).toBe(false);
@@ -188,7 +194,8 @@ describe("Utility Functions", () => {
 				const validationError: CallApiResultErrorVariant<unknown>["error"] = {
 					name: "ValidationError",
 					message: "Validation error",
-					originalError: new ValidationError({ issues: [], response: null }),
+					issueCause: "unknown",
+					originalError: new ValidationError({ issues: [], response: null, issueCause: "unknown" }),
 					errorData: [],
 				};
 

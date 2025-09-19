@@ -303,7 +303,7 @@ export const createFetchClient = <
 					options.responseParser
 				);
 
-				const validErrorData = await handleSchemaValidation(resolvedSchema?.errorData, {
+				const validErrorData = await handleSchemaValidation(resolvedSchema, "errorData", {
 					inputValue: errorData,
 					response,
 					schemaConfig: resolvedSchemaConfig,
@@ -326,7 +326,7 @@ export const createFetchClient = <
 				options.responseParser
 			);
 
-			const validSuccessData = await handleSchemaValidation(resolvedSchema?.data, {
+			const validSuccessData = await handleSchemaValidation(resolvedSchema, "data", {
 				inputValue: successData,
 				response,
 				schemaConfig: resolvedSchemaConfig,
@@ -423,11 +423,7 @@ export const createFetchClient = <
 
 			if (isValidationErrorInstance(error)) {
 				const hookError = await executeHooksInCatchBlock(
-					[
-						options.onValidationError?.(errorContext),
-						options.onRequestError?.(errorContext),
-						options.onError?.(errorContext),
-					],
+					[options.onValidationError?.(errorContext), options.onError?.(errorContext)],
 					hookInfo
 				);
 

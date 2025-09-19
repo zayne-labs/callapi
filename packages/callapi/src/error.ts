@@ -2,6 +2,7 @@ import { extraOptionDefaults } from "./constants/default-options";
 import type { CallApiExtraOptions } from "./types";
 import type { StandardSchemaV1 } from "./types/standard-schema";
 import { isObject, isString } from "./utils/guards";
+import type { CallApiSchema, CallApiSchemaConfig } from "./validation";
 
 type HTTPErrorDetails<TErrorData> = Pick<CallApiExtraOptions, "defaultHTTPErrorMessage"> & {
 	errorData: TErrorData;
@@ -82,15 +83,36 @@ const prettifyValidationIssues = (issues: ValidationError["errorData"]) => {
 	return issuesString;
 };
 
+type LockedExtract<TUnion, TKey extends TUnion> = Extract<TUnion, TKey>;
+
 type ValidationErrorDetails = {
+	/**
+	 * The cause of the validation error.
+	 *
+	 * It's either the name the schema for which validation failed, or the name of the schema config option that led to the validation error.
+	 */
+	issueCause:
+		| "unknown"
+		| `schemaConfig-(${LockedExtract<keyof CallApiSchemaConfig, "strict">})`
+		| keyof CallApiSchema;
+
+	/**
+	 * The issues that caused the validation error.
+	 */
 	issues: readonly StandardSchemaV1.Issue[];
+
+	/**
+	 * The response from server, if any.
+	 */
 	response: Response | null;
 };
 
-const validationErrorSymbol = Symbol("validationErrorSymbol");
+const validationErrorSymbol = Symbol("ValidationErrorSymbol");
 
 export class ValidationError extends Error {
 	errorData: ValidationErrorDetails["issues"];
+
+	issueCause: ValidationErrorDetails["issueCause"];
 
 	override name = "ValidationError" as const;
 
@@ -99,7 +121,7 @@ export class ValidationError extends Error {
 	readonly validationErrorSymbol = validationErrorSymbol;
 
 	constructor(details: ValidationErrorDetails, errorOptions?: ErrorOptions) {
-		const { issues, response } = details;
+		const { issueCause, issues, response } = details;
 
 		const message = prettifyValidationIssues(issues);
 
@@ -107,6 +129,7 @@ export class ValidationError extends Error {
 
 		this.errorData = issues;
 		this.response = response;
+		this.issueCause = issueCause;
 	}
 
 	/**

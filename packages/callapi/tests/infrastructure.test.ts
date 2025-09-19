@@ -47,6 +47,7 @@ describe("Test Infrastructure", () => {
 			expectHTTPError(httpError, 404);
 
 			const validationError = new ValidationError({
+				issueCause: "unknown",
 				issues: [{ message: "Validation failed", path: [] }],
 				response: null,
 			});

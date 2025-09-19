@@ -111,6 +111,7 @@ describe("Error Handling", () => {
 	describe("ValidationError creation and formatting", () => {
 		it("should verify ValidationError.isError static method works correctly", () => {
 			const validationError = new ValidationError({
+				issueCause: "unknown",
 				issues: [{ message: "Test error", path: [] }],
 				response: null,
 			});
@@ -145,6 +146,7 @@ describe("Error Handling", () => {
 			];
 
 			const validationError = new ValidationError({
+				issueCause: "unknown",
 				issues: validationIssues,
 				response: null,
 			});
@@ -164,6 +166,7 @@ describe("Error Handling", () => {
 			];
 
 			const validationError = new ValidationError({
+				issueCause: "unknown",
 				issues: validationIssues,
 				response: null,
 			});
@@ -182,6 +185,7 @@ describe("Error Handling", () => {
 			];
 
 			const validationError = new ValidationError({
+				issueCause: "unknown",
 				issues: validationIssues,
 				response: null,
 			});

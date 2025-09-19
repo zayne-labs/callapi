@@ -52,12 +52,21 @@ const handleValidatorFunction = async <TInput>(
 };
 
 export const standardSchemaParser = async <
-	TSchema extends NonNullable<CallApiSchema[keyof CallApiSchema]>,
+	TFullSchema extends CallApiSchema,
+	TSchemaName extends keyof CallApiSchema,
+	TSchema extends NonNullable<TFullSchema[TSchemaName]>,
 >(
-	schema: TSchema,
+	fullSchema: TFullSchema | undefined,
+	schemaName: TSchemaName,
 	inputData: InferSchemaInput<TSchema>,
 	response?: Response | null
 ): Promise<InferSchemaOutputResult<TSchema>> => {
+	const schema = fullSchema?.[schemaName];
+
+	if (!schema) {
+		return inputData as never;
+	}
+
 	const result =
 		isFunction(schema) ?
 			await handleValidatorFunction(schema, inputData)
@@ -66,10 +75,11 @@ export const standardSchemaParser = async <
 	// == If the `issues` field exists, it means the validation failed
 
 	if (result.issues) {
-		throw new ValidationError(
-			{ issues: result.issues, response: response ?? null },
-			{ cause: result.issues }
-		);
+		throw new ValidationError({
+			issueCause: schemaName,
+			issues: result.issues,
+			response: response ?? null,
+		});
 	}
 
 	return result.value as never;
@@ -185,17 +195,22 @@ type ValidationOptions<
 	schemaConfig: CallApiSchemaConfig | undefined;
 };
 
-export const handleSchemaValidation = async <TSchema extends CallApiSchema[keyof CallApiSchema]>(
-	schema: TSchema | undefined,
+export const handleSchemaValidation = async <
+	TFullSchema extends CallApiSchema,
+	TSchemaName extends keyof CallApiSchema,
+	TSchema extends NonNullable<TFullSchema[TSchemaName]>,
+>(
+	fullSchema: TFullSchema | undefined,
+	schemaName: TSchemaName,
 	validationOptions: ValidationOptions<TSchema>
 ): Promise<InferSchemaOutputResult<TSchema>> => {
 	const { inputValue, response, schemaConfig } = validationOptions;
 
-	if (!schema || schemaConfig?.disableRuntimeValidation) {
+	if (schemaConfig?.disableRuntimeValidation) {
 		return inputValue as never;
 	}
 
-	const validResult = await standardSchemaParser(schema, inputValue, response);
+	const validResult = await standardSchemaParser(fullSchema, schemaName, inputValue, response);
 
 	return validResult as never;
 };
@@ -231,9 +246,9 @@ const handleExtraOptionsValidation = async (validationOptions: ExtraOptionsValid
 	const { options, schema, schemaConfig } = validationOptions;
 
 	const validationResultArray = await Promise.all(
-		extraOptionsToBeValidated.map((propertyKey) =>
-			handleSchemaValidation(schema?.[propertyKey], {
-				inputValue: options[propertyKey],
+		extraOptionsToBeValidated.map((schemaName) =>
+			handleSchemaValidation(schema, schemaName, {
+				inputValue: options[schemaName],
 				schemaConfig,
 			})
 		)
@@ -243,12 +258,12 @@ const handleExtraOptionsValidation = async (validationOptions: ExtraOptionsValid
 		Pick<CallApiExtraOptions, (typeof extraOptionsToBeValidated)[number]>
 	> = {};
 
-	for (const [index, propertyKey] of extraOptionsToBeValidated.entries()) {
+	for (const [index, schemaName] of extraOptionsToBeValidated.entries()) {
 		const validationResult = validationResultArray[index];
 
 		if (validationResult === undefined) continue;
 
-		validatedResultObject[propertyKey] = validationResult as never;
+		validatedResultObject[schemaName] = validationResult as never;
 	}
 
 	return validatedResultObject;
@@ -268,9 +283,9 @@ const handleRequestOptionsValidation = async (validationOptions: RequestOptionsV
 	const { requestOptions, schema, schemaConfig } = validationOptions;
 
 	const validationResultArray = await Promise.all(
-		requestOptionsToBeValidated.map((propertyKey) =>
-			handleSchemaValidation(schema?.[propertyKey], {
-				inputValue: requestOptions[propertyKey],
+		requestOptionsToBeValidated.map((schemaName) =>
+			handleSchemaValidation(schema, schemaName, {
+				inputValue: requestOptions[schemaName],
 				schemaConfig,
 			})
 		)
@@ -306,8 +321,9 @@ export const handleConfigValidation = async (
 
 	const resolvedSchemaConfig = getResolvedSchemaConfig({ baseExtraOptions, extraOptions });
 
-	if (!currentRouteSchema && resolvedSchemaConfig?.strict === true) {
+	if (resolvedSchemaConfig?.strict === true && !currentRouteSchema) {
 		throw new ValidationError({
+			issueCause: "schemaConfig-(strict)",
 			issues: [{ message: `Strict Mode - No schema found for route '${currentRouteSchemaKey}' ` }],
 			response: null,
 		});

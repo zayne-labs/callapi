@@ -8,6 +8,7 @@ import {
 	type ResultModeUnion,
 	type SuccessContext,
 } from "@zayne-labs/callapi";
+import { loggerPlugin } from "@zayne-labs/callapi-plugins";
 import * as z from "zod";
 import * as zv3 from "zod/v3";
 
@@ -75,7 +76,7 @@ const callMainApi = createFetchClient({
 	onRequest: [() => console.info("OnRequest1 - BASE"), () => console.info("OnRequest2 - BASE")],
 	onUpload: (_progress) => {},
 	onUploadSuccess: (_progress) => {},
-	plugins: [pluginOne, pluginTwo],
+	plugins: [pluginOne, pluginTwo, loggerPlugin({})],
 
 	schema: defineSchema({
 		".": {
@@ -97,9 +98,9 @@ const callMainApi = createFetchClient({
 		},
 
 		"https://api.github.com/repos/zayne-labs/ui/commits": {
-			query: z.object({ per_page: z.number() }),
 			// body: z.object({ flow: z.string() }),
-			// data: z.array(z.object({ version: z.string() })),
+			data: z.array(z.object({ version: z.string() })),
+			query: z.object({ per_page: z.number() }),
 		},
 	}),
 });

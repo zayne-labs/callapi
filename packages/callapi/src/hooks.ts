@@ -1,10 +1,11 @@
-import type { ValidationError } from "./error";
 import {
 	type CallApiResultErrorVariant,
 	type CallApiResultSuccessVariant,
 	type ErrorInfo,
 	type PossibleHTTPError,
+	type PossibleJavaScriptError,
 	type PossibleJavaScriptOrValidationError,
+	type PossibleValidationError,
 	resolveErrorResult,
 } from "./result";
 import type { StreamProgressEvent } from "./stream";
@@ -332,7 +333,7 @@ export type RequestContext = {
 export type ValidationErrorContext = UnmaskType<
 	RequestContext & {
 		/** Validation error containing details about what failed validation */
-		error: ValidationError;
+		error: PossibleValidationError;
 		/** HTTP response object if validation failed on response, null if on request */
 		response: Response | null;
 	}
@@ -359,7 +360,7 @@ export type ResponseContext<TData, TErrorData> = UnmaskType<
 
 export type RequestErrorContext = RequestContext & {
 	/** Error that occurred during the request (network, timeout, etc.) */
-	error: PossibleJavaScriptOrValidationError;
+	error: PossibleJavaScriptError;
 	/** Always null for request errors since no response was received */
 	response: null;
 };
