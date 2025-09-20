@@ -2,16 +2,16 @@
 
 import { ProgressProvider } from "@bprogress/next/app";
 import { isBrowser } from "@zayne-labs/toolkit-core";
-import { useConstant, useEffectOnce } from "@zayne-labs/toolkit-react";
+import { useEffectOnce } from "@zayne-labs/toolkit-react";
 import { RootProvider as FumaThemeProvider } from "fumadocs-ui/provider";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 function Providers(props: { children: React.ReactNode }) {
 	const { children } = props;
 
 	const [isDarkMode, setIsDarkMode] = useState(false);
 
-	const mutationObserver = useConstant(() => {
+	const mutationObserver = useMemo(() => {
 		if (!isBrowser()) return;
 
 		return new MutationObserver((mutations) => {
@@ -25,7 +25,7 @@ function Providers(props: { children: React.ReactNode }) {
 
 			setIsDarkMode(newState);
 		});
-	});
+	}, []);
 
 	useEffectOnce(() => {
 		mutationObserver?.observe(document.documentElement, { attributes: true });

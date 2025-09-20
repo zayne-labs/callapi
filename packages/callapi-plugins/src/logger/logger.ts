@@ -104,8 +104,7 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 				if (!isEnabled) return;
 
 				const message = [
-					`(${ctx.request.method}) Request to ${ctx.options.fullURL} failed with status:
-					${ctx.response.status} (${ctx.response.statusText || getStatusText(ctx.response.status)})`,
+					`(${ctx.request.method}) Request to ${ctx.options.fullURL} failed with status: ${ctx.response.status} (${ctx.response.statusText || getStatusText(ctx.response.status)})`,
 
 					`${ctx.error.name}: ${ctx.error.message}`,
 				].join(lineBreak);
