@@ -33,6 +33,7 @@ export type LoggerOptions = {
 	enabled?:
 		| boolean
 		| {
+				onError?: boolean;
 				onRequest?: boolean;
 				onRequestError?: boolean;
 				onResponse?: boolean;
@@ -87,7 +88,8 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 			},
 
 			onRequestError: (ctx) => {
-				const isEnabled = isBoolean(enabled) ? enabled : enabled.onRequestError === true;
+				const isEnabled =
+					isBoolean(enabled) ? enabled : enabled.onRequestError === true || enabled.onError;
 
 				if (!isEnabled) return;
 
@@ -100,7 +102,8 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 			},
 
 			onResponseError: (ctx) => {
-				const isEnabled = isBoolean(enabled) ? enabled : enabled.onResponseError === true;
+				const isEnabled =
+					isBoolean(enabled) ? enabled : enabled.onResponseError === true || enabled.onError;
 
 				if (!isEnabled) return;
 
@@ -135,7 +138,8 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 			},
 
 			onValidationError: (ctx) => {
-				const isEnabled = isBoolean(enabled) ? enabled : enabled.onValidationError === true;
+				const isEnabled =
+					isBoolean(enabled) ? enabled : enabled.onValidationError === true || enabled.onError;
 
 				if (!isEnabled) return;
 

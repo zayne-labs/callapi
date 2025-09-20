@@ -49,14 +49,55 @@ await callApi("https://api.example.com/custom", {
 });
 ```
 
-## Automatic Response Parser
+## Smart Response Parser
 
-Responses are automatically parsed based on the response type specified in the `responseType` option.
+CallApi features a smart response parser that automatically detects the appropriate response type based on the `Content-Type` header, eliminating the need to manually specify `responseType` in most cases.
+
+<Callout type="info">
+	The automatic detection only occurs when you don't explicitly set a `responseType`. If you provide a
+	`responseType`, it will always be used regardless of the `Content-Type` header.
+</Callout>
+
+### Automatic Response Type Detection
+
+When no `responseType` is specified, CallApi automatically determines how to parse the response by examining the `Content-Type` header:
+
+**JSON Detection:**
+
+- Matches `application/json` and JSON variants like `application/vnd.api+json`, `application/ld+json`
+- Uses regex pattern: `/^application\/(?:[\w!#$%&*.^`~-]\*\+)?json(;.+)?$/i`
+
+**Text Detection:**
+
+- Any content type starting with `text/` (e.g., `text/plain`, `text/html`, `text/css`)
+- Specific types: `image/svg+xml`, `application/xml`, `application/xhtml+xml`, `application/html`
+
+**Binary Detection (Blob):**
+
+- Everything else (images, PDFs, videos, unknown types)
+- Fallback when no `Content-Type` header is present
+
+```ts title="api.ts"
+import { callApi } from "@zayne-labs/callapi";
+
+// Automatically parsed as JSON (Content-Type: application/json)
+const { data: user } = await callApi("https://api.example.com/user");
+
+// Automatically parsed as text (Content-Type: text/html)
+const { data: html } = await callApi("https://api.example.com/page");
+
+// Automatically parsed as blob (Content-Type: image/png)
+const { data: image } = await callApi("https://api.example.com/avatar.png");
+```
+
+### Manual Response Type Override
+
+You can still manually specify the response type when needed:
 
 Available response types include:
 
 - All [response types](https://developer.mozilla.org/en-US/docs/Web/API/Response#instance_methods) from the Fetch API:
-   - `json()` (default)
+   - `json()` (default fallback)
    - `text()`
    - `blob()`
    - `arrayBuffer()`
@@ -66,22 +107,34 @@ Available response types include:
 ```ts title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
 
-// `json` response (default)
-const { data } = await callApi<{ name: string; age: number }>("https://api.example.com/user");
-
-// Other response types
+// Force specific response types when needed
 const { data: imageBlob } = await callApi("https://api.example.com/image", {
-	responseType: "blob",
+	responseType: "blob", // Override automatic detection
 });
 
-const { data: textContent } = await callApi("https://api.example.com/text", {
-	responseType: "text",
+const { data: rawText } = await callApi("https://api.example.com/data.json", {
+	responseType: "text", // Get JSON as raw text instead of parsed object
 });
 
-// Doing any of the above in Fetch would imply the following extra steps:
-const response = await fetch("some-url");
+const { data: buffer } = await callApi("https://api.example.com/binary", {
+	responseType: "arrayBuffer", // Get as ArrayBuffer for binary processing
+});
 
-const data = await response.json(); // Or response.text() or response.blob() etc
+// Stream large responses
+const { data: stream } = await callApi("https://api.example.com/large-file", {
+	responseType: "stream", // Get ReadableStream for progressive processing
+});
+```
+
+**Benefits over Fetch:**
+
+```ts
+// With CallApi - automatic detection
+const { data } = await callApi("https://api.example.com/user");
+
+// With Fetch - manual parsing required
+const response = await fetch("https://api.example.com/user");
+const data = await response.json(); // You must know/guess the response type
 ```
 
 Suppose you want to parse a response with a custom function other than the default `JSON.parse`. In that case, you can pass a custom parser function to the `responseParser` option:

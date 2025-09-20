@@ -29,7 +29,7 @@ const callMainApi = createFetchClient({
 	plugins: [
 		loggerPlugin({
 			enabled: process.env.NODE_ENV === "development",
-			verbose: process.env.DEBUG === "true",
+			mode: process.env.DEBUG === "true" ? "verbose" : "basic",
 		}),
 	],
 });
@@ -39,16 +39,46 @@ const callMainApi = createFetchClient({
 
 ### `enabled`
 
-Type: `boolean`
+Type: `boolean | { onError?: boolean; onRequest?: boolean; onRequestError?: boolean; onResponse?: boolean; onResponseError?: boolean; onRetry?: boolean; onSuccess?: boolean; onValidationError?: boolean; }`
 Default: `true`
 
-Toggle logging on/off.
+Toggle logging on/off. Can be a boolean to enable/disable all logging, or an object for granular control over specific events.
 
 ```ts
-export const client = createClient({
+// Simple boolean toggle
+export const client = createFetchClient({
 	plugins: [
 		loggerPlugin({
 			enabled: process.env.NODE_ENV === "development",
+		}),
+	],
+});
+
+// Granular control
+export const client = createFetchClient({
+	plugins: [
+		loggerPlugin({
+			enabled: {
+				onRequest: true,
+				onSuccess: true,
+				onError: true, // Enable all error logging by default
+				onValidationError: false, // Disable validation error logging specifically
+			},
+		}),
+	],
+});
+
+// Alternative: Enable only specific error types
+export const client2 = createFetchClient({
+	plugins: [
+		loggerPlugin({
+			enabled: {
+				onRequest: true,
+				onSuccess: true,
+				onRequestError: true, // Only network/request errors
+				onResponseError: false, // Disable HTTP error logging
+				onValidationError: false, // Disable validation error logging
+			},
 		}),
 	],
 });
@@ -62,7 +92,7 @@ Default: A pre-configured `consola` instance
 Allows you to provide a custom console-like object that implements the following interface:
 
 ```ts
-interface ConsoleLike {
+interface ConsoleLikeObject {
 	error: (...args: any[]) => void;
 	fail?: (...args: any[]) => void;
 	log: (...args: any[]) => void;
@@ -83,25 +113,24 @@ const customLogger: ConsoleLikeObject = {
 	success: (...args) => console.log("[API SUCCESS]", ...args),
 };
 
-export const client = createClient({
-	plugins: [loggerPlugin({ consoleObject: customConsole })],
+export const client = createFetchClient({
+	plugins: [loggerPlugin({ consoleObject: customLogger })],
 });
 ```
 
-### `verbose`
+### `mode`
 
-Type: `boolean`
-Default: `false`
+Type: `"basic" | "verbose"`
+Default: `"basic"`
 
-Enable for detailed debugging:
+Controls the verbosity of logging output:
 
-- Full request/response payloads
-- Error stacks
-- Headers and timing
+- **`"basic"`**: Standard logging with essential information
+- **`"verbose"`**: Detailed debugging with full payloads, error data, and additional context
 
 ```ts
-export const client = createClient({
-	plugins: [loggerPlugin({ verbose: true })],
+export const client = createFetchClient({
+	plugins: [loggerPlugin({ mode: "verbose" })],
 });
 ```
 
@@ -114,3 +143,4 @@ The logger plugin will log the following events:
 - **Response Error**: When a response is received with an error status
 - **Retry**: When a request is being retried (with attempt count)
 - **Success**: When a request completes successfully
+- **Validation Error**: When request/response validation fails (schema validation)
