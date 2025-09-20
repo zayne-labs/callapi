@@ -16,7 +16,7 @@ export type {
 	URLOptions,
 } from "@zayne-labs/callapi";
 
-export type RetryOptions = Omit<InitRetryOptions<unknown>, "retryAttemptCount">;
+export type RetryOptions = Omit<InitRetryOptions<unknown>, "~retryAttemptCount">;
 
 export type BaseCallApiExtraOptions = Omit<InitBaseCallApiExtraOptions, "~retryAttemptCount">;
 
