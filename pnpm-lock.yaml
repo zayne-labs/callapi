@@ -82,8 +82,8 @@ importers:
         specifier: 5.9.2
         version: 5.9.2
       vite:
-        specifier: ^7.1.6
-        version: 7.1.6(@types/node@24.5.2)(jiti@2.5.1)(lightningcss@1.30.1)(terser@5.39.0)(tsx@4.20.5)(yaml@2.8.1)
+        specifier: npm:rolldown-vite@latest
+        version: rolldown-vite@7.1.11(@types/node@24.5.2)(esbuild@0.25.10)(jiti@2.5.1)(terser@5.39.0)(tsx@4.20.5)(yaml@2.8.1)
 
   apps/docs:
     dependencies:
@@ -1275,6 +1275,10 @@ packages:
   '@orama/orama@3.1.14':
     resolution: {integrity: sha512-Iq4RxYC7y0pA/hLgcUGpYYs5Vze4qNmJk0Qi1uIrg2bHGpm6A06nbjWcH9h4HQsddkDFFlanLj/zYBH3Sxdb4w==}
     engines: {node: '>= 20.0.0'}
+
+  '@oxc-project/runtime@0.89.0':
+    resolution: {integrity: sha512-vP7SaoF0l09GAYuj4IKjfyJodRWC09KdLy8NmnsdUPAsWhPz+2hPTLfEr5+iObDXSNug1xfTxtkGjBLvtwBOPQ==}
+    engines: {node: '>=6.9.0'}
 
   '@oxc-project/types@0.89.0':
     resolution: {integrity: sha512-yuo+ECPIW5Q9mSeNmCDC2im33bfKuwW18mwkaHMQh8KakHYDzj4ci/q7wxf2qS3dMlVVCIyrs3kFtH5LmnlYnw==}
@@ -3752,14 +3756,6 @@ packages:
   fastq@1.19.1:
     resolution: {integrity: sha512-GwLTyxkCXjXbxqIhTsMI2Nui8huMPtnxg7krajPJAjnEG/iiOS7i+zCtWGZR9G0NBKbXKh6X9m9UIsYX/N6vvQ==}
 
-  fdir@6.4.6:
-    resolution: {integrity: sha512-hiFoqpyZcfNm1yc4u8oWCf9A2c4D3QjCrks3zmoVKVxpQRzmPNar1hUJcBG2RQHvEVGDN+Jm81ZheVLAQMK6+w==}
-    peerDependencies:
-      picomatch: ^3 || ^4
-    peerDependenciesMeta:
-      picomatch:
-        optional: true
-
   fdir@6.5.0:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
     engines: {node: '>=12.0.0'}
@@ -5209,6 +5205,46 @@ packages:
       typescript:
         optional: true
       vue-tsc:
+        optional: true
+
+  rolldown-vite@7.1.11:
+    resolution: {integrity: sha512-33L3z0NvLLyg2avZsEuLrKR33l8+tALVw9tYpSvW/4Zj7tYeRs5O9bodPL/NsmfUzLSjVIoG+GdADVeil0HNiQ==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    hasBin: true
+    peerDependencies:
+      '@types/node': ^20.19.0 || >=22.12.0
+      esbuild: ^0.25.0
+      jiti: '>=1.21.0'
+      less: ^4.0.0
+      sass: ^1.70.0
+      sass-embedded: ^1.70.0
+      stylus: '>=0.54.8'
+      sugarss: ^5.0.0
+      terser: ^5.16.0
+      tsx: ^4.8.1
+      yaml: ^2.4.2
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+      esbuild:
+        optional: true
+      jiti:
+        optional: true
+      less:
+        optional: true
+      sass:
+        optional: true
+      sass-embedded:
+        optional: true
+      stylus:
+        optional: true
+      sugarss:
+        optional: true
+      terser:
+        optional: true
+      tsx:
+        optional: true
+      yaml:
         optional: true
 
   rolldown@1.0.0-beta.38:
@@ -6878,6 +6914,8 @@ snapshots:
   '@opentelemetry/api@1.9.0': {}
 
   '@orama/orama@3.1.14': {}
+
+  '@oxc-project/runtime@0.89.0': {}
 
   '@oxc-project/types@0.89.0': {}
 
@@ -9459,10 +9497,6 @@ snapshots:
     dependencies:
       reusify: 1.1.0
 
-  fdir@6.4.6(picomatch@4.0.3):
-    optionalDependencies:
-      picomatch: 4.0.3
-
   fdir@6.5.0(picomatch@4.0.3):
     optionalDependencies:
       picomatch: 4.0.3
@@ -11193,6 +11227,24 @@ snapshots:
       - oxc-resolver
       - supports-color
 
+  rolldown-vite@7.1.11(@types/node@24.5.2)(esbuild@0.25.10)(jiti@2.5.1)(terser@5.39.0)(tsx@4.20.5)(yaml@2.8.1):
+    dependencies:
+      '@oxc-project/runtime': 0.89.0
+      fdir: 6.5.0(picomatch@4.0.3)
+      lightningcss: 1.30.1
+      picomatch: 4.0.3
+      postcss: 8.5.6
+      rolldown: 1.0.0-beta.38
+      tinyglobby: 0.2.15
+    optionalDependencies:
+      '@types/node': 24.5.2
+      esbuild: 0.25.10
+      fsevents: 2.3.3
+      jiti: 2.5.1
+      terser: 5.39.0
+      tsx: 4.20.5
+      yaml: 2.8.1
+
   rolldown@1.0.0-beta.38:
     dependencies:
       '@oxc-project/types': 0.89.0
@@ -11551,12 +11603,12 @@ snapshots:
 
   tinyglobby@0.2.13:
     dependencies:
-      fdir: 6.4.6(picomatch@4.0.3)
+      fdir: 6.5.0(picomatch@4.0.3)
       picomatch: 4.0.3
 
   tinyglobby@0.2.14:
     dependencies:
-      fdir: 6.4.6(picomatch@4.0.3)
+      fdir: 6.5.0(picomatch@4.0.3)
       picomatch: 4.0.3
 
   tinyglobby@0.2.15:

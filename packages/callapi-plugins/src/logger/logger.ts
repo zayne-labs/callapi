@@ -63,11 +63,12 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 	const isBasicMode = mode === "basic";
 	const isVerboseMode = mode === "verbose";
 
-	const lineBreak = "\n\n";
+	const lineBreak = "\n";
 
 	const successLog = consoleObject.success ?? consoleObject.log;
 
-	const errorLog = consoleObject.fail ?? consoleObject.error;
+	// eslint-disable-next-line ts-eslint/no-unnecessary-condition -- Ignore
+	const errorLog = consoleObject.error ?? consoleObject.fail ?? consoleObject.log;
 
 	return {
 		/* eslint-disable perfectionist/sort-objects -- Ignore for now */
@@ -91,8 +92,8 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 				if (!isEnabled) return;
 
 				const message = [
-					`(${ctx.request.method}) Request to ${ctx.options.fullURL} failed!`,
-					`${ctx.error.name}: ${ctx.error.message}`,
+					`${ctx.request.method} to '${ctx.options.fullURL}' failed!`,
+					`Reason = ${ctx.error.name}: ${ctx.error.message}`,
 				].join(lineBreak);
 
 				errorLog(message);
@@ -104,9 +105,8 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 				if (!isEnabled) return;
 
 				const message = [
-					`(${ctx.request.method}) Request to ${ctx.options.fullURL} failed with status: ${ctx.response.status} (${ctx.response.statusText || getStatusText(ctx.response.status)})`,
-
-					`${ctx.error.name}: ${ctx.error.message}`,
+					`${ctx.request.method} to '${ctx.options.fullURL}' failed with status: ${ctx.response.status} (${ctx.response.statusText || getStatusText(ctx.response.status)})`,
+					`Reason = ${ctx.error.name}: ${ctx.error.message}`,
 				].join(lineBreak);
 
 				isBasicMode && errorLog(message);
@@ -146,7 +146,7 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 						:	`${ctx.error.message.slice(0, limit).trimEnd()}${ctx.error.message.length > limit ? "..." : ""}`;
 
 					return [
-						`(${ctx.error.issueCause.toUpperCase()}) Validation for request to ${ctx.options.fullURL} failed!`,
+						`(${ctx.error.issueCause.toUpperCase()}) Validation for request to '${ctx.options.fullURL}' failed!`,
 						`${ctx.error.name}: ${errorMessage}`,
 					].join(lineBreak);
 				};
