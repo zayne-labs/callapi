@@ -8,6 +8,9 @@ import { createGenerator, remarkAutoTypeTable } from "fumadocs-typescript";
 
 export const { docs, meta } = defineDocs({
 	dir: "content/docs",
+	docs: {
+		postprocess: { includeProcessedMarkdown: true },
+	},
 });
 
 const generator = createGenerator();

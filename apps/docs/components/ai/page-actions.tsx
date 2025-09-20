@@ -2,13 +2,13 @@
 
 import { callApi } from "@zayne-labs/callapi";
 import { isBrowser } from "@zayne-labs/toolkit-core";
-import { buttonVariants } from "fumadocs-ui/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "fumadocs-ui/components/ui/popover";
 import { useCopyButton } from "fumadocs-ui/utils/use-copy-button";
 import { Check, ChevronDown, Copy, ExternalLinkIcon, MessageCircleIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { tv } from "tailwind-variants";
 import { cn } from "@/lib/cn";
+import { Button } from "../ui/button";
 
 const cache = new Map<string, string>();
 
@@ -25,7 +25,8 @@ export function LLMCopyButton(props: CopyBtnProps) {
 		const cached = cache.get(markdownUrl);
 
 		if (cached) {
-			return navigator.clipboard.writeText(cached);
+			navigator.clipboard.writeText(cached);
+			return;
 		}
 
 		setLoading(true);
@@ -54,23 +55,18 @@ export function LLMCopyButton(props: CopyBtnProps) {
 	});
 
 	return (
-		<button
-			type="button"
+		<Button
 			disabled={isLoading}
-			className={cn(
-				buttonVariants({
-					className: "gap-2 [&_svg]:size-3.5 [&_svg]:text-fd-muted-foreground",
-					color: "secondary",
-					size: "sm",
-				})
-			)}
+			theme="secondary"
+			size="sm"
+			className="gap-2 [&_svg]:size-3.5 [&_svg]:text-fd-muted-foreground"
 			onClick={onClick}
 		>
 			{checked ?
 				<Check />
 			:	<Copy />}
-			Copy Markdown
-		</button>
+			<p>Copy Markdown</p>
+		</Button>
 	);
 }
 
@@ -97,17 +93,11 @@ export function ViewOptions(props: ViewOptionsProps) {
 
 	return (
 		<Popover>
-			<PopoverTrigger
-				className={cn(
-					buttonVariants({
-						className: "gap-2",
-						color: "secondary",
-						size: "sm",
-					})
-				)}
-			>
-				Open
-				<ChevronDown className="size-3.5 text-fd-muted-foreground" />
+			<PopoverTrigger asChild={true}>
+				<Button theme="secondary" size="sm" className="gap-2">
+					<p>Open</p>
+					<ChevronDown className="size-3.5 text-fd-muted-foreground" />
+				</Button>
 			</PopoverTrigger>
 
 			<PopoverContent className="flex flex-col overflow-auto">

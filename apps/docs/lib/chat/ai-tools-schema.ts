@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const InkeepRecordTypes = z.enum([
+const RecordTypes = z.enum([
 	"documentation",
 	"site",
 	"discourse_post",
@@ -13,7 +13,7 @@ const InkeepRecordTypes = z.enum([
 ]);
 
 const LinkType = z.union([
-	InkeepRecordTypes,
+	RecordTypes,
 	z.string(), // catch all
 ]);
 

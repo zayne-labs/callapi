@@ -13,7 +13,7 @@
 	"dependencies": {
 		"@zayne-labs/callapi": "workspace:*",
 		"@zayne-labs/callapi-plugins": "workspace:*",
-		"zod": "^4.1.9"
+		"zod": "^4.1.11"
 	},
 	"devDependencies": {
 		"@types/node": "^24.5.2",

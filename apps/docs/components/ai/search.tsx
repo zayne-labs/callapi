@@ -1,5 +1,7 @@
 "use client";
 
+import type { ProvideLinksToolSchema } from "@/lib/chat/ai-tools-schema";
+import { cn } from "@/lib/cn";
 import { type UIMessage, type UseChatHelpers, useChat } from "@ai-sdk/react";
 import type { InferProps } from "@zayne-labs/toolkit-react/utils";
 import { DefaultChatTransport } from "ai";
@@ -8,9 +10,7 @@ import { Loader2, RefreshCw, Send, X } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { type ComponentProps, createContext, use, useEffect, useRef, useState } from "react";
 import type { z } from "zod";
-import type { ProvideLinksToolSchema } from "@/lib/chat/inkeep-qa-schema";
-import { cn } from "@/lib/cn";
-import { Button, buttonVariants } from "../ui/button";
+import { Button } from "../ui/button";
 import { Markdown } from "./markdown";
 
 const ChatContext = createContext<UseChatHelpers<UIMessage> | null>(null);
@@ -28,7 +28,9 @@ function SearchAIActions(props: ComponentProps<"div">) {
 	const { messages, regenerate, setMessages, status } = useChatContext();
 	const isLoading = status === "streaming";
 
-	if (messages.length === 0) return null;
+	if (messages.length === 0) {
+		return null;
+	}
 
 	return (
 		<div {...props}>
@@ -40,10 +42,16 @@ function SearchAIActions(props: ComponentProps<"div">) {
 					onClick={() => void regenerate()}
 				>
 					<RefreshCw className="size-4" />
-					Retry
+					<p>Retry</p>
 				</Button>
 			)}
-			<Button type="button" size="sm" className="rounded-full" onClick={() => setMessages([])}>
+			<Button
+				type="button"
+				size="sm"
+				theme="secondary"
+				className="rounded-full"
+				onClick={() => setMessages([])}
+			>
 				Clear Chat
 			</Button>
 		</div>
@@ -58,8 +66,8 @@ function SearchAIInput(props: React.ComponentProps<"form">) {
 
 	const isLoading = status === "streaming" || status === "submitted";
 
-	const onStart = (e?: React.SyntheticEvent) => {
-		e?.preventDefault();
+	const onStart = (event: React.SyntheticEvent) => {
+		event.preventDefault();
 		void sendMessage({ text: input });
 		setInput("");
 	};
@@ -90,7 +98,7 @@ function SearchAIInput(props: React.ComponentProps<"form">) {
 			{isLoading ?
 				<Button theme="secondary" className="mt-2 gap-2 rounded-full" onClick={() => void stop()}>
 					<Loader2 className="size-4 animate-spin text-fd-muted-foreground" />
-					Abort Answer
+					<p>Abort Answer</p>
 				</Button>
 			:	<Button
 					theme="ghost"
@@ -152,8 +160,10 @@ function List(props: Omit<React.ComponentProps<"div">, "dir">) {
 }
 
 function Input(props: React.ComponentProps<"textarea">) {
-	const { className, value } = props;
+	const { className, value, ...restOfProps } = props;
+
 	const ref = useRef<HTMLDivElement>(null);
+
 	const shared = cn("col-start-1 row-start-1", className);
 
 	return (
@@ -161,7 +171,7 @@ function Input(props: React.ComponentProps<"textarea">) {
 			<textarea
 				value={value}
 				id="nd-ai-input"
-				{...props}
+				{...restOfProps}
 				className={cn(
 					"resize-none bg-transparent placeholder:text-fd-muted-foreground focus-visible:outline-none",
 					shared
@@ -175,7 +185,7 @@ function Input(props: React.ComponentProps<"textarea">) {
 }
 
 const roleName: Record<string, string> = {
-	assistant: "fumadocs",
+	assistant: "assistant",
 	user: "you",
 };
 
@@ -207,12 +217,13 @@ function Message({ message, ...props }: ComponentProps<"div"> & { message: UIMes
 			>
 				{roleName[message.role] ?? "unknown"}
 			</p>
+
 			<div className="prose text-sm">
 				<Markdown text={markdown} />
 			</div>
 
-			{isLinksPresent ?
-				<div className="mt-2 flex flex-row flex-wrap items-center gap-1">
+			{isLinksPresent && (
+				<div className="mt-2 flex flex-wrap items-center gap-1">
 					{links?.map((item) => (
 						<Link
 							key={item.label}
@@ -225,7 +236,7 @@ function Message({ message, ...props }: ComponentProps<"div"> & { message: UIMes
 						</Link>
 					))}
 				</div>
-			:	null}
+			)}
 		</div>
 	);
 }
@@ -235,9 +246,7 @@ export default function AISearch(props: InferProps<typeof Dialog.Root>) {
 
 	const chat = useChat({
 		id: "search",
-		transport: new DefaultChatTransport({
-			api: "/api/chat",
-		}),
+		transport: new DefaultChatTransport({ api: "/api/chat" }),
 	});
 
 	const messages = chat.messages.filter((msg) => msg.role !== "system");
@@ -253,9 +262,9 @@ export default function AISearch(props: InferProps<typeof Dialog.Root>) {
 				/>
 
 				<Dialog.Content
-					onOpenAutoFocus={(e) => {
+					onOpenAutoFocus={(event) => {
 						document.querySelector<HTMLElement>("#nd-ai-input")?.focus();
-						e.preventDefault();
+						event.preventDefault();
 					}}
 					aria-describedby={undefined}
 					className="fixed left-1/2 z-50 flex w-[calc(100%-1rem)] max-w-screen-sm -translate-x-1/2
@@ -265,24 +274,20 @@ export default function AISearch(props: InferProps<typeof Dialog.Root>) {
 				>
 					<ChatContext value={chat}>
 						<div className="px-3 py-2">
-							<Dialog.Title className="text-sm font-medium">Inkeep AI</Dialog.Title>
+							<Dialog.Title className="text-sm font-medium">CallApi Assistant</Dialog.Title>
 							<Dialog.Description className="text-xs text-fd-muted-foreground">
 								AI can be inaccurate, please verify the information.
 							</Dialog.Description>
 						</div>
 
-						<Dialog.Close
-							aria-label="Close"
-							tabIndex={-1}
-							className={cn(
-								buttonVariants({
-									className: "absolute end-1 top-1 text-fd-muted-foreground",
-									size: "icon",
-									theme: "ghost",
-								})
-							)}
-						>
-							<X />
+						<Dialog.Close aria-label="Close" tabIndex={-1} asChild={true}>
+							<Button
+								className="absolute end-1 top-1 text-fd-muted-foreground"
+								size="icon"
+								theme="ghost"
+							>
+								<X />
+							</Button>
 						</Dialog.Close>
 
 						{messages.length > 0 && (

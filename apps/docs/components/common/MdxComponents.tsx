@@ -13,7 +13,7 @@ export const getMDXComponents = (extraComponents?: MDXComponents) => {
 		...TypeTable,
 		Link,
 		...extraComponents,
-	} satisfies MDXComponents;
+	};
 };
 
 // declare module "mdx/types.js" {

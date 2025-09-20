@@ -6,9 +6,10 @@ export default zayne(
 		react: {
 			// compiler: true,
 			files: ["apps/docs/**/*.{ts,tsx}"],
-			nextjs: true,
-			overrides: {
-				"nextjs-next/no-html-link-for-pages": ["error", "apps/docs"],
+			nextjs: {
+				overrides: {
+					"nextjs/no-html-link-for-pages": ["error", "apps/docs"],
+				},
 			},
 		},
 		tailwindcssBetter: {

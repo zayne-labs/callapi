@@ -17,7 +17,7 @@ import remarkRehype from "remark-rehype";
 
 export type Processor = {
 	process: (content: string) => Promise<ReactNode>;
-}
+};
 
 function createProcessor(): Processor {
 	const processor = remark().use(remarkGfm).use(remarkRehype);
@@ -52,7 +52,9 @@ function Pre(props: ComponentProps<"pre">) {
 			.find((v) => v.startsWith("language-"))
 			?.slice("language-".length) ?? "text";
 
-	if (lang === "mdx") lang = "md";
+	if (lang === "mdx") {
+		lang = "md";
+	}
 
 	return <DynamicCodeBlock lang={lang} code={(codeProps.children ?? "") as string} />;
 }

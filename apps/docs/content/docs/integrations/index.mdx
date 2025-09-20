@@ -30,8 +30,6 @@ const callMainApi = createFetchClient({
 	baseURL: "https://api.example.com",
 	resultMode: "onlyData", // Only data is needed for most integrations
 	throwOnError: true, // Most libraries expect errors to be thrown
-	timeout: 10000, // 10 second timeout
-	retryAttempts: 2, // Retry failed requests
 });
 
 // @log: Use it in your data fetching logic
