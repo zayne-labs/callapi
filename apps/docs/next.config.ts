@@ -12,10 +12,6 @@ const config = {
 		ignoreDuringBuilds: true,
 	},
 
-	experimental: {
-		esmExternals: false,
-	},
-
 	reactStrictMode: true,
 
 	// eslint-disable-next-line ts-eslint/require-await
@@ -27,6 +23,8 @@ const config = {
 			},
 		];
 	},
+
+	serverExternalPackages: ["typescript", "twoslash"],
 
 	typescript: {
 		ignoreBuildErrors: true,

@@ -1,6 +1,5 @@
 import { defaultTwoslashOptions } from "@shikijs/twoslash";
-import { rehypeCodeDefaultOptions } from "fumadocs-core/mdx-plugins";
-import { remarkInstall } from "fumadocs-docgen";
+import { rehypeCodeDefaultOptions, remarkNpm } from "fumadocs-core/mdx-plugins";
 import { defineConfig, defineDocs } from "fumadocs-mdx/config";
 import { transformerTwoslash } from "fumadocs-twoslash";
 import { createFileSystemTypesCache } from "fumadocs-twoslash/cache-fs";
@@ -47,7 +46,7 @@ export default defineConfig({
 		},
 
 		remarkPlugins: [
-			[remarkInstall, { persist: { id: "persist-install" } }],
+			[remarkNpm, { persist: { id: "persist-install" } }],
 			[remarkAutoTypeTable, { generator }],
 		],
 	},
