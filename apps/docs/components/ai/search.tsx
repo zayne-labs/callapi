@@ -1,7 +1,5 @@
 "use client";
 
-import type { ProvideLinksToolSchema } from "@/lib/chat/ai-tools-schema";
-import { cn } from "@/lib/cn";
 import { type UIMessage, type UseChatHelpers, useChat } from "@ai-sdk/react";
 import type { InferProps } from "@zayne-labs/toolkit-react/utils";
 import { DefaultChatTransport } from "ai";
@@ -10,6 +8,8 @@ import { Loader2, RefreshCw, Send, X } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { type ComponentProps, createContext, use, useEffect, useRef, useState } from "react";
 import type { z } from "zod";
+import type { ProvideLinksToolSchema } from "@/lib/chat/ai-tools-schema";
+import { cn } from "@/lib/cn";
 import { Button } from "../ui/button";
 import { Markdown } from "./markdown";
 
@@ -101,6 +101,7 @@ function SearchAIInput(props: React.ComponentProps<"form">) {
 					<p>Abort Answer</p>
 				</Button>
 			:	<Button
+					type="submit"
 					theme="ghost"
 					size="icon"
 					className="mt-2 rounded-full transition-all"
@@ -273,7 +274,7 @@ export default function AISearch(props: InferProps<typeof Dialog.Root>) {
 						data-[state=open]:animate-fd-dialog-in max-md:top-12 md:bottom-12"
 				>
 					<ChatContext value={chat}>
-						<div className="px-3 py-2">
+						<div className="flex flex-col gap-1 px-3 py-2">
 							<Dialog.Title className="text-sm font-medium">CallApi Assistant</Dialog.Title>
 							<Dialog.Description className="text-xs text-fd-muted-foreground">
 								AI can be inaccurate, please verify the information.

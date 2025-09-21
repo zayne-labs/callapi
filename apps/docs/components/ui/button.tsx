@@ -16,6 +16,8 @@ export const buttonVariants = tv({
 		size: {
 			default: "h-9 px-4 py-2",
 			icon: "size-9",
+			"icon-sm": "p-1.5 [&_svg]:size-4.5",
+			"icon-xs": "p-1 [&_svg]:size-4",
 			lg: "h-10 rounded-md px-8",
 			sm: "h-8 rounded-md px-3 text-xs",
 		},
@@ -27,7 +29,7 @@ export const buttonVariants = tv({
 			link: "text-fd-primary underline-offset-4 hover:underline",
 			outline: `border border-fd-input bg-fd-background shadow-sm hover:bg-fd-accent
 			hover:text-fd-accent-foreground`,
-			primary: "bg-fd-primary text-fd-primary-foreground shadow hover:bg-fd-primary/90",
+			primary: "bg-fd-primary text-fd-primary-foreground shadow-sm hover:bg-fd-primary/90",
 			secondary: "bg-fd-secondary/75 text-fd-secondary-foreground shadow-sm",
 		},
 	},
