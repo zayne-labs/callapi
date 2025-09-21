@@ -8,12 +8,12 @@ const config = {
 		position: "bottom-right",
 	},
 
-	typescript: {
-		ignoreBuildErrors: true,
-	},
-
 	eslint: {
 		ignoreDuringBuilds: true,
+	},
+
+	experimental: {
+		esmExternals: false,
 	},
 
 	reactStrictMode: true,
@@ -26,6 +26,10 @@ const config = {
 				source: "/docs/:path*.mdx",
 			},
 		];
+	},
+
+	typescript: {
+		ignoreBuildErrors: true,
 	},
 } satisfies NextConfig;
 
