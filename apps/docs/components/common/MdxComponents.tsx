@@ -16,16 +16,16 @@ export const getMDXComponents = (extraComponents?: MDXComponents) => {
 	};
 };
 
-// declare module "mdx/types.js" {
-// 	// eslint-disable-next-line ts-eslint/no-namespace
-// 	namespace JSX {
-// 		type Element = React.JSX.Element;
-// 		type ElementClass = React.JSX.ElementClass;
-// 		type ElementAttributesProperty = React.JSX.ElementAttributesProperty;
-// 		type ElementChildrenAttribute = React.JSX.ElementChildrenAttribute;
-// 		type IntrinsicElements = React.JSX.IntrinsicElements;
-// 	}
-// }
+declare module "mdx/types.js" {
+	// Augment the MDX types to make it understand React.
+	// eslint-disable-next-line ts-eslint/no-namespace
+	namespace JSX {
+		type Element = React.JSX.Element;
+		type ElementClass = React.JSX.ElementClass;
+		type ElementType = React.JSX.ElementType;
+		type IntrinsicElements = React.JSX.IntrinsicElements;
+	}
+}
 
 declare global {
 	type MDXProvidedComponents = ReturnType<typeof getMDXComponents>;

@@ -1,5 +1,10 @@
+import createBundleAnalyzer from "@next/bundle-analyzer";
 import { createMDX } from "fumadocs-mdx/next";
 import type { NextConfig } from "next";
+
+const withAnalyzer = createBundleAnalyzer({
+	enabled: process.env.ANALYZE === "true",
+});
 
 const withMDX = createMDX();
 
@@ -24,11 +29,11 @@ const config = {
 		];
 	},
 
-	serverExternalPackages: ["typescript", "twoslash"],
+	serverExternalPackages: ["typescript", "twoslash", "shiki"],
 
 	typescript: {
 		ignoreBuildErrors: true,
 	},
 } satisfies NextConfig;
 
-export default withMDX(config);
+export default withAnalyzer(withMDX(config));

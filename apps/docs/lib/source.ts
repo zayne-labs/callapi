@@ -1,8 +1,7 @@
 import { type InferMetaType, type InferPageType, loader } from "fumadocs-core/source";
-import { createMDXSource } from "fumadocs-mdx";
 import { icons as lucideIcons } from "lucide-react";
 import { createElement } from "react";
-import { docs, meta } from "@/.source";
+import { docs } from "@/.source";
 
 export const source = loader({
 	baseUrl: "/docs",
@@ -13,7 +12,7 @@ export const source = loader({
 
 		return createElement(lucideIcons[iconName as keyof typeof lucideIcons]);
 	},
-	source: createMDXSource(docs, meta),
+	source: docs.toFumadocsSource(),
 });
 
 export type Page = InferPageType<typeof source>;

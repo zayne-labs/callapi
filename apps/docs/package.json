@@ -6,6 +6,7 @@
 	"scripts": {
 		"build": "pnpm -w build:callapi && next build",
 		"dev": "next dev --turbo",
+		"dev:anaylze": "cross-env ANALYZE=true pnpm dev",
 		"postinstall": "fumadocs-mdx",
 		"start": "next start"
 	},
@@ -48,6 +49,7 @@
 		"zustand": "^5.0.8"
 	},
 	"devDependencies": {
+		"@next/bundle-analyzer": "^15.5.3",
 		"@tailwindcss/postcss": "^4.1.13",
 		"@types/mdx": "^2.0.13",
 		"@types/node": "24.5.2",
@@ -56,6 +58,7 @@
 		"@zayne-labs/prettier-config": "0.9.16",
 		"@zayne-labs/tsconfig": "0.9.16",
 		"autoprefixer": "^10.4.21",
+		"cross-env": "^10.0.0",
 		"postcss": "^8.5.6",
 		"prettier-plugin-classnames": "^0.8.3",
 		"prettier-plugin-merge": "^0.8.0",

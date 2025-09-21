@@ -4,12 +4,13 @@ import { getLLMText } from "../get-llm-text";
 export const getDocumentationContext = async () => {
 	const pages = source.getPages();
 
-	const scannedPagePromises = pages.map((element) => getLLMText(element));
+	const scannedPagePromises = pages.map((page) => getLLMText(page));
 	const scannedPages = await Promise.all(scannedPagePromises);
 
 	const contextParts = [
 		"=== CALLAPI DOCUMENTATION CONTEXT ===",
-		"This context contains information from the CallAPI documentation to help answer user questions accurately.",
+		"This context contains all information from the CallAPI documentation needed to help answer user questions accurately.",
+
 		...scannedPages,
 	];
 

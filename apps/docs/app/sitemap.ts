@@ -4,20 +4,33 @@ import { source } from "@/lib/source";
 
 export const revalidate = false;
 
-const sitemap = (): MetadataRoute.Sitemap => {
-	const pages = source.getPages().map((page) => ({ slug: page.slugs }));
+const url = (path: string): string => new URL(path, baseURL).toString();
 
-	const docs = pages.map((page) => ({
-		lastModified: new Date().toISOString().split("T")[0],
-		url: `${baseURL}/docs/${page.slug.join("/")}`,
-	}));
+const sitemap = (): MetadataRoute.Sitemap => {
+	const pages = source.getPages();
+
+	const docsSiteMap = pages.map((page) => {
+		return {
+			changeFrequency: "weekly",
+			lastModified: page.data.lastModified,
+			priority: 0.5,
+			url: url(page.url),
+		} satisfies MetadataRoute.Sitemap[number];
+	});
 
 	return [
 		{
-			lastModified: new Date().toISOString().split("T")[0],
-			url: baseURL,
+			changeFrequency: "monthly",
+			priority: 1,
+			url: url("/"),
 		},
-		...docs,
+		{
+			changeFrequency: "monthly",
+			priority: 0.8,
+			url: url("/docs"),
+		},
+
+		...docsSiteMap,
 	];
 };
 

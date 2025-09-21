@@ -1,18 +1,16 @@
 import { defaultTwoslashOptions } from "@shikijs/twoslash";
-import { rehypeCodeDefaultOptions, remarkNpm } from "fumadocs-core/mdx-plugins";
+import { rehypeCodeDefaultOptions } from "fumadocs-core/mdx-plugins";
 import { defineConfig, defineDocs } from "fumadocs-mdx/config";
 import { transformerTwoslash } from "fumadocs-twoslash";
 import { createFileSystemTypesCache } from "fumadocs-twoslash/cache-fs";
-import { createGenerator, remarkAutoTypeTable } from "fumadocs-typescript";
+import { remarkAutoTypeTable } from "fumadocs-typescript";
 
-export const { docs, meta } = defineDocs({
+export const docs = defineDocs({
 	dir: "content/docs",
 	docs: {
 		postprocess: { includeProcessedMarkdown: true },
 	},
 });
-
-const generator = createGenerator();
 
 const defaultTwoSlashOptionsObject = defaultTwoslashOptions();
 
@@ -21,7 +19,7 @@ export default defineConfig({
 		rehypeCodeOptions: {
 			experimentalJSEngine: true,
 			inline: "tailing-curly-colon",
-			langs: ["js", "bash"],
+			langs: ["ts", "js", "html", "tsx", "mdx", "bash"],
 			lazy: true,
 			themes: {
 				dark: "material-theme-darker",
@@ -45,9 +43,15 @@ export default defineConfig({
 			],
 		},
 
-		remarkPlugins: [
-			[remarkNpm, { persist: { id: "persist-install" } }],
-			[remarkAutoTypeTable, { generator }],
-		],
+		remarkCodeTabOptions: {
+			parseMdx: true,
+		},
+		remarkNpmOptions: {
+			persist: {
+				id: "package-manager",
+			},
+		},
+
+		remarkPlugins: [remarkAutoTypeTable],
 	},
 });
