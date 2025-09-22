@@ -166,7 +166,7 @@ export const createRetryStrategy = (ctx: ErrorContext<unknown> & RequestContext)
 		);
 
 		const includesStatusCodes =
-			Boolean(ctx.response) && retryStatusCodes.size > 0 ?
+			ctx.response != null && retryStatusCodes.size > 0 ?
 				retryStatusCodes.has(ctx.response.status)
 			:	true;
 

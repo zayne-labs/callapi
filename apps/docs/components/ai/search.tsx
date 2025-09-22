@@ -6,7 +6,7 @@ import { DefaultChatTransport } from "ai";
 import Link from "fumadocs-core/link";
 import { Loader2, RefreshCw, Send, X } from "lucide-react";
 import { Dialog } from "radix-ui";
-import { type ComponentProps, createContext, use, useEffect, useRef, useState } from "react";
+import { createContext, use, useEffect, useRef, useState } from "react";
 import type { z } from "zod";
 import type { ProvideLinksToolSchema } from "@/lib/chat/ai-tools-schema";
 import { cn } from "@/lib/cn";
@@ -14,6 +14,7 @@ import { Button } from "../ui/button";
 import { Markdown } from "./markdown";
 
 const ChatContext = createContext<UseChatHelpers<UIMessage> | null>(null);
+
 function useChatContext() {
 	const context = use(ChatContext);
 
@@ -24,7 +25,7 @@ function useChatContext() {
 	return context;
 }
 
-function SearchAIActions(props: ComponentProps<"div">) {
+function SearchAIActions(props: InferProps<"div">) {
 	const { messages, regenerate, setMessages, status } = useChatContext();
 	const isLoading = status === "streaming";
 
@@ -58,7 +59,7 @@ function SearchAIActions(props: ComponentProps<"div">) {
 	);
 }
 
-function SearchAIInput(props: React.ComponentProps<"form">) {
+function SearchAIInput(props: InferProps<"form">) {
 	const { className, ...restOfProps } = props;
 	const { sendMessage, status, stop } = useChatContext();
 
@@ -114,14 +115,40 @@ function SearchAIInput(props: React.ComponentProps<"form">) {
 	);
 }
 
-function List(props: Omit<React.ComponentProps<"div">, "dir">) {
+function Input(props: InferProps<"textarea">) {
+	const { className, value, ...restOfProps } = props;
+
+	const ref = useRef<HTMLDivElement>(null);
+
+	const shared = cn("col-start-1 row-start-1", className);
+
+	return (
+		<div className="grid flex-1">
+			<textarea
+				value={value}
+				id="nd-ai-input"
+				{...restOfProps}
+				className={cn(
+					"resize-none bg-transparent placeholder:text-fd-muted-foreground focus-visible:outline-none",
+					shared
+				)}
+			/>
+			<div ref={ref} className={cn(shared, "invisible break-all")}>
+				{`${value?.toString() ?? ""}\n`}
+			</div>
+		</div>
+	);
+}
+
+function MessageList(props: Omit<InferProps<"div">, "dir">) {
 	const { children, className, ...restOfProps } = props;
 
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		if (!containerRef.current) return;
-		function callback() {
+
+		const callback = () => {
 			const container = containerRef.current;
 			if (!container) return;
 
@@ -129,7 +156,7 @@ function List(props: Omit<React.ComponentProps<"div">, "dir">) {
 				behavior: "instant",
 				top: container.scrollHeight,
 			});
-		}
+		};
 
 		const observer = new ResizeObserver(callback);
 
@@ -160,38 +187,16 @@ function List(props: Omit<React.ComponentProps<"div">, "dir">) {
 	);
 }
 
-function Input(props: React.ComponentProps<"textarea">) {
-	const { className, value, ...restOfProps } = props;
-
-	const ref = useRef<HTMLDivElement>(null);
-
-	const shared = cn("col-start-1 row-start-1", className);
-
-	return (
-		<div className="grid flex-1">
-			<textarea
-				value={value}
-				id="nd-ai-input"
-				{...restOfProps}
-				className={cn(
-					"resize-none bg-transparent placeholder:text-fd-muted-foreground focus-visible:outline-none",
-					shared
-				)}
-			/>
-			<div ref={ref} className={cn(shared, "invisible break-all")}>
-				{`${value?.toString() ?? ""}\n`}
-			</div>
-		</div>
-	);
-}
-
-const roleName: Record<string, string> = {
+const roleName = {
 	assistant: "assistant",
 	user: "you",
-};
+} satisfies Record<Exclude<UIMessage["role"], "system">, string> as Record<string, string>;
 
-function Message({ message, ...props }: ComponentProps<"div"> & { message: UIMessage }) {
+function Message(props: InferProps<"div"> & { message: UIMessage }) {
+	const { message, ...restOfProps } = props;
+
 	let markdown = "";
+
 	let links: z.infer<typeof ProvideLinksToolSchema>["links"] = [];
 
 	// eslint-disable-next-line ts-eslint/no-unnecessary-condition
@@ -209,7 +214,7 @@ function Message({ message, ...props }: ComponentProps<"div"> & { message: UIMes
 	const isLinksPresent = links && links.length > 0;
 
 	return (
-		<div {...props}>
+		<div {...restOfProps}>
 			<p
 				className={cn(
 					"mb-1 text-sm font-medium text-fd-muted-foreground",
@@ -292,7 +297,7 @@ export default function AISearch(props: InferProps<typeof Dialog.Root>) {
 						</Dialog.Close>
 
 						{messages.length > 0 && (
-							<List
+							<MessageList
 								style={{
 									maskImage:
 										"linear-gradient(to bottom, transparent, black 20px, black calc(100% - 20px), transparent)",
@@ -303,8 +308,9 @@ export default function AISearch(props: InferProps<typeof Dialog.Root>) {
 										<Message key={item.id} message={item} />
 									))}
 								</div>
-							</List>
+							</MessageList>
 						)}
+
 						<div
 							className="overflow-hidden rounded-xl border border-fd-foreground/20
 								text-fd-popover-foreground"

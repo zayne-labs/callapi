@@ -173,7 +173,7 @@ export const waitFor = (delay: number) => {
 };
 
 export const createCombinedSignal = (...signals: Array<AbortSignal | null | undefined>) => {
-	const cleanedSignals = signals.filter(Boolean);
+	const cleanedSignals = signals.filter((signal) => signal != null);
 
 	const combinedSignal = AbortSignal.any(cleanedSignals);
 

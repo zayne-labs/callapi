@@ -7,17 +7,23 @@ const google = createGoogleGenerativeAI({
 	apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
 });
 
+export const runtime = "edge";
+
 export async function POST(req: Request) {
-	const reqJson = (await req.json()) as Record<string, unknown>;
-
 	const systemPromptContext = getSystemPromptContext();
-	const documentationContext = await getDocumentationContext();
 
-	const initMessages = convertToModelMessages(reqJson.messages as never, {
+	const [reqJson, documentationContext] = await Promise.all([
+		req.json() as unknown as Record<string, unknown>,
+		getDocumentationContext(),
+	]);
+
+	const { messages: userMessages } = reqJson;
+
+	const initMessages = convertToModelMessages(userMessages as never, {
 		ignoreIncompleteToolCalls: true,
 	});
 
-	const messagesSystemContext = [
+	const messages = [
 		{
 			content: systemPromptContext,
 			role: "system",
@@ -30,9 +36,12 @@ export async function POST(req: Request) {
 	] as const satisfies ModelMessage[];
 
 	const result = streamText({
-		messages: messagesSystemContext,
+		messages,
+
 		model: google("gemini-2.5-flash"),
+
 		toolChoice: "auto",
+
 		tools: {
 			provideLinks: {
 				inputSchema: ProvideLinksToolSchema,

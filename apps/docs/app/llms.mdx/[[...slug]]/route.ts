@@ -5,8 +5,9 @@ import { source } from "@/lib/source";
 
 export const revalidate = false;
 
-export async function GET(_req: NextRequest, { params }: RouteContext<"/llms.mdx/[[...slug]]">) {
-	const { slug } = await params;
+export async function GET(_req: NextRequest, ctx: RouteContext<"/llms.mdx/[[...slug]]">) {
+	const { slug } = await ctx.params;
+
 	const page = source.getPage(slug);
 
 	if (!page) {

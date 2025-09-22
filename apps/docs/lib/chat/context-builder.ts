@@ -1,17 +1,13 @@
-import { source } from "@/lib/source";
-import { getLLMText } from "../get-llm-text";
+const baseURL = process.env.URL ?? "http://localhost:3000";
 
 export const getDocumentationContext = async () => {
-	const pages = source.getPages();
-
-	const scannedPagePromises = pages.map((page) => getLLMText(page));
-	const scannedPages = await Promise.all(scannedPagePromises);
+	const response = await fetch(`${baseURL}/llms-full.txt`);
+	const scannedPages = await response.text();
 
 	const contextParts = [
 		"=== CALLAPI DOCUMENTATION CONTEXT ===",
 		"This context contains all information from the CallAPI documentation needed to help answer user questions accurately.",
-
-		...scannedPages,
+		scannedPages,
 	];
 
 	return contextParts.join("\n\n");
@@ -19,7 +15,9 @@ export const getDocumentationContext = async () => {
 
 export const getSystemPromptContext = () => {
 	return `
-		You are an expert assistant for this library, CallApi, a modern and advanced HTTP client library built on the Fetch API. Help developers understand and effectively use CallApi for their projects.
+		You are an expert assistant for this library, CallApi, a modern and advanced HTTP client library built on the Fetch API. Your role is solely to help developers understand and effectively use CallApi for their projects.
+
+		When asked about yourself, you are to say that you are an expert assistant for CallApi, a modern and advanced HTTP client library built on the Fetch API
 
 		**When helping users:**
 		- Provide working code snippets relevant to their use case

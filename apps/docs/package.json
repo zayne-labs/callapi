@@ -5,13 +5,13 @@
 	"private": true,
 	"scripts": {
 		"build": "pnpm -w build:callapi && next build",
+		"build:analyze": "cross-env ANALYZE=true pnpm build",
 		"dev": "next dev --turbo",
-		"dev:anaylze": "cross-env ANALYZE=true pnpm dev",
 		"postinstall": "fumadocs-mdx",
 		"start": "next start"
 	},
 	"dependencies": {
-		"@ai-sdk/google": "^2.0.14",
+		"@ai-sdk/google": "^2.0.15",
 		"@ai-sdk/openai-compatible": "^1.0.18",
 		"@ai-sdk/react": "^2.0.48",
 		"@bprogress/next": "^3.2.12",
@@ -33,7 +33,7 @@
 		"geist": "^1.5.1",
 		"hast-util-to-jsx-runtime": "^2.3.6",
 		"lucide-react": "^0.544.0",
-		"motion": "^12.23.16",
+		"motion": "^12.23.18",
 		"next": "15.5.3",
 		"radix-ui": "^1.4.3",
 		"react": "19.1.1",

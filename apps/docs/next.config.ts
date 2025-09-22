@@ -1,12 +1,15 @@
 import createBundleAnalyzer from "@next/bundle-analyzer";
 import { createMDX } from "fumadocs-mdx/next";
 import type { NextConfig } from "next";
+import { fileURLToPath } from "node:url";
 
 const withAnalyzer = createBundleAnalyzer({
 	enabled: process.env.ANALYZE === "true",
 });
 
 const withMDX = createMDX();
+
+const getRoot = (rootPath = "/") => fileURLToPath(new URL(rootPath, import.meta.url));
 
 const config = {
 	devIndicators: {
@@ -30,6 +33,10 @@ const config = {
 	},
 
 	serverExternalPackages: ["typescript", "twoslash", "shiki"],
+
+	turbopack: {
+		root: getRoot(),
+	},
 
 	typescript: {
 		ignoreBuildErrors: true,
