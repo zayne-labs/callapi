@@ -107,7 +107,7 @@ export const extractMethodFromURL = (initURL: string | undefined) => {
 
 	const method = initURL.split("@")[1]?.split("/")[0];
 
-	if (!method || !routeKeyMethods.includes(method)) return;
+	if (!method || !routeKeyMethods.includes(method as RouteKeyMethodsURLUnion)) return;
 
 	return method;
 };
