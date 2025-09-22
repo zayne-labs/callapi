@@ -11,6 +11,8 @@ const withMDX = createMDX();
 
 const getRoot = (rootPath = "/") => fileURLToPath(new URL(rootPath, import.meta.url));
 
+const isDev = process.env.NODE_ENV !== "production";
+
 const config = {
 	devIndicators: {
 		position: "bottom-right",
@@ -34,9 +36,11 @@ const config = {
 
 	serverExternalPackages: ["typescript", "twoslash", "shiki"],
 
-	turbopack: {
-		root: getRoot(),
-	},
+	...(isDev && {
+		turbopack: {
+			root: getRoot(),
+		},
+	}),
 
 	typescript: {
 		ignoreBuildErrors: true,
