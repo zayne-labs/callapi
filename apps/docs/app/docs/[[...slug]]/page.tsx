@@ -7,7 +7,6 @@ import { owner, repo } from "@/lib/github";
 import { createMetadata } from "@/lib/metadata";
 import { source } from "@/lib/source";
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const revalidate = 86400;
 
 export default async function Page(props: { params: Promise<{ slug?: string[] }> }) {
@@ -53,7 +52,6 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
 	);
 }
 
-/* eslint-disable react-refresh/only-export-components -- This doesn't apply to Next.js */
 export function generateStaticParams() {
 	return source.generateParams();
 }

@@ -31,7 +31,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
 	});
 }
 
-// eslint-disable-next-line react-refresh/only-export-components -- Does not apply to Next.js
 export function generateStaticParams(): Array<{
 	slug: string[];
 }> {

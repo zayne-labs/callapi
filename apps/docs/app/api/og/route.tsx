@@ -2,7 +2,6 @@ import { callApi } from "@zayne-labs/callapi";
 import { ImageResponse } from "next/og";
 import * as z from "zod";
 
-// eslint-disable-next-line react-refresh/only-export-components -- It's fine
 export const runtime = "edge";
 
 const ogSchema = z.object({
