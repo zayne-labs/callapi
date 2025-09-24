@@ -10,7 +10,7 @@ import {
 	isSerializable,
 	isValidJsonString,
 } from "./guards";
-import { createCombinedSignalPolyfill, createTimeoutSignalPolyfill } from "./polyfill";
+import { createCombinedSignalPolyfill, createTimeoutSignalPolyfill } from "./polyfills";
 
 export const omitKeys = <
 	TObject extends Record<string, unknown>,
