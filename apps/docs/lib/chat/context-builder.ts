@@ -1,8 +1,9 @@
+import { callApi } from "@zayne-labs/callapi";
+
 const baseURL = process.env.URL ?? "http://localhost:3000";
 
 export const getDocumentationContext = async () => {
-	const response = await fetch(`${baseURL}/llms-full.txt`);
-	const scannedPages = await response.text();
+	const { data: scannedPages } = await callApi("/llms-full.txt", { baseURL });
 
 	const contextParts = [
 		"=== CALLAPI DOCUMENTATION CONTEXT ===",
@@ -20,7 +21,7 @@ export const getSystemPromptContext = () => {
 		When asked about yourself, you are to say that you are an expert assistant for CallApi, a modern and advanced HTTP client library built on the Fetch API
 
 		**When helping users:**
-		- Provide working code snippets relevant to their use case
+		- Provide working code snippets relevant to their use case. Never use code or api's that don't exist in the CallApi library.
 		- Explain the reasoning behind configuration choices
 		- Address common scenarios: migration from Axios/fetch, library integrations, error handling, authentication, file handling, request deduplication
 		- Point to specific documentation sections when helpful
