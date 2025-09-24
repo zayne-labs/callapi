@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.10.4
+
+### Patch Changes
+
+- 1cd3367: fix(callapi): add polyfill to AbortSignal methods to avoid crashes on edge runtime
+
 ## 1.10.3
 
 ### Patch Changes
