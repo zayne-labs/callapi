@@ -10,6 +10,7 @@ import {
 	isSerializable,
 	isValidJsonString,
 } from "./guards";
+import { createCombinedSignalPolyfill, createTimeoutSignalPolyfill } from "./polyfill";
 
 export const omitKeys = <
 	TObject extends Record<string, unknown>,
@@ -175,12 +176,22 @@ export const waitFor = (delay: number) => {
 export const createCombinedSignal = (...signals: Array<AbortSignal | null | undefined>) => {
 	const cleanedSignals = signals.filter((signal) => signal != null);
 
+	if (!("any" in AbortSignal)) {
+		return createCombinedSignalPolyfill(cleanedSignals);
+	}
+
 	const combinedSignal = AbortSignal.any(cleanedSignals);
 
 	return combinedSignal;
 };
 
-export const createTimeoutSignal = (milliseconds: number) => AbortSignal.timeout(milliseconds);
+export const createTimeoutSignal = (milliseconds: number) => {
+	if (!("timeout" in AbortSignal)) {
+		return createTimeoutSignalPolyfill(milliseconds);
+	}
+
+	return AbortSignal.timeout(milliseconds);
+};
 
 export const deterministicHashFn = (value: unknown): string => {
 	return JSON.stringify(value, (_, val: unknown) => {
