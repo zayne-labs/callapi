@@ -1,5 +1,15 @@
 # @zayne-labs/callapi
 
+## 1.10.5
+
+### Patch Changes
+
+- 8437089: feat(callapi): add onBeforeRequest hook and refactor method handling
+   - Introduce new onBeforeRequest hook for early request lifecycle interception
+   - Move method-related utilities to utils/common.ts for better organization
+   - Update tests to cover new hook functionality
+   - Rename slot.tsx to slot.ts in docs components for consistency
+
 ## 1.10.4
 
 ### Patch Changes
