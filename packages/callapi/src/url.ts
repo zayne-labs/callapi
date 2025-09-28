@@ -1,9 +1,8 @@
-import { requestOptionDefaults } from "./constants/default-options";
-import type { CallApiExtraOptions, CallApiRequestOptions } from "./types/common";
+import type { CallApiExtraOptions } from "./types/common";
 import type { AnyString, UnmaskType } from "./types/type-helpers";
 import { toQueryString } from "./utils";
 import { isArray } from "./utils/guards";
-import { type CallApiSchemaConfig, type RouteKeyMethodsURLUnion, routeKeyMethods } from "./validation";
+import { type RouteKeyMethodsURLUnion, routeKeyMethods } from "./validation";
 
 const slash = "/";
 const colon = ":";
@@ -110,25 +109,6 @@ export const extractMethodFromURL = (initURL: string | undefined) => {
 	if (!method || !routeKeyMethods.includes(method as (typeof routeKeyMethods)[number])) return;
 
 	return method;
-};
-
-export type GetMethodContext = {
-	/** The URL string that may contain method modifiers like "@get/" or "@post/" */
-	initURL: string | undefined;
-	/** Explicitly specified HTTP method */
-	method: CallApiRequestOptions["method"];
-	/** Schema configuration that affects method resolution behavior */
-	schemaConfig?: CallApiSchemaConfig;
-};
-
-export const getMethod = (ctx: GetMethodContext) => {
-	const { initURL, method } = ctx;
-
-	return (
-		method?.toUpperCase()
-		?? extractMethodFromURL(initURL)?.toUpperCase()
-		?? requestOptionDefaults().method
-	);
 };
 
 const normalizeURL = (initURL: string) => {

@@ -1,7 +1,9 @@
 import { getAuthHeader } from "../auth";
 import { fetchSpecificKeys } from "../constants/common";
-import { extraOptionDefaults } from "../constants/default-options";
+import { extraOptionDefaults, requestOptionDefaults } from "../constants/default-options";
 import type { BaseCallApiExtraOptions, CallApiExtraOptions, CallApiRequestOptions } from "../types/common";
+import { extractMethodFromURL } from "../url";
+import type { CallApiSchemaConfig } from "../validation";
 import {
 	isArray,
 	isFunction,
@@ -120,6 +122,25 @@ export const getHeaders = async (options: GetHeadersOptions) => {
 	}
 
 	return headersObject;
+};
+
+export type GetMethodContext = {
+	/** The URL string that may contain method modifiers like "@get/" or "@post/" */
+	initURL: string | undefined;
+	/** Explicitly specified HTTP method */
+	method: CallApiRequestOptions["method"];
+	/** Schema configuration that affects method resolution behavior */
+	schemaConfig?: CallApiSchemaConfig;
+};
+
+export const getMethod = (ctx: GetMethodContext) => {
+	const { initURL, method } = ctx;
+
+	return (
+		method?.toUpperCase()
+		?? extractMethodFromURL(initURL)?.toUpperCase()
+		?? requestOptionDefaults().method
+	);
 };
 
 export type GetBodyOptions = {

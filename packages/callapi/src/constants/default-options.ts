@@ -35,5 +35,7 @@ export const extraOptionDefaults = () => {
 };
 
 export const requestOptionDefaults = () => {
-	return defineEnum({ method: "GET" } satisfies CallApiConfig);
+	return defineEnum({
+		method: "GET",
+	} satisfies CallApiConfig);
 };

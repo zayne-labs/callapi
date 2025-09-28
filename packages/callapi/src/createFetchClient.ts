@@ -39,12 +39,13 @@ import type {
 } from "./types/common";
 import type { DefaultDataType, DefaultPluginArray, DefaultThrowOnError } from "./types/default-types";
 import type { AnyFunction, Writeable } from "./types/type-helpers";
-import { getFullAndNormalizedURL, getMethod } from "./url";
+import { getFullAndNormalizedURL } from "./url";
 import {
 	createCombinedSignal,
 	createTimeoutSignal,
 	getBody,
 	getHeaders,
+	getMethod,
 	splitBaseConfig,
 	splitConfig,
 	waitFor,
@@ -236,7 +237,7 @@ export const createFetchClient = <
 		try {
 			await handleRequestCancelStrategy();
 
-			await executeHooksInTryBlock(options.onRequest?.({ baseConfig, config, options, request }));
+			await executeHooksInTryBlock(options.onBeforeRequest?.({ baseConfig, config, options, request }));
 
 			const {
 				extraOptionsValidationResult,
@@ -290,6 +291,8 @@ export const createFetchClient = <
 				...(Boolean(validHeaders) && { headers: validHeaders }),
 				...(Boolean(validMethod) && { method: validMethod }),
 			};
+
+			await executeHooksInTryBlock(options.onRequest?.({ baseConfig, config, options, request }));
 
 			const response = await handleRequestDeferStrategy({ options, request });
 

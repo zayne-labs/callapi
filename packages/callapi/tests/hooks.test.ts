@@ -193,6 +193,21 @@ describe("Hook System", () => {
 	});
 
 	describe("Hook types", () => {
+		it("should execute onBeforeRequest hooks", async () => {
+			const tracker = createCallTracker();
+
+			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
+
+			await callApi("/test", {
+				onBeforeRequest: (context) => {
+					tracker.track("onBeforeRequest", context.options.fullURL);
+				},
+			});
+
+			expect(tracker.getCallCount()).toBe(1);
+			expect(tracker.getLastCall()?.args[0]).toBe("onBeforeRequest");
+		});
+
 		it("should execute onRequest hooks", async () => {
 			const tracker = createCallTracker();
 

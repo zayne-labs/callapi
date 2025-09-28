@@ -1,3 +1,3 @@
 export { IconBox } from "./IconBox";
-export { Slot } from "./Slot";
+export { Slot } from "./slot";
 export { getMDXComponents } from "./MdxComponents";
