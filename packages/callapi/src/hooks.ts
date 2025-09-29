@@ -41,7 +41,7 @@ export interface Hooks<TData = DefaultDataType, TErrorData = DefaultDataType, TP
 	) => Awaitable<unknown>;
 
 	/**
-	 * Hook called before the HTTP request is sent and before any internal processing begins.
+	 * Hook called before the HTTP request is sent and before any internal processing of the request object begins.
 	 *
 	 * This is the ideal place to modify request headers, add authentication,
 	 * implement request logging, or perform any setup before the network call.
