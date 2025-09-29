@@ -11,13 +11,13 @@ import {
 import { type CallApiPlugin, initializePlugins } from "./plugins";
 import {
 	type ErrorInfo,
-	getCustomizedErrorResult,
 	type GetResponseType,
+	getCustomizedErrorResult,
+	type ResponseTypeUnion,
+	type ResultModeUnion,
 	resolveErrorResult,
 	resolveResponseData,
 	resolveSuccessResult,
-	type ResponseTypeUnion,
-	type ResultModeUnion,
 } from "./result";
 import { createRetryStrategy } from "./retry";
 import type {
@@ -212,10 +212,12 @@ export const createFetchClient = <
 			newFetchController.signal
 		);
 
+		const initMethod = getMethod({ initURL: resolvedInitURL, method: resolvedRequestOptions.method });
+
 		let request = {
 			...resolvedRequestOptions,
 
-			method: getMethod({ initURL: resolvedInitURL, method: resolvedRequestOptions.method }),
+			method: initMethod,
 			signal: combinedSignal,
 		} satisfies CallApiRequestOptionsForHooks;
 
@@ -260,10 +262,13 @@ export const createFetchClient = <
 			}
 
 			// == Apply Schema Output for Request Options
-			const rawBody = shouldApplySchemaOutput ? requestOptionsValidationResult?.body : request.body;
+			const validMethod = getMethod({
+				initURL: resolvedInitURL,
+				method: shouldApplySchemaOutput ? requestOptionsValidationResult?.method : request.method,
+			});
 
 			const validBody = getBody({
-				body: rawBody,
+				body: shouldApplySchemaOutput ? requestOptionsValidationResult?.body : request.body,
 				bodySerializer: options.bodySerializer,
 			});
 
@@ -276,13 +281,8 @@ export const createFetchClient = <
 
 			const validHeaders = await getHeaders({
 				auth: options.auth,
-				body: rawBody,
+				body: validBody,
 				headers: shouldApplySchemaOutput ? requestOptionsValidationResult?.headers : resolvedHeaders,
-			});
-
-			const validMethod = getMethod({
-				initURL: resolvedInitURL,
-				method: shouldApplySchemaOutput ? requestOptionsValidationResult?.method : request.method,
 			});
 
 			request = {
