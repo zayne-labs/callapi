@@ -1,5 +1,15 @@
 # @zayne-labs/callapi
 
+## 1.10.6
+
+### Patch Changes
+
+- ee21de9: refactor(hooks): rename onBeforeRequest to onRequestReady and clean up schema config
+   - Rename onBeforeRequest hook to onRequestReady for better semantic meaning
+   - Remove unused schemaConfig from GetMethodContext type
+   - Reorder imports and clean up type definitions
+   - Update corresponding test cases to reflect hook name change
+
 ## 1.10.5
 
 ### Patch Changes
