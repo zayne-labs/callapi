@@ -27,16 +27,6 @@ export type PluginExtraOptions<TPluginOptions = unknown> = {
 /* eslint-disable perfectionist/sort-intersection-types -- Plugin options should come last */
 export interface Hooks<TData = DefaultDataType, TErrorData = DefaultDataType, TPluginOptions = unknown> {
 	/**
-	 * First hook in the request lifecycle, executed before any internal processing begins.
-	 *
-	 * This is the earliest point to intercept requests - ideal for initial setup, logging,
-	 * or modifying the request before any other processing occurs.
-	 *
-	 * @param context - Request context with mutable request object and configuration
-	 */
-	onBeforeRequest?: (context: RequestContext & PluginExtraOptions<TPluginOptions>) => Awaitable<unknown>;
-
-	/**
 	 * Hook called when any error occurs within the request/response lifecycle.
 	 *
 	 * This is a unified error handler that catches both request errors (network failures,
@@ -51,7 +41,7 @@ export interface Hooks<TData = DefaultDataType, TErrorData = DefaultDataType, TP
 	) => Awaitable<unknown>;
 
 	/**
-	 * Hook called just before the HTTP request is sent.
+	 * Hook called before the HTTP request is sent and before any internal processing begins.
 	 *
 	 * This is the ideal place to modify request headers, add authentication,
 	 * implement request logging, or perform any setup before the network call.
@@ -75,6 +65,13 @@ export interface Hooks<TData = DefaultDataType, TErrorData = DefaultDataType, TP
 	onRequestError?: (
 		context: RequestErrorContext & PluginExtraOptions<TPluginOptions>
 	) => Awaitable<unknown>;
+
+	/**
+	 * Hook called just before the HTTP request is sent and after the request has been processed.
+	 *
+	 * @param context - Request context with mutable request object and configuration
+	 */
+	onRequestReady?: (context: RequestContext & PluginExtraOptions<TPluginOptions>) => Awaitable<unknown>;
 
 	/**
 	 * Hook called during upload stream progress tracking.
@@ -428,10 +425,10 @@ type HookRegistries = Required<{
 
 export const getHookRegistries = (): HookRegistries => {
 	return {
-		onBeforeRequest: new Set(),
 		onError: new Set(),
 		onRequest: new Set(),
 		onRequestError: new Set(),
+		onRequestReady: new Set(),
 		onRequestStream: new Set(),
 		onResponse: new Set(),
 		onResponseError: new Set(),

@@ -193,19 +193,19 @@ describe("Hook System", () => {
 	});
 
 	describe("Hook types", () => {
-		it("should execute onBeforeRequest hooks", async () => {
+		it("should execute onRequestReady hooks", async () => {
 			const tracker = createCallTracker();
 
 			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
 
 			await callApi("/test", {
-				onBeforeRequest: (context) => {
-					tracker.track("onBeforeRequest", context.options.fullURL);
+				onRequestReady: (context) => {
+					tracker.track("onRequestReady", context.options.fullURL);
 				},
 			});
 
 			expect(tracker.getCallCount()).toBe(1);
-			expect(tracker.getLastCall()?.args[0]).toBe("onBeforeRequest");
+			expect(tracker.getLastCall()?.args[0]).toBe("onRequestReady");
 		});
 
 		it("should execute onRequest hooks", async () => {

@@ -3,7 +3,6 @@ import { fetchSpecificKeys } from "../constants/common";
 import { extraOptionDefaults, requestOptionDefaults } from "../constants/default-options";
 import type { BaseCallApiExtraOptions, CallApiExtraOptions, CallApiRequestOptions } from "../types/common";
 import { extractMethodFromURL } from "../url";
-import type { CallApiSchemaConfig } from "../validation";
 import {
 	isArray,
 	isFunction,
@@ -129,8 +128,6 @@ export type GetMethodContext = {
 	initURL: string | undefined;
 	/** Explicitly specified HTTP method */
 	method: CallApiRequestOptions["method"];
-	/** Schema configuration that affects method resolution behavior */
-	schemaConfig?: CallApiSchemaConfig;
 };
 
 export const getMethod = (ctx: GetMethodContext) => {

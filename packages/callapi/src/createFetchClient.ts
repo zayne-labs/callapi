@@ -11,13 +11,13 @@ import {
 import { type CallApiPlugin, initializePlugins } from "./plugins";
 import {
 	type ErrorInfo,
-	type GetResponseType,
 	getCustomizedErrorResult,
-	type ResponseTypeUnion,
-	type ResultModeUnion,
+	type GetResponseType,
 	resolveErrorResult,
 	resolveResponseData,
 	resolveSuccessResult,
+	type ResponseTypeUnion,
+	type ResultModeUnion,
 } from "./result";
 import { createRetryStrategy } from "./retry";
 import type {
@@ -166,8 +166,8 @@ export const createFetchClient = <
 
 		// == Merged Request Options
 		const mergedRequestOptions = {
-			// == Making sure headers is always an object
-			headers: {},
+			headers: {}, // == Making sure headers is always an object
+
 			...baseFetchOptions,
 			...(!shouldSkipAutoMergeForRequest && fetchOptions),
 		} satisfies CallApiRequestOptions;
@@ -215,6 +215,7 @@ export const createFetchClient = <
 		let request = {
 			...resolvedRequestOptions,
 
+			method: getMethod({ initURL: resolvedInitURL, method: resolvedRequestOptions.method }),
 			signal: combinedSignal,
 		} satisfies CallApiRequestOptionsForHooks;
 
@@ -237,7 +238,7 @@ export const createFetchClient = <
 		try {
 			await handleRequestCancelStrategy();
 
-			await executeHooksInTryBlock(options.onBeforeRequest?.({ baseConfig, config, options, request }));
+			await executeHooksInTryBlock(options.onRequest?.({ baseConfig, config, options, request }));
 
 			const {
 				extraOptionsValidationResult,
@@ -282,7 +283,6 @@ export const createFetchClient = <
 			const validMethod = getMethod({
 				initURL: resolvedInitURL,
 				method: shouldApplySchemaOutput ? requestOptionsValidationResult?.method : request.method,
-				schemaConfig: resolvedSchemaConfig,
 			});
 
 			request = {
@@ -292,7 +292,7 @@ export const createFetchClient = <
 				...(Boolean(validMethod) && { method: validMethod }),
 			};
 
-			await executeHooksInTryBlock(options.onRequest?.({ baseConfig, config, options, request }));
+			await executeHooksInTryBlock(options.onRequestReady?.({ baseConfig, config, options, request }));
 
 			const response = await handleRequestDeferStrategy({ options, request });
 
