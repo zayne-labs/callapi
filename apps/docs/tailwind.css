@@ -56,8 +56,8 @@
 
 @theme {
 	--animate-ripple: ripple var(--duration, 2s) ease calc(var(--i, 0) * 0.2s) infinite;
-	/* --animate-accordion-down: accordion-down 0.2s ease-out;
-	--animate-accordion-up: accordion-up 0.2s ease-out; */
+	--animate-accordion-down: accordion-down 0.2s ease-out;
+	--animate-accordion-up: accordion-up 0.2s ease-out;
 
 	@keyframes ripple {
 		0%,
@@ -68,7 +68,7 @@
 			transform: scale(0.9);
 		}
 	}
-	/*
+
 	@keyframes accordion-up {
 		from {
 			height: var(--radix-accordion-content-height);
@@ -85,7 +85,7 @@
 		to {
 			height: var(--radix-accordion-content-height);
 		}
-	} */
+	}
 }
 
 /* -------------1-----*/
