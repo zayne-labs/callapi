@@ -1,39 +1,31 @@
 "use client";
 
 import { type UIMessage, type UseChatHelpers, useChat } from "@ai-sdk/react";
-import { on } from "@zayne-labs/toolkit-core";
-import { useCallbackRef } from "@zayne-labs/toolkit-react";
 import type { InferProps } from "@zayne-labs/toolkit-react/utils";
-import { Presence } from "@zayne-labs/ui-react/common/presence";
 import { DefaultChatTransport } from "ai";
 import Link from "fumadocs-core/link";
-import { Loader2, RefreshCw, SearchIcon, Send, X } from "lucide-react";
-import { createContext, use, useEffect, useMemo, useRef, useState } from "react";
-import { RemoveScroll } from "react-remove-scroll";
+import { Loader2, RefreshCw, Send, X } from "lucide-react";
+import { Dialog } from "radix-ui";
+import { createContext, use, useEffect, useRef, useState } from "react";
 import type { z } from "zod";
 import type { ProvideLinksToolSchema } from "@/lib/chat/ai-tools-schema";
-import { cnMerge } from "@/lib/utils/cn";
+import { cn } from "@/lib/cn";
 import { Button } from "../ui/button";
 import { Markdown } from "./markdown";
 
-type GeneralContextType = {
-	chat: UseChatHelpers<UIMessage>;
-	setOpen: (open: boolean) => void;
-};
-
-const GeneralContext = createContext<GeneralContextType | null>(null);
+const ChatContext = createContext<UseChatHelpers<UIMessage> | null>(null);
 
 function useChatContext() {
-	const context = use(GeneralContext);
+	const context = use(ChatContext);
 
 	if (!context) {
 		throw new Error("useChatContext must be used within a ChatContext");
 	}
 
-	return context.chat;
+	return context;
 }
 
-function SearchAIActions() {
+function SearchAIActions(props: InferProps<"div">) {
 	const { messages, regenerate, setMessages, status } = useChatContext();
 	const isLoading = status === "streaming";
 
@@ -42,7 +34,7 @@ function SearchAIActions() {
 	}
 
 	return (
-		<>
+		<div {...props}>
 			{!isLoading && messages.at(-1)?.role === "assistant" && (
 				<Button
 					size="sm"
@@ -54,7 +46,6 @@ function SearchAIActions() {
 					<p>Retry</p>
 				</Button>
 			)}
-
 			<Button
 				type="button"
 				size="sm"
@@ -64,7 +55,7 @@ function SearchAIActions() {
 			>
 				Clear Chat
 			</Button>
-		</>
+		</div>
 	);
 }
 
@@ -89,12 +80,11 @@ function SearchAIInput(props: InferProps<"form">) {
 	}, [isLoading]);
 
 	return (
-		<form {...restOfProps} className={cnMerge("flex items-start pe-2", className)} onSubmit={onStart}>
+		<form {...restOfProps} className={cn("flex items-start pe-2", className)} onSubmit={onStart}>
 			<Input
 				value={input}
 				placeholder={isLoading ? "AI is answering..." : "Ask AI something"}
-				autoFocus={true}
-				className="p-4"
+				className="max-h-60 min-h-10 p-3"
 				disabled={status === "streaming" || status === "submitted"}
 				onChange={(e) => {
 					setInput(e.target.value);
@@ -107,19 +97,14 @@ function SearchAIInput(props: InferProps<"form">) {
 			/>
 
 			{isLoading ?
-				<Button
-					key="bn"
-					theme="secondary"
-					className="mt-2 gap-2 rounded-full transition-all"
-					onClick={() => void stop()}
-				>
+				<Button theme="secondary" className="mt-2 gap-2 rounded-full" onClick={() => void stop()}>
 					<Loader2 className="size-4 animate-spin text-fd-muted-foreground" />
 					<p>Abort Answer</p>
 				</Button>
 			:	<Button
-					key="bn"
 					type="submit"
-					theme="secondary"
+					theme="ghost"
+					size="icon"
 					className="mt-2 rounded-full transition-all"
 					disabled={input.length === 0}
 				>
@@ -135,7 +120,7 @@ function Input(props: InferProps<"textarea">) {
 
 	const ref = useRef<HTMLDivElement>(null);
 
-	const shared = cnMerge("col-start-1 row-start-1", className);
+	const shared = cn("col-start-1 row-start-1", className);
 
 	return (
 		<div className="grid flex-1">
@@ -143,13 +128,12 @@ function Input(props: InferProps<"textarea">) {
 				value={value}
 				id="nd-ai-input"
 				{...restOfProps}
-				className={cnMerge(
+				className={cn(
 					"resize-none bg-transparent placeholder:text-fd-muted-foreground focus-visible:outline-none",
 					shared
 				)}
 			/>
-
-			<div ref={ref} className={cnMerge(shared, "invisible break-all")}>
+			<div ref={ref} className={cn(shared, "invisible break-all")}>
 				{`${value?.toString() ?? ""}\n`}
 			</div>
 		</div>
@@ -193,7 +177,10 @@ function MessageList(props: Omit<InferProps<"div">, "dir">) {
 		<div
 			ref={containerRef}
 			{...restOfProps}
-			className={cnMerge("fd-scroll-container flex min-w-0 flex-col overflow-y-auto", className)}
+			className={cn(
+				"fd-scroll-container flex max-h-[calc(100dvh-240px)] min-w-0 flex-col overflow-y-auto",
+				className
+			)}
 		>
 			{children}
 		</div>
@@ -224,10 +211,12 @@ function Message(props: InferProps<"div"> & { message: UIMessage }) {
 		}
 	}
 
+	const isLinksPresent = links && links.length > 0;
+
 	return (
 		<div {...restOfProps}>
 			<p
-				className={cnMerge(
+				className={cn(
 					"mb-1 text-sm font-medium text-fd-muted-foreground",
 					message.role === "assistant" && "text-fd-primary"
 				)}
@@ -239,9 +228,9 @@ function Message(props: InferProps<"div"> & { message: UIMessage }) {
 				<Markdown text={markdown} />
 			</div>
 
-			{links && links.length > 0 && (
+			{isLinksPresent && (
 				<div className="mt-2 flex flex-wrap items-center gap-1">
-					{links.map((item) => (
+					{links?.map((item) => (
 						<Link
 							key={item.label}
 							href={item.url}
@@ -258,128 +247,80 @@ function Message(props: InferProps<"div"> & { message: UIMessage }) {
 	);
 }
 
-export function AISearchTrigger() {
-	const [open, setOpen] = useState(false);
+export default function AISearch(props: InferProps<typeof Dialog.Root>) {
+	const { children, ...restOfProps } = props;
 
 	const chat = useChat({
 		id: "search",
 		transport: new DefaultChatTransport({ api: "/api/chat" }),
 	});
 
-	const onKeyPress = useCallbackRef((event: KeyboardEvent) => {
-		if (event.key === "Escape" && open) {
-			setOpen(false);
-			event.preventDefault();
-		}
-
-		if (event.key === "/" && (event.metaKey || event.ctrlKey) && !open) {
-			setOpen(true);
-			event.preventDefault();
-		}
-	});
-
-	useEffect(() => {
-		const cleanup = on("keydown", globalThis, onKeyPress);
-
-		return () => cleanup();
-	}, [onKeyPress]);
-
-	const contextValue = useMemo(() => ({ chat, open, setOpen }), [chat, open]);
+	const messages = chat.messages.filter((msg) => msg.role !== "system");
 
 	return (
-		<GeneralContext value={contextValue}>
-			<RemoveScroll enabled={open}>
-				<Presence present={open}>
-					<div
-						data-id="Overlay"
-						className={cnMerge(
-							`fixed inset-0 right-(--removed-body-scroll-bar-size,0) z-50 flex flex-col
-							items-center bg-fd-background/80 p-2 pb-[8.375rem] backdrop-blur-sm`,
-							open ? "animate-fd-fade-in" : "animate-fd-fade-out"
-						)}
-						onClick={(event) => {
-							if (event.target === event.currentTarget) {
-								event.preventDefault();
-								setOpen(false);
-							}
-						}}
-					>
-						<div className="sticky top-0 flex w-full max-w-[600px] items-center gap-2 py-2 pl-2">
-							<p className="flex-1 text-xs text-fd-muted-foreground">Powered by Gemma</p>
+		<Dialog.Root {...restOfProps}>
+			{children}
 
+			<Dialog.Portal>
+				<Dialog.Overlay
+					className="fixed inset-0 z-50 backdrop-blur-xs data-[state=closed]:animate-fd-fade-out
+						data-[state=open]:animate-fd-fade-in"
+				/>
+
+				<Dialog.Content
+					onOpenAutoFocus={(event) => {
+						document.querySelector<HTMLElement>("#nd-ai-input")?.focus();
+						event.preventDefault();
+					}}
+					aria-describedby={undefined}
+					className="fixed left-1/2 z-50 flex w-[calc(100%-1rem)] max-w-screen-sm -translate-x-1/2
+						flex-col rounded-2xl border bg-fd-popover/80 p-1 shadow-2xl backdrop-blur-xl
+						focus-visible:outline-none data-[state=closed]:animate-fd-dialog-out
+						data-[state=open]:animate-fd-dialog-in max-md:top-12 md:bottom-12"
+				>
+					<ChatContext value={chat}>
+						<div className="flex flex-col gap-1 px-3 py-2">
+							<Dialog.Title className="text-sm font-medium">CallApi Assistant</Dialog.Title>
+							<Dialog.Description className="text-xs text-fd-muted-foreground">
+								AI can be inaccurate, please verify the information.
+							</Dialog.Description>
+						</div>
+
+						<Dialog.Close aria-label="Close" tabIndex={-1} asChild={true}>
 							<Button
-								aria-label="Close"
-								tabIndex={-1}
+								className="absolute end-1 top-1 text-fd-muted-foreground"
 								size="icon"
-								theme="secondary"
-								className="rounded-full"
-								onClick={() => setOpen(false)}
+								theme="ghost"
 							>
 								<X />
 							</Button>
-						</div>
+						</Dialog.Close>
 
-						<MessageList
-							className="w-full max-w-[600px] overscroll-contain px-2 py-10"
-							style={{
-								maskImage:
-									"linear-gradient(to bottom, transparent, white 4rem, white calc(100% - 2rem), transparent 100%)",
-							}}
-						>
-							<div className="flex flex-col gap-4">
-								{chat.messages
-									.filter((msg) => msg.role !== "system")
-									.map((item) => (
+						{messages.length > 0 && (
+							<MessageList
+								style={{
+									maskImage:
+										"linear-gradient(to bottom, transparent, black 20px, black calc(100% - 20px), transparent)",
+								}}
+							>
+								<div className="flex flex-col gap-4 p-3">
+									{messages.map((item) => (
 										<Message key={item.id} message={item} />
 									))}
-							</div>
-						</MessageList>
-					</div>
-				</Presence>
+								</div>
+							</MessageList>
+						)}
 
-				<div
-					className={cnMerge(
-						`fixed bottom-2 z-50 -translate-x-1/2 overflow-hidden rounded-2xl border shadow-xl
-						transition-[width,height] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]`,
-						open ?
-							"h-32 w-[min(600px,90vw)] bg-fd-popover"
-						:	"h-10 w-40 bg-fd-secondary text-fd-secondary-foreground shadow-fd-background"
-					)}
-					style={{
-						left: "calc(50% - var(--removed-body-scroll-bar-size,0px)/2)",
-					}}
-				>
-					<Presence present={!open}>
-						<Button
-							unstyled={true}
-							className={cnMerge(
-								`absolute inset-0 p-2 text-center text-sm text-fd-muted-foreground
-								transition-colors hover:bg-fd-accent hover:text-fd-accent-foreground`,
-								!open ? "animate-fd-fade-in" : "animate-fd-fade-out bg-fd-accent"
-							)}
-							onClick={() => setOpen(true)}
-						>
-							<SearchIcon className="absolute top-1/2 size-4.5 -translate-y-1/2" />
-							Ask AI
-						</Button>
-					</Presence>
-
-					<Presence present={open}>
 						<div
-							className={cnMerge(
-								"absolute inset-0 flex flex-col",
-								open ? "animate-fd-fade-in" : "animate-fd-fade-out"
-							)}
+							className="overflow-hidden rounded-xl border border-fd-foreground/20
+								text-fd-popover-foreground"
 						>
-							<SearchAIInput className="flex-1" />
-
-							<div className="flex items-center gap-1.5 p-1 empty:hidden">
-								<SearchAIActions />
-							</div>
+							<SearchAIInput />
+							<SearchAIActions className="flex flex-row items-center gap-1.5 p-1 empty:hidden" />
 						</div>
-					</Presence>
-				</div>
-			</RemoveScroll>
-		</GeneralContext>
+					</ChatContext>
+				</Dialog.Content>
+			</Dialog.Portal>
+		</Dialog.Root>
 	);
 }

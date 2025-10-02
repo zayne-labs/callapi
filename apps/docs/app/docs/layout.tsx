@@ -2,6 +2,7 @@ import { DocsLayout } from "fumadocs-ui/layouts/notebook";
 import { BgPattern } from "@/components/icons";
 import { docsOptions } from "../layout.config";
 import "fumadocs-twoslash/twoslash.css";
+import { AISearchTrigger } from "@/components/ai/search";
 
 function Layout({ children }: { children: React.ReactNode }) {
 	return (
@@ -14,6 +15,8 @@ function Layout({ children }: { children: React.ReactNode }) {
 			</span>
 
 			{children}
+
+			<AISearchTrigger />
 		</DocsLayout>
 	);
 }

@@ -1,13 +1,11 @@
 import { callApi } from "@zayne-labs/callapi";
 import { GithubInfo } from "fumadocs-ui/components/github-info";
-import { LargeSearchToggle } from "fumadocs-ui/components/layout/search-toggle";
 import type { DocsLayoutProps, LinkItemType } from "fumadocs-ui/layouts/docs";
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
-import { Sparkles, TagIcon } from "lucide-react";
+import { TagIcon } from "lucide-react";
 import Image from "next/image";
 import Logo from "public/logo.png";
 import { z } from "zod";
-import { AISearchTrigger } from "@/components/ai";
 import { source } from "@/lib/source";
 
 /**
@@ -61,16 +59,16 @@ export const docsOptions = {
 	],
 
 	nav: {
-		children: (
-			<AISearchTrigger
-				theme="secondary"
-				size="sm"
-				className="absolute top-1/2 left-1/2 -translate-1/2 gap-2 rounded-full text-fd-muted-foreground md:hidden"
-			>
-				<Sparkles className="size-4.5 fill-current" />
-				Ask AI
-			</AISearchTrigger>
-		),
+		// children: (
+		// 	<AISearchTrigger
+		// 		theme="secondary"
+		// 		size="sm"
+		// 		className="absolute top-1/2 left-1/2 -translate-1/2 gap-2 rounded-full text-fd-muted-foreground md:hidden"
+		// 	>
+		// 		<Sparkles className="size-4.5 fill-current" />
+		// 		Ask AI
+		// 	</AISearchTrigger>
+		// ),
 
 		title: (
 			<>
@@ -89,23 +87,23 @@ export const docsOptions = {
 		transparentMode: "top",
 	},
 
-	searchToggle: {
-		components: {
-			lg: (
-				<div className="flex gap-1.5 max-md:hidden">
-					<LargeSearchToggle className="grow" />
-					<AISearchTrigger
-						aria-label="Ask AI"
-						theme="outline"
-						size="icon"
-						className="text-fd-muted-foreground"
-					>
-						<Sparkles className="size-4" />
-					</AISearchTrigger>
-				</div>
-			),
-		},
-	},
+	// searchToggle: {
+	// 	components: {
+	// 		lg: (
+	// 			<div className="flex gap-1.5 max-md:hidden">
+	// 				<LargeSearchToggle className="grow" />
+	// 				<AISearchTrigger
+	// 					aria-label="Ask AI"
+	// 					theme="outline"
+	// 					size="icon"
+	// 					className="text-fd-muted-foreground"
+	// 				>
+	// 					<Sparkles className="size-4" />
+	// 				</AISearchTrigger>
+	// 			</div>
+	// 		),
+	// 	},
+	// },
 
 	sidebar: {
 		tabs: [

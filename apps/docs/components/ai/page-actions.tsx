@@ -29,25 +29,18 @@ export function LLMCopyButton(props: CopyBtnProps) {
 			return;
 		}
 
-		setLoading(true);
-
 		const markDownPromise = callApi(markdownUrl, {
 			responseType: "text",
-			resultMode: "onlyData",
-			throwOnError: true,
-		})
-			.then((content) => {
-				cache.set(markdownUrl, content);
-				return content;
-			})
-			.catch((error: unknown) => {
-				console.error(error);
-				return "";
-			});
+		}).then((result) => {
+			const content = result.data as NonNullable<typeof result.data>;
+			cache.set(markdownUrl, content);
+			return content;
+		});
 
 		const clipboardItem = new ClipboardItem({ "text/plain": markDownPromise });
 
 		try {
+			setLoading(true);
 			await navigator.clipboard.write([clipboardItem]);
 		} finally {
 			setLoading(false);

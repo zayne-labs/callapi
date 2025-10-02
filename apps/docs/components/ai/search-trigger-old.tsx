@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 
 // lazy load the dialog
-const SearchAI = dynamic(() => import("./search"), { ssr: false });
+const SearchAI = dynamic(() => import("./search-old"), { ssr: false });
 
 /**
  * @description The trigger component for AI search dialog.
