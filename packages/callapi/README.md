@@ -44,9 +44,9 @@ const { data, error } = await callApi("/api/users");
 import { createFetchClient } from "@zayne-labs/callapi";
 
 const callBackendApi = createFetchClient({
- baseURL: "https://api.example.com",
- retryAttempts: 2,
- timeout: 10000,
+	baseURL: "https://api.example.com",
+	retryAttempts: 2,
+	timeout: 10000,
 });
 
 const user = await callBackendApi("/users/123");
@@ -81,9 +81,9 @@ const { data } = await callApi("/api/image.png"); // Blob
 const { data, error } = await callApi("/api/users");
 
 if (error) {
- console.log(error.name); // "HTTPError", "ValidationError", etc.
- console.log(error.message); // Human readable message
- console.log(error.errorData); // Server response data
+	console.log(error.name); // "HTTPError", "ValidationError", etc.
+	console.log(error.message); // Human readable message
+	console.log(error.errorData); // Server response data
 }
 ```
 
@@ -92,12 +92,12 @@ if (error) {
 ```js
 // Dynamic parameters
 await callApi("/users/:id/posts/:postId", {
- params: { id: 123, postId: 456 },
+	params: { id: 123, postId: 456 },
 }); // → /users/123/posts/456
 
 // Query parameters
 await callApi("/search", {
- query: { q: "javascript", limit: 10 },
+	query: { q: "javascript", limit: 10 },
 }); // → /search?q=javascript&limit=10
 ```
 
@@ -111,24 +111,24 @@ import { defineSchema, createFetchClient } from "@zayne-labs/callapi";
 
 // Client-level validation with route schemas
 const callBackendApi = createFetchClient({
- baseURL: "https://api.example.com",
- schema: defineSchema({
-  "/users/:id": {
-   data: z.object({
-    id: z.number(),
-    name: z.string(),
-    email: z.string(),
-   }),
-  },
-  "/posts": {
-   data: z.array(
-    z.object({
-     id: z.number(),
-     title: z.string(),
-    })
-   ),
-  },
- }),
+	baseURL: "https://api.example.com",
+	schema: defineSchema({
+		"/users/:id": {
+			data: z.object({
+				id: z.number(),
+				name: z.string(),
+				email: z.string(),
+			}),
+		},
+		"/posts": {
+			data: z.array(
+				z.object({
+					id: z.number(),
+					title: z.string(),
+				})
+			),
+		},
+	}),
 });
 
 // Automatically validated based on route (both at runtime and at the type level)
@@ -139,12 +139,12 @@ const posts = await callBackendApi("/posts"); // Typed as Array<{ id: number, ti
 import { callApi } from "@zayne-labs/callapi";
 
 const userSchema = z.object({
- id: z.number(),
- name: z.string(),
+	id: z.number(),
+	name: z.string(),
 });
 
 const { data } = await callApi("/api/user", {
- schema: { data: userSchema }, // Validates response
+	schema: { data: userSchema }, // Validates response
 });
 // data is now typed as { id: number, name: string }
 ```
@@ -179,11 +179,11 @@ To do this, you first need to set your `script`'s type to `module`, then import 
 
 ```html
 <script type="module">
- import { callApi } from "https://esm.run/@zayne-labs/callapi";
+	import { callApi } from "https://esm.run/@zayne-labs/callapi";
 </script>
 
 <!-- Locked to a specific version -->
 <script type="module">
- import { callApi } from "https://esm.run/@zayne-labs/callapi@1.10.3";
+	import { callApi } from "https://esm.run/@zayne-labs/callapi@1.10.3";
 </script>
 ```

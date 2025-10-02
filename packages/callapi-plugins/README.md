@@ -39,13 +39,13 @@ import { createFetchClient } from "@zayne-labs/callapi";
 import { loggerPlugin } from "@zayne-labs/callapi-plugins";
 
 const api = createFetchClient({
-  baseURL: "https://api.example.com",
-  plugins: [
-    loggerPlugin({
-      enabled: process.env.NODE_ENV === "development",
-      mode: "verbose" // or "basic"
-    })
-  ]
+	baseURL: "https://api.example.com",
+	plugins: [
+		loggerPlugin({
+			enabled: process.env.NODE_ENV === "development",
+			mode: "verbose", // or "basic"
+		}),
+	],
 });
 ```
 
@@ -59,13 +59,13 @@ const api = createFetchClient({
 
 ```js
 loggerPlugin({
-  enabled: {
-    onRequest: true,
-    onSuccess: true,
-    onError: true, // Fallback for all error types
-    onValidationError: false // Disable specific error types
-  }
-})
+	enabled: {
+		onRequest: true,
+		onSuccess: true,
+		onError: true, // Fallback for all error types
+		onValidationError: false, // Disable specific error types
+	},
+});
 ```
 
 ## Usage
@@ -78,19 +78,17 @@ import { loggerPlugin } from "@zayne-labs/callapi-plugins";
 
 // Base configuration
 const api = createFetchClient({
-  baseURL: "https://api.example.com",
-  plugins: [
-    loggerPlugin({
-      enabled: process.env.NODE_ENV === "development"
-    })
-  ]
+	baseURL: "https://api.example.com",
+	plugins: [
+		loggerPlugin({
+			enabled: process.env.NODE_ENV === "development",
+		}),
+	],
 });
 
 // Per-request plugins
 const { data } = await api("/users", {
-  plugins: [
-    loggerPlugin({ mode: "verbose" })
-  ]
+	plugins: [loggerPlugin({ mode: "verbose" })],
 });
 ```
 
@@ -104,23 +102,23 @@ Basic plugin structure:
 import { definePlugin } from "@zayne-labs/callapi";
 
 const myPlugin = definePlugin({
-  id: "my-plugin",
-  name: "My Plugin",
-  version: "1.0.0",
+	id: "my-plugin",
+	name: "My Plugin",
+	version: "1.0.0",
 
-  setup: ({ request, options }) => {
-    // Modify request/options before sending
-    return { request, options };
-  },
+	setup: ({ request, options }) => {
+		// Modify request/options before sending
+		return { request, options };
+	},
 
-  hooks: {
-    onRequest: (ctx) => {
-      // Handle request lifecycle events
-    },
-    onSuccess: (ctx) => {
-      // Handle successful responses
-    }
-  }
+	hooks: {
+		onRequest: (ctx) => {
+			// Handle request lifecycle events
+		},
+		onSuccess: (ctx) => {
+			// Handle successful responses
+		},
+	},
 });
 ```
 
