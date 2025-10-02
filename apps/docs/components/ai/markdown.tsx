@@ -37,13 +37,15 @@ function createProcessor(): Processor {
 				Fragment,
 				jsx,
 				jsxs,
-			});
+			}) as React.JSX.Element;
 		},
 	};
 }
 
 function Pre(props: ComponentProps<"pre">) {
-	const code = Children.only(props.children) as ReactElement;
+	const { children } = props;
+
+	const code = Children.only(children) as ReactElement;
 	const codeProps = code.props as ComponentProps<"code">;
 
 	let lang =

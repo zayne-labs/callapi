@@ -75,7 +75,7 @@ export function generate(props: GenerateProps): ReactElement {
 						marginTop: "auto",
 					}}
 				>
-					{/* eslint-disable-next-line nextjs-next/no-img-element */}
+					{/* eslint-disable-next-line nextjs/no-img-element -- Image component doesn't work here */}
 					<img
 						alt="CallApi"
 						src={`${baseURL}/logo.png`}

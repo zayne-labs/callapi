@@ -13,7 +13,7 @@ export async function POST(req: Request) {
 	const systemPromptContext = getSystemPromptContext();
 
 	const [reqJson, documentationContext] = await Promise.all([
-		req.json() as unknown as Record<string, unknown>,
+		req.json() as unknown as Promise<Record<string, unknown>>,
 		getDocumentationContext(),
 	]);
 

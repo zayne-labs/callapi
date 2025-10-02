@@ -10,7 +10,7 @@ import { source } from "@/lib/source";
 export const revalidate = 86400;
 
 export default async function Page(props: { params: Promise<{ slug?: string[] }> }) {
-	// eslint-disable-next-line react/prefer-destructuring-assignment -- Ignore this
+	// eslint-disable-next-line react-x/prefer-destructuring-assignment -- Ignore this
 	const params = await props.params;
 
 	const page = source.getPage(params.slug);
@@ -87,5 +87,3 @@ export async function generateMetadata(props: { params: Promise<{ slug: string[]
 		},
 	});
 }
-
-/* eslint-enable react-refresh/only-export-components -- This doesn't apply to Next.js */

@@ -25,7 +25,7 @@ export function LLMCopyButton(props: CopyBtnProps) {
 		const cached = cache.get(markdownUrl);
 
 		if (cached) {
-			navigator.clipboard.writeText(cached);
+			await navigator.clipboard.writeText(cached);
 			return;
 		}
 
@@ -33,14 +33,14 @@ export function LLMCopyButton(props: CopyBtnProps) {
 
 		const markDownPromise = callApi(markdownUrl, {
 			responseType: "text",
-			throwOnError: true,
 			resultMode: "onlyData",
+			throwOnError: true,
 		})
 			.then((content) => {
 				cache.set(markdownUrl, content);
 				return content;
 			})
-			.catch((error) => {
+			.catch((error: unknown) => {
 				console.error(error);
 				return "";
 			});

@@ -24,8 +24,8 @@ function Ripple(props: RippleProps) {
 				return (
 					<div
 						key={i}
-						className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-ripple
-							border bg-fd-foreground/25 shadow-xl"
+						className="absolute top-1/2 left-1/2 -translate-1/2 animate-ripple border
+							bg-fd-foreground/25 shadow-xl"
 						style={
 							{
 								"--i": i,

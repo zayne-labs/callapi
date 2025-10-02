@@ -66,8 +66,8 @@ export function GridPattern({
 
 	// Update squares to animate in
 	useEffect(() => {
+		// eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler
 		if (dimensions.width && dimensions.height) {
-			// eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect -- Not my code
 			setSquares(generateSquares(numSquares));
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- Not my code
@@ -122,7 +122,7 @@ export function GridPattern({
 							repeatType: "reverse",
 						}}
 						onAnimationComplete={() => updateSquarePosition(id)}
-						// eslint-disable-next-line react/no-array-index-key -- Not my code
+						// eslint-disable-next-line react-x/no-array-index-key -- Not my code
 						key={`${x}-${y}-${index}`}
 						width={width - 1}
 						height={height - 1}

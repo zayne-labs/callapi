@@ -49,7 +49,7 @@ const callApiNpmDataPromise = callApi("https://registry.npmjs.org/@zayne-labs/ca
 	},
 });
 
-export const docsOptions: DocsLayoutProps = {
+export const docsOptions = {
 	...baseOptions,
 
 	links: [
@@ -65,13 +65,13 @@ export const docsOptions: DocsLayoutProps = {
 			<AISearchTrigger
 				theme="secondary"
 				size="sm"
-				className="absolute top-1/2 left-1/2 -translate-1/2 gap-2 rounded-full text-fd-muted-foreground
-					md:hidden"
+				className="absolute top-1/2 left-1/2 -translate-1/2 gap-2 rounded-full text-fd-muted-foreground md:hidden"
 			>
 				<Sparkles className="size-4.5 fill-current" />
 				Ask AI
 			</AISearchTrigger>
 		),
+
 		title: (
 			<>
 				<Image
@@ -85,6 +85,7 @@ export const docsOptions: DocsLayoutProps = {
 				<p className="font-medium [header_&]:text-[15px]">CallApi</p>
 			</>
 		),
+
 		transparentMode: "top",
 	},
 
@@ -112,10 +113,7 @@ export const docsOptions: DocsLayoutProps = {
 				// eslint-disable-next-line unicorn/prefer-top-level-await -- Ignore`
 				description: callApiNpmDataPromise.then((result) => `v${result.data?.version ?? "*.*.*"}`),
 				icon: (
-					<div
-						className="grid size-full place-items-center rounded-lg max-md:border
-							max-md:bg-fd-primary/10 max-md:p-1.5"
-					>
+					<div className="grid size-full place-items-center rounded-lg max-md:border max-md:bg-fd-primary/10 max-md:p-1.5">
 						<TagIcon className="size-full text-fd-primary" />
 					</div>
 				),
@@ -125,4 +123,4 @@ export const docsOptions: DocsLayoutProps = {
 		],
 	},
 	tree: source.pageTree,
-};
+} satisfies DocsLayoutProps;
