@@ -35,10 +35,10 @@
 		"release": "changeset publish",
 		"release:rc": "pnpm build && changeset publish --tag rc",
 		"release:test": "pnpx pkg-pr-new publish ./packages/*",
-		"test": "turbo --filter=./packages/* test",
-		"test:browser": "turbo --filter=./packages/* test:browser",
-		"test:coverage": "turbo --filter=./packages/* test:coverage",
-		"test:dev": "turbo --filter=./packages/* test:dev"
+		"test": "turbo run --filter=./packages/* test",
+		"test:browser": "turbo run --filter=./packages/* test:browser",
+		"test:coverage": "turbo run --filter=./packages/* test:coverage",
+		"test:dev": "turbo run --filter=./packages/* test:dev"
 	},
 	"devDependencies": {
 		"@changesets/cli": "2.29.7",
