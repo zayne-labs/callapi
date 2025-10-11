@@ -28,19 +28,18 @@ Each interceptor receives `originalFetch` which represents everything below it i
 
 ## Components and Interfaces
 
-### 1. No Type Changes Needed
+### 1. Update PluginInitResult Type
 
 **Location:** `packages/callapi/src/plugins.ts`
 
-No changes needed to `PluginInitResult`. Plugins return `fetchInterceptor` as part of the `options` object:
+Add `fetchInterceptor` as a top-level property in `PluginInitResult`:
 
 ```typescript
-// PluginInitResult already supports this:
 export type PluginInitResult = Partial<
   Omit<PluginSetupContext, "initURL" | "request"> & {
     initURL: InitURLOrURLObject;
     request: CallApiRequestOptions;
-    // options is already here, which includes fetchInterceptor from SharedExtraOptions
+    fetchInterceptor?: FetchInterceptor; // Add as top-level property
   }
 >;
 
@@ -49,16 +48,13 @@ setup: ({ options }) => {
   const cache = new Map();
 
   return {
-    options: {
-      ...options,
-      fetchInterceptor: (originalFetch) => async (input, init) => {
-        const cached = cache.get(input.toString());
-        if (cached) return cached;
+    fetchInterceptor: (originalFetch) => async (input, init) => {
+      const cached = cache.get(input.toString());
+      if (cached) return cached;
 
-        const response = await originalFetch(input, init);
-        cache.set(input.toString(), response.clone());
-        return response;
-      }
+      const response = await originalFetch(input, init);
+      cache.set(input.toString(), response.clone());
+      return response;
     }
   };
 }
@@ -121,27 +117,19 @@ export const initializePlugins = async (context: PluginSetupContext) => {
     // ... existing code unchanged ...
   };
 
-  // Add function to compose main interceptors (base + per-request)
-  const composeMainInterceptors = () => {
-    const baseInterceptor = baseConfig.fetchInterceptor;
-    const instanceInterceptor = config.fetchInterceptor;
-    const existingInterceptor = resolvedOptions.fetchInterceptor;
+  // Create interceptor registry (same pattern as hooks)
+  const interceptorRegistry = new Set<FetchInterceptor>();
 
-    // Build the main interceptor (instance wraps base if both exist)
-    const mainInterceptor =
-      baseInterceptor && instanceInterceptor
-        ? (baseFetch) => instanceInterceptor(baseInterceptor(baseFetch))
-        : baseInterceptor || instanceInterceptor;
-
-    // If there's an existing interceptor (from plugins), compose with it
-    // Otherwise just use the main interceptor
-    if (existingInterceptor && mainInterceptor) {
-      resolvedOptions.fetchInterceptor = (baseFetch) =>
-        mainInterceptor(existingInterceptor(baseFetch));
-    } else if (mainInterceptor) {
-      resolvedOptions.fetchInterceptor = mainInterceptor;
+  const addBaseInterceptor = () => {
+    if (baseConfig.fetchInterceptor) {
+      interceptorRegistry.add(baseConfig.fetchInterceptor);
     }
-    // If no mainInterceptor, keep existingInterceptor as-is
+  };
+
+  const addInstanceInterceptor = () => {
+    if (config.fetchInterceptor) {
+      interceptorRegistry.add(config.fetchInterceptor);
+    }
   };
 
   const hookRegistrationOrder =
@@ -149,7 +137,7 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 
   if (hookRegistrationOrder === "mainFirst") {
     addMainHooks();
-    composeMainInterceptors();
+    addBaseInterceptor(); // Base goes first (innermost)
   }
 
   const { currentRouteSchemaKey, mainInitURL } = getCurrentRouteSchemaKeyAndMainInitURL({
@@ -194,19 +182,12 @@ export const initializePlugins = async (context: PluginSetupContext) => {
     }
 
     if (isPlainObject(initResult.options)) {
-      // If plugin provides a fetchInterceptor, compose it with existing one
-      if (initResult.options.fetchInterceptor && resolvedOptions.fetchInterceptor) {
-        const previousInterceptor = resolvedOptions.fetchInterceptor;
-        const newInterceptor = initResult.options.fetchInterceptor;
+      resolvedOptions = initResult.options;
+    }
 
-        // Compose: new wraps previous (using spread to avoid mutation)
-        resolvedOptions = {
-          ...initResult.options,
-          fetchInterceptor: (baseFetch) => newInterceptor(previousInterceptor(baseFetch))
-        };
-      } else {
-        resolvedOptions = initResult.options;
-      }
+    // If plugin provides a fetchInterceptor (top-level), add it to registry
+    if (initResult.fetchInterceptor) {
+      interceptorRegistry.add(initResult.fetchInterceptor);
     }
   };
 
@@ -222,16 +203,33 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 
   if (hookRegistrationOrder === "pluginsFirst") {
     addMainHooks();
-    composeMainInterceptors();
+    addBaseInterceptor(); // Base goes after plugins but before instance
   }
 
+  // Always add instance interceptor last (outermost, wraps everything)
+  addInstanceInterceptor();
+
   // ... existing hook composition code ...
+
+  // Compose all interceptors from registry (same pattern as hooks)
+  let resolvedFetchInterceptor: FetchInterceptor | undefined;
+
+  if (interceptorRegistry.size > 0) {
+    const interceptors = [...interceptorRegistry];
+
+    // Compose all interceptors using pipe
+    resolvedFetchInterceptor = (baseFetch) =>
+      pipe(baseFetch, ...interceptors);
+  }
 
   return {
     resolvedCurrentRouteSchemaKey,
     resolvedHooks,
     resolvedInitURL,
-    resolvedOptions,
+    resolvedOptions: {
+      ...resolvedOptions,
+      fetchInterceptor: resolvedFetchInterceptor
+    },
     resolvedRequestOptions,
   };
 };
