@@ -5,6 +5,7 @@
 This feature introduces `fetchInterceptor` as a first-class capability in CallApi that allows wrapping, delaying, modifying, or short-circuiting HTTP requests. Unlike `customFetchImpl` which completely replaces the fetch implementation, interceptors wrap and enhance the existing fetch using a composable higher-order function pattern.
 
 **Key Innovation:** `fetchInterceptor` can be used at multiple levels:
+
 - **Base config level** - Apply interceptors to all requests from a client
 - **Plugin level** - Create reusable interceptor logic as plugins
 - **Per-request level** - Add one-off interceptors for specific requests
@@ -12,6 +13,7 @@ This feature introduces `fetchInterceptor` as a first-class capability in CallAp
 All interceptors compose together in a predictable chain, giving developers full control over the request lifecycle.
 
 **Signature:**
+
 ```typescript
 fetchInterceptor?: (originalFetch: FetchFunction) => FetchFunction
 
@@ -124,6 +126,7 @@ const data = await client("/users", {
 ```
 
 **Use Cases:**
+
 - Return cached responses without hitting the network
 - Mock responses for testing
 - Transform requests/responses at the network layer

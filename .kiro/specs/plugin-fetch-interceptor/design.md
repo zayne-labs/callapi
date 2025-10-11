@@ -4,9 +4,9 @@
 
 This document outlines the implementation of `fetchInterceptor` composition for CallApi. The `fetchInterceptor` option already exists in `SharedExtraOptions`, making it available at base config and per-request levels. This design adds:
 
-1. Support for plugins to return `fetchInterceptor` from their `setup` function
-2. Composition logic to chain interceptors from all levels using Set-based registry (same pattern as hooks)
-3. Options access within interceptors via extended RequestInit
+1. Support for plugins to return `fetchInterceptor` from their `setup` function (as a top-level property)
+2. Composition logic to chain interceptors from all levels during plugin initialization
+3. The composed interceptor is added to `resolvedOptions.fetchInterceptor` and used by existing fetch logic
 
 ## Architecture
 
@@ -28,7 +28,27 @@ Each interceptor receives `originalFetch` which represents everything below it i
 
 ## Components and Interfaces
 
-### 1. Update PluginInitResult Type
+### 1. Add FetchInterceptor Type to SharedExtraOptions
+
+**Location:** `packages/callapi/src/types/common.ts`
+
+Add `FetchInterceptor` type using the existing `FetchImpl` type:
+
+```typescript
+// FetchImpl already exists:
+// type FetchImpl = UnmaskType<(input: string | Request | URL, init?: RequestInit) => Promise<Response>>;
+
+// Add FetchInterceptor type:
+type FetchInterceptor = (originalFetch: FetchImpl) => FetchImpl;
+
+type SharedExtraOptions<TPluginOptions extends PluginOptions = PluginOptions> = {
+  // ... existing options ...
+  fetchInterceptor?: FetchInterceptor;
+  // ... other options ...
+};
+```
+
+### 2. Update PluginInitResult Type
 
 **Location:** `packages/callapi/src/plugins.ts`
 
@@ -60,38 +80,6 @@ setup: ({ options }) => {
 }
 ```
 
-### 2. Update getFetchImpl to Handle Interceptors
-
-**Location:** `packages/callapi/src/utils/common.ts`
-
-Update `getFetchImpl` to accept and apply `fetchInterceptor`:
-
-```typescript
-export const getFetchImpl = (
-  customFetchImpl: CallApiExtraOptions["customFetchImpl"],
-  fetchInterceptor?: FetchInterceptor
-) => {
-  let fetchImpl: FetchFunction;
-
-  if (customFetchImpl) {
-    fetchImpl = customFetchImpl;
-  } else if (typeof globalThis !== "undefined" && isFunction(globalThis.fetch)) {
-    fetchImpl = globalThis.fetch;
-  } else {
-    throw new Error("No fetch implementation found");
-  }
-
-  // Apply interceptor if present
-  if (fetchInterceptor) {
-    fetchImpl = fetchInterceptor(fetchImpl);
-  }
-
-  return fetchImpl;
-};
-```
-
-
-
 ### 3. Integration with Existing Code
 
 **Location:** `packages/callapi/src/plugins.ts`
@@ -117,27 +105,11 @@ export const initializePlugins = async (context: PluginSetupContext) => {
     // ... existing code unchanged ...
   };
 
-  // Create interceptor registry (same pattern as hooks)
-  const interceptorRegistry = new Set<FetchInterceptor>();
-
-  const addBaseInterceptor = () => {
-    if (baseConfig.fetchInterceptor) {
-      interceptorRegistry.add(baseConfig.fetchInterceptor);
-    }
-  };
-
-  const addInstanceInterceptor = () => {
-    if (config.fetchInterceptor) {
-      interceptorRegistry.add(config.fetchInterceptor);
-    }
-  };
-
   const hookRegistrationOrder =
     options.hooksRegistrationOrder ?? extraOptionDefaults().hooksRegistrationOrder;
 
   if (hookRegistrationOrder === "mainFirst") {
     addMainHooks();
-    addBaseInterceptor(); // Base goes first (innermost)
   }
 
   const { currentRouteSchemaKey, mainInitURL } = getCurrentRouteSchemaKeyAndMainInitURL({
@@ -146,6 +118,7 @@ export const initializePlugins = async (context: PluginSetupContext) => {
     initURL,
   });
 
+  let resolvedFetchInterceptor: FetchInterceptor | undefined;
   let resolvedCurrentRouteSchemaKey = currentRouteSchemaKey;
   let resolvedInitURL = mainInitURL;
   let resolvedOptions = options;
@@ -185,10 +158,14 @@ export const initializePlugins = async (context: PluginSetupContext) => {
       resolvedOptions = initResult.options;
     }
 
-    // If plugin provides a fetchInterceptor (top-level), add it to registry
+    // If plugin provides a fetchInterceptor (top-level), compose it
     if (initResult.fetchInterceptor) {
-      interceptorRegistry.add(initResult.fetchInterceptor);
+      const prev = resolvedFetchInterceptor;
+      resolvedFetchInterceptor = prev
+        ? (baseFetch) => initResult.fetchInterceptor!(prev(baseFetch))
+        : initResult.fetchInterceptor;
     }
+
   };
 
   const resolvedPlugins = getResolvedPlugins({ baseConfig, options });
@@ -203,24 +180,23 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 
   if (hookRegistrationOrder === "pluginsFirst") {
     addMainHooks();
-    addBaseInterceptor(); // Base goes after plugins but before instance
   }
 
-  // Always add instance interceptor last (outermost, wraps everything)
-  addInstanceInterceptor();
+  if (baseConfig.fetchInterceptor) {
+      const prev = resolvedFetchInterceptor;
+      resolvedFetchInterceptor = prev
+        ? (baseFetch) => baseConfig.fetchInterceptor!(prev(baseFetch))
+        : baseConfig.fetchInterceptor;
+    }
+
+   if (config.fetchInterceptor) {
+      const prev = resolvedFetchInterceptor;
+      resolvedFetchInterceptor = prev
+        ? (baseFetch) => config.fetchInterceptor!(prev(baseFetch))
+        : config.fetchInterceptor;
+    }
 
   // ... existing hook composition code ...
-
-  // Compose all interceptors from registry (same pattern as hooks)
-  let resolvedFetchInterceptor: FetchInterceptor | undefined;
-
-  if (interceptorRegistry.size > 0) {
-    const interceptors = [...interceptorRegistry];
-
-    // Compose all interceptors using pipe
-    resolvedFetchInterceptor = (baseFetch) =>
-      pipe(baseFetch, ...interceptors);
-  }
 
   return {
     resolvedCurrentRouteSchemaKey,
@@ -235,52 +211,13 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 };
 ```
 
-**Location:** `packages/callapi/src/dedupe.ts`
+**Key Points:**
 
-Update to pass `fetchInterceptor` to `getFetchImpl`:
-
-```typescript
-const handleRequestDeferStrategy = async (deferContext: {
-  options: DedupeContext["options"];
-  request: DedupeContext["request"];
-}) => {
-  const { options: localOptions, request: localRequest } = deferContext;
-
-  // getFetchImpl now handles both customFetchImpl and fetchInterceptor
-  const fetchApi = getFetchImpl(localOptions.customFetchImpl, localOptions.fetchInterceptor);
-
-  const shouldUsePromiseFromCache = prevRequestInfo && resolvedDedupeStrategy === "defer";
-
-  const streamableContext = {
-    baseConfig,
-    config,
-    options: localOptions,
-    request: localRequest,
-  } satisfies RequestContext;
-
-  const streamableRequest = await toStreamableRequest(streamableContext);
-
-  const responsePromise =
-    shouldUsePromiseFromCache ?
-      prevRequestInfo.responsePromise
-    : fetchApi(
-        localOptions.fullURL as NonNullable<typeof localOptions.fullURL>,
-        streamableRequest
-      );
-
-  $RequestInfoCacheOrNull?.set(dedupeKey, {
-    controller: newFetchController,
-    responsePromise
-  });
-
-  const streamableResponse = toStreamableResponse({
-    ...streamableContext,
-    response: await responsePromise,
-  });
-
-  return streamableResponse;
-};
-```
+- Plugin interceptors are returned as a top-level property in `PluginInitResult`
+- Composition happens incrementally during plugin initialization
+- The final composed interceptor is added to `resolvedOptions.fetchInterceptor`
+- Existing code that uses `options.fetchInterceptor` will automatically use the composed interceptor
+- No changes needed to `getFetchImpl` or `dedupe.ts` - they already handle `options.fetchInterceptor`
 
 ## Error Handling
 
@@ -407,33 +344,30 @@ const cachingPlugin = definePlugin({
     const cachePolicy = options.cachePolicy;
 
     return {
-      options: {
-        ...options,
-        fetchInterceptor: (originalFetch) => async (input, init) => {
-          if (cachePolicy === "no-cache") {
-            return originalFetch(input, init);
-          }
-
-          const cacheKey = `${input}`;
-          const cached = cache.get(cacheKey);
-
-          if (cached && Date.now() - cached.timestamp < cacheLifetime) {
-            console.log(`Cache hit: ${cacheKey}`);
-            return cached.data.clone();
-          }
-
-          console.log(`Cache miss: ${cacheKey}`);
-          const response = await originalFetch(input, init);
-
-          if (response.ok) {
-            cache.set(cacheKey, {
-              data: response.clone(),
-              timestamp: Date.now()
-            });
-          }
-
-          return response;
+      fetchInterceptor: (originalFetch) => async (input, init) => {
+        if (cachePolicy === "no-cache") {
+          return originalFetch(input, init);
         }
+
+        const cacheKey = `${input}`;
+        const cached = cache.get(cacheKey);
+
+        if (cached && Date.now() - cached.timestamp < cacheLifetime) {
+          console.log(`Cache hit: ${cacheKey}`);
+          return cached.data.clone();
+        }
+
+        console.log(`Cache miss: ${cacheKey}`);
+        const response = await originalFetch(input, init);
+
+        if (response.ok) {
+          cache.set(cacheKey, {
+            data: response.clone(),
+            timestamp: Date.now()
+          });
+        }
+
+        return response;
       }
     };
   }
@@ -483,12 +417,9 @@ const myPlugin = definePlugin({
     const state = createState();
 
     return {
-      options: {
-        ...options,
-        fetchInterceptor: (originalFetch) => async (input, init) => {
-          // Has access to state via closure
-          return originalFetch(input, init);
-        }
+      fetchInterceptor: (originalFetch) => async (input, init) => {
+        // Has access to state via closure
+        return originalFetch(input, init);
       }
     };
   }
