@@ -2,7 +2,7 @@ import { extraOptionDefaults } from "./constants/default-options";
 import type { RequestContext } from "./hooks";
 import { toStreamableRequest, toStreamableResponse } from "./stream";
 import type { AnyString, UnmaskType } from "./types/type-helpers";
-import { deterministicHashFn, getFetchImpl, waitFor } from "./utils/common";
+import { deterministicHashFn, getResolvedFetchImpl, waitFor } from "./utils/common";
 import { isFunction } from "./utils/guards";
 
 type RequestInfo = {
@@ -159,7 +159,7 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 		// == Local options and request are needed so that transformations are applied can be applied to both from call site
 		const { options: localOptions, request: localRequest } = deferContext;
 
-		const fetchApi = getFetchImpl(localOptions.customFetchImpl);
+		const fetchApi = getResolvedFetchImpl(localOptions.customFetchImpl, localOptions.fetchMiddleware);
 
 		const shouldUsePromiseFromCache = prevRequestInfo && resolvedDedupeStrategy === "defer";
 

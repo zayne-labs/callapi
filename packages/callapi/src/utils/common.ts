@@ -157,7 +157,7 @@ export const getBody = (options: GetBodyOptions) => {
 	return body;
 };
 
-export const getFetchImpl = (customFetchImpl: CallApiExtraOptions["customFetchImpl"]) => {
+export const getInitFetchImpl = (customFetchImpl: CallApiExtraOptions["customFetchImpl"]) => {
 	if (customFetchImpl) {
 		return customFetchImpl;
 	}
@@ -167,6 +167,17 @@ export const getFetchImpl = (customFetchImpl: CallApiExtraOptions["customFetchIm
 	}
 
 	throw new Error("No fetch implementation found");
+};
+
+export const getResolvedFetchImpl = (
+	customFetchImpl: CallApiExtraOptions["customFetchImpl"],
+	fetchMiddleware: CallApiExtraOptions["fetchMiddleware"]
+) => {
+	const initFetchApi = getInitFetchImpl(customFetchImpl);
+
+	const fetchImpl = fetchMiddleware ? fetchMiddleware(initFetchApi) : initFetchApi;
+
+	return fetchImpl;
 };
 
 const PromiseWithResolvers = () => {

@@ -12,8 +12,8 @@ import {
 	createTimeoutSignal,
 	deterministicHashFn,
 	getBody,
-	getFetchImpl,
 	getHeaders,
+	getInitFetchImpl,
 	objectifyHeaders,
 	omitKeys,
 	pickKeys,
@@ -770,7 +770,7 @@ describe("Utility Functions", () => {
 		describe("getFetchImpl", () => {
 			it("should return custom fetch implementation when provided", () => {
 				const customFetch = vi.fn();
-				const result = getFetchImpl(customFetch);
+				const result = getInitFetchImpl(customFetch);
 
 				expect(result).toBe(customFetch);
 			});
@@ -780,7 +780,7 @@ describe("Utility Functions", () => {
 				const mockGlobalFetch = vi.fn();
 				globalThis.fetch = mockGlobalFetch;
 
-				const result = getFetchImpl(undefined);
+				const result = getInitFetchImpl(undefined);
 
 				expect(result).toBe(mockGlobalFetch);
 
@@ -792,7 +792,7 @@ describe("Utility Functions", () => {
 				const originalFetch = globalThis.fetch;
 				delete (globalThis as any).fetch;
 
-				expect(() => getFetchImpl(undefined)).toThrow("No fetch implementation found");
+				expect(() => getInitFetchImpl(undefined)).toThrow("No fetch implementation found");
 
 				// Restore original fetch
 				globalThis.fetch = originalFetch;

@@ -7,7 +7,11 @@ import {
 	type PluginExtraOptions,
 	type RequestContext,
 } from "./hooks";
-import type { CallApiRequestOptions, CallApiRequestOptionsForHooks } from "./types/common";
+import type {
+	CallApiExtraOptions,
+	CallApiRequestOptions,
+	CallApiRequestOptionsForHooks,
+} from "./types/common";
 import type { Awaitable } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
 import { isArray, isFunction, isPlainObject, isString } from "./utils/guards";
@@ -17,10 +21,11 @@ export type PluginSetupContext<TPluginExtraOptions = unknown> = RequestContext /
 	& PluginExtraOptions<TPluginExtraOptions> & { initURL: string };
 
 export type PluginInitResult = Partial<
-	Omit<PluginSetupContext, "initURL" | "request"> & {
-		initURL: InitURLOrURLObject;
-		request: CallApiRequestOptions;
-	}
+	Omit<PluginSetupContext, "initURL" | "request">
+		& Pick<CallApiExtraOptions, "fetchMiddleware"> & {
+			initURL: InitURLOrURLObject;
+			request: CallApiRequestOptions;
+		}
 >;
 
 export type PluginHooksWithMoreOptions<TMoreOptions = unknown> = HooksOrHooksArray<
@@ -139,6 +144,8 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 	let resolvedOptions = options;
 	let resolvedRequestOptions = request;
 
+	let composedFetchMiddleware: CallApiExtraOptions["fetchMiddleware"];
+
 	const executePluginSetupFn = async (pluginSetupFn: CallApiPlugin["setup"]) => {
 		if (!pluginSetupFn) return;
 
@@ -172,6 +179,16 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 		if (isPlainObject(initResult.options)) {
 			resolvedOptions = initResult.options;
 		}
+
+		if (initResult.fetchMiddleware) {
+			const previousMiddleware = composedFetchMiddleware;
+			const currentMiddleware = initResult.fetchMiddleware;
+
+			composedFetchMiddleware =
+				previousMiddleware ?
+					(baseFetch) => currentMiddleware(previousMiddleware(baseFetch))
+				:	currentMiddleware;
+		}
 	};
 
 	const resolvedPlugins = getResolvedPlugins({ baseConfig, options });
@@ -187,6 +204,26 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 
 	if (hookRegistrationOrder === "pluginsFirst") {
 		addMainHooks();
+	}
+
+	if (baseConfig.fetchMiddleware) {
+		const previousMiddleware = composedFetchMiddleware;
+		const currentMiddleware = baseConfig.fetchMiddleware;
+
+		composedFetchMiddleware =
+			previousMiddleware ?
+				(baseFetch) => currentMiddleware(previousMiddleware(baseFetch))
+			:	currentMiddleware;
+	}
+
+	if (config.fetchMiddleware) {
+		const previousMiddleware = composedFetchMiddleware;
+		const currentMiddleware = config.fetchMiddleware;
+
+		composedFetchMiddleware =
+			previousMiddleware ?
+				(baseFetch) => currentMiddleware(previousMiddleware(baseFetch))
+			:	currentMiddleware;
 	}
 
 	const resolvedHooks: Hooks = {};
@@ -210,7 +247,10 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 		resolvedCurrentRouteSchemaKey,
 		resolvedHooks,
 		resolvedInitURL,
-		resolvedOptions,
+		resolvedOptions: {
+			...resolvedOptions,
+			fetchMiddleware: composedFetchMiddleware,
+		},
 		resolvedRequestOptions,
 	};
 };

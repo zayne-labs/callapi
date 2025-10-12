@@ -2,11 +2,11 @@
 
 ## Overview
 
-This document outlines the implementation of `fetchInterceptor` composition for CallApi. The `fetchInterceptor` option already exists in `SharedExtraOptions`, making it available at base config and per-request levels. This design adds:
+This document outlines the implementation of `fetchMiddleware` composition for CallApi. The `fetchMiddleware` option already exists in `SharedExtraOptions`, making it available at base config and per-request levels. This design adds:
 
-1. Support for plugins to return `fetchInterceptor` from their `setup` function (as a top-level property)
+1. Support for plugins to return `fetchMiddleware` from their `setup` function (as a top-level property)
 2. Composition logic to chain interceptors from all levels during plugin initialization
-3. The composed interceptor is added to `resolvedOptions.fetchInterceptor` and used by existing fetch logic
+3. The composed interceptor is added to `resolvedOptions.fetchMiddleware` and used by existing fetch logic
 
 ## Architecture
 
@@ -28,22 +28,22 @@ Each interceptor receives `originalFetch` which represents everything below it i
 
 ## Components and Interfaces
 
-### 1. Add FetchInterceptor Type to SharedExtraOptions
+### 1. Add fetchMiddleware Type to SharedExtraOptions
 
 **Location:** `packages/callapi/src/types/common.ts`
 
-Add `FetchInterceptor` type using the existing `FetchImpl` type:
+Add `fetchMiddleware` type using the existing `FetchImpl` type:
 
 ```typescript
 // FetchImpl already exists:
 // type FetchImpl = UnmaskType<(input: string | Request | URL, init?: RequestInit) => Promise<Response>>;
 
-// Add FetchInterceptor type:
-type FetchInterceptor = (originalFetch: FetchImpl) => FetchImpl;
+// Add fetchMiddleware type:
+type fetchMiddleware = (originalFetch: FetchImpl) => FetchImpl;
 
 type SharedExtraOptions<TPluginOptions extends PluginOptions = PluginOptions> = {
   // ... existing options ...
-  fetchInterceptor?: FetchInterceptor;
+  fetchMiddleware?: fetchMiddleware;
   // ... other options ...
 };
 ```
@@ -52,14 +52,14 @@ type SharedExtraOptions<TPluginOptions extends PluginOptions = PluginOptions> = 
 
 **Location:** `packages/callapi/src/plugins.ts`
 
-Add `fetchInterceptor` as a top-level property in `PluginInitResult`:
+Add `fetchMiddleware` as a top-level property in `PluginInitResult`:
 
 ```typescript
 export type PluginInitResult = Partial<
   Omit<PluginSetupContext, "initURL" | "request"> & {
     initURL: InitURLOrURLObject;
     request: CallApiRequestOptions;
-    fetchInterceptor?: FetchInterceptor; // Add as top-level property
+    fetchMiddleware?: fetchMiddleware; // Add as top-level property
   }
 >;
 
@@ -68,7 +68,7 @@ setup: ({ options }) => {
   const cache = new Map();
 
   return {
-    fetchInterceptor: (originalFetch) => async (input, init) => {
+    fetchMiddleware: (originalFetch) => async (input, init) => {
       const cached = cache.get(input.toString());
       if (cached) return cached;
 
@@ -93,7 +93,7 @@ export const initializePlugins = async (context: PluginSetupContext) => {
   const hookRegistries = getHookRegistries();
 
   // Collect interceptors as we go
-  const interceptors: FetchInterceptor[] = [];
+  const interceptors: fetchMiddleware[] = [];
 
   const hookRegistryKeyArray = Object.keys(hookRegistries) as Array<keyof Hooks>;
 
@@ -118,7 +118,7 @@ export const initializePlugins = async (context: PluginSetupContext) => {
     initURL,
   });
 
-  let resolvedFetchInterceptor: FetchInterceptor | undefined;
+  let resolvedfetchMiddleware: fetchMiddleware | undefined;
   let resolvedCurrentRouteSchemaKey = currentRouteSchemaKey;
   let resolvedInitURL = mainInitURL;
   let resolvedOptions = options;
@@ -158,12 +158,12 @@ export const initializePlugins = async (context: PluginSetupContext) => {
       resolvedOptions = initResult.options;
     }
 
-    // If plugin provides a fetchInterceptor (top-level), compose it
-    if (initResult.fetchInterceptor) {
-      const prev = resolvedFetchInterceptor;
-      resolvedFetchInterceptor = prev
-        ? (baseFetch) => initResult.fetchInterceptor!(prev(baseFetch))
-        : initResult.fetchInterceptor;
+    // If plugin provides a fetchMiddleware (top-level), compose it
+    if (initResult.fetchMiddleware) {
+      const prev = resolvedfetchMiddleware;
+      resolvedfetchMiddleware = prev
+        ? (baseFetch) => initResult.fetchMiddleware!(prev(baseFetch))
+        : initResult.fetchMiddleware;
     }
 
   };
@@ -182,18 +182,18 @@ export const initializePlugins = async (context: PluginSetupContext) => {
     addMainHooks();
   }
 
-  if (baseConfig.fetchInterceptor) {
-      const prev = resolvedFetchInterceptor;
-      resolvedFetchInterceptor = prev
-        ? (baseFetch) => baseConfig.fetchInterceptor!(prev(baseFetch))
-        : baseConfig.fetchInterceptor;
+  if (baseConfig.fetchMiddleware) {
+      const prev = resolvedfetchMiddleware;
+      resolvedfetchMiddleware = prev
+        ? (baseFetch) => baseConfig.fetchMiddleware!(prev(baseFetch))
+        : baseConfig.fetchMiddleware;
     }
 
-   if (config.fetchInterceptor) {
-      const prev = resolvedFetchInterceptor;
-      resolvedFetchInterceptor = prev
-        ? (baseFetch) => config.fetchInterceptor!(prev(baseFetch))
-        : config.fetchInterceptor;
+   if (config.fetchMiddleware) {
+      const prev = resolvedfetchMiddleware;
+      resolvedfetchMiddleware = prev
+        ? (baseFetch) => config.fetchMiddleware!(prev(baseFetch))
+        : config.fetchMiddleware;
     }
 
   // ... existing hook composition code ...
@@ -204,7 +204,7 @@ export const initializePlugins = async (context: PluginSetupContext) => {
     resolvedInitURL,
     resolvedOptions: {
       ...resolvedOptions,
-      fetchInterceptor: resolvedFetchInterceptor
+      fetchMiddleware: resolvedfetchMiddleware
     },
     resolvedRequestOptions,
   };
@@ -215,9 +215,9 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 
 - Plugin interceptors are returned as a top-level property in `PluginInitResult`
 - Composition happens incrementally during plugin initialization
-- The final composed interceptor is added to `resolvedOptions.fetchInterceptor`
-- Existing code that uses `options.fetchInterceptor` will automatically use the composed interceptor
-- No changes needed to `getFetchImpl` or `dedupe.ts` - they already handle `options.fetchInterceptor`
+- The final composed interceptor is added to `resolvedOptions.fetchMiddleware`
+- Existing code that uses `options.fetchMiddleware` will automatically use the composed interceptor
+- No changes needed to `getFetchImpl` or `dedupe.ts` - they already handle `options.fetchMiddleware`
 
 ## Error Handling
 
@@ -285,7 +285,7 @@ const wrappedInterceptor = (originalFetch: FetchFunction): FetchFunction => {
 **File:** `packages/callapi/tests/fetch-interceptor.test.ts`
 
 ```typescript
-describe('fetchInterceptor', () => {
+describe('fetchMiddleware', () => {
   describe('composition', () => {
     it('should compose interceptors in correct order');
     it('should allow short-circuiting');
@@ -344,7 +344,7 @@ const cachingPlugin = definePlugin({
     const cachePolicy = options.cachePolicy;
 
     return {
-      fetchInterceptor: (originalFetch) => async (input, init) => {
+      fetchMiddleware: (originalFetch) => async (input, init) => {
         if (cachePolicy === "no-cache") {
           return originalFetch(input, init);
         }
@@ -381,7 +381,7 @@ const cachingPlugin = definePlugin({
 ```typescript
 const client = createFetchClient({
   baseURL: 'https://api.example.com',
-  fetchInterceptor: (originalFetch) => async (input, init) => {
+  fetchMiddleware: (originalFetch) => async (input, init) => {
     console.log('Request starting:', input);
     const response = await originalFetch(input, init);
     console.log('Response:', response.status);
@@ -394,7 +394,7 @@ const client = createFetchClient({
 
 ```typescript
 const { data } = await callApi('/users', {
-  fetchInterceptor: (originalFetch) => async (input, init) => {
+  fetchMiddleware: (originalFetch) => async (input, init) => {
     // Add auth token for this specific request
     const token = await getAuthToken();
     return originalFetch(input, {
@@ -417,7 +417,7 @@ const myPlugin = definePlugin({
     const state = createState();
 
     return {
-      fetchInterceptor: (originalFetch) => async (input, init) => {
+      fetchMiddleware: (originalFetch) => async (input, init) => {
         // Has access to state via closure
         return originalFetch(input, init);
       }
@@ -437,3 +437,4 @@ const myPlugin = definePlugin({
 1. **Option Exposure**: All options are exposed to interceptors - document sensitive data handling
 2. **Response Tampering**: Interceptors can modify responses - validate in critical paths
 3. **Plugin Trust**: Plugins have full request control - only use trusted plugins
+

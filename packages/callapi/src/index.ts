@@ -27,8 +27,8 @@ export {
 } from "./plugins";
 
 export {
-	type CallApiResultSuccessVariant,
 	type CallApiResultErrorVariant,
+	type CallApiResultSuccessVariant,
 	type PossibleHTTPError,
 	type PossibleJavaScriptError,
 	type PossibleJavaScriptOrValidationError,

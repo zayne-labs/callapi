@@ -2,9 +2,9 @@
 
 ## Introduction
 
-This feature introduces `fetchInterceptor` as a first-class capability in CallApi that allows wrapping, delaying, modifying, or short-circuiting HTTP requests. Unlike `customFetchImpl` which completely replaces the fetch implementation, interceptors wrap and enhance the existing fetch using a composable higher-order function pattern.
+This feature introduces `fetchMiddleware` as a first-class capability in CallApi that allows wrapping, delaying, modifying, or short-circuiting HTTP requests. Unlike `customFetchImpl` which completely replaces the fetch implementation, interceptors wrap and enhance the existing fetch using a composable higher-order function pattern.
 
-**Key Innovation:** `fetchInterceptor` can be used at multiple levels:
+**Key Innovation:** `fetchMiddleware` can be used at multiple levels:
 
 - **Base config level** - Apply interceptors to all requests from a client
 - **Plugin level** - Create reusable interceptor logic as plugins
@@ -15,7 +15,7 @@ All interceptors compose together in a predictable chain, giving developers full
 **Signature:**
 
 ```typescript
-fetchInterceptor?: (originalFetch: FetchFunction) => FetchFunction
+fetchMiddleware?: (originalFetch: FetchFunction) => FetchFunction
 
 // Where FetchFunction is:
 type FetchFunction = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
@@ -27,7 +27,7 @@ type FetchFunction = (input: RequestInfo | URL, init?: RequestInit) => Promise<R
 // 1. Base config interceptor - adds logging
 const client = createFetchClient({
   baseURL: "https://api.example.com",
-  fetchInterceptor: (originalFetch) => async (input, init) => {
+  fetchMiddleware: (originalFetch) => async (input, init) => {
     console.log("Base: Before fetch", input);
     const response = await originalFetch(input, init);
     console.log("Base: After fetch", response.status);
@@ -38,7 +38,7 @@ const client = createFetchClient({
 // 2. Plugin interceptor - adds caching
 const cachingPlugin = definePlugin({
   id: "cache",
-  fetchInterceptor: (originalFetch) => async (input, init) => {
+  fetchMiddleware: (originalFetch) => async (input, init) => {
     const cached = cache.get(input);
     if (cached) return cached;
 
@@ -51,7 +51,7 @@ const cachingPlugin = definePlugin({
 // 3. Per-request interceptor - adds auth
 const data = await client("/users", {
   plugins: [cachingPlugin],
-  fetchInterceptor: (originalFetch) => async (input, init) => {
+  fetchMiddleware: (originalFetch) => async (input, init) => {
     const token = await getToken();
     const newInit = {
       ...init,
@@ -75,7 +75,7 @@ const data = await client("/users", {
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ callApi("/users", { fetchInterceptor: addAuth })            │
+│ callApi("/users", { fetchMiddleware: addAuth })            │
 └────────────────────────┬────────────────────────────────────┘
                          │
                          ▼
@@ -146,11 +146,11 @@ const data = await client("/users", {
 
 #### Acceptance Criteria
 
-1. WHEN `fetchInterceptor` is defined in base config THEN it SHALL be applied to all requests from that client
-2. WHEN `fetchInterceptor` is defined in a plugin THEN the plugin system SHALL recognize and store this interceptor
-3. WHEN `fetchInterceptor` is defined in per-request config THEN it SHALL be applied only to that specific request
-4. WHEN a `fetchInterceptor` is invoked THEN it SHALL receive the original fetch function as its only parameter
-5. WHEN a `fetchInterceptor` is invoked THEN it SHALL return a new function with the same signature as fetch
+1. WHEN `fetchMiddleware` is defined in base config THEN it SHALL be applied to all requests from that client
+2. WHEN `fetchMiddleware` is defined in a plugin THEN the plugin system SHALL recognize and store this interceptor
+3. WHEN `fetchMiddleware` is defined in per-request config THEN it SHALL be applied only to that specific request
+4. WHEN a `fetchMiddleware` is invoked THEN it SHALL receive the original fetch function as its only parameter
+5. WHEN a `fetchMiddleware` is invoked THEN it SHALL return a new function with the same signature as fetch
 6. WHEN the returned function is called THEN it SHALL receive the request input (URL/Request) as the first parameter
 7. WHEN the returned function is called THEN it SHALL receive the RequestInit options (including all merged options) as the second parameter
 8. WHEN an interceptor returns a Response without calling the original fetch THEN the system SHALL use that response and skip the network call
@@ -179,13 +179,13 @@ const data = await client("/users", {
 #### Acceptance Criteria
 
 1. WHEN interceptors are defined at multiple levels THEN they SHALL compose in this order: per-request → plugins → base config → customFetchImpl → native fetch
-2. WHEN multiple plugins provide `fetchInterceptor` THEN they SHALL be composed in the order plugins are registered
+2. WHEN multiple plugins provide `fetchMiddleware` THEN they SHALL be composed in the order plugins are registered
 3. WHEN an interceptor's returned fetch function calls the original fetch THEN it SHALL invoke the next interceptor in the chain
 4. WHEN the last interceptor calls the original fetch THEN it SHALL invoke `customFetchImpl` (if provided) or native fetch
 5. WHEN an interceptor does not call the original fetch THEN the chain SHALL stop and subsequent interceptors SHALL not be invoked
 6. WHEN plugins are registered in order [A, B, C] THEN the composition SHALL be: A wraps B wraps C
-7. WHEN base config provides both `fetchInterceptor` and `customFetchImpl` THEN the interceptor SHALL wrap the customFetchImpl
-8. WHEN per-request config provides `fetchInterceptor` THEN it SHALL be the outermost wrapper in the chain
+7. WHEN base config provides both `fetchMiddleware` and `customFetchImpl` THEN the interceptor SHALL wrap the customFetchImpl
+8. WHEN per-request config provides `fetchMiddleware` THEN it SHALL be the outermost wrapper in the chain
 9. WHEN the composition order is [per-request, pluginA, pluginB, base, customFetchImpl] THEN calling per-request's originalFetch SHALL invoke pluginA, which invokes pluginB, which invokes base, which invokes customFetchImpl
 
 ### Requirement 4: Type Safety for Options
@@ -196,12 +196,12 @@ const data = await client("/users", {
 
 1. WHEN a plugin defines `defineExtraOptions` with a Zod schema THEN TypeScript SHALL infer the option types
 2. WHEN a user configures a request with plugin options THEN TypeScript SHALL provide autocomplete for those options
-3. WHEN options are accessed in the `fetchInterceptor` returned function THEN TypeScript SHALL provide proper type information
+3. WHEN options are accessed in the `fetchMiddleware` returned function THEN TypeScript SHALL provide proper type information
 4. WHEN options are accessed in hooks THEN TypeScript SHALL provide proper type information
 5. WHEN multiple plugins are used THEN TypeScript SHALL merge their option types correctly
 6. WHEN the `init` parameter is accessed in the returned fetch function THEN TypeScript SHALL show all available options (CallApi options + plugin options)
-7. WHEN `fetchInterceptor` is defined at base config level THEN TypeScript SHALL infer the correct types for the init parameter
-8. WHEN `fetchInterceptor` is defined at per-request level THEN TypeScript SHALL infer the correct types for the init parameter
+7. WHEN `fetchMiddleware` is defined at base config level THEN TypeScript SHALL infer the correct types for the init parameter
+8. WHEN `fetchMiddleware` is defined at per-request level THEN TypeScript SHALL infer the correct types for the init parameter
 
 ### Requirement 5: Backward Compatibility
 
@@ -209,10 +209,10 @@ const data = await client("/users", {
 
 #### Acceptance Criteria
 
-1. WHEN no `fetchInterceptor` is provided at any level THEN the system SHALL behave exactly as before
+1. WHEN no `fetchMiddleware` is provided at any level THEN the system SHALL behave exactly as before
 2. WHEN the base config provides `customFetchImpl` THEN it SHALL still work as it does currently
-3. WHEN both `fetchInterceptor` and `customFetchImpl` are provided THEN interceptors SHALL wrap the customFetchImpl
-4. WHEN existing plugins without `fetchInterceptor` are used THEN they SHALL continue to work unchanged
+3. WHEN both `fetchMiddleware` and `customFetchImpl` are provided THEN interceptors SHALL wrap the customFetchImpl
+4. WHEN existing plugins without `fetchMiddleware` are used THEN they SHALL continue to work unchanged
 5. WHEN the feature is added THEN all existing tests SHALL pass without modification
 6. WHEN `customFetchImpl` is used at the request level THEN it SHALL work alongside interceptors
 7. WHEN only `customFetchImpl` is used (no interceptors) THEN behavior SHALL be identical to current implementation
@@ -226,11 +226,11 @@ const data = await client("/users", {
 1. WHEN an interceptor's returned fetch function throws an error THEN the error SHALL propagate through the normal error handling flow
 2. WHEN an interceptor's returned fetch function throws an error THEN the `onError` and `onRequestError` hooks SHALL be invoked
 3. WHEN an interceptor's returned fetch function returns an invalid Response THEN a clear error message SHALL be provided
-4. WHEN a plugin's `fetchInterceptor` fails THEN the error SHALL include the plugin name for debugging
+4. WHEN a plugin's `fetchMiddleware` fails THEN the error SHALL include the plugin name for debugging
 5. WHEN multiple interceptors are in the chain and one fails THEN the error SHALL indicate which interceptor/plugin failed
 6. WHEN an interceptor calls the original fetch with invalid parameters THEN a clear error message SHALL be provided
-7. WHEN a base config `fetchInterceptor` fails THEN the error SHALL indicate it came from base config
-8. WHEN a per-request `fetchInterceptor` fails THEN the error SHALL indicate it came from request config
+7. WHEN a base config `fetchMiddleware` fails THEN the error SHALL indicate it came from base config
+8. WHEN a per-request `fetchMiddleware` fails THEN the error SHALL indicate it came from request config
 
 ### Requirement 7: Documentation and Examples
 
@@ -238,13 +238,14 @@ const data = await client("/users", {
 
 #### Acceptance Criteria
 
-1. WHEN the feature is released THEN documentation SHALL include a guide on implementing `fetchInterceptor` at all levels (base config, plugins, per-request)
+1. WHEN the feature is released THEN documentation SHALL include a guide on implementing `fetchMiddleware` at all levels (base config, plugins, per-request)
 2. WHEN the feature is released THEN at least three example plugins SHALL be provided (caching, mocking, offline)
 3. WHEN the feature is released THEN examples SHALL show standalone usage (without plugins)
 4. WHEN the feature is released THEN TypeScript types SHALL have JSDoc comments explaining the API
-5. WHEN the feature is released THEN documentation SHALL clearly explain the difference between `customFetchImpl` and `fetchInterceptor`
+5. WHEN the feature is released THEN documentation SHALL clearly explain the difference between `customFetchImpl` and `fetchMiddleware`
 6. WHEN the feature is released THEN best practices SHALL be documented for interceptor composition
 7. WHEN the feature is released THEN examples SHALL show how to properly call the original fetch and when to short-circuit
 8. WHEN the feature is released THEN examples SHALL demonstrate the higher-order function pattern clearly
 9. WHEN the feature is released THEN documentation SHALL explain the composition order with diagrams
 10. WHEN the feature is released THEN examples SHALL show common patterns (caching, retry, logging, auth)
+
