@@ -45,7 +45,7 @@ const detectResponseType = (response: Response): Extract<ResponseTypeUnion, "blo
 	const initContentType = response.headers.get("content-type");
 
 	if (!initContentType) {
-		return extraOptionDefaults().responseType;
+		return extraOptionDefaults.responseType;
 	}
 
 	const contentType = initContentType.split(";")[0] ?? "";
@@ -66,7 +66,7 @@ export const resolveResponseData = <TResponse>(
 	responseType: ResponseTypeUnion | undefined,
 	parser: Parser<TResponse> | undefined
 ) => {
-	const selectedParser = parser ?? extraOptionDefaults().responseParser;
+	const selectedParser = parser ?? extraOptionDefaults.responseParser;
 	const selectedResponseType = responseType ?? detectResponseType(response);
 
 	const RESPONSE_TYPE_LOOKUP = getResponseType<TResponse>(response, selectedParser);

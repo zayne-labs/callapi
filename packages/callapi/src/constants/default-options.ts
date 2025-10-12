@@ -1,11 +1,11 @@
 import type { CallApiConfig, CallApiExtraOptions } from "../types/common";
 import { defineEnum } from "../types/type-helpers";
 
-export const extraOptionDefaults = () => {
-	return defineEnum({
+export const extraOptionDefaults = Object.freeze(
+	defineEnum({
 		// Common defaults
 		bodySerializer: JSON.stringify,
-		defaultHTTPErrorMessage: "An unexpected error occurred during the HTTP request.",
+		defaultHTTPErrorMessage: "HTTP request failed unexpectedly",
 
 		// Dedupe defaults
 		/* eslint-disable perfectionist/sort-objects -- Allow */
@@ -30,11 +30,9 @@ export const extraOptionDefaults = () => {
 		retryMethods: ["GET", "POST"],
 		retryStatusCodes: [],
 		retryStrategy: "linear",
-	} satisfies CallApiExtraOptions);
-};
+	} satisfies CallApiExtraOptions)
+);
 
-export const requestOptionDefaults = () => {
-	return defineEnum({
-		method: "GET",
-	} satisfies CallApiConfig);
-};
+export const requestOptionDefaults = defineEnum({
+	method: "GET",
+} satisfies CallApiConfig);

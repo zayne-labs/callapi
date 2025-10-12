@@ -30,7 +30,7 @@ export class HTTPError<TErrorData = Record<string, unknown>> extends Error {
 
 		const selectedDefaultErrorMessage =
 			resolvedDefaultHTTPErrorMessage
-			?? (response.statusText || extraOptionDefaults().defaultHTTPErrorMessage);
+			?? (response.statusText || extraOptionDefaults.defaultHTTPErrorMessage);
 
 		const message =
 			(errorData as { message?: string } | undefined)?.message ?? selectedDefaultErrorMessage;

@@ -39,7 +39,8 @@ export type Writeable<TObject, TLevel extends WriteableLevel = "shallow"> =
 		}
 	:	TObject;
 
-export const defineEnum = <const TValue extends object>(value: TValue) => value as Writeable<TValue>;
+export const defineEnum = <const TValue extends object>(value: TValue) =>
+	Object.freeze(value) as Readonly<Writeable<TValue>>;
 
 export type UnionToIntersection<TUnion> =
 	(TUnion extends unknown ? (param: TUnion) => void : never) extends (param: infer TParam) => void ?

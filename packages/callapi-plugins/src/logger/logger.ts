@@ -1,4 +1,4 @@
-import { definePlugin, type CallApiPlugin } from "@zayne-labs/callapi";
+import { type CallApiPlugin, definePlugin } from "@zayne-labs/callapi";
 import { type AnyFunction, isBoolean } from "@zayne-labs/toolkit-type-helpers";
 import { createConsola } from "consola";
 import { getStatusText } from "./utils";
@@ -108,8 +108,8 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 				if (!isEnabled) return;
 
 				const message = [
-					`${ctx.request.method} to '${ctx.options.fullURL}' failed with status: ${ctx.response.status} (${ctx.response.statusText || getStatusText(ctx.response.status)})`,
-					`Reason = ${ctx.error.name}: ${ctx.error.message}`,
+					`${ctx.request.method} request to '${ctx.options.fullURL}' failed with status: ${ctx.response.status} (${ctx.response.statusText || getStatusText(ctx.response.status)})`,
+					`Reason = "${ctx.error.name}: ${ctx.error.message}"`,
 				].join(lineBreak);
 
 				isBasicMode && errorLog(message);

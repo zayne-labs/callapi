@@ -147,10 +147,7 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 		}
 
 		if (isPlainObject(initResult.options)) {
-			resolvedOptions = {
-				...resolvedOptions,
-				...initResult.options,
-			};
+			resolvedOptions = { ...resolvedOptions, ...initResult.options };
 		}
 	};
 
@@ -250,7 +247,7 @@ const setupHooksAndMiddlewares = (
 
 			if (flattenedHookArray.length === 0) continue;
 
-			const hooksExecutionMode = options.hooksExecutionMode ?? extraOptionDefaults().hooksExecutionMode;
+			const hooksExecutionMode = options.hooksExecutionMode ?? extraOptionDefaults.hooksExecutionMode;
 
 			const composedHook = composeAllHooks(flattenedHookArray, hooksExecutionMode);
 

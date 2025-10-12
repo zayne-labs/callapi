@@ -195,7 +195,7 @@ export const createFetchClient = <
 			query: resolvedOptions.query,
 		});
 
-		let options = {
+		const options = {
 			...resolvedOptions,
 			...resolvedHooks,
 			...resolvedMiddlewares,
@@ -217,7 +217,7 @@ export const createFetchClient = <
 
 		const initMethod = getMethod({ initURL: resolvedInitURL, method: resolvedRequestOptions.method });
 
-		let request = {
+		const request = {
 			...resolvedRequestOptions,
 
 			method: initMethod,
@@ -261,7 +261,7 @@ export const createFetchClient = <
 
 			// == Apply Schema Output for Extra Options
 			if (shouldApplySchemaOutput) {
-				options = { ...options, ...extraOptionsValidationResult };
+				Object.assign(options, extraOptionsValidationResult);
 			}
 
 			// == Apply Schema Output for Request Options
@@ -288,12 +288,11 @@ export const createFetchClient = <
 				headers: shouldApplySchemaOutput ? requestOptionsValidationResult?.headers : resolvedHeaders,
 			});
 
-			request = {
-				...request,
-				...(Boolean(validBody) && { body: validBody }),
-				...(Boolean(validHeaders) && { headers: validHeaders }),
-				...(Boolean(validMethod) && { method: validMethod }),
-			};
+			Object.assign(request, {
+				...(validBody && { body: validBody }),
+				...(validHeaders && { headers: validHeaders }),
+				...(validMethod && { method: validMethod }),
+			});
 
 			await executeHooks(options.onRequestReady?.({ baseConfig, config, options, request }));
 

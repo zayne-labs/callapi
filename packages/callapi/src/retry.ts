@@ -92,18 +92,17 @@ const getLinearDelay = (currentAttemptCount: number, options: RetryOptions<unkno
 
 	const resolveRetryDelay =
 		(isFunction(retryDelay) ? retryDelay(currentAttemptCount) : retryDelay)
-		?? extraOptionDefaults().retryDelay;
+		?? extraOptionDefaults.retryDelay;
 
 	return resolveRetryDelay;
 };
 
 const getExponentialDelay = (currentAttemptCount: number, options: RetryOptions<unknown>) => {
-	const retryDelay = options.retryDelay ?? options.retry?.delay ?? extraOptionDefaults().retryDelay;
+	const retryDelay = options.retryDelay ?? options.retry?.delay ?? extraOptionDefaults.retryDelay;
 
 	const resolvedRetryDelay = isFunction(retryDelay) ? retryDelay(currentAttemptCount) : retryDelay;
 
-	const maxDelay =
-		options.retryMaxDelay ?? options.retry?.maxDelay ?? extraOptionDefaults().retryMaxDelay;
+	const maxDelay = options.retryMaxDelay ?? options.retry?.maxDelay ?? extraOptionDefaults.retryMaxDelay;
 
 	const exponentialDelay = resolvedRetryDelay * 2 ** currentAttemptCount;
 
@@ -117,7 +116,7 @@ export const createRetryStrategy = (ctx: ErrorContext<unknown> & RequestContext)
 	const currentAttemptCount = options["~retryAttemptCount"] ?? 1;
 
 	const retryStrategy =
-		options.retryStrategy ?? options.retry?.strategy ?? extraOptionDefaults().retryStrategy;
+		options.retryStrategy ?? options.retry?.strategy ?? extraOptionDefaults.retryStrategy;
 
 	const getDelay = () => {
 		switch (retryStrategy) {
@@ -139,10 +138,10 @@ export const createRetryStrategy = (ctx: ErrorContext<unknown> & RequestContext)
 		}
 
 		const retryCondition =
-			options.retryCondition ?? options.retry?.condition ?? extraOptionDefaults().retryCondition;
+			options.retryCondition ?? options.retry?.condition ?? extraOptionDefaults.retryCondition;
 
 		const maximumRetryAttempts =
-			options.retryAttempts ?? options.retry?.attempts ?? extraOptionDefaults().retryAttempts;
+			options.retryAttempts ?? options.retry?.attempts ?? extraOptionDefaults.retryAttempts;
 
 		const customRetryCondition = await retryCondition(ctx);
 
@@ -153,7 +152,7 @@ export const createRetryStrategy = (ctx: ErrorContext<unknown> & RequestContext)
 		}
 
 		const retryMethods = new Set(
-			options.retryMethods ?? options.retry?.methods ?? extraOptionDefaults().retryMethods
+			options.retryMethods ?? options.retry?.methods ?? extraOptionDefaults.retryMethods
 		);
 
 		const includesMethod =
@@ -162,7 +161,7 @@ export const createRetryStrategy = (ctx: ErrorContext<unknown> & RequestContext)
 			:	true;
 
 		const retryStatusCodes = new Set(
-			options.retryStatusCodes ?? options.retry?.statusCodes ?? extraOptionDefaults().retryStatusCodes
+			options.retryStatusCodes ?? options.retry?.statusCodes ?? extraOptionDefaults.retryStatusCodes
 		);
 
 		const includesStatusCodes =

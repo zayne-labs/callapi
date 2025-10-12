@@ -16,7 +16,7 @@ import { createCombinedSignalPolyfill, createTimeoutSignalPolyfill } from "./pol
 
 export const omitKeys = <
 	TObject extends Record<string, unknown>,
-	const TOmitArray extends Array<keyof TObject>,
+	const TOmitArray extends Array<keyof TObject> | ReadonlyArray<keyof TObject>,
 >(
 	initialObject: TObject,
 	keysToOmit: TOmitArray
@@ -36,7 +36,7 @@ export const omitKeys = <
 
 export const pickKeys = <
 	TObject extends Record<string, unknown>,
-	const TPickArray extends Array<keyof TObject>,
+	const TPickArray extends Array<keyof TObject> | ReadonlyArray<keyof TObject>,
 >(
 	initialObject: TObject,
 	keysToPick: TPickArray
@@ -135,9 +135,7 @@ export const getMethod = (ctx: GetMethodContext) => {
 	const { initURL, method } = ctx;
 
 	return (
-		method?.toUpperCase()
-		?? extractMethodFromURL(initURL)?.toUpperCase()
-		?? requestOptionDefaults().method
+		method?.toUpperCase() ?? extractMethodFromURL(initURL)?.toUpperCase() ?? requestOptionDefaults.method
 	);
 };
 
@@ -150,7 +148,7 @@ export const getBody = (options: GetBodyOptions) => {
 	const { body, bodySerializer } = options;
 
 	if (isSerializable(body)) {
-		const selectedBodySerializer = bodySerializer ?? extraOptionDefaults().bodySerializer;
+		const selectedBodySerializer = bodySerializer ?? extraOptionDefaults.bodySerializer;
 
 		return selectedBodySerializer(body);
 	}
