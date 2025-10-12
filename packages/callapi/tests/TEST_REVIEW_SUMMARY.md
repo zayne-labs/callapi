@@ -11,10 +11,10 @@
 7. `hooks.test.ts` - Hook system
 8. `infrastructure.test.ts` - Infrastructure tests
 9. `plugins.test.ts` - Plugin system
-10. `retry.test.ts` - Retry logic
-11. `url-handling.test.ts` - URL processing
-12. `utils.test.ts` - Utility functions
-13. `validation.test.ts` - Validation system
+10.   `retry.test.ts` - Retry logic
+11.   `url-handling.test.ts` - URL processing
+12.   `utils.test.ts` - Utility functions
+13.   `validation.test.ts` - Validation system
 
 ## Key Findings
 
