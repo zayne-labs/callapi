@@ -3,6 +3,7 @@ import type { fetchSpecificKeys } from "../constants/common";
 import type { DedupeOptions } from "../dedupe";
 import type { HTTPError } from "../error";
 import type { HookConfigOptions, Hooks, HooksOrHooksArray } from "../hooks";
+import type { FetchImpl, Middlewares } from "../middlewares";
 import type { CallApiPlugin } from "../plugins";
 import type { GetCallApiResult, ResponseTypeUnion, ResultModeUnion } from "../result";
 import type { RetryOptions } from "../retry";
@@ -28,7 +29,7 @@ import type {
 	ThrowOnErrorUnion,
 } from "./conditional-types";
 import type { DefaultDataType, DefaultPluginArray, DefaultThrowOnError } from "./default-types";
-import type { Awaitable, Prettify, UnmaskType, Writeable } from "./type-helpers";
+import type { Awaitable, Prettify, Writeable } from "./type-helpers";
 
 type FetchSpecificKeysUnion = Exclude<(typeof fetchSpecificKeys)[number], "body" | "headers" | "method">;
 
@@ -57,12 +58,6 @@ export type CallApiRequestOptionsForHooks = Omit<CallApiRequestOptions, "headers
 	headers: Record<string, string | undefined>;
 };
 
-export type FetchImpl = UnmaskType<
-	(input: string | Request | URL, init?: RequestInit) => Promise<Response>
->;
-
-export type FetchMiddleware = UnmaskType<(originalFetch: FetchImpl) => FetchImpl>;
-
 type SharedExtraOptions<
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,
@@ -73,6 +68,7 @@ type SharedExtraOptions<
 > = DedupeOptions
 	& HookConfigOptions
 	& HooksOrHooksArray<TData, TErrorData, Partial<InferPluginOptions<TPluginArray>>>
+	& Middlewares
 	& Partial<InferPluginOptions<TPluginArray>>
 	& ResultModeOption<TErrorData, TResultMode>
 	& RetryOptions<TErrorData>
@@ -206,39 +202,6 @@ type SharedExtraOptions<
 		defaultHTTPErrorMessage?:
 			| string
 			| ((context: Pick<HTTPError<TErrorData>, "errorData" | "response">) => string);
-
-		/**
-		 * Wraps the fetch implementation to intercept requests at the network layer.
-		 *
-		 * Takes the current fetch function and returns a new one. Use it to cache responses,
-		 * add logging, handle offline mode, or short-circuit requests etc. Multiple middleware
-		 * compose in order: plugins → base config → per-request.
-		 *
-		 * Unlike `customFetchImpl`, middleware can call through to the original fetch.
-		 *
-		 * @example
-		 * ```ts
-		 * // Cache responses
-		 * const cache = new Map();
-		 * fetchMiddleware: (originalFetch) => async (input, init) => {
-		 *   const key = input.toString();
-		 *   if (cache.has(key)) return cache.get(key).clone();
-		 *
-		 *   const response = await originalFetch(input, init);
-		 *   cache.set(key, response.clone());
-		 *   return response;
-		 * }
-		 *
-		 * // Handle offline
-		 * fetchMiddleware: (originalFetch) => async (input, init) => {
-		 *   if (!navigator.onLine) {
-		 *     return new Response('{"error": "offline"}', { status: 503 });
-		 *   }
-		 *   return originalFetch(input, init);
-		 * }
-		 * ```
-		 */
-		fetchMiddleware?: FetchMiddleware;
 
 		/**
 		 * Forces calculation of total byte size from request/response body streams.

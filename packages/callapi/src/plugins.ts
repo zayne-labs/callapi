@@ -1,17 +1,14 @@
 import { extraOptionDefaults } from "./constants/default-options";
 import {
 	composeAllHooks,
-	getHookRegistries,
+	getHookRegistriesAndKeys,
 	type Hooks,
 	type HooksOrHooksArray,
 	type PluginExtraOptions,
 	type RequestContext,
 } from "./hooks";
-import type {
-	CallApiExtraOptions,
-	CallApiRequestOptions,
-	CallApiRequestOptionsForHooks,
-} from "./types/common";
+import { composeAllMiddlewares, getMiddlewareRegistriesAndKeys, type Middlewares } from "./middlewares";
+import type { CallApiRequestOptions, CallApiRequestOptionsForHooks } from "./types/common";
 import type { Awaitable } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
 import { isArray, isFunction, isPlainObject, isString } from "./utils/guards";
@@ -21,11 +18,10 @@ export type PluginSetupContext<TPluginExtraOptions = unknown> = RequestContext /
 	& PluginExtraOptions<TPluginExtraOptions> & { initURL: string };
 
 export type PluginInitResult = Partial<
-	Omit<PluginSetupContext, "initURL" | "request">
-		& Pick<CallApiExtraOptions, "fetchMiddleware"> & {
-			initURL: InitURLOrURLObject;
-			request: CallApiRequestOptions;
-		}
+	Omit<PluginSetupContext, "initURL" | "request"> & {
+		initURL: InitURLOrURLObject;
+		request: CallApiRequestOptions;
+	}
 >;
 
 export type PluginHooksWithMoreOptions<TMoreOptions = unknown> = HooksOrHooksArray<
@@ -40,6 +36,8 @@ export type PluginHooks<TData = never, TErrorData = never, TMoreOptions = unknow
 	TMoreOptions
 >;
 
+export type PluginMiddlewares = Middlewares;
+
 export interface CallApiPlugin {
 	/**
 	 * Defines additional options that can be passed to callApi
@@ -52,14 +50,19 @@ export interface CallApiPlugin {
 	description?: string;
 
 	/**
-	 * Hooks / Interceptors for the plugin
+	 * Hooks for the plugin
 	 */
-	hooks?: PluginHooks;
+	hooks?: PluginHooks | ((context: PluginSetupContext) => Awaitable<PluginHooks>);
 
 	/**
 	 *  A unique id for the plugin
 	 */
 	id: string;
+
+	/**
+	 * Middlewares that for the plugin
+	 */
+	middlewares?: Middlewares | ((context: PluginSetupContext) => Awaitable<Middlewares>);
 
 	/**
 	 * A name for the plugin
@@ -96,42 +99,14 @@ export const getResolvedPlugins = (context: Pick<RequestContext, "baseConfig" | 
 export const initializePlugins = async (context: PluginSetupContext) => {
 	const { baseConfig, config, initURL, options, request } = context;
 
-	const hookRegistries = getHookRegistries();
-
-	const hookRegistryKeyArray = Object.keys(hookRegistries) as Array<keyof Hooks>;
-
-	const addMainHooks = () => {
-		for (const key of hookRegistryKeyArray) {
-			const overriddenHook = options[key];
-			const baseHook = baseConfig[key];
-			const instanceHook = config[key];
-
-			// == If the base hook is an array and instance hook is defined, we need to compose the base hook with the instance hook
-			const mainHook =
-				isArray(baseHook) && Boolean(instanceHook) ? [baseHook, instanceHook].flat() : overriddenHook;
-
-			if (!mainHook) continue;
-
-			hookRegistries[key].add(mainHook as never);
-		}
-	};
-
-	const addPluginHooks = (pluginHooks: Required<CallApiPlugin>["hooks"]) => {
-		for (const key of hookRegistryKeyArray) {
-			const pluginHook = pluginHooks[key];
-
-			if (!pluginHook) continue;
-
-			hookRegistries[key].add(pluginHook as never);
-		}
-	};
-
-	const hookRegistrationOrder =
-		options.hooksRegistrationOrder ?? extraOptionDefaults().hooksRegistrationOrder;
-
-	if (hookRegistrationOrder === "mainFirst") {
-		addMainHooks();
-	}
+	const {
+		addMainHooks,
+		addMainMiddlewares,
+		addPluginHooks,
+		addPluginMiddlewares,
+		getResolvedHooks,
+		getResolvedMiddlewares,
+	} = setupHooksAndMiddlewares({ baseConfig, config, options });
 
 	const { currentRouteSchemaKey, mainInitURL } = getCurrentRouteSchemaKeyAndMainInitURL({
 		baseExtraOptions: baseConfig,
@@ -144,18 +119,10 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 	let resolvedOptions = options;
 	let resolvedRequestOptions = request;
 
-	let composedFetchMiddleware: CallApiExtraOptions["fetchMiddleware"];
+	const executePluginSetupFn = async (pluginSetup: CallApiPlugin["setup"]) => {
+		if (!pluginSetup) return;
 
-	const executePluginSetupFn = async (pluginSetupFn: CallApiPlugin["setup"]) => {
-		if (!pluginSetupFn) return;
-
-		const initResult = await pluginSetupFn({
-			baseConfig,
-			config,
-			initURL,
-			options,
-			request,
-		});
+		const initResult = await pluginSetup(context);
 
 		if (!isPlainObject(initResult)) return;
 
@@ -173,21 +140,17 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 		}
 
 		if (isPlainObject(initResult.request)) {
-			resolvedRequestOptions = initResult.request as CallApiRequestOptionsForHooks;
+			resolvedRequestOptions = {
+				...resolvedRequestOptions,
+				...(initResult.request as CallApiRequestOptionsForHooks),
+			};
 		}
 
 		if (isPlainObject(initResult.options)) {
-			resolvedOptions = initResult.options;
-		}
-
-		if (initResult.fetchMiddleware) {
-			const previousMiddleware = composedFetchMiddleware;
-			const currentMiddleware = initResult.fetchMiddleware;
-
-			composedFetchMiddleware =
-				previousMiddleware ?
-					(baseFetch) => currentMiddleware(previousMiddleware(baseFetch))
-				:	currentMiddleware;
+			resolvedOptions = {
+				...resolvedOptions,
+				...initResult.options,
+			};
 		}
 	};
 
@@ -195,62 +158,132 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 
 	for (const plugin of resolvedPlugins) {
 		// eslint-disable-next-line no-await-in-loop -- Await is necessary in this case.
-		await executePluginSetupFn(plugin.setup);
+		const [, pluginHooks, pluginMiddlewares] = await Promise.all([
+			executePluginSetupFn(plugin.setup),
+			isFunction(plugin.hooks) ? plugin.hooks(context) : plugin.hooks,
+			isFunction(plugin.middlewares) ? plugin.middlewares(context) : plugin.middlewares,
+		]);
 
-		if (!plugin.hooks) continue;
-
-		addPluginHooks(plugin.hooks);
+		pluginHooks && addPluginHooks(pluginHooks);
+		pluginMiddlewares && addPluginMiddlewares(pluginMiddlewares);
 	}
 
-	if (hookRegistrationOrder === "pluginsFirst") {
-		addMainHooks();
-	}
+	addMainHooks();
 
-	if (baseConfig.fetchMiddleware) {
-		const previousMiddleware = composedFetchMiddleware;
-		const currentMiddleware = baseConfig.fetchMiddleware;
+	addMainMiddlewares();
 
-		composedFetchMiddleware =
-			previousMiddleware ?
-				(baseFetch) => currentMiddleware(previousMiddleware(baseFetch))
-			:	currentMiddleware;
-	}
+	const resolvedHooks = getResolvedHooks();
 
-	if (config.fetchMiddleware) {
-		const previousMiddleware = composedFetchMiddleware;
-		const currentMiddleware = config.fetchMiddleware;
-
-		composedFetchMiddleware =
-			previousMiddleware ?
-				(baseFetch) => currentMiddleware(previousMiddleware(baseFetch))
-			:	currentMiddleware;
-	}
-
-	const resolvedHooks: Hooks = {};
-
-	for (const [key, hookRegistry] of Object.entries(hookRegistries)) {
-		if (hookRegistry.size === 0) continue;
-
-		// == Flatten the hook registry to remove any nested arrays, incase an array of hooks is passed to any of the hooks
-		const flattenedHookArray = [...hookRegistry].flat();
-
-		if (flattenedHookArray.length === 0) continue;
-
-		const hooksExecutionMode = options.hooksExecutionMode ?? extraOptionDefaults().hooksExecutionMode;
-
-		const composedHook = composeAllHooks(flattenedHookArray, hooksExecutionMode);
-
-		resolvedHooks[key as keyof Hooks] = composedHook;
-	}
+	const resolvedMiddlewares = getResolvedMiddlewares();
 
 	return {
 		resolvedCurrentRouteSchemaKey,
 		resolvedHooks,
 		resolvedInitURL,
-		resolvedOptions: {
-			...resolvedOptions,
-			fetchMiddleware: composedFetchMiddleware,
-		},
+		resolvedMiddlewares,
+		resolvedOptions,
 		resolvedRequestOptions,
+	};
+};
+
+const setupHooksAndMiddlewares = (
+	context: Pick<PluginSetupContext, "baseConfig" | "config" | "options">
+) => {
+	const { baseConfig, config, options } = context;
+
+	const { hookRegistries, hookRegistryKeys } = getHookRegistriesAndKeys();
+
+	const { middlewareRegistries, middlewareRegistryKeys } = getMiddlewareRegistriesAndKeys();
+
+	const addMainHooks = () => {
+		for (const hookName of hookRegistryKeys) {
+			const overriddenHook = options[hookName];
+			const baseHook = baseConfig[hookName];
+			const instanceHook = config[hookName];
+
+			const shouldMergeBaseAndInstanceHooks = isArray(baseHook) && instanceHook;
+
+			const mainHook =
+				shouldMergeBaseAndInstanceHooks ? [baseHook, instanceHook].flat() : overriddenHook;
+
+			mainHook && hookRegistries[hookName].add(mainHook as never);
+		}
+	};
+
+	const addPluginHooks = (pluginHooks: PluginHooks) => {
+		for (const hookName of hookRegistryKeys) {
+			const pluginHook = pluginHooks[hookName];
+
+			pluginHook && hookRegistries[hookName].add(pluginHook as never);
+		}
+	};
+
+	const addMainMiddlewares = () => {
+		for (const middlewareName of middlewareRegistryKeys) {
+			const baseMiddleware = baseConfig[middlewareName];
+			const instanceMiddleware = config[middlewareName];
+
+			baseMiddleware && middlewareRegistries[middlewareName].add(baseMiddleware);
+
+			instanceMiddleware && middlewareRegistries[middlewareName].add(instanceMiddleware);
+		}
+	};
+
+	const addPluginMiddlewares = (pluginMiddlewares: PluginMiddlewares) => {
+		for (const middlewareName of middlewareRegistryKeys) {
+			const pluginMiddleware = pluginMiddlewares[middlewareName];
+
+			if (!pluginMiddleware) continue;
+
+			middlewareRegistries[middlewareName].add(pluginMiddleware);
+		}
+	};
+
+	const getResolvedHooks = () => {
+		const resolvedHooks: Hooks = {};
+
+		for (const [hookName, hookRegistry] of Object.entries(hookRegistries)) {
+			if (hookRegistry.size === 0) continue;
+
+			// == Flatten the hook registry to remove any nested arrays, incase an array of hooks is passed to any of the hooks
+			const flattenedHookArray = [...hookRegistry].flat();
+
+			if (flattenedHookArray.length === 0) continue;
+
+			const hooksExecutionMode = options.hooksExecutionMode ?? extraOptionDefaults().hooksExecutionMode;
+
+			const composedHook = composeAllHooks(flattenedHookArray, hooksExecutionMode);
+
+			resolvedHooks[hookName as keyof Hooks] = composedHook;
+		}
+
+		return resolvedHooks;
+	};
+
+	const getResolvedMiddlewares = () => {
+		const resolvedMiddlewares: Middlewares = {};
+
+		for (const [middlewareName, middlewareRegistry] of Object.entries(middlewareRegistries)) {
+			if (middlewareRegistry.size === 0) continue;
+
+			const middlewareArray = [...middlewareRegistry];
+
+			if (middlewareArray.length === 0) continue;
+
+			const composedMiddleware = composeAllMiddlewares(middlewareArray);
+
+			resolvedMiddlewares[middlewareName as keyof Middlewares] = composedMiddleware;
+		}
+
+		return resolvedMiddlewares;
+	};
+
+	return {
+		addMainHooks,
+		addMainMiddlewares,
+		addPluginHooks,
+		addPluginMiddlewares,
+		getResolvedHooks,
+		getResolvedMiddlewares,
 	};
 };

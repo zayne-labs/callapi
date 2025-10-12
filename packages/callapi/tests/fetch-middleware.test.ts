@@ -4,12 +4,15 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { definePlugin } from "../src";
 import { createFetchClient } from "../src/createFetchClient";
+import type { FetchImpl, Middlewares } from "../src/middlewares";
 import type { CallApiPlugin } from "../src/plugins";
-import type { FetchImpl, FetchMiddleware } from "../src/types/common";
 import { mockUser } from "./fixtures";
 import { createMockResponse, expectSuccessResult } from "./helpers";
 import { mockFetch } from "./setup";
+
+type FetchMiddleware = Middlewares["fetchMiddleware"];
 
 describe("fetchMiddleware", () => {
 	beforeEach(() => {
@@ -17,21 +20,21 @@ describe("fetchMiddleware", () => {
 	});
 
 	describe("composition order", () => {
-		it("should compose middleware in correct order: per-request → plugins → base → customFetchImpl → fetch", async () => {
+		it("should compose middleware in correct order: plugins → base → per-request → customFetchImpl → fetch", async () => {
 			const executionOrder: string[] = [];
 
 			// Base config middleware
-			const baseMiddleware: FetchMiddleware = (originalFetch) => async (input, init) => {
+			const baseMiddleware: FetchMiddleware = (fetchImpl) => async (input, init) => {
 				executionOrder.push("base-before");
-				const response = await originalFetch(input, init);
+				const response = await fetchImpl(input, init);
 				executionOrder.push("base-after");
 				return response;
 			};
 
 			// Plugin middleware
-			const pluginMiddleware: FetchMiddleware = (originalFetch) => async (input, init) => {
+			const pluginMiddleware: FetchMiddleware = (fetchImpl) => async (input, init) => {
 				executionOrder.push("plugin-before");
-				const response = await originalFetch(input, init);
+				const response = await fetchImpl(input, init);
 				executionOrder.push("plugin-after");
 				return response;
 			};
@@ -39,15 +42,15 @@ describe("fetchMiddleware", () => {
 			const plugin: CallApiPlugin = {
 				id: "test-plugin",
 				name: "Test Plugin",
-				setup: () => ({
+				middlewares: {
 					fetchMiddleware: pluginMiddleware,
-				}),
+				},
 			};
 
 			// Per-request middleware
-			const perRequestMiddleware: FetchMiddleware = (originalFetch) => async (input, init) => {
+			const perRequestMiddleware: FetchMiddleware = (fetchImpl) => async (input, init) => {
 				executionOrder.push("per-request-before");
-				const response = await originalFetch(input, init);
+				const response = await fetchImpl(input, init);
 				executionOrder.push("per-request-after");
 				return response;
 			};
@@ -72,7 +75,8 @@ describe("fetchMiddleware", () => {
 			});
 
 			// Verify execution order: per-request → base → plugin → customFetch
-			// This matches the hook system where per-request is outermost, then base, then plugins
+			// Middlewares are added to registry in order: plugins, base, per-request
+			// Then composed so last added wraps the rest (reverse order execution)
 			expect(executionOrder).toEqual([
 				"per-request-before",
 				"base-before",
@@ -90,40 +94,40 @@ describe("fetchMiddleware", () => {
 			const plugin1: CallApiPlugin = {
 				id: "plugin-1",
 				name: "Plugin 1",
-				setup: () => ({
-					fetchMiddleware: (originalFetch) => async (input, init) => {
+				middlewares: {
+					fetchMiddleware: (fetchImpl) => async (input, init) => {
 						executionOrder.push("plugin1-before");
-						const response = await originalFetch(input, init);
+						const response = await fetchImpl(input, init);
 						executionOrder.push("plugin1-after");
 						return response;
 					},
-				}),
+				},
 			};
 
 			const plugin2: CallApiPlugin = {
 				id: "plugin-2",
 				name: "Plugin 2",
-				setup: () => ({
-					fetchMiddleware: (originalFetch) => async (input, init) => {
+				middlewares: {
+					fetchMiddleware: (fetchImpl) => async (input, init) => {
 						executionOrder.push("plugin2-before");
-						const response = await originalFetch(input, init);
+						const response = await fetchImpl(input, init);
 						executionOrder.push("plugin2-after");
 						return response;
 					},
-				}),
+				},
 			};
 
 			const plugin3: CallApiPlugin = {
 				id: "plugin-3",
 				name: "Plugin 3",
-				setup: () => ({
-					fetchMiddleware: (originalFetch) => async (input, init) => {
+				middlewares: {
+					fetchMiddleware: (fetchImpl) => async (input, init) => {
 						executionOrder.push("plugin3-before");
-						const response = await originalFetch(input, init);
+						const response = await fetchImpl(input, init);
 						executionOrder.push("plugin3-after");
 						return response;
 					},
-				}),
+				},
 			};
 
 			const client = createFetchClient({
@@ -134,8 +138,8 @@ describe("fetchMiddleware", () => {
 			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
 			await client("/users/1");
 
-			// Plugins should execute in reverse order: plugin3 → plugin2 → plugin1
-			// This is because later plugins wrap earlier ones
+			// Plugins execute in reverse registration order: plugin3 → plugin2 → plugin1
+			// Last registered plugin wraps the rest (executes first)
 			expect(executionOrder).toEqual([
 				"plugin3-before",
 				"plugin2-before",
@@ -151,9 +155,9 @@ describe("fetchMiddleware", () => {
 
 			const client = createFetchClient({
 				baseURL: "https://api.example.com",
-				fetchMiddleware: (originalFetch) => async (input, init) => {
+				fetchMiddleware: (fetchImpl) => async (input, init) => {
 					executionOrder.push("base");
-					return originalFetch(input, init);
+					return fetchImpl(input, init);
 				},
 			});
 
@@ -172,9 +176,9 @@ describe("fetchMiddleware", () => {
 
 			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
 			await client("/users/1", {
-				fetchMiddleware: (originalFetch) => async (input, init) => {
+				fetchMiddleware: (fetchImpl) => async (input, init) => {
 					executionOrder.push("per-request");
-					return originalFetch(input, init);
+					return fetchImpl(input, init);
 				},
 			});
 
@@ -187,12 +191,12 @@ describe("fetchMiddleware", () => {
 			const plugin: CallApiPlugin = {
 				id: "test-plugin",
 				name: "Test Plugin",
-				setup: () => ({
-					fetchMiddleware: (originalFetch) => async (input, init) => {
+				middlewares: {
+					fetchMiddleware: (fetchImpl) => async (input, init) => {
 						executionOrder.push("plugin");
-						return originalFetch(input, init);
+						return fetchImpl(input, init);
 					},
-				}),
+				},
 			};
 
 			const client = createFetchClient({
@@ -208,11 +212,11 @@ describe("fetchMiddleware", () => {
 	});
 
 	describe("short-circuiting", () => {
-		it("should allow middleware to return response without calling originalFetch", async () => {
+		it("should allow middleware to return response without calling fetchImpl", async () => {
 			const cachedResponse = createMockResponse({ cached: true, id: 999 });
 
 			const cachingMiddleware: FetchMiddleware = () => async () => {
-				// Return cached response without calling originalFetch
+				// Return cached response without calling fetchImpl
 				return cachedResponse;
 			};
 
@@ -237,9 +241,9 @@ describe("fetchMiddleware", () => {
 			const mockingPlugin: CallApiPlugin = {
 				id: "mocking-plugin",
 				name: "Mocking Plugin",
-				setup: () => ({
+				middlewares: {
 					fetchMiddleware: () => async () => mockResponse,
-				}),
+				},
 			};
 
 			const client = createFetchClient({
@@ -279,9 +283,9 @@ describe("fetchMiddleware", () => {
 				return createMockResponse({ shortCircuited: true });
 			};
 
-			const baseMiddleware: FetchMiddleware = (originalFetch) => async (input, init) => {
+			const baseMiddleware: FetchMiddleware = (fetchImpl) => async (input, init) => {
 				executionOrder.push("base");
-				return originalFetch(input, init);
+				return fetchImpl(input, init);
 			};
 
 			const client = createFetchClient({
@@ -293,13 +297,13 @@ describe("fetchMiddleware", () => {
 				fetchMiddleware: shortCircuitMiddleware,
 			});
 
-			// Only short-circuit middleware should execute
+			// Per-request executes first and short-circuits (doesn't call base)
 			expect(executionOrder).toEqual(["short-circuit"]);
 			expect(mockFetch).not.toHaveBeenCalled();
 		});
 
 		it("should allow conditional short-circuiting based on request", async () => {
-			const cacheMiddleware: FetchMiddleware = (originalFetch) => async (input, init) => {
+			const cacheMiddleware: FetchMiddleware = (fetchImpl) => async (input, init) => {
 				const url = input.toString();
 
 				// Short-circuit for cached endpoints
@@ -308,7 +312,7 @@ describe("fetchMiddleware", () => {
 				}
 
 				// Pass through for non-cached endpoints
-				return originalFetch(input, init);
+				return fetchImpl(input, init);
 			};
 
 			const client = createFetchClient({
@@ -339,8 +343,8 @@ describe("fetchMiddleware", () => {
 			const cachingPlugin: CallApiPlugin = {
 				id: "caching-plugin",
 				name: "Caching Plugin",
-				setup: () => ({
-					fetchMiddleware: (originalFetch) => async (input, init) => {
+				middlewares: {
+					fetchMiddleware: (fetchImpl) => async (input, init) => {
 						const cacheKey = input.toString();
 						const cached = cache.get(cacheKey);
 
@@ -348,11 +352,11 @@ describe("fetchMiddleware", () => {
 							return cached.clone();
 						}
 
-						const response = await originalFetch(input, init);
+						const response = await fetchImpl(input, init);
 						cache.set(cacheKey, response.clone());
 						return response;
 					},
-				}),
+				},
 			};
 
 			const client = createFetchClient({
@@ -379,12 +383,12 @@ describe("fetchMiddleware", () => {
 			const countingPlugin: CallApiPlugin = {
 				id: "counting-plugin",
 				name: "Counting Plugin",
-				setup: () => ({
-					fetchMiddleware: (originalFetch) => async (input, init) => {
+				middlewares: {
+					fetchMiddleware: (fetchImpl) => async (input, init) => {
 						requestCount++;
-						return originalFetch(input, init);
+						return fetchImpl(input, init);
 					},
-				}),
+				},
 			};
 
 			const client = createFetchClient({
@@ -415,15 +419,15 @@ describe("fetchMiddleware", () => {
 			const configurableCachingPlugin: CallApiPlugin = {
 				id: "configurable-caching",
 				name: "Configurable Caching",
-				setup: ({ options }) => {
+				middlewares: ({ options }) => {
 					const pluginOptions = options as unknown as CachePluginOptions;
 					const cacheEnabled = pluginOptions.cacheEnabled ?? true;
 					const maxCacheSize = pluginOptions.maxCacheSize ?? 100;
 
 					return {
-						fetchMiddleware: (originalFetch) => async (input, init) => {
+						fetchMiddleware: (fetchImpl) => async (input, init) => {
 							if (!cacheEnabled) {
-								return originalFetch(input, init);
+								return fetchImpl(input, init);
 							}
 
 							const cacheKey = input.toString();
@@ -433,7 +437,7 @@ describe("fetchMiddleware", () => {
 								return cached.clone();
 							}
 
-							const response = await originalFetch(input, init);
+							const response = await fetchImpl(input, init);
 
 							if (cache.size < maxCacheSize) {
 								cache.set(cacheKey, response.clone());
@@ -463,16 +467,16 @@ describe("fetchMiddleware", () => {
 			let counter1 = 0;
 			let counter2 = 0;
 
-			const createCounterPlugin = (id: string, counterRef: { value: number }): CallApiPlugin => ({
+			const createCounterPlugin = definePlugin((id: string, counterRef: { value: number }) => ({
 				id,
 				name: `Counter ${id}`,
-				setup: () => ({
-					fetchMiddleware: (originalFetch) => async (input, init) => {
+				middlewares: {
+					fetchMiddleware: (fetchImpl) => async (input, init) => {
 						counterRef.value++;
-						return originalFetch(input, init);
+						return fetchImpl(input, init);
 					},
-				}),
-			});
+				},
+			}));
 
 			const plugin1 = createCounterPlugin("counter-1", { value: counter1 });
 			const plugin2 = createCounterPlugin("counter-2", { value: counter2 });
@@ -514,11 +518,11 @@ describe("fetchMiddleware", () => {
 			const errorPlugin: CallApiPlugin = {
 				id: "error-plugin",
 				name: "Error Plugin",
-				setup: () => ({
+				middlewares: {
 					fetchMiddleware: () => async () => {
 						throw new Error("Plugin middleware error");
 					},
-				}),
+				},
 			};
 
 			const client = createFetchClient({
@@ -556,10 +560,10 @@ describe("fetchMiddleware", () => {
 		it("should handle errors in nested middleware composition", async () => {
 			const executionOrder: string[] = [];
 
-			const baseMiddleware: FetchMiddleware = (originalFetch) => async (input, init) => {
+			const baseMiddleware: FetchMiddleware = (fetchImpl) => async (input, init) => {
 				executionOrder.push("base-before");
 				try {
-					const response = await originalFetch(input, init);
+					const response = await fetchImpl(input, init);
 					executionOrder.push("base-after");
 					return response;
 				} catch (error) {
@@ -582,14 +586,14 @@ describe("fetchMiddleware", () => {
 				fetchMiddleware: perRequestMiddleware,
 			});
 
-			// Per-request wraps base, so per-request throws before base is called
+			// Per-request wraps base, so per-request executes first and throws
 			expect(executionOrder).toEqual(["per-request-throw"]);
 		});
 
-		it("should handle errors when originalFetch is called with invalid parameters", async () => {
-			const invalidMiddleware: FetchMiddleware = (originalFetch) => async () => {
+		it("should handle errors when fetchImpl is called with invalid parameters", async () => {
+			const invalidMiddleware: FetchMiddleware = (fetchImpl) => async () => {
 				// Call with invalid URL
-				return originalFetch("", undefined);
+				return fetchImpl("", undefined);
 			};
 
 			const client = createFetchClient({
@@ -672,9 +676,9 @@ describe("fetchMiddleware", () => {
 				return mockFetch(input, init);
 			};
 
-			const middleware: FetchMiddleware = (originalFetch) => async (input, init) => {
+			const middleware: FetchMiddleware = (fetchImpl) => async (input, init) => {
 				executionOrder.push("middleware-before");
-				const response = await originalFetch(input, init);
+				const response = await fetchImpl(input, init);
 				executionOrder.push("middleware-after");
 				return response;
 			};
@@ -722,12 +726,12 @@ describe("fetchMiddleware", () => {
 			const pluginWithMiddleware: CallApiPlugin = {
 				id: "with-middleware",
 				name: "With Middleware",
-				setup: () => ({
-					fetchMiddleware: (originalFetch) => async (input, init) => {
+				middlewares: {
+					fetchMiddleware: (fetchImpl) => async (input, init) => {
 						executionOrder.push("middleware-plugin");
-						return originalFetch(input, init);
+						return fetchImpl(input, init);
 					},
-				}),
+				},
 			};
 
 			const pluginWithoutMiddleware: CallApiPlugin = {
@@ -760,9 +764,9 @@ describe("fetchMiddleware", () => {
 				return mockFetch(input, init);
 			};
 
-			const middleware: FetchMiddleware = (originalFetch) => async (input, init) => {
+			const middleware: FetchMiddleware = (fetchImpl) => async (input, init) => {
 				executionOrder.push("middleware");
-				return originalFetch(input, init);
+				return fetchImpl(input, init);
 			};
 
 			const client = createFetchClient({
@@ -780,7 +784,7 @@ describe("fetchMiddleware", () => {
 
 	describe("request and response modification", () => {
 		it("should allow middleware to modify request before passing to next layer", async () => {
-			const authMiddleware: FetchMiddleware = (originalFetch) => async (input, init) => {
+			const authMiddleware: FetchMiddleware = (fetchImpl) => async (input, init) => {
 				const modifiedInit = {
 					...init,
 					headers: {
@@ -788,7 +792,7 @@ describe("fetchMiddleware", () => {
 						Authorization: "Bearer test-token",
 					},
 				};
-				return originalFetch(input, modifiedInit);
+				return fetchImpl(input, modifiedInit);
 			};
 
 			const client = createFetchClient({
@@ -810,10 +814,10 @@ describe("fetchMiddleware", () => {
 		});
 
 		it("should allow middleware to modify URL", async () => {
-			const urlModifyingMiddleware: FetchMiddleware = (originalFetch) => async (input, init) => {
+			const urlModifyingMiddleware: FetchMiddleware = (fetchImpl) => async (input, init) => {
 				const url = new URL(input.toString());
 				url.searchParams.set("modified", "true");
-				return originalFetch(url.toString(), init);
+				return fetchImpl(url.toString(), init);
 			};
 
 			const client = createFetchClient({
@@ -831,8 +835,8 @@ describe("fetchMiddleware", () => {
 		});
 
 		it("should allow middleware to clone and modify response", async () => {
-			const responseModifyingMiddleware: FetchMiddleware = (originalFetch) => async (input, init) => {
-				const response = await originalFetch(input, init);
+			const responseModifyingMiddleware: FetchMiddleware = (fetchImpl) => async (input, init) => {
+				const response = await fetchImpl(input, init);
 				const data = (await response.json()) as Record<string, unknown>;
 
 				// Return modified response
@@ -856,15 +860,15 @@ describe("fetchMiddleware", () => {
 		});
 
 		it("should allow multiple middlewares to modify request sequentially", async () => {
-			const addHeader1: FetchMiddleware = (originalFetch) => async (input, init) => {
-				return originalFetch(input, {
+			const addHeader1: FetchMiddleware = (fetchImpl) => async (input, init) => {
+				return fetchImpl(input, {
 					...init,
 					headers: { ...init?.headers, "X-Header-1": "value1" },
 				});
 			};
 
-			const addHeader2: FetchMiddleware = (originalFetch) => async (input, init) => {
-				return originalFetch(input, {
+			const addHeader2: FetchMiddleware = (fetchImpl) => async (input, init) => {
+				return fetchImpl(input, {
 					...init,
 					headers: { ...init?.headers, "X-Header-2": "value2" },
 				});
@@ -896,9 +900,9 @@ describe("fetchMiddleware", () => {
 		it("should provide access to RequestInit in middleware", async () => {
 			let capturedInit: RequestInit | undefined;
 
-			const inspectMiddleware: FetchMiddleware = (originalFetch) => async (input, init) => {
+			const inspectMiddleware: FetchMiddleware = (fetchImpl) => async (input, init) => {
 				capturedInit = init;
-				return originalFetch(input, init);
+				return fetchImpl(input, init);
 			};
 
 			const client = createFetchClient({
@@ -923,10 +927,10 @@ describe("fetchMiddleware", () => {
 			let capturedHeaders: Record<string, string> = {};
 			let capturedMethod: string | undefined;
 
-			const inspectMiddleware: FetchMiddleware = (originalFetch) => async (input, init) => {
+			const inspectMiddleware: FetchMiddleware = (fetchImpl) => async (input, init) => {
 				capturedHeaders = init?.headers as Record<string, string>;
 				capturedMethod = init?.method;
-				return originalFetch(input, init);
+				return fetchImpl(input, init);
 			};
 
 			const client = createFetchClient({
@@ -949,9 +953,9 @@ describe("fetchMiddleware", () => {
 	});
 
 	describe("edge cases", () => {
-		it("should handle middleware that doesn't call originalFetch and doesn't return response", async () => {
+		it("should handle middleware that doesn't call fetchImpl and doesn't return response", async () => {
 			const brokenMiddleware: FetchMiddleware = () => async () => {
-				// Doesn't call originalFetch and returns undefined
+				// Doesn't call fetchImpl and returns undefined
 				return undefined as unknown as Response;
 			};
 
@@ -978,31 +982,11 @@ describe("fetchMiddleware", () => {
 			expect(result.data).toEqual(mockUser);
 		});
 
-		it("should handle plugin setup that returns undefined fetchMiddleware", async () => {
-			const plugin: CallApiPlugin = {
-				id: "undefined-middleware",
-				name: "Undefined Middleware",
-				setup: () => ({
-					fetchMiddleware: undefined,
-				}),
-			};
-
-			const client = createFetchClient({
-				baseURL: "https://api.example.com",
-				plugins: [plugin],
-			});
-
-			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
-			const result = await client("/users/1");
-
-			expectSuccessResult(result);
-		});
-
 		it("should handle async middleware correctly", async () => {
-			const asyncMiddleware: FetchMiddleware = (originalFetch) => async (input, init) => {
+			const asyncMiddleware: FetchMiddleware = (fetchImpl) => async (input, init) => {
 				// Simulate async operation
 				await new Promise((resolve) => setTimeout(resolve, 10));
-				return originalFetch(input, init);
+				return fetchImpl(input, init);
 			};
 
 			const client = createFetchClient({

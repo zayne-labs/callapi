@@ -16,7 +16,6 @@ export const extraOptionDefaults = () => {
 
 		// Hook defaults
 		hooksExecutionMode: "parallel",
-		hooksRegistrationOrder: "pluginsFirst",
 
 		// Response defaults
 		responseParser: JSON.parse,

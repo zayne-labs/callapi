@@ -1,6 +1,7 @@
 import { getAuthHeader } from "../auth";
 import { fetchSpecificKeys } from "../constants/common";
 import { extraOptionDefaults, requestOptionDefaults } from "../constants/default-options";
+import type { Middlewares } from "../middlewares";
 import type { BaseCallApiExtraOptions, CallApiExtraOptions, CallApiRequestOptions } from "../types/common";
 import { extractMethodFromURL } from "../url";
 import {
@@ -169,9 +170,9 @@ export const getInitFetchImpl = (customFetchImpl: CallApiExtraOptions["customFet
 	throw new Error("No fetch implementation found");
 };
 
-export const getResolvedFetchImpl = (
+export const getFetchImpl = (
 	customFetchImpl: CallApiExtraOptions["customFetchImpl"],
-	fetchMiddleware: CallApiExtraOptions["fetchMiddleware"]
+	fetchMiddleware: Middlewares["fetchMiddleware"]
 ) => {
 	const initFetchApi = getInitFetchImpl(customFetchImpl);
 

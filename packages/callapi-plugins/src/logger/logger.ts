@@ -1,4 +1,4 @@
-import { definePlugin } from "@zayne-labs/callapi";
+import { definePlugin, type CallApiPlugin } from "@zayne-labs/callapi";
 import { type AnyFunction, isBoolean } from "@zayne-labs/toolkit-type-helpers";
 import { createConsola } from "consola";
 import { getStatusText } from "./utils";
@@ -162,5 +162,5 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 				isVerboseMode && consoleObject.error(verboseMessage, ctx.error.errorData);
 			},
 		},
-	};
+	} satisfies CallApiPlugin;
 });

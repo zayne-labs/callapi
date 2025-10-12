@@ -2,7 +2,7 @@ import { extraOptionDefaults } from "./constants/default-options";
 import type { RequestContext } from "./hooks";
 import { toStreamableRequest, toStreamableResponse } from "./stream";
 import type { AnyString, UnmaskType } from "./types/type-helpers";
-import { deterministicHashFn, getResolvedFetchImpl, waitFor } from "./utils/common";
+import { deterministicHashFn, waitFor } from "./utils/common";
 import { isFunction } from "./utils/guards";
 
 type RequestInfo = {
@@ -153,13 +153,12 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 	};
 
 	const handleRequestDeferStrategy = async (deferContext: {
+		fetchApi: NonNullable<DedupeContext["options"]["customFetchImpl"]>;
 		options: DedupeContext["options"];
 		request: DedupeContext["request"];
 	}) => {
 		// == Local options and request are needed so that transformations are applied can be applied to both from call site
-		const { options: localOptions, request: localRequest } = deferContext;
-
-		const fetchApi = getResolvedFetchImpl(localOptions.customFetchImpl, localOptions.fetchMiddleware);
+		const { fetchApi, options: localOptions, request: localRequest } = deferContext;
 
 		const shouldUsePromiseFromCache = prevRequestInfo && resolvedDedupeStrategy === "defer";
 
@@ -179,12 +178,10 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 		$RequestInfoCacheOrNull?.set(dedupeKey, { controller: newFetchController, responsePromise });
 
-		const streamableResponse = toStreamableResponse({
+		return toStreamableResponse({
 			...streamableContext,
 			response: await responsePromise,
 		});
-
-		return streamableResponse;
 	};
 
 	const removeDedupeKeyFromCache = () => {

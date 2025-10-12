@@ -1,5 +1,5 @@
 import {
-	executeHooksInTryBlock,
+	executeHooks,
 	type RequestContext,
 	type RequestStreamContext,
 	type ResponseStreamContext,
@@ -110,14 +110,14 @@ export const toStreamableRequest = async (
 				requestInstance,
 			} satisfies RequestStreamContext;
 
-			await executeHooksInTryBlock(options.onRequestStream?.(requestStreamContext));
+			await executeHooks(options.onRequestStream?.(requestStreamContext));
 
 			for await (const chunk of body) {
 				transferredBytes += chunk.byteLength;
 
 				totalBytes = Math.max(totalBytes, transferredBytes);
 
-				await executeHooksInTryBlock(
+				await executeHooks(
 					options.onRequestStream?.({
 						...requestStreamContext,
 						event: createProgressEvent({ chunk, totalBytes, transferredBytes }),
@@ -174,14 +174,14 @@ export const toStreamableResponse = async (context: StreamableResponseContext): 
 				response,
 			} satisfies ResponseStreamContext;
 
-			await executeHooksInTryBlock(options.onResponseStream?.(responseStreamContext));
+			await executeHooks(options.onResponseStream?.(responseStreamContext));
 
 			for await (const chunk of body) {
 				transferredBytes += chunk.byteLength;
 
 				totalBytes = Math.max(totalBytes, transferredBytes);
 
-				await executeHooksInTryBlock(
+				await executeHooks(
 					options.onResponseStream?.({
 						...responseStreamContext,
 						event: createProgressEvent({ chunk, totalBytes, transferredBytes }),

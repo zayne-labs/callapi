@@ -776,7 +776,7 @@ describe("Utility Functions", () => {
 			});
 
 			it("should return global fetch when available", () => {
-				const originalFetch = globalThis.fetch;
+				const fetchImpl = globalThis.fetch;
 				const mockGlobalFetch = vi.fn();
 				globalThis.fetch = mockGlobalFetch;
 
@@ -785,17 +785,17 @@ describe("Utility Functions", () => {
 				expect(result).toBe(mockGlobalFetch);
 
 				// Restore original fetch
-				globalThis.fetch = originalFetch;
+				globalThis.fetch = fetchImpl;
 			});
 
 			it("should throw error when no fetch implementation found", () => {
-				const originalFetch = globalThis.fetch;
+				const fetchImpl = globalThis.fetch;
 				delete (globalThis as any).fetch;
 
 				expect(() => getInitFetchImpl(undefined)).toThrow("No fetch implementation found");
 
 				// Restore original fetch
-				globalThis.fetch = originalFetch;
+				globalThis.fetch = fetchImpl;
 			});
 		});
 

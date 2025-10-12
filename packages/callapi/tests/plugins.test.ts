@@ -198,7 +198,7 @@ describe("plugins", () => {
 			expect(result.error.message).toContain("Hook error");
 		});
 
-		it("should default to pluginsFirst and run hooks in order when sequential", async () => {
+		it("should execute plugin hooks before main hooks when sequential", async () => {
 			const order: string[] = [];
 
 			const orderingPlugin: CallApiPlugin = {
@@ -213,7 +213,6 @@ describe("plugins", () => {
 
 			const client = createFetchClient({
 				baseURL: "https://api.example.com",
-				// Do not set hooksRegistrationOrder to use default (pluginsFirst)
 				onRequest: () => {
 					order.push("main");
 				},
@@ -228,34 +227,7 @@ describe("plugins", () => {
 			expect(mockFetch).toHaveBeenCalledWith("https://api.example.com/users/1", expect.any(Object));
 		});
 
-		it("should respect hooksRegistrationOrder=mainFirst when sequential", async () => {
-			const order: string[] = [];
-
-			const plugin: CallApiPlugin = {
-				hooks: {
-					onRequest: () => order.push("plugin"),
-				},
-				id: "order-main-first",
-				name: "Order Main First",
-			};
-
-			const client = createFetchClient({
-				baseURL: "https://api.example.com",
-				onRequest: () => order.push("main"),
-				plugins: [plugin],
-			});
-
-			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
-
-			await client("/users/1", {
-				hooksExecutionMode: "sequential",
-				hooksRegistrationOrder: "mainFirst",
-			});
-
-			expect(order).toEqual(["main", "plugin"]);
-		});
-
-		it("should execute multiple plugins in provided order (pluginsFirst)", async () => {
+		it("should execute multiple plugins in provided order", async () => {
 			const order: string[] = [];
 
 			const p1: CallApiPlugin = {

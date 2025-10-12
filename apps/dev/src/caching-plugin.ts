@@ -1,6 +1,6 @@
-import { definePlugin } from "@zayne-labs/callapi";
+import { definePlugin, type CallApiPlugin } from "@zayne-labs/callapi";
 
-type cacheConfigOptions = {
+type CacheConfigOptions = {
 	/**
 	 * How long cached responses should be considered valid (in milliseconds).
 	 * @default 60000 (1 minute)
@@ -57,7 +57,7 @@ type cacheConfigOptions = {
  * });
  * ```
  */
-export const cachingPlugin = definePlugin((configOptions: cacheConfigOptions) => {
+export const cachingPlugin = definePlugin((configOptions: CacheConfigOptions) => {
 	const { cacheLifetime, cachePolicy } = configOptions;
 
 	return {
@@ -65,15 +65,14 @@ export const cachingPlugin = definePlugin((configOptions: cacheConfigOptions) =>
 		id: "caching-plugin",
 		name: "Caching Plugin",
 
-		setup: () => {
-			// Demonstrate closure over cache Map - this state persists across requests
+		// eslint-disable-next-line perfectionist/sort-objects -- Ignore
+		middlewares: () => {
 			const cache = new Map<string, { data: Response; timestamp: number }>();
 
 			return {
-				fetchMiddleware: (originalFetch) => async (input, init) => {
-					// If no-cache policy, bypass cache entirely
+				fetchMiddleware: (fetchImpl) => async (input, init) => {
 					if (cachePolicy === "no-cache") {
-						return originalFetch(input, init);
+						return fetchImpl(input, init);
 					}
 
 					// Generate cache key from request
@@ -94,7 +93,7 @@ export const cachingPlugin = definePlugin((configOptions: cacheConfigOptions) =>
 
 					// Cache miss or expired - make network request
 					console.info(`[Caching Plugin] Cache miss: ${cacheKey}`);
-					const response = await originalFetch(input, init);
+					const response = await fetchImpl(input, init);
 
 					// Only cache successful responses
 					if (response.ok) {
@@ -109,5 +108,5 @@ export const cachingPlugin = definePlugin((configOptions: cacheConfigOptions) =>
 				},
 			};
 		},
-	};
+	} satisfies CallApiPlugin;
 });

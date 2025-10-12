@@ -8,7 +8,7 @@ CallApi runs these functions (sync or async) automatically at specific points du
 
 These hooks allow you to "tap into" the process and run custom code without cluttering your main API call logic. They are sometimes referred to as interceptors in other libraries.
 
-You can configure how hooks execute using `hooksExecutionMode` (parallel vs sequential) and their registration order using `hooksRegistrationOrder` (plugins first vs main first). See the [Hook Configuration Options](#hook-configuration-options) section for details.
+You can configure how hooks execute using `hooksExecutionMode` (parallel vs sequential). Plugin hooks always execute before main hooks. See the [Hook Configuration Options](#hook-configuration-options) section for details.
 
 ```ts twoslash title="example.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -377,11 +377,9 @@ await client("/api/data", {
 // With sequential execution, they run in registration order: 1 → 2 → 3
 ```
 
-You can customize the registration order of plugin vs main hooks (`hooksRegistrationOrder`) and whether all hooks run sequentially or in parallel (`hooksExecutionMode`) using configuration options, but the default behavior is a common and predictable setup.
+You can customize whether all hooks run sequentially or in parallel using the `hooksExecutionMode` configuration option. Plugin hooks always execute before main hooks, providing a predictable execution order.
 
 ## Hook Configuration Options
-
-CallApi provides two configuration options to control how hooks are registered and executed:
 
 ### hooksExecutionMode
 
@@ -423,60 +421,6 @@ const dependentClient = createFetchClient({
 	],
 });
 ```
-
-### hooksRegistrationOrder
-
-Controls the registration order of main hooks relative to plugin hooks, which affects execution sequence when using sequential mode.
-
-- **`"pluginsFirst"`** (default): Plugin hooks register first, then main hooks
-- **`"mainFirst"`**: Main hooks register first, then plugin hooks
-
-```ts title="Hook Registration Order Examples"
-import { createFetchClient, definePlugin } from "@zayne-labs/callapi";
-
-const setupPlugin = definePlugin({
-	name: "setup",
-	hooks: {
-		onRequest: (ctx) => console.log("Plugin setup"),
-	},
-});
-
-// Plugin hooks register first (default behavior)
-const pluginsFirstClient = createFetchClient({
-	hooksRegistrationOrder: "pluginsFirst", // Default
-	hooksExecutionMode: "sequential",
-	plugins: [setupPlugin],
-	onRequest: (ctx) => console.log("Main hook"),
-});
-// Output: "Plugin setup" → "Main hook"
-
-// Main hooks register first
-const mainFirstClient = createFetchClient({
-	hooksRegistrationOrder: "mainFirst",
-	hooksExecutionMode: "sequential",
-	plugins: [setupPlugin],
-	onRequest: (ctx) => console.log("Main hook"),
-});
-// Output: "Main hook" → "Plugin setup"
-
-// Use case: Main validation before plugin processing
-const validationFirstClient = createFetchClient({
-	hooksRegistrationOrder: "mainFirst",
-	hooksExecutionMode: "sequential",
-	plugins: [transformPlugin],
-	onRequest: (ctx) => {
-		// This main hook runs first in sequential mode
-		if (!ctx.request.headers.authorization) {
-			throw new Error("Authorization required");
-		}
-	},
-});
-```
-
-<Callout type="info">
-	**Performance vs Control**: Use `"parallel"` mode for better performance when hooks are independent. Use
-	`"sequential"` mode when hooks have dependencies and need to run in the order of registration.
-</Callout>
 
 ## Hook Overriding And Merging
 

@@ -2,222 +2,308 @@
 
 ## Overview
 
-This document outlines the implementation of `fetchMiddleware` composition for CallApi. The `fetchMiddleware` option already exists in `SharedExtraOptions`, making it available at base config and per-request levels. This design adds:
+This document outlines the implementation of `fetchMiddleware` composition for CallApi using a dedicated middleware system. The implementation includes:
 
-1. Support for plugins to return `fetchMiddleware` from their `setup` function (as a top-level property)
-2. Composition logic to chain interceptors from all levels during plugin initialization
-3. The composed interceptor is added to `resolvedOptions.fetchMiddleware` and used by existing fetch logic
+1. **New `middlewares.ts` module** - Dedicated middleware system with composition logic
+2. **Plugin middleware support** - Plugins can define `middlewares` property with `fetchMiddleware`
+3. **Unified middleware/hook management** - Both hooks and middlewares use registry-based composition
+4. **Automatic composition** - Middlewares from all sources (plugins, base config, per-request) compose automatically
+
+This approach provides a clean separation of concerns and makes middleware a first-class feature alongside hooks.
 
 ## Architecture
 
 ### Composition Flow
 
+The middleware system uses a registry-based approach where middlewares are collected and composed automatically:
+
 ```
-Per-Request Interceptor
-  ↓ calls originalFetch
-Plugin Interceptors (in order)
-  ↓ calls originalFetch
-Base Config Interceptor
-  ↓ calls originalFetch
-customFetchImpl (if provided)
-  ↓
-Native fetch()
+graph LR
+┌─────────────────────────────────────────────────────────┐
+│ Plugin Initialization Phase                             │
+├─────────────────────────────────────────────────────────┤
+│ 1. Collect plugin middlewares → Add to registry        │
+│ 2. Collect base config middleware → Add to registry    │
+│ 3. Collect per-request middleware → Add to registry    │
+│ 4. Compose all via composeAllMiddlewares()             │
+└─────────────────────────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│ Request Execution Phase                                 │
+├─────────────────────────────────────────────────────────┤
+│ Plugin Middleware 1                                     │
+│   ↓ calls fetchImpl                                     │
+│ Plugin Middleware 2                                     │
+│   ↓ calls fetchImpl                                     │
+│ Base Config Middleware                                  │
+│   ↓ calls fetchImpl                                     │
+│ Per-Request Middleware                                  │
+│   ↓ calls fetchImpl                                     │
+│ customFetchImpl (if provided)                           │
+│   ↓                                                      │
+│ Native fetch()                                          │
+└─────────────────────────────────────────────────────────┘
 ```
 
-Each interceptor receives `originalFetch` which represents everything below it in the chain.
+**Key Points:**
+
+- Middlewares are collected in a Set-based registry
+- Composition happens once during plugin initialization
+- Each middleware receives `fetchImpl` representing the rest of the chain
+- The composed middleware is stored in `options.fetchMiddleware`
 
 ## Components and Interfaces
 
-### 1. Add fetchMiddleware Type to SharedExtraOptions
+### 1. Middleware System (`middlewares.ts`)
 
-**Location:** `packages/callapi/src/types/common.ts`
+**Location:** `packages/callapi/src/middlewares.ts`
 
-Add `fetchMiddleware` type using the existing `FetchImpl` type:
+A dedicated module for middleware management:
 
 ```typescript
-// FetchImpl already exists:
-// type FetchImpl = UnmaskType<(input: string | Request | URL, init?: RequestInit) => Promise<Response>>;
+export type FetchImpl = UnmaskType<
+  (input: string | Request | URL, init?: RequestInit) => Promise<Response>
+>;
 
-// Add fetchMiddleware type:
-type fetchMiddleware = (originalFetch: FetchImpl) => FetchImpl;
+export interface Middlewares {
+  /**
+   * Wraps the fetch implementation to intercept requests at the network layer.
+   * Multiple middleware compose in order: plugins → base config → per-request.
+   */
+  fetchMiddleware?: (fetchImpl: FetchImpl) => FetchImpl;
+}
 
-type SharedExtraOptions<TPluginOptions extends PluginOptions = PluginOptions> = {
-  // ... existing options ...
-  fetchMiddleware?: fetchMiddleware;
-  // ... other options ...
+type MiddlewareRegistries = Required<{
+  [Key in keyof Middlewares]: Set<Middlewares[Key]>;
+}>;
+
+export const getMiddlewareRegistriesAndKeys = () => {
+  const middlewareRegistries: MiddlewareRegistries = {
+    fetchMiddleware: new Set(),
+  };
+
+  const middlewareRegistryKeys = Object.keys(middlewareRegistries) as Array<keyof Middlewares>;
+
+  return { middlewareRegistries, middlewareRegistryKeys };
+};
+
+export const composeAllMiddlewares = (
+  middlewareArray: Array<Middlewares[keyof Middlewares] | undefined>
+) => {
+  let composedMiddleware: Middlewares[keyof Middlewares];
+
+  for (const currentMiddleware of middlewareArray) {
+    if (!currentMiddleware) continue;
+
+    const previousMiddleware = composedMiddleware;
+
+    composedMiddleware = previousMiddleware
+      ? (fetchImpl) => currentMiddleware(previousMiddleware(fetchImpl))
+      : currentMiddleware;
+  }
+
+  return composedMiddleware;
 };
 ```
 
-### 2. Update PluginInitResult Type
+**Key Features:**
+
+- Registry-based system similar to hooks
+- Automatic composition via `composeAllMiddlewares`
+- Type-safe with proper TypeScript inference
+- Extensible for future middleware types
+
+### 2. Plugin Middleware Support
 
 **Location:** `packages/callapi/src/plugins.ts`
 
-Add `fetchMiddleware` as a top-level property in `PluginInitResult`:
+Plugins define middlewares via the `middlewares` property:
 
 ```typescript
-export type PluginInitResult = Partial<
-  Omit<PluginSetupContext, "initURL" | "request"> & {
-    initURL: InitURLOrURLObject;
-    request: CallApiRequestOptions;
-    fetchMiddleware?: fetchMiddleware; // Add as top-level property
-  }
->;
+export type PluginMiddlewares = Middlewares;
+
+export interface CallApiPlugin {
+  // ... other properties ...
+
+  /**
+   * Middlewares for the plugin
+   */
+  middlewares?: Middlewares | ((context: PluginSetupContext) => Awaitable<Middlewares>);
+}
 
 // Plugin example:
-setup: ({ options }) => {
-  const cache = new Map();
-
-  return {
-    fetchMiddleware: (originalFetch) => async (input, init) => {
+const cachingPlugin = definePlugin({
+  id: "caching",
+  middlewares: {
+    fetchMiddleware: (fetchImpl) => async (input, init) => {
       const cached = cache.get(input.toString());
       if (cached) return cached;
 
-      const response = await originalFetch(input, init);
+      const response = await fetchImpl(input, init);
       cache.set(input.toString(), response.clone());
       return response;
     }
-  };
-}
+  }
+});
+
+// Or with dynamic setup:
+const authPlugin = definePlugin({
+  id: "auth",
+  middlewares: ({ options }) => ({
+    fetchMiddleware: (fetchImpl) => async (input, init) => {
+      const token = await getToken(options.authConfig);
+      return fetchImpl(input, {
+        ...init,
+        headers: { ...init?.headers, Authorization: `Bearer ${token}` }
+      });
+    }
+  })
+});
 ```
 
-### 3. Integration with Existing Code
+### 3. Unified Hook and Middleware Management
 
 **Location:** `packages/callapi/src/plugins.ts`
 
-Update `initializePlugins` to collect and compose interceptors:
+The `setupHooksAndMiddlewares` function manages both:
+
+```typescript
+const setupHooksAndMiddlewares = (context) => {
+  const { hookRegistries, hookRegistryKeys } = getHookRegistriesAndKeys();
+  const { middlewareRegistries, middlewareRegistryKeys } = getMiddlewareRegistriesAndKeys();
+
+  const addMainMiddlewares = () => {
+    for (const middlewareName of middlewareRegistryKeys) {
+      const baseMiddleware = baseConfig[middlewareName];
+      const instanceMiddleware = config[middlewareName];
+
+      baseMiddleware && middlewareRegistries[middlewareName].add(baseMiddleware);
+      instanceMiddleware && middlewareRegistries[middlewareName].add(instanceMiddleware);
+    }
+  };
+
+  const addPluginMiddlewares = (pluginMiddlewares: PluginMiddlewares) => {
+    for (const middlewareName of middlewareRegistryKeys) {
+      const pluginMiddleware = pluginMiddlewares[middlewareName];
+      if (!pluginMiddleware) continue;
+
+      middlewareRegistries[middlewareName].add(pluginMiddleware);
+    }
+  };
+
+  const getResolvedMiddlewares = () => {
+    const resolvedMiddlewares: Middlewares = {};
+
+    for (const [middlewareName, middlewareRegistry] of Object.entries(middlewareRegistries)) {
+      if (middlewareRegistry.size === 0) continue;
+
+      const middlewareArray = [...middlewareRegistry];
+      if (middlewareArray.length === 0) continue;
+
+      const composedMiddleware = composeAllMiddlewares(middlewareArray);
+      resolvedMiddlewares[middlewareName as keyof Middlewares] = composedMiddleware;
+    }
+
+    return resolvedMiddlewares;
+  };
+
+  return {
+    addMainHooks,
+    addMainMiddlewares,
+    addPluginHooks,
+    addPluginMiddlewares,
+    getResolvedHooks,
+    getResolvedMiddlewares,
+  };
+};
+```
+
+### 4. Plugin Initialization Flow
+
+**Location:** `packages/callapi/src/plugins.ts`
 
 ```typescript
 export const initializePlugins = async (context: PluginSetupContext) => {
-  const { baseConfig, config, initURL, options, request } = context;
-
-  const hookRegistries = getHookRegistries();
-
-  // Collect interceptors as we go
-  const interceptors: fetchMiddleware[] = [];
-
-  const hookRegistryKeyArray = Object.keys(hookRegistries) as Array<keyof Hooks>;
-
-  const addMainHooks = () => {
-    // ... existing code unchanged ...
-  };
-
-  const addPluginHooks = (pluginHooks: Required<CallApiPlugin>["hooks"]) => {
-    // ... existing code unchanged ...
-  };
-
-  const hookRegistrationOrder =
-    options.hooksRegistrationOrder ?? extraOptionDefaults().hooksRegistrationOrder;
-
-  if (hookRegistrationOrder === "mainFirst") {
-    addMainHooks();
-  }
-
-  const { currentRouteSchemaKey, mainInitURL } = getCurrentRouteSchemaKeyAndMainInitURL({
-    baseExtraOptions: baseConfig,
-    extraOptions: config,
-    initURL,
-  });
-
-  let resolvedfetchMiddleware: fetchMiddleware | undefined;
-  let resolvedCurrentRouteSchemaKey = currentRouteSchemaKey;
-  let resolvedInitURL = mainInitURL;
-  let resolvedOptions = options;
-  let resolvedRequestOptions = request;
-
-  const executePluginSetupFn = async (pluginSetupFn: CallApiPlugin["setup"]) => {
-    if (!pluginSetupFn) return;
-
-    const initResult = await pluginSetupFn({
-      baseConfig,
-      config,
-      initURL,
-      options,
-      request,
-    });
-
-    if (!isPlainObject(initResult)) return;
-
-    const urlString = initResult.initURL?.toString();
-
-    if (isString(urlString)) {
-      const newResult = getCurrentRouteSchemaKeyAndMainInitURL({
-        baseExtraOptions: baseConfig,
-        extraOptions: config,
-        initURL: urlString,
-      });
-
-      resolvedCurrentRouteSchemaKey = newResult.currentRouteSchemaKey;
-      resolvedInitURL = newResult.mainInitURL;
-    }
-
-    if (isPlainObject(initResult.request)) {
-      resolvedRequestOptions = initResult.request as CallApiRequestOptionsForHooks;
-    }
-
-    if (isPlainObject(initResult.options)) {
-      resolvedOptions = initResult.options;
-    }
-
-    // If plugin provides a fetchMiddleware (top-level), compose it
-    if (initResult.fetchMiddleware) {
-      const prev = resolvedfetchMiddleware;
-      resolvedfetchMiddleware = prev
-        ? (baseFetch) => initResult.fetchMiddleware!(prev(baseFetch))
-        : initResult.fetchMiddleware;
-    }
-
-  };
+  const {
+    addMainHooks,
+    addMainMiddlewares,
+    addPluginHooks,
+    addPluginMiddlewares,
+    getResolvedHooks,
+    getResolvedMiddlewares,
+  } = setupHooksAndMiddlewares({ baseConfig, config, options });
 
   const resolvedPlugins = getResolvedPlugins({ baseConfig, options });
 
   for (const plugin of resolvedPlugins) {
-    await executePluginSetupFn(plugin.setup);
+    const [, pluginHooks, pluginMiddlewares] = await Promise.all([
+      executePluginSetupFn(plugin.setup),
+      isFunction(plugin.hooks) ? plugin.hooks(context) : plugin.hooks,
+      isFunction(plugin.middlewares) ? plugin.middlewares(context) : plugin.middlewares,
+    ]);
 
-    if (!plugin.hooks) continue;
-
-    addPluginHooks(plugin.hooks);
+    pluginHooks && addPluginHooks(pluginHooks);
+    pluginMiddlewares && addPluginMiddlewares(pluginMiddlewares);
   }
 
-  if (hookRegistrationOrder === "pluginsFirst") {
-    addMainHooks();
-  }
+  addMainHooks();
+  addMainMiddlewares();
 
-  if (baseConfig.fetchMiddleware) {
-      const prev = resolvedfetchMiddleware;
-      resolvedfetchMiddleware = prev
-        ? (baseFetch) => baseConfig.fetchMiddleware!(prev(baseFetch))
-        : baseConfig.fetchMiddleware;
-    }
-
-   if (config.fetchMiddleware) {
-      const prev = resolvedfetchMiddleware;
-      resolvedfetchMiddleware = prev
-        ? (baseFetch) => config.fetchMiddleware!(prev(baseFetch))
-        : config.fetchMiddleware;
-    }
-
-  // ... existing hook composition code ...
+  const resolvedHooks = getResolvedHooks();
+  const resolvedMiddlewares = getResolvedMiddlewares();
 
   return {
     resolvedCurrentRouteSchemaKey,
     resolvedHooks,
     resolvedInitURL,
-    resolvedOptions: {
-      ...resolvedOptions,
-      fetchMiddleware: resolvedfetchMiddleware
-    },
+    resolvedMiddlewares,  // ← Returned to createFetchClient
+    resolvedOptions,
     resolvedRequestOptions,
   };
 };
 ```
 
+**Composition Order:**
+
+1. Plugin middlewares are added first (in plugin registration order)
+2. Base config middleware is added
+3. Per-request middleware is added last
+4. All are composed via `composeAllMiddlewares`
+
+### 5. Integration with createFetchClient
+
+**Location:** `packages/callapi/src/createFetchClient.ts`
+
+```typescript
+const {
+  resolvedCurrentRouteSchemaKey,
+  resolvedHooks,
+  resolvedInitURL,
+  resolvedMiddlewares,  // ← Received from initializePlugins
+  resolvedOptions,
+  resolvedRequestOptions,
+} = await initializePlugins({ baseConfig, config, initURL, options, request });
+
+let options = {
+  ...resolvedOptions,
+  ...resolvedHooks,
+  ...resolvedMiddlewares,  // ← Merged into options
+  fullURL,
+  initURL: resolvedInitURL,
+  initURLNormalized: normalizedInitURL,
+} satisfies CallApiExtraOptionsForHooks;
+
+// Later in the code:
+const fetchApi = getFetchImpl(options.customFetchImpl, options.fetchMiddleware);
+const response = await handleRequestDeferStrategy({ fetchApi, options, request });
+```
+
 **Key Points:**
 
-- Plugin interceptors are returned as a top-level property in `PluginInitResult`
-- Composition happens incrementally during plugin initialization
-- The final composed interceptor is added to `resolvedOptions.fetchMiddleware`
-- Existing code that uses `options.fetchMiddleware` will automatically use the composed interceptor
-- No changes needed to `getFetchImpl` or `dedupe.ts` - they already handle `options.fetchMiddleware`
+- Middlewares are composed during plugin initialization
+- The composed middleware is merged into options
+- `getFetchImpl` uses the composed middleware
+- No changes needed to dedupe or other systems
 
 ## Error Handling
 
@@ -267,10 +353,10 @@ try {
 }
 
 // During execution (optional enhancement)
-const wrappedInterceptor = (originalFetch: FetchFunction): FetchFunction => {
+const wrappedInterceptor = (fetchImpl: FetchFunction): FetchFunction => {
   return async (input, init) => {
     try {
-      return await interceptor(originalFetch)(input, init);
+      return await interceptor(fetchImpl)(input, init);
     } catch (error) {
       throw new InterceptorExecutionError(source, input, error);
     }
@@ -282,35 +368,48 @@ const wrappedInterceptor = (originalFetch: FetchFunction): FetchFunction => {
 
 ### Unit Tests
 
-**File:** `packages/callapi/tests/fetch-interceptor.test.ts`
+**File:** `packages/callapi/tests/fetch-middleware.test.ts`
 
 ```typescript
 describe('fetchMiddleware', () => {
+  describe('middleware system', () => {
+    it('should compose middlewares in correct order (plugins → base → per-request)');
+    it('should handle empty middleware registry');
+    it('should compose single middleware correctly');
+    it('should compose multiple plugin middlewares in registration order');
+  });
+
   describe('composition', () => {
-    it('should compose interceptors in correct order');
-    it('should allow short-circuiting');
+    it('should allow short-circuiting (returning without calling fetchImpl)');
     it('should work with customFetchImpl');
+    it('should pass correct fetchImpl to each middleware');
+    it('should maintain proper call chain through all middlewares');
   });
 
-  describe('plugin interceptors', () => {
-    it('should use interceptor from plugin setup');
-    it('should have access to plugin options');
+  describe('plugin middlewares', () => {
+    it('should use static middlewares object from plugin');
+    it('should use dynamic middlewares function from plugin');
+    it('should have access to plugin options in dynamic middlewares');
     it('should have access to plugin state via closure');
+    it('should handle plugins without middlewares');
   });
 
-  describe('options access', () => {
-    it('should provide CallApi options in init parameter');
-    it('should provide plugin options in init parameter');
+  describe('registry system', () => {
+    it('should collect middlewares in Set-based registry');
+    it('should handle duplicate middleware additions');
+    it('should clear registry between requests');
   });
 
   describe('error handling', () => {
-    it('should wrap initialization errors with source');
-    it('should wrap execution errors with source');
+    it('should propagate middleware errors correctly');
+    it('should handle errors during composition');
+    it('should provide clear error messages');
   });
 
   describe('backward compatibility', () => {
-    it('should work without any interceptors');
+    it('should work without any middlewares');
     it('should work with only customFetchImpl');
+    it('should work with existing hooks');
   });
 });
 ```
@@ -319,8 +418,10 @@ describe('fetchMiddleware', () => {
 
 - Caching plugin with cache hits/misses
 - Authentication plugin with token refresh
-- Multiple plugins working together
-- Per-request interceptors overriding plugin behavior
+- Multiple plugins with middlewares working together
+- Per-request middlewares overriding plugin behavior
+- Middleware + hooks working together
+- Middleware + dedupe strategy working together
 
 ## Example: Caching Plugin
 
@@ -338,15 +439,51 @@ const cachingPlugin = definePlugin({
     cacheLifetimeMs: z.number().int().positive().default(60 * 1000),
   }),
 
-  setup: ({ options }) => {
+  // Option 1: Static middlewares object
+  middlewares: {
+    fetchMiddleware: (fetchImpl) => {
+      const cache = new Map<string, { data: Response; timestamp: number }>();
+
+      return async (input, init) => {
+        const cacheKey = `${input}`;
+        const cached = cache.get(cacheKey);
+
+        if (cached && Date.now() - cached.timestamp < 60000) {
+          return cached.data.clone();
+        }
+
+        const response = await fetchImpl(input, init);
+
+        if (response.ok) {
+          cache.set(cacheKey, { data: response.clone(), timestamp: Date.now() });
+        }
+
+        return response;
+      };
+    }
+  }
+});
+
+// Option 2: Dynamic middlewares with access to plugin options
+const cachingPluginDynamic = definePlugin({
+  id: "caching-plugin",
+  name: "Caching Plugin",
+  version: "1.0.0",
+
+  defineExtraOptions: () => z.object({
+    cachePolicy: z.enum(["cache-first", "no-cache"]).default("cache-first"),
+    cacheLifetimeMs: z.number().int().positive().default(60 * 1000),
+  }),
+
+  middlewares: ({ options }) => {
     const cache = new Map<string, { data: Response; timestamp: number }>();
     const cacheLifetime = options.cacheLifetimeMs;
     const cachePolicy = options.cachePolicy;
 
     return {
-      fetchMiddleware: (originalFetch) => async (input, init) => {
+      fetchMiddleware: (fetchImpl) => async (input, init) => {
         if (cachePolicy === "no-cache") {
-          return originalFetch(input, init);
+          return fetchImpl(input, init);
         }
 
         const cacheKey = `${input}`;
@@ -358,7 +495,7 @@ const cachingPlugin = definePlugin({
         }
 
         console.log(`Cache miss: ${cacheKey}`);
-        const response = await originalFetch(input, init);
+        const response = await fetchImpl(input, init);
 
         if (response.ok) {
           cache.set(cacheKey, {
@@ -381,9 +518,9 @@ const cachingPlugin = definePlugin({
 ```typescript
 const client = createFetchClient({
   baseURL: 'https://api.example.com',
-  fetchMiddleware: (originalFetch) => async (input, init) => {
+  fetchMiddleware: (fetchImpl) => async (input, init) => {
     console.log('Request starting:', input);
-    const response = await originalFetch(input, init);
+    const response = await fetchImpl(input, init);
     console.log('Response:', response.status);
     return response;
   }
@@ -394,10 +531,10 @@ const client = createFetchClient({
 
 ```typescript
 const { data } = await callApi('/users', {
-  fetchMiddleware: (originalFetch) => async (input, init) => {
+  fetchMiddleware: (fetchImpl) => async (input, init) => {
     // Add auth token for this specific request
     const token = await getAuthToken();
-    return originalFetch(input, {
+    return fetchImpl(input, {
       ...init,
       headers: {
         ...init?.headers,
@@ -413,13 +550,14 @@ const { data } = await callApi('/users', {
 ```typescript
 const myPlugin = definePlugin({
   id: 'my-plugin',
-  setup: ({ options }) => {
+  middlewares: ({ options }) => {
     const state = createState();
 
     return {
-      fetchMiddleware: (originalFetch) => async (input, init) => {
+      fetchMiddleware: (fetchImpl) => async (input, init) => {
         // Has access to state via closure
-        return originalFetch(input, init);
+        state.increment();
+        return fetchImpl(input, init);
       }
     };
   }
@@ -437,4 +575,3 @@ const myPlugin = definePlugin({
 1. **Option Exposure**: All options are exposed to interceptors - document sensitive data handling
 2. **Response Tampering**: Interceptors can modify responses - validate in critical paths
 3. **Plugin Trust**: Plugins have full request control - only use trusted plugins
-

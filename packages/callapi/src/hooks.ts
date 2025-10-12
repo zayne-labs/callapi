@@ -17,7 +17,7 @@ import type {
 	CallApiRequestOptionsForHooks,
 } from "./types/common";
 import type { DefaultDataType } from "./types/default-types";
-import type { AnyFunction, Awaitable, Prettify, UnmaskType } from "./types/type-helpers";
+import type { Awaitable, Prettify, UnmaskType } from "./types/type-helpers";
 
 export type PluginExtraOptions<TPluginOptions = unknown> = {
 	/** Plugin-specific options passed to the plugin configuration */
@@ -197,8 +197,6 @@ export interface HookConfigOptions {
 	 *
 	 * This affects how ALL hooks execute together, regardless of their source (main or plugin).
 	 *
-	 * Use `hookRegistrationOrder` to control the registration order of main vs plugin hooks.
-	 *
 	 * @default "parallel"
 	 *
 	 * @example
@@ -212,7 +210,6 @@ export interface HookConfigOptions {
 	 * // Use case: Hooks have dependencies and must run in order
 	 * const client = callApi.create({
 	 *   hooksExecutionMode: "sequential",
-	 *   hookRegistrationOrder: "mainFirst",
 	 *   plugins: [transformPlugin],
 	 *   onRequest: (ctx) => {
 	 *     // This runs first, then transform plugin runs
@@ -242,63 +239,6 @@ export interface HookConfigOptions {
 	 * ```
 	 */
 	hooksExecutionMode?: "parallel" | "sequential";
-
-	/**
-	 * Controls the registration order of main hooks relative to plugin hooks.
-	 *
-	 * - **"pluginsFirst"**: Plugin hooks register first, then main hooks (default)
-	 * - **"mainFirst"**: Main hooks register first, then plugin hooks
-	 *
-	 * This determines the order hooks are added to the registry, which affects
-	 * their execution sequence when using sequential execution mode.
-	 *
-	 * @default "pluginsFirst"
-	 *
-	 * @example
-	 * ```ts
-	 * // Plugin hooks register first (default behavior)
-	 * hookRegistrationOrder: "pluginsFirst"
-	 *
-	 * // Main hooks register first
-	 * hookRegistrationOrder: "mainFirst"
-	 *
-	 * // Use case: Main validation before plugin processing
-	 * const client = callApi.create({
-	 *   hookRegistrationOrder: "mainFirst",
-	 *   hooksExecutionMode: "sequential",
-	 *   plugins: [transformPlugin],
-	 *   onRequest: (ctx) => {
-	 *     // This main hook runs first in sequential mode
-	 *     if (!ctx.request.headers.authorization) {
-	 *       throw new Error("Authorization required");
-	 *     }
-	 *   }
-	 * });
-	 *
-	 * // Use case: Plugin setup before main logic (default)
-	 * const client = callApi.create({
-	 *   hookRegistrationOrder: "pluginsFirst", // Default
-	 *   hooksExecutionMode: "sequential",
-	 *   plugins: [setupPlugin],
-	 *   onRequest: (ctx) => {
-	 *     // Plugin runs first, then this main hook
-	 *     console.log("Request prepared:", ctx.request.url);
-	 *   }
-	 * });
-	 *
-	 * // Use case: Parallel mode (registration order less important)
-	 * const client = callApi.create({
-	 *   hookRegistrationOrder: "pluginsFirst",
-	 *   hooksExecutionMode: "parallel", // All run simultaneously
-	 *   plugins: [metricsPlugin, cachePlugin],
-	 *   onRequest: (ctx) => {
-	 *     // All hooks run in parallel regardless of registration order
-	 *     addRequestId(ctx.request);
-	 *   }
-	 * });
-	 * ```
-	 */
-	hooksRegistrationOrder?: "mainFirst" | "pluginsFirst";
 }
 
 export type RequestContext = {
@@ -423,8 +363,8 @@ type HookRegistries = Required<{
 	[Key in keyof Hooks]: Set<Hooks[Key]>;
 }>;
 
-export const getHookRegistries = (): HookRegistries => {
-	return {
+export const getHookRegistriesAndKeys = () => {
+	const hookRegistries: HookRegistries = {
 		onError: new Set(),
 		onRequest: new Set(),
 		onRequestError: new Set(),
@@ -437,23 +377,27 @@ export const getHookRegistries = (): HookRegistries => {
 		onSuccess: new Set(),
 		onValidationError: new Set(),
 	};
+
+	const hookRegistryKeys = Object.keys(hookRegistries) as Array<keyof Hooks>;
+
+	return { hookRegistries, hookRegistryKeys };
 };
 
 export const composeAllHooks = (
-	hooksArray: Array<AnyFunction | undefined>,
+	hooksArray: Array<Hooks[keyof Hooks] | undefined>,
 	hooksExecutionMode: CallApiExtraOptionsForHooks["hooksExecutionMode"]
 ) => {
-	const mergedHook = async (ctx: unknown) => {
+	const composedHook = async (ctx: unknown) => {
 		switch (hooksExecutionMode) {
 			case "parallel": {
-				await Promise.all(hooksArray.map((uniqueHook) => uniqueHook?.(ctx)));
+				await Promise.all(hooksArray.map((uniqueHook) => uniqueHook?.(ctx as never)));
 				break;
 			}
 
 			case "sequential": {
 				for (const hook of hooksArray) {
 					// eslint-disable-next-line no-await-in-loop -- This is necessary in this case
-					await hook?.(ctx);
+					await hook?.(ctx as never);
 				}
 				break;
 			}
@@ -464,10 +408,10 @@ export const composeAllHooks = (
 		}
 	};
 
-	return mergedHook;
+	return composedHook;
 };
 
-export const executeHooksInTryBlock = async (...hookResultsOrPromise: Array<Awaitable<unknown>>) => {
+export const executeHooks = async (...hookResultsOrPromise: Array<Awaitable<unknown>>) => {
 	await Promise.all(hookResultsOrPromise);
 };
 

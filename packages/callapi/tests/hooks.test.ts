@@ -90,108 +90,6 @@ describe("Hook System", () => {
 		});
 	});
 
-	describe("Hook registration order", () => {
-		it("should register plugin hooks first by default (pluginsFirst)", async () => {
-			const executionOrder: string[] = [];
-
-			const testPlugin: CallApiPlugin = {
-				hooks: {
-					onRequest: () => {
-						executionOrder.push("plugin");
-					},
-				},
-				id: "test-plugin",
-				name: "Test Plugin",
-			};
-
-			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
-
-			const client = createFetchClient({
-				hooksExecutionMode: "sequential", // to ensure predictable order
-				hooksRegistrationOrder: "pluginsFirst", // explicit for clarity
-				plugins: [testPlugin],
-			});
-
-			await client("/test", {
-				onRequest: () => {
-					executionOrder.push("main");
-				},
-			});
-
-			expect(executionOrder).toEqual(["plugin", "main"]);
-		});
-
-		it("should register main hooks first when specified (mainFirst)", async () => {
-			const executionOrder: string[] = [];
-
-			const testPlugin: CallApiPlugin = {
-				hooks: {
-					onRequest: () => {
-						executionOrder.push("plugin");
-					},
-				},
-				id: "test-plugin",
-				name: "Test Plugin",
-			};
-
-			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
-
-			const client = createFetchClient({
-				hooksExecutionMode: "sequential", // to ensure predictable order
-				hooksRegistrationOrder: "mainFirst",
-				plugins: [testPlugin],
-			});
-
-			await client("/test", {
-				onRequest: () => {
-					executionOrder.push("main");
-				},
-			});
-
-			expect(executionOrder).toEqual(["main", "plugin"]);
-		});
-
-		it("should handle multiple plugins with correct registration order", async () => {
-			const executionOrder: string[] = [];
-
-			const plugin1: CallApiPlugin = {
-				hooks: {
-					onRequest: () => {
-						executionOrder.push("plugin1");
-					},
-				},
-				id: "plugin-1",
-				name: "Plugin 1",
-			};
-
-			const plugin2: CallApiPlugin = {
-				hooks: {
-					onRequest: () => {
-						executionOrder.push("plugin2");
-					},
-				},
-				id: "plugin-2",
-				name: "Plugin 2",
-			};
-
-			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
-
-			const client = createFetchClient({
-				hooksExecutionMode: "sequential",
-				hooksRegistrationOrder: "pluginsFirst",
-				plugins: [plugin1, plugin2],
-			});
-
-			await client("/test", {
-				onRequest: () => {
-					executionOrder.push("main");
-				},
-			});
-
-			expect(executionOrder).toEqual(["plugin1", "plugin2", "main"]);
-		});
-	});
-
 	describe("Hook types", () => {
 		it("should execute onRequestReady hooks", async () => {
 			const tracker = createCallTracker();
@@ -469,7 +367,6 @@ describe("Hook System", () => {
 
 			const client = createFetchClient({
 				hooksExecutionMode: "sequential",
-				hooksRegistrationOrder: "pluginsFirst",
 				onRequest: () => executionOrder.push("base"),
 				plugins: [plugin1, plugin2],
 			});
@@ -787,7 +684,6 @@ describe("Hook System", () => {
 
 			const client = createFetchClient({
 				hooksExecutionMode: "sequential",
-				hooksRegistrationOrder: "pluginsFirst",
 				plugins: [plugin1, plugin2],
 			});
 

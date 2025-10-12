@@ -3,8 +3,8 @@ import { HTTPError } from "./error";
 import {
 	type ErrorContext,
 	type ExecuteHookInfo,
+	executeHooks,
 	executeHooksInCatchBlock,
-	executeHooksInTryBlock,
 	type RetryContext,
 	type SuccessContext,
 } from "./hooks";
@@ -44,6 +44,7 @@ import {
 	createCombinedSignal,
 	createTimeoutSignal,
 	getBody,
+	getFetchImpl,
 	getHeaders,
 	getMethod,
 	splitBaseConfig,
@@ -176,6 +177,7 @@ export const createFetchClient = <
 			resolvedCurrentRouteSchemaKey,
 			resolvedHooks,
 			resolvedInitURL,
+			resolvedMiddlewares,
 			resolvedOptions,
 			resolvedRequestOptions,
 		} = await initializePlugins({
@@ -196,6 +198,7 @@ export const createFetchClient = <
 		let options = {
 			...resolvedOptions,
 			...resolvedHooks,
+			...resolvedMiddlewares,
 
 			fullURL,
 			initURL: resolvedInitURL,
@@ -240,7 +243,7 @@ export const createFetchClient = <
 		try {
 			await handleRequestCancelStrategy();
 
-			await executeHooksInTryBlock(options.onRequest?.({ baseConfig, config, options, request }));
+			await executeHooks(options.onRequest?.({ baseConfig, config, options, request }));
 
 			const {
 				extraOptionsValidationResult,
@@ -292,9 +295,11 @@ export const createFetchClient = <
 				...(Boolean(validMethod) && { method: validMethod }),
 			};
 
-			await executeHooksInTryBlock(options.onRequestReady?.({ baseConfig, config, options, request }));
+			await executeHooks(options.onRequestReady?.({ baseConfig, config, options, request }));
 
-			const response = await handleRequestDeferStrategy({ options, request });
+			const fetchApi = getFetchImpl(options.customFetchImpl, options.fetchMiddleware);
+
+			const response = await handleRequestDeferStrategy({ fetchApi, options, request });
 
 			// == Also clone response when dedupeStrategy is set to "defer" to avoid error thrown from reading response.(whatever) more than once
 			const shouldCloneResponse = resolvedDedupeStrategy === "defer" || options.cloneResponse;
@@ -344,7 +349,7 @@ export const createFetchClient = <
 				response,
 			} satisfies SuccessContext<unknown>;
 
-			await executeHooksInTryBlock(
+			await executeHooks(
 				options.onSuccess?.(successContext),
 
 				options.onResponse?.({ ...successContext, error: null })
