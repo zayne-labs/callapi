@@ -14,6 +14,7 @@ import {
 	getBody,
 	getHeaders,
 	getInitFetchImpl,
+	getMethod,
 	objectifyHeaders,
 	omitKeys,
 	pickKeys,
@@ -40,7 +41,7 @@ import {
 	isValidationErrorInstance,
 	isValidJsonString,
 } from "../src/utils/guards";
-import { mockError, mockUser } from "./fixtures";
+import { mockError } from "./fixtures";
 import { createMockErrorResponse, createMockResponse } from "./helpers";
 
 describe("Utility Functions", () => {
@@ -729,6 +730,28 @@ describe("Utility Functions", () => {
 				expect(result).toEqual({
 					Authorization: "Bearer async-token",
 				});
+			});
+		});
+
+		describe("getMethod", () => {
+			it("should return provided method in uppercase", () => {
+				const result = getMethod({ initURL: "/test", method: "post" });
+				expect(result).toBe("POST");
+			});
+
+			it("should extract method from URL prefix", () => {
+				const result = getMethod({ initURL: "@post/test", method: undefined });
+				expect(result).toBe("POST");
+			});
+
+			it("should return default method when no method provided", () => {
+				const result = getMethod({ initURL: "/test", method: undefined });
+				expect(result).toBe("GET");
+			});
+
+			it("should prioritize explicit method over URL prefix", () => {
+				const result = getMethod({ initURL: "@post/test", method: "PUT" });
+				expect(result).toBe("PUT");
 			});
 		});
 

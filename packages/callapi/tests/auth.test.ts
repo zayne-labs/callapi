@@ -14,58 +14,28 @@ describe("Authentication System", () => {
 		it("should handle Bearer token as string", async () => {
 			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
 
-			await callApi("https://api.example.com/users/1", {
-				auth: mockAuthToken,
-			});
+			await callApi("https://api.example.com/users/1", { auth: mockAuthToken });
 
 			expect(mockFetch).toHaveBeenCalledWith(
 				"https://api.example.com/users/1",
 				expect.objectContaining({
-					headers: expect.objectContaining({
-						Authorization: `Bearer ${mockAuthToken}`,
-					}),
+					headers: expect.objectContaining({ Authorization: `Bearer ${mockAuthToken}` }),
 				})
 			);
 		});
 
-		it("should handle Bearer token with auth object", async () => {
+		it.each([
+			["auth object", { bearer: mockAuthToken, type: "Bearer" as const }],
+			["function value", { bearer: () => mockAuthToken, type: "Bearer" as const }],
+		])("should handle Bearer token with %s", async (_, auth) => {
 			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
 
-			await callApi("https://api.example.com/users/1", {
-				auth: {
-					bearer: mockAuthToken,
-					type: "Bearer",
-				},
-			});
+			await callApi("https://api.example.com/users/1", { auth });
 
 			expect(mockFetch).toHaveBeenCalledWith(
 				"https://api.example.com/users/1",
 				expect.objectContaining({
-					headers: expect.objectContaining({
-						Authorization: `Bearer ${mockAuthToken}`,
-					}),
-				})
-			);
-		});
-
-		it("should handle Bearer token with function value", async () => {
-			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
-
-			const getToken = () => mockAuthToken;
-
-			await callApi("https://api.example.com/users/1", {
-				auth: {
-					bearer: getToken,
-					type: "Bearer",
-				},
-			});
-
-			expect(mockFetch).toHaveBeenCalledWith(
-				"https://api.example.com/users/1",
-				expect.objectContaining({
-					headers: expect.objectContaining({
-						Authorization: `Bearer ${mockAuthToken}`,
-					}),
+					headers: expect.objectContaining({ Authorization: `Bearer ${mockAuthToken}` }),
 				})
 			);
 		});
@@ -79,18 +49,13 @@ describe("Authentication System", () => {
 			};
 
 			await callApi("https://api.example.com/users/1", {
-				auth: {
-					bearer: getTokenAsync,
-					type: "Bearer",
-				},
+				auth: { bearer: getTokenAsync, type: "Bearer" },
 			});
 
 			expect(mockFetch).toHaveBeenCalledWith(
 				"https://api.example.com/users/1",
 				expect.objectContaining({
-					headers: expect.objectContaining({
-						Authorization: `Bearer ${mockAuthToken}`,
-					}),
+					headers: expect.objectContaining({ Authorization: `Bearer ${mockAuthToken}` }),
 				})
 			);
 		});
@@ -99,13 +64,9 @@ describe("Authentication System", () => {
 			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
 
 			await callApi("https://api.example.com/users/1", {
-				auth: {
-					bearer: undefined,
-					type: "Bearer",
-				},
+				auth: { bearer: undefined, type: "Bearer" },
 			});
 
-			// Should not include Authorization header when bearer is undefined
 			const callArgs = mockFetch.mock.calls[0]?.[1] as RequestInit;
 			const headers = callArgs.headers as Record<string, string>;
 			expect(headers.Authorization).toBeUndefined();
@@ -221,42 +182,18 @@ describe("Authentication System", () => {
 	});
 
 	describe("Token authentication", () => {
-		it("should handle Token auth with token value", async () => {
+		it.each([
+			["token value", { token: mockAuthToken }],
+			["function value", { token: () => mockAuthToken }],
+		])("should handle Token auth with %s", async (_, auth) => {
 			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
 
-			await callApi("https://api.example.com/users/1", {
-				auth: {
-					token: mockAuthToken,
-				},
-			});
+			await callApi("https://api.example.com/users/1", { auth });
 
 			expect(mockFetch).toHaveBeenCalledWith(
 				"https://api.example.com/users/1",
 				expect.objectContaining({
-					headers: expect.objectContaining({
-						Authorization: `Token ${mockAuthToken}`,
-					}),
-				})
-			);
-		});
-
-		it("should handle Token auth with function value", async () => {
-			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
-
-			const getToken = () => mockAuthToken;
-
-			await callApi("https://api.example.com/users/1", {
-				auth: {
-					token: getToken,
-				},
-			});
-
-			expect(mockFetch).toHaveBeenCalledWith(
-				"https://api.example.com/users/1",
-				expect.objectContaining({
-					headers: expect.objectContaining({
-						Authorization: `Token ${mockAuthToken}`,
-					}),
+					headers: expect.objectContaining({ Authorization: `Token ${mockAuthToken}` }),
 				})
 			);
 		});

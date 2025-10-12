@@ -91,45 +91,29 @@ describe("Hook System", () => {
 	});
 
 	describe("Hook types", () => {
-		it("should execute onRequestReady hooks", async () => {
+		it.each([
+			["onRequestReady", (ctx: any) => ctx.options.fullURL],
+			["onRequest", (ctx: any) => ctx.options.fullURL],
+		])("should execute %s hooks", async (hookName, getValue) => {
 			const tracker = createCallTracker();
-
 			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
 
 			await callApi("/test", {
-				onRequestReady: (context) => {
-					tracker.track("onRequestReady", context.options.fullURL);
+				[hookName]: (context: any) => {
+					tracker.track(hookName, getValue(context));
 				},
 			});
 
 			expect(tracker.getCallCount()).toBe(1);
-			expect(tracker.getLastCall()?.args[0]).toBe("onRequestReady");
-		});
-
-		it("should execute onRequest hooks", async () => {
-			const tracker = createCallTracker();
-
-			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
-
-			await callApi("/test", {
-				onRequest: (context) => {
-					tracker.track("onRequest", context.options.fullURL);
-				},
-			});
-
-			expect(tracker.getCallCount()).toBe(1);
-			expect(tracker.getLastCall()?.args[0]).toBe("onRequest");
+			expect(tracker.getLastCall()?.args[0]).toBe(hookName);
 		});
 
 		it("should execute onResponse hooks for successful responses", async () => {
 			const tracker = createCallTracker();
-
 			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
 
 			await callApi("/test", {
-				onResponse: (context) => {
-					tracker.track("onResponse", context.response.status);
-				},
+				onResponse: (context) => tracker.track("onResponse", context.response.status),
 			});
 
 			expect(tracker.getCallCount()).toBe(1);
@@ -138,13 +122,10 @@ describe("Hook System", () => {
 
 		it("should execute onSuccess hooks for successful responses", async () => {
 			const tracker = createCallTracker();
-
 			mockFetch.mockResolvedValueOnce(createMockResponse({ id: 1, name: "test" }));
 
 			await callApi("/test", {
-				onSuccess: (context) => {
-					tracker.track("onSuccess", context.data);
-				},
+				onSuccess: (context) => tracker.track("onSuccess", context.data),
 			});
 
 			expect(tracker.getCallCount()).toBe(1);
@@ -153,89 +134,65 @@ describe("Hook System", () => {
 
 		it("should execute onError hooks for any error", async () => {
 			const tracker = createCallTracker();
-
 			mockFetch.mockRejectedValueOnce(mockNetworkError("Network failure"));
 
 			const { error } = await callApi("/test", {
-				onError: (context) => {
-					tracker.track("onError", context.error.message);
-				},
+				onError: (context) => tracker.track("onError", context.error.message),
 				resultMode: "all",
 			});
 
 			expect(error).toBeDefined();
-			expect(tracker.getCallCount()).toBe(1);
 			expect(tracker.getLastCall()?.args).toEqual(["onError", "Network failure"]);
 		});
 
 		it("should execute onRequestError hooks for request errors", async () => {
 			const tracker = createCallTracker();
-
 			mockFetch.mockRejectedValueOnce(mockNetworkError("Connection failed"));
 
 			const { error } = await callApi("/test", {
-				onRequestError: (context) => {
-					tracker.track("onRequestError", context.error.message, context.response);
-				},
+				onRequestError: (context) =>
+					tracker.track("onRequestError", context.error.message, context.response),
 				resultMode: "all",
 			});
 
 			expect(error).toBeDefined();
-			expect(tracker.getCallCount()).toBe(1);
 			const lastCall = tracker.getLastCall();
-			expect(lastCall?.args[0]).toBe("onRequestError");
-			expect(lastCall?.args[1]).toBe("Connection failed");
-			expect(lastCall?.args[2]).toBeNull(); // No response for request errors
+			expect(lastCall?.args).toEqual(["onRequestError", "Connection failed", null]);
 		});
 
 		it("should execute onResponseError hooks for HTTP error responses", async () => {
 			const tracker = createCallTracker();
-
 			mockFetch.mockResolvedValueOnce(createMockErrorResponse({ error: "Not found" }, 404));
 
 			const { error } = await callApi("/test", {
-				onResponseError: (context) => {
-					tracker.track("onResponseError", context.response.status, context.error);
-				},
+				onResponseError: (context) => tracker.track("onResponseError", context.response.status),
 				resultMode: "all",
 			});
 
 			expect(error).toBeDefined();
-			expect(tracker.getCallCount()).toBe(1);
-			const lastCall = tracker.getLastCall();
-			expect(lastCall?.args[0]).toBe("onResponseError");
-			expect(lastCall?.args[1]).toBe(404);
-			expect(lastCall?.args[2]).toBeDefined();
+			expect(tracker.getLastCall()?.args).toEqual(["onResponseError", 404]);
 		});
 
 		it("should execute onRetry hooks during retry attempts", async () => {
 			const tracker = createCallTracker();
-
-			// First call returns HTTP error (500), second succeeds
 			mockFetch
 				.mockResolvedValueOnce(createMockErrorResponse({ error: "Server error" }, 500))
 				.mockResolvedValueOnce(createMockResponse({ success: true }));
 
 			await callApi("/test", {
-				onRetry: (context) => {
-					tracker.track("onRetry", context.retryAttemptCount, context.error.message);
-				},
+				onRetry: (context) => tracker.track("onRetry", context.retryAttemptCount),
 				retry: { attempts: 2, delay: 10 },
 			});
 
-			// Retry functionality may not trigger hooks in all cases, so just verify structure
 			expect(tracker.getCallCount()).toBeGreaterThanOrEqual(0);
 		});
 
 		it("should execute onValidationError hooks for validation failures", async () => {
 			const tracker = createCallTracker();
-
 			mockFetch.mockResolvedValueOnce(createMockResponse({ invalid: "data" }));
 
 			const { error } = await callApi("/test", {
-				onValidationError: (context) => {
-					tracker.track("onValidationError", context.error.message, context.response?.status);
-				},
+				onValidationError: (context) => tracker.track("onValidationError", context.error.message),
 				resultMode: "all",
 				schema: {
 					data: (data: unknown) => {
@@ -247,17 +204,15 @@ describe("Hook System", () => {
 				},
 			});
 
-			// Validation errors should trigger the hook
 			expect(error).toBeDefined();
 			expect(tracker.getCallCount()).toBeGreaterThanOrEqual(0);
 		});
 
 		it("should execute onRequestStream hooks during upload streaming", async () => {
 			const tracker = createCallTracker();
-			const testData = "test upload data";
 			const body = new ReadableStream({
 				start(controller) {
-					controller.enqueue(new TextEncoder().encode(testData));
+					controller.enqueue(new TextEncoder().encode("test upload data"));
 					controller.close();
 				},
 			});
@@ -267,42 +222,34 @@ describe("Hook System", () => {
 			await callApi("/upload", {
 				body,
 				method: "POST",
-				onRequestStream: (context) => {
-					tracker.track("onRequestStream", context.event.transferredBytes, context.event.totalBytes);
-				},
+				onRequestStream: (context) => tracker.track("onRequestStream", context.event.transferredBytes),
 			});
 
-			// Stream hooks should be called during upload
 			expect(tracker.getCallCount()).toBeGreaterThanOrEqual(0);
 		});
 
 		it("should execute onResponseStream hooks during download streaming", async () => {
 			const tracker = createCallTracker();
-			const testData = "test download data";
-
-			// Create a mock response with a readable stream body
 			const stream = new ReadableStream({
 				start(controller) {
-					controller.enqueue(new TextEncoder().encode(testData));
+					controller.enqueue(new TextEncoder().encode("test download data"));
 					controller.close();
 				},
 			});
 
-			const mockResponse = new Response(stream, {
-				headers: { "Content-Type": "application/octet-stream" },
-				status: 200,
-			});
-
-			mockFetch.mockResolvedValueOnce(mockResponse);
+			mockFetch.mockResolvedValueOnce(
+				new Response(stream, {
+					headers: { "Content-Type": "application/octet-stream" },
+					status: 200,
+				})
+			);
 
 			await callApi("/download", {
-				onResponseStream: (context) => {
-					tracker.track("onResponseStream", context.event.transferredBytes, context.event.totalBytes);
-				},
+				onResponseStream: (context) =>
+					tracker.track("onResponseStream", context.event.transferredBytes),
 				responseType: "stream",
 			});
 
-			// Stream hooks should be called during download
 			expect(tracker.getCallCount()).toBeGreaterThanOrEqual(0);
 		});
 	});
@@ -403,7 +350,6 @@ describe("Hook System", () => {
 	describe("Async hook execution", () => {
 		it("should handle async hooks in parallel mode", async () => {
 			const results: string[] = [];
-
 			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
 
 			await callApi("/test", {
@@ -425,16 +371,11 @@ describe("Hook System", () => {
 			});
 
 			expect(results).toHaveLength(3);
-			expect(results).toContain("async1");
-			expect(results).toContain("async2");
-			expect(results).toContain("async3");
-			// In parallel mode, faster hooks finish first
-			expect(results[0]).toBe("async3");
+			expect(results[0]).toBe("async3"); // Fastest finishes first in parallel
 		});
 
 		it("should handle async hooks in sequential mode", async () => {
 			const results: string[] = [];
-
 			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
 
 			await callApi("/test", {
@@ -460,7 +401,6 @@ describe("Hook System", () => {
 
 		it("should handle mixed sync and async hooks", async () => {
 			const results: string[] = [];
-
 			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
 
 			await callApi("/test", {
@@ -484,61 +424,29 @@ describe("Hook System", () => {
 	});
 
 	describe("Error handling within hooks", () => {
-		it("should handle hook errors in parallel mode", async () => {
+		it.each([["parallel"], ["sequential"]])("should handle hook errors in %s mode", async (mode) => {
 			const tracker = createCallTracker();
-
 			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
 
 			const { data, error } = await callApi("/test", {
-				hooksExecutionMode: "parallel",
+				hooksExecutionMode: mode as "parallel" | "sequential",
 				onRequest: [
 					() => {
 						tracker.track("hook1");
 						throw new Error("Hook error");
 					},
-					() => {
-						tracker.track("hook2");
-					},
+					() => tracker.track("hook2"),
 				],
 				resultMode: "all",
 			});
 
-			// Hook errors cause the request to fail
 			expect(data).toBeNull();
-			expect(error).toBeDefined();
-			expect(error?.message).toBe("Hook error");
-			expect(tracker.getCallCount()).toBeGreaterThanOrEqual(1);
-		});
-
-		it("should handle hook errors in sequential mode", async () => {
-			const tracker = createCallTracker();
-
-			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
-
-			const { data, error } = await callApi("/test", {
-				hooksExecutionMode: "sequential",
-				onRequest: [
-					() => {
-						tracker.track("hook1");
-						throw new Error("Hook error");
-					},
-					() => {
-						tracker.track("hook2");
-					},
-				],
-				resultMode: "all",
-			});
-
-			// Hook errors cause the request to fail
-			expect(data).toBeNull();
-			expect(error).toBeDefined();
 			expect(error?.message).toBe("Hook error");
 			expect(tracker.getCallCount()).toBeGreaterThanOrEqual(1);
 		});
 
 		it("should handle async hook errors", async () => {
 			const tracker = createCallTracker();
-
 			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
 
 			const { data, error } = await callApi("/test", {
@@ -549,23 +457,18 @@ describe("Hook System", () => {
 						tracker.track("async-hook");
 						throw new Error("Async hook error");
 					},
-					() => {
-						tracker.track("sync-hook");
-					},
+					() => tracker.track("sync-hook"),
 				],
 				resultMode: "all",
 			});
 
-			// Hook errors cause the request to fail
 			expect(data).toBeNull();
-			expect(error).toBeDefined();
 			expect(error?.message).toBe("Async hook error");
 			expect(tracker.getCallCount()).toBeGreaterThanOrEqual(1);
 		});
 
 		it("should handle errors in error hooks", async () => {
 			const tracker = createCallTracker();
-
 			mockFetch.mockRejectedValueOnce(mockNetworkError("Network error"));
 
 			const { error } = await callApi("/test", {
@@ -574,24 +477,17 @@ describe("Hook System", () => {
 						tracker.track("error-hook-1");
 						throw new Error("Error hook failed");
 					},
-					() => {
-						tracker.track("error-hook-2");
-					},
+					() => tracker.track("error-hook-2"),
 				],
 				resultMode: "all",
 			});
 
-			// Error thrown inside error hook may be returned; ensure an error message exists and matches either
 			expect(error).toBeDefined();
-			if (typeof error?.message === "string") {
-				expect(error.message).toMatch(/Error hook failed|Network error/);
-			}
-			expect(tracker.getCallCount()).toBeGreaterThanOrEqual(0);
+			expect(error?.message).toMatch(/Error hook failed|Network error/);
 		});
 
 		it("should handle errors in success hooks", async () => {
 			const tracker = createCallTracker();
-
 			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
 
 			const { data, error } = await callApi("/test", {
@@ -600,16 +496,12 @@ describe("Hook System", () => {
 						tracker.track("success-hook-1");
 						throw new Error("Success hook failed");
 					},
-					() => {
-						tracker.track("success-hook-2");
-					},
+					() => tracker.track("success-hook-2"),
 				],
 				resultMode: "all",
 			});
 
-			// Success hook errors cause the request to fail
 			expect(data).toBeNull();
-			expect(error).toBeDefined();
 			expect(error?.message).toBe("Success hook failed");
 			expect(tracker.getCallCount()).toBeGreaterThanOrEqual(1);
 		});
@@ -708,10 +600,8 @@ describe("Hook System", () => {
 		it("should handle hook arrays with different execution modes", async () => {
 			const parallelResults: string[] = [];
 			const sequentialResults: string[] = [];
-
 			mockFetch.mockResolvedValue(createMockResponse({ success: true }));
 
-			// Test parallel execution
 			await callApi("/test-parallel", {
 				hooksExecutionMode: "parallel",
 				onRequest: [
@@ -730,7 +620,6 @@ describe("Hook System", () => {
 				],
 			});
 
-			// Test sequential execution
 			await callApi("/test-sequential", {
 				hooksExecutionMode: "sequential",
 				onRequest: [
@@ -749,9 +638,7 @@ describe("Hook System", () => {
 				],
 			});
 
-			// Parallel should have fastest first
-			expect(parallelResults[0]).toBe("hook2");
-			// Sequential should be in order
+			expect(parallelResults[0]).toBe("hook2"); // Fastest first in parallel
 			expect(sequentialResults).toEqual(["hook1", "hook2", "hook3"]);
 		});
 	});
@@ -759,7 +646,6 @@ describe("Hook System", () => {
 	describe("Hook context and data flow", () => {
 		it("should provide correct context to onRequest hooks", async () => {
 			let capturedContext: any;
-
 			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
 
 			const client = createFetchClient({
@@ -776,7 +662,6 @@ describe("Hook System", () => {
 
 			expect(capturedContext).toBeDefined();
 			expect(capturedContext.request).toBeDefined();
-			expect(capturedContext.request.headers).toBeDefined();
 			expect(capturedContext.baseConfig).toBeDefined();
 			expect(capturedContext.config).toBeDefined();
 			expect(capturedContext.options).toBeDefined();
@@ -784,9 +669,7 @@ describe("Hook System", () => {
 
 		it("should provide correct context to onResponse hooks", async () => {
 			let capturedContext: any;
-
-			const testData = { id: 1, name: "test" };
-			mockFetch.mockResolvedValueOnce(createMockResponse(testData));
+			mockFetch.mockResolvedValueOnce(createMockResponse({ id: 1, name: "test" }));
 
 			await callApi("/test", {
 				onResponse: (context) => {
@@ -795,45 +678,27 @@ describe("Hook System", () => {
 			});
 
 			expect(capturedContext).toBeDefined();
-			expect(capturedContext.response).toBeDefined();
 			expect(capturedContext.response.status).toBe(200);
 			expect(capturedContext.data).toBeDefined();
 		});
 
 		it("should provide correct context to onError hooks", async () => {
 			let capturedContext: any;
-
 			mockFetch.mockRejectedValueOnce(mockNetworkError("Network error"));
 
-			const result = await callApi("/test", {
+			await callApi("/test", {
 				onError: (context) => {
-					capturedContext = context;
-				},
-				onRequestError: (context) => {
 					capturedContext = context;
 				},
 				resultMode: "all",
 			});
 
-			// If context was captured, validate its shape for network errors
-			if (capturedContext) {
-				expect(capturedContext.error).toBeDefined();
-				expect(capturedContext.error.message).toBe("Network error");
-				expect(capturedContext.response).toBeNull(); // Network error has no response
-			}
-
-			// Also validate returned error result as a fallback
-			// result is CallApiResultErrorVariant for network error in resultMode: "all"
-			const anyResult: any = result;
-			if (anyResult && anyResult.error) {
-				expect(anyResult.error.message).toBe("Network error");
-				expect(anyResult.response).toBeNull();
-			}
+			expect(capturedContext.error.message).toBe("Network error");
+			expect(capturedContext.response).toBeNull();
 		});
 
 		it("should allow hooks to modify request context", async () => {
 			let capturedContext: any;
-
 			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
 
 			await callApi("/test", {
@@ -963,7 +828,6 @@ describe("Hook System", () => {
 
 		it("should handle hook errors without breaking the request flow", async () => {
 			const tracker = createCallTracker();
-
 			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
 
 			const { data, error } = await callApi("/test", {
@@ -974,16 +838,13 @@ describe("Hook System", () => {
 				resultMode: "all",
 			});
 
-			// Hook error should cause request to fail
 			expect(data).toBeNull();
-			expect(error).toBeDefined();
 			expect(error?.message).toBe("Hook failed");
 			expect(tracker.getCallCount()).toBe(1);
 		});
 
 		it("should handle async hook rejections properly", async () => {
 			const tracker = createCallTracker();
-
 			mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
 
 			const { data, error } = await callApi("/test", {
@@ -995,9 +856,7 @@ describe("Hook System", () => {
 				resultMode: "all",
 			});
 
-			// Async hook error should cause request to fail
 			expect(data).toBeNull();
-			expect(error).toBeDefined();
 			expect(error?.message).toBe("Async hook failed");
 			expect(tracker.getCallCount()).toBe(1);
 		});

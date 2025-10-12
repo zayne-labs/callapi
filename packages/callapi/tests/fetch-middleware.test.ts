@@ -150,75 +150,42 @@ describe("fetchMiddleware", () => {
 			]);
 		});
 
-		it("should work with only base config middleware", async () => {
+		it.each([
+			["base", { baseMiddleware: true, perRequestMiddleware: false, pluginMiddleware: false }],
+			["per-request", { baseMiddleware: false, perRequestMiddleware: true, pluginMiddleware: false }],
+			["plugin", { baseMiddleware: false, perRequestMiddleware: false, pluginMiddleware: true }],
+		])("should work with only %s middleware", async (level, config) => {
 			const executionOrder: string[] = [];
-
-			const client = createFetchClient({
-				baseURL: "https://api.example.com",
-				fetchMiddleware: (fetchImpl) => async (input, init) => {
-					executionOrder.push("base");
-					return fetchImpl(input, init);
-				},
-			});
-
-			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
-			await client("/users/1");
-
-			expect(executionOrder).toEqual(["base"]);
-		});
-
-		it("should work with only per-request middleware", async () => {
-			const executionOrder: string[] = [];
-
-			const client = createFetchClient({
-				baseURL: "https://api.example.com",
-			});
-
-			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
-			await client("/users/1", {
-				fetchMiddleware: (fetchImpl) => async (input, init) => {
-					executionOrder.push("per-request");
-					return fetchImpl(input, init);
-				},
-			});
-
-			expect(executionOrder).toEqual(["per-request"]);
-		});
-
-		it("should work with only plugin middleware", async () => {
-			const executionOrder: string[] = [];
+			const middleware: FetchMiddleware = (fetchImpl) => async (input, init) => {
+				executionOrder.push(level);
+				return fetchImpl(input, init);
+			};
 
 			const plugin: CallApiPlugin = {
 				id: "test-plugin",
 				name: "Test Plugin",
-				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
-						executionOrder.push("plugin");
-						return fetchImpl(input, init);
-					},
-				},
+				middlewares: { fetchMiddleware: middleware },
 			};
 
 			const client = createFetchClient({
 				baseURL: "https://api.example.com",
-				plugins: [plugin],
+				...(config.baseMiddleware && { fetchMiddleware: middleware }),
+				...(config.pluginMiddleware && { plugins: [plugin] }),
 			});
 
 			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
-			await client("/users/1");
+			await client("/users/1", {
+				...(config.perRequestMiddleware && { fetchMiddleware: middleware }),
+			});
 
-			expect(executionOrder).toEqual(["plugin"]);
+			expect(executionOrder).toEqual([level]);
 		});
 	});
 
 	describe("short-circuiting", () => {
 		it("should allow middleware to return response without calling fetchImpl", async () => {
 			const cachedResponse = createMockResponse({ cached: true, id: 999 });
-
-			const cachingMiddleware: FetchMiddleware = () => async () => {
-				// Return cached response without calling fetchImpl
-				return cachedResponse;
-			};
+			const cachingMiddleware: FetchMiddleware = () => async () => cachedResponse;
 
 			const client = createFetchClient({
 				baseURL: "https://api.example.com",
@@ -227,23 +194,17 @@ describe("fetchMiddleware", () => {
 
 			const result = await client("/users/1");
 
-			// Should return cached response
 			expectSuccessResult(result);
 			expect(result.data).toEqual({ cached: true, id: 999 });
-
-			// Native fetch should not be called
 			expect(mockFetch).not.toHaveBeenCalled();
 		});
 
 		it("should allow plugin middleware to short-circuit", async () => {
 			const mockResponse = createMockResponse({ mocked: true });
-
 			const mockingPlugin: CallApiPlugin = {
 				id: "mocking-plugin",
 				name: "Mocking Plugin",
-				middlewares: {
-					fetchMiddleware: () => async () => mockResponse,
-				},
+				middlewares: { fetchMiddleware: () => async () => mockResponse },
 			};
 
 			const client = createFetchClient({
@@ -497,43 +458,30 @@ describe("fetchMiddleware", () => {
 	});
 
 	describe("error handling during composition", () => {
-		it("should propagate errors thrown in middleware", async () => {
+		it.each([
+			["base middleware", { baseMiddleware: true, pluginMiddleware: false }],
+			["plugin middleware", { baseMiddleware: false, pluginMiddleware: true }],
+		])("should propagate errors thrown in %s", async (_, config) => {
 			const errorMiddleware: FetchMiddleware = () => async () => {
 				throw new Error("Middleware error");
 			};
 
-			const client = createFetchClient({
-				baseURL: "https://api.example.com",
-				fetchMiddleware: errorMiddleware,
-			});
-
-			const result = await client("/users/1");
-
-			expect(result.error).toBeDefined();
-			expect(result.error?.message).toContain("Middleware error");
-			expect(result.data).toBeNull();
-		});
-
-		it("should propagate errors from plugin middleware", async () => {
 			const errorPlugin: CallApiPlugin = {
 				id: "error-plugin",
 				name: "Error Plugin",
-				middlewares: {
-					fetchMiddleware: () => async () => {
-						throw new Error("Plugin middleware error");
-					},
-				},
+				middlewares: { fetchMiddleware: errorMiddleware },
 			};
 
 			const client = createFetchClient({
 				baseURL: "https://api.example.com",
-				plugins: [errorPlugin],
+				...(config.baseMiddleware && { fetchMiddleware: errorMiddleware }),
+				...(config.pluginMiddleware && { plugins: [errorPlugin] }),
 			});
 
 			const result = await client("/users/1");
 
-			expect(result.error).toBeDefined();
-			expect(result.error?.message).toContain("Plugin middleware error");
+			expect(result.error?.message).toContain("Middleware error");
+			expect(result.data).toBeNull();
 		});
 
 		it("should invoke onError and onRequestError hooks when middleware throws", async () => {
