@@ -1,7 +1,7 @@
 {
 	"name": "@zayne-labs/callapi-plugins",
 	"type": "module",
-	"version": "3.1.7",
+	"version": "4.0.0",
 	"description": "A collection of plugins for callapi",
 	"author": "Ryan Zayne",
 	"license": "MIT",
