@@ -1,5 +1,16 @@
 # @zayne-labs/callapi
 
+## 1.11.1
+
+### Patch Changes
+
+- f0b9575: feat(type-helpers): add RemovePrefix utility type for key transformation
+
+   refactor(retry): simplify retry options type using RemovePrefix
+   refactor(dedupe): apply same pattern to dedupe options type
+
+   docs: add social media post introducing CallApi features
+
 ## 1.11.0
 
 ### Minor Changes
