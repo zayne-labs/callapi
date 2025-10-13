@@ -54,8 +54,8 @@ const { data } = await callApi("/api/data"); // JSON? Parsed.
 ```js
 const { data, error } = await callApi("/api/users");
 if (error) {
-  console.log(error.name); // "HTTPError", "ValidationError"
-  console.log(error.errorData); // Actual API response
+	console.log(error.name); // "HTTPError", "ValidationError"
+	console.log(error.errorData); // Actual API response
 }
 ```
 
@@ -63,9 +63,9 @@ if (error) {
 
 ```js
 await callApi("/api/data", {
-  retryAttempts: 3,
-  retryStrategy: "exponential",
-  retryStatusCodes: [429, 500, 502, 503]
+	retryAttempts: 3,
+	retryStrategy: "exponential",
+	retryStatusCodes: [429, 500, 502, 503],
 });
 ```
 
@@ -76,14 +76,14 @@ import { z } from "zod";
 import { defineSchema, createFetchClient } from "@zayne-labs/callapi";
 
 const api = createFetchClient({
-  schema: defineSchema({
-    "/users/:id": {
-      data: z.object({
-        id: z.number(),
-        name: z.string()
-      })
-    }
-  })
+	schema: defineSchema({
+		"/users/:id": {
+			data: z.object({
+				id: z.number(),
+				name: z.string(),
+			}),
+		},
+	}),
 });
 
 const user = await api("/users/123"); // Fully typed + validated
@@ -93,15 +93,15 @@ const user = await api("/users/123"); // Fully typed + validated
 
 ```js
 const api = createFetchClient({
-  onRequest: ({ request }) => {
-    request.headers.set("Authorization", `Bearer ${token}`);
-  },
-  onError: ({ error }) => {
-    Sentry.captureException(error);
-  },
-  onResponseStream: ({ event }) => {
-    console.log(`Downloaded ${event.progress}%`);
-  }
+	onRequest: ({ request }) => {
+		request.headers.set("Authorization", `Bearer ${token}`);
+	},
+	onError: ({ error }) => {
+		Sentry.captureException(error);
+	},
+	onResponseStream: ({ event }) => {
+		console.log(`Downloaded ${event.progress}%`);
+	},
 });
 ```
 
@@ -109,31 +109,31 @@ const api = createFetchClient({
 
 ```js
 const cachingPlugin = definePlugin({
-  id: "caching-plugin",
-  name: "Caching plugin",
+	id: "caching-plugin",
+	name: "Caching plugin",
 
-  middlewares: (ctx) => {
-    const cache = new Map();
+	middlewares: (ctx) => {
+		const cache = new Map();
 
-    return {
-      fetchMiddleware: (fetchImpl) => async (input, init) => {
-        const key = input.toString();
+		return {
+			fetchMiddleware: (fetchImpl) => async (input, init) => {
+				const key = input.toString();
 
-        if (cache.has(key)) {
-          return cache.get(key).clone();
-         }
+				if (cache.has(key)) {
+					return cache.get(key).clone();
+				}
 
-        const response = await fetchImpl(input, init);
-        cache.set(key, response.clone());
+				const response = await fetchImpl(input, init);
+				cache.set(key, response.clone());
 
-        return response;
-      }
-    };
-  }
+				return response;
+			},
+		};
+	},
 });
 
 const callBackendApi = createFetchClient({
-  plugins: [cachingPlugin]
+	plugins: [cachingPlugin],
 });
 ```
 
@@ -161,10 +161,10 @@ const { data } = await callApi("/api/users");
 
 // Configured
 const api = createFetchClient({
-  baseURL: "https://api.example.com",
-  retryAttempts: 2,
-  timeout: 10000,
-  onError: ({ error }) => trackError(error)
+	baseURL: "https://api.example.com",
+	retryAttempts: 2,
+	timeout: 10000,
+	onError: ({ error }) => trackError(error),
 });
 ```
 
@@ -172,7 +172,7 @@ const api = createFetchClient({
 
 ```html
 <script type="module">
-  import { callApi } from "https://esm.run/@zayne-labs/callapi";
+	import { callApi } from "https://esm.run/@zayne-labs/callapi";
 </script>
 ```
 
