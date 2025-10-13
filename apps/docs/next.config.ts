@@ -34,8 +34,6 @@ const config = {
 		];
 	},
 
-	serverExternalPackages: ["typescript", "twoslash"],
-
 	...(isDev && {
 		turbopack: {
 			root: getRoot(),
