@@ -888,4 +888,242 @@ describe("Request Deduplication", () => {
 			expect(getFetchCallCount()).toBeGreaterThanOrEqual(1);
 		});
 	});
+
+	describe("Inner Dedupe Options (dedupe object)", () => {
+		it("should use dedupe.strategy instead of dedupeStrategy", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupe: {
+					strategy: "defer",
+				},
+			});
+
+			mockFetchSuccess(mockUser);
+			mockFetchSuccess(mockUser);
+
+			const [result1, result2] = await Promise.all([client("/users/1"), client("/users/1")]);
+
+			expect(result1.data).toBeDefined();
+			expect(result2.data).toBeDefined();
+		});
+
+		it("should use dedupe.key instead of dedupeKey", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupe: {
+					key: "custom-key",
+					strategy: "defer",
+				},
+			});
+
+			mockFetchSuccess(mockUser);
+			mockFetchSuccess(mockUser);
+
+			// Different URLs but same key should be deduplicated
+			const [result1, result2] = await Promise.all([client("/users/1"), client("/users/2")]);
+
+			expect(result1.data).toBeDefined();
+			expect(result2.data).toBeDefined();
+		});
+
+		it("should use dedupe.cacheScope instead of dedupeCacheScope", async () => {
+			const client1 = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupe: {
+					cacheScope: "global",
+					cacheScopeKey: "shared",
+					strategy: "defer",
+				},
+			});
+
+			const client2 = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupe: {
+					cacheScope: "global",
+					cacheScopeKey: "shared",
+					strategy: "defer",
+				},
+			});
+
+			mockFetchSuccess(mockUser);
+			mockFetchSuccess(mockUser);
+
+			// Should share cache between clients
+			const [result1, result2] = await Promise.all([client1("/users/1"), client2("/users/1")]);
+
+			expect(result1.data).toBeDefined();
+			expect(result2.data).toBeDefined();
+		});
+
+		it("should prefer top-level options over dedupe object", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupeStrategy: "none", // Top-level
+				dedupe: {
+					strategy: "defer", // Should be ignored
+				},
+			});
+
+			mockFetchSuccess(mockUser);
+			mockFetchSuccess(mockUsers[1]);
+
+			// Should use "none" strategy from top-level
+			const [result1, result2] = await Promise.all([client("/users/1"), client("/users/1")]);
+
+			expect(result1.data).toBeDefined();
+			expect(result2.data).toBeDefined();
+
+			// Should make 2 calls since top-level "none" takes precedence
+			expect(getFetchCallCount()).toBe(2);
+		});
+
+		it("should use dedupe object per-request", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupeStrategy: "defer",
+			});
+
+			mockFetchSuccess(mockUser);
+			mockFetchSuccess(mockUsers[1]);
+
+			// Override with dedupe object per-request
+			const [result1, result2] = await Promise.all([
+				client("/users/1", {
+					dedupe: {
+						strategy: "none",
+					},
+				}),
+				client("/users/1", {
+					dedupe: {
+						strategy: "none",
+					},
+				}),
+			]);
+
+			expect(result1.data).toBeDefined();
+			expect(result2.data).toBeDefined();
+
+			// Should make 2 calls since we overrode to "none"
+			expect(getFetchCallCount()).toBe(2);
+		});
+
+		it("should use dedupe.key function", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupe: {
+					key: (context) => {
+						const match = context.options.fullURL?.match(/\/users\/(\d+)/);
+						return match ? `user-${match[1]}` : "default";
+					},
+					strategy: "defer",
+				},
+			});
+
+			mockFetchSuccess(mockUser);
+			mockFetchSuccess(mockUser);
+
+			// Same user ID should be deduplicated
+			const [result1, result2] = await Promise.all([
+				client("/users/1?page=1"),
+				client("/users/1?page=2"),
+			]);
+
+			expect(result1.data).toBeDefined();
+			expect(result2.data).toBeDefined();
+		});
+
+		it("should mix dedupe object with top-level options", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupeKey: "top-level-key",
+				dedupe: {
+					strategy: "defer",
+					cacheScope: "global",
+				},
+			});
+
+			mockFetchSuccess(mockUser);
+			mockFetchSuccess(mockUser);
+
+			// Should use top-level key and dedupe.strategy
+			const [result1, result2] = await Promise.all([client("/users/1"), client("/users/2")]);
+
+			expect(result1.data).toBeDefined();
+			expect(result2.data).toBeDefined();
+		});
+
+		it("should handle all dedupe options in object form", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupe: {
+					strategy: "defer",
+					key: "all-options-key",
+					cacheScope: "global",
+					cacheScopeKey: "test-scope",
+				},
+			});
+
+			mockFetchSuccess(mockUser);
+			mockFetchSuccess(mockUser);
+
+			const [result1, result2] = await Promise.all([client("/users/1"), client("/users/2")]);
+
+			expect(result1.data).toBeDefined();
+			expect(result2.data).toBeDefined();
+		});
+
+		it("should handle dedupe.strategy function", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupe: {
+					strategy: (context) => (context.request.method === "GET" ? "defer" : "cancel"),
+				},
+			});
+
+			mockFetchSuccess(mockUser);
+			mockFetchSuccess(mockUser);
+
+			// GET requests should be deferred
+			const [result1, result2] = await Promise.all([
+				client("/users/1", { method: "GET" }),
+				client("/users/1", { method: "GET" }),
+			]);
+
+			expect(result1.data).toBeDefined();
+			expect(result2.data).toBeDefined();
+		});
+
+		it("should override dedupe object per-request with another dedupe object", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				dedupe: {
+					strategy: "defer",
+					key: "base-key",
+				},
+			});
+
+			mockFetchSuccess(mockUser);
+			mockFetchSuccess(mockUsers[1]);
+
+			// Override with different dedupe object
+			const [result1, result2] = await Promise.all([
+				client("/users/1", {
+					dedupe: {
+						key: "override-key-1",
+					},
+				}),
+				client("/users/1", {
+					dedupe: {
+						key: "override-key-2",
+					},
+				}),
+			]);
+
+			expect(result1.data).toBeDefined();
+			expect(result2.data).toBeDefined();
+
+			// Should make 2 calls since keys are different
+			expect(getFetchCallCount()).toBe(2);
+		});
+	});
 });
