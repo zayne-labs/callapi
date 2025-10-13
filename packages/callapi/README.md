@@ -15,7 +15,7 @@
  </p>
 
 <p align="center">
-  <strong>A fetch wrapper that actually solves real problems.</strong>
+  <strong>An advanced fetch library that actually solves real problems.</strong>
 </p>
 
 <p align="center">
