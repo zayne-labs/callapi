@@ -81,8 +81,8 @@ const { data } = await callApi("/image.png"); // Image? Blob.
 const { data, error } = await callApi("/api/users");
 
 if (error) {
-  console.log(error.name); // "HTTPError", "ValidationError", "TimeoutError"
-  console.log(error.errorData); // The actual error response from your API
+	console.log(error.name); // "HTTPError", "ValidationError", "TimeoutError"
+	console.log(error.errorData); // The actual error response from your API
 }
 ```
 
@@ -94,9 +94,9 @@ Network flaky? API rate-limiting you? Handled.
 
 ```js
 await callApi("/api/data", {
-  retryAttempts: 3,
-  retryStrategy: "exponential", // 1s, 2s, 4s, 8s...
-  retryStatusCodes: [429, 500, 502, 503]
+	retryAttempts: 3,
+	retryStrategy: "exponential", // 1s, 2s, 4s, 8s...
+	retryStatusCodes: [429, 500, 502, 503],
 });
 ```
 
@@ -109,16 +109,16 @@ import { z } from "zod";
 import { defineSchema, createFetchClient } from "@zayne-labs/callapi";
 
 const api = createFetchClient({
-  baseURL: "https://api.example.com",
-  schema: defineSchema({
-    "/users/:id": {
-      data: z.object({
-        id: z.number(),
-        name: z.string(),
-        email: z.string()
-      })
-    }
-  })
+	baseURL: "https://api.example.com",
+	schema: defineSchema({
+		"/users/:id": {
+			data: z.object({
+				id: z.number(),
+				name: z.string(),
+				email: z.string(),
+			}),
+		},
+	}),
 });
 
 const user = await api("/users/123");
@@ -134,12 +134,12 @@ Works with Zod, Valibot, ArkType, or any Standard Schema validator.
 ```js
 // Dynamic params
 await callApi("/users/:id/posts/:postId", {
-  params: { id: 123, postId: 456 }
+	params: { id: 123, postId: 456 },
 }); // → /users/123/posts/456
 
 // Query strings
 await callApi("/search", {
-  query: { q: "javascript", limit: 10 }
+	query: { q: "javascript", limit: 10 },
 }); // → /search?q=javascript&limit=10
 
 // Method prefixes
@@ -150,30 +150,30 @@ await callApi("@delete/users/123"); // Sets method to DELETE
 
 ```js
 const api = createFetchClient({
-  onRequest: ({ request }) => {
-    // Add auth, modify headers
-    request.headers.set("Authorization", `Bearer ${token}`);
-  },
+	onRequest: ({ request }) => {
+		// Add auth, modify headers
+		request.headers.set("Authorization", `Bearer ${token}`);
+	},
 
-  onResponse: ({ data, response }) => {
-    // Log, cache, transform
-    console.log(`${response.status} - ${response.url}`);
-  },
+	onResponse: ({ data, response }) => {
+		// Log, cache, transform
+		console.log(`${response.status} - ${response.url}`);
+	},
 
-  onError: ({ error }) => {
-    // Send to error tracking
-    Sentry.captureException(error);
-  },
+	onError: ({ error }) => {
+		// Send to error tracking
+		Sentry.captureException(error);
+	},
 
-  onRequestStream: ({ event }) => {
-    // Upload progress
-    console.log(`Uploaded ${event.progress}%`);
-  },
+	onRequestStream: ({ event }) => {
+		// Upload progress
+		console.log(`Uploaded ${event.progress}%`);
+	},
 
-  onResponseStream: ({ event }) => {
-    // Download progress
-    updateProgressBar(event.progress);
-  }
+	onResponseStream: ({ event }) => {
+		// Download progress
+		updateProgressBar(event.progress);
+	},
 });
 ```
 
@@ -183,26 +183,26 @@ Build plugins for caching, upload progress with XHR, offline detection, whatever
 
 ```js
 const cachingPlugin = definePlugin({
-  id: "caching",
+	id: "caching",
 
-  middlewares: ({ options }) => {
-    const cache = new Map();
+	middlewares: ({ options }) => {
+		const cache = new Map();
 
-    return {
-      fetchMiddleware: (fetchImpl) => async (input, init) => {
-        // Check cache first
-        const cached = cache.get(input.toString());
-        if (cached && !isExpired(cached)) {
-          return cached.response.clone();
-        }
+		return {
+			fetchMiddleware: (fetchImpl) => async (input, init) => {
+				// Check cache first
+				const cached = cache.get(input.toString());
+				if (cached && !isExpired(cached)) {
+					return cached.response.clone();
+				}
 
-        // Fetch and cache
-        const response = await fetchImpl(input, init);
-        cache.set(input.toString(), { response: response.clone(), timestamp: Date.now() });
-        return response;
-      }
-    };
-  }
+				// Fetch and cache
+				const response = await fetchImpl(input, init);
+				cache.set(input.toString(), { response: response.clone(), timestamp: Date.now() });
+				return response;
+			},
+		};
+	},
 });
 ```
 
@@ -222,11 +222,11 @@ const { data, error } = await callApi("/api/users");
 
 // Configured client
 const api = createFetchClient({
-  baseURL: "https://api.example.com",
-  retryAttempts: 2,
-  timeout: 10000,
-  dedupeStrategy: "cancel",
-  onError: ({ error }) => trackError(error)
+	baseURL: "https://api.example.com",
+	retryAttempts: 2,
+	timeout: 10000,
+	dedupeStrategy: "cancel",
+	onError: ({ error }) => trackError(error),
 });
 
 const users = await api("/users");
@@ -236,9 +236,9 @@ const users = await api("/users");
 
 ```html
 <script type="module">
-  import { callApi } from "https://esm.run/@zayne-labs/callapi";
+	import { callApi } from "https://esm.run/@zayne-labs/callapi";
 
-  const { data } = await callApi("/api/users");
+	const { data } = await callApi("/api/users");
 </script>
 ```
 
