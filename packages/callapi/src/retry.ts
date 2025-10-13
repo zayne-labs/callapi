@@ -1,7 +1,13 @@
 import { extraOptionDefaults } from "./constants/default-options";
 import type { ErrorContext, RequestContext } from "./hooks";
 import type { MethodUnion } from "./types";
-import { type AnyNumber, type Awaitable, defineEnum, type UnmaskType } from "./types/type-helpers";
+import {
+	type AnyNumber,
+	type Awaitable,
+	defineEnum,
+	type RemovePrefix,
+	type UnmaskType,
+} from "./types/type-helpers";
 import { isBoolean, isFunction, isString } from "./utils/guards";
 
 // eslint-disable-next-line ts-eslint/no-unused-vars -- Ignore
@@ -21,16 +27,10 @@ type RetryStatusCodes = UnmaskType<AnyNumber | keyof ReturnType<typeof defaultRe
 
 type RetryCondition<TErrorData> = (context: ErrorContext<TErrorData>) => Awaitable<boolean>;
 
-type InnerRetryKeys<TErrorData> = Exclude<keyof RetryOptions<TErrorData>, "~retryAttemptCount" | "retry">;
+type RetryOptionKeys<TErrorData> = Exclude<keyof RetryOptions<TErrorData>, "~retryAttemptCount" | "retry">;
 
 type InnerRetryOptions<TErrorData> = {
-	[Key in InnerRetryKeys<TErrorData> as Key extends `retry${infer TRest}` ?
-		Uncapitalize<TRest> extends "attempts" ?
-			never
-		:	Uncapitalize<TRest>
-	:	Key]?: RetryOptions<TErrorData>[Key];
-} & {
-	attempts: NonNullable<RetryOptions<TErrorData>["retryAttempts"]>;
+	[Key in RetryOptionKeys<TErrorData> as RemovePrefix<"retry", Key>]?: RetryOptions<TErrorData>[Key];
 };
 
 export interface RetryOptions<TErrorData> {

@@ -50,6 +50,9 @@ export type UnionToIntersection<TUnion> =
 // == Using this Immediately Indexed Mapped type helper to help show computed type of anything passed to it instead of just the type name
 export type UnmaskType<TValue> = { _: TValue }["_"];
 
+export type RemovePrefix<TPrefix extends "dedupe" | "retry", TKey extends string> =
+	TKey extends `${TPrefix}${infer TRest}` ? Uncapitalize<TRest> : TKey;
+
 export type Awaitable<TValue> = Promise<TValue> | TValue;
 
 export type CommonRequestHeaders =
