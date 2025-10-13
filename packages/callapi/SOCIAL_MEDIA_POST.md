@@ -58,9 +58,9 @@ Fetch's error handling is... not great. CallApi gives you structured errors you 
 const { data, error } = await callApi("/api/users");
 
 if (error) {
-	console.log(error.name); // "HTTPError", "ValidationError", "TimeoutError"
-	console.log(error.errorData); // The actual error response from your API
-	console.log(error.response); // Full response object if you need it
+ console.log(error.name); // "HTTPError", "ValidationError", "TimeoutError"
+ console.log(error.errorData); // The actual error response from your API
+ console.log(error.response); // Full response object if you need it
 }
 ```
 
@@ -72,15 +72,15 @@ Network flaky? API rate-limiting you? CallApi handles retries with exponential b
 
 ```ts
 await callApi("/api/data", {
-	retryAttempts: 3,
-	retryStrategy: "exponential", // 1s, 2s, 4s, 8s...
-	retryDelay: 1000,
-	retryMaxDelay: 10000,
-	retryStatusCodes: [429, 500, 502, 503], // Only retry these
-	retryCondition: ({ response }) => {
-		// Or write custom logic
-		return response?.status === 429;
-	},
+ retryAttempts: 3,
+ retryStrategy: "exponential", // 1s, 2s, 4s, 8s...
+ retryDelay: 1000,
+ retryMaxDelay: 10000,
+ retryStatusCodes: [429, 500, 502, 503], // Only retry these
+ retryCondition: ({ response }) => {
+  // Or write custom logic
+  return response?.status === 429;
+ },
 });
 ```
 
@@ -92,15 +92,15 @@ This one's cool. Define your API schema once, get TypeScript types AND runtime v
 
 ```ts
 const api = createFetchClient({
-	schema: defineSchema({
-		"/users/:id": {
-			data: z.object({
-				id: z.number(),
-				name: z.string(),
-				email: z.string(),
-			}),
-		},
-	}),
+ schema: defineSchema({
+  "/users/:id": {
+   data: z.object({
+    id: z.number(),
+    name: z.string(),
+    email: z.string(),
+   }),
+  },
+ }),
 });
 
 const user = await api("/users/123");
@@ -117,30 +117,30 @@ Need to add auth headers? Log requests? Track errors? There's a hook for that:
 
 ```ts
 const api = createFetchClient({
-	onRequest: ({ request }) => {
-		// Add auth, modify headers, whatever
-		request.headers.set("Authorization", `Bearer ${token}`);
-	},
+ onRequest: ({ request }) => {
+  // Add auth, modify headers, whatever
+  request.headers.set("Authorization", `Bearer ${token}`);
+ },
 
-	onResponse: ({ data, response }) => {
-		// Log, cache, transform
-		console.log(`${response.status} - ${response.url}`);
-	},
+ onResponse: ({ data, response }) => {
+  // Log, cache, transform
+  console.log(`${response.status} - ${response.url}`);
+ },
 
-	onError: ({ error }) => {
-		// Send to error tracking
-		Sentry.captureException(error);
-	},
+ onError: ({ error }) => {
+  // Send to error tracking
+  Sentry.captureException(error);
+ },
 
-	onRequestStream: ({ event }) => {
-		// Upload progress
-		console.log(`Uploaded ${event.progress}%`);
-	},
+ onRequestStream: ({ event }) => {
+  // Upload progress
+  console.log(`Uploaded ${event.progress}%`);
+ },
 
-	onResponseStream: ({ event }) => {
-		// Download progress
-		updateProgressBar(event.progress);
-	},
+ onResponseStream: ({ event }) => {
+  // Download progress
+  updateProgressBar(event.progress);
+ },
 });
 ```
 
@@ -152,26 +152,26 @@ Want to add caching? Upload progress with XHR? Offline detection? Build a plugin
 
 ```ts
 const cachingPlugin = definePlugin({
-	id: "caching",
+ id: "caching",
 
-	middlewares: ({ options }) => {
-		const cache = new Map();
+ middlewares: ({ options }) => {
+  const cache = new Map();
 
-		return {
-			fetchMiddleware: (fetchImpl) => async (input, init) => {
-				// Check cache first
-				const cached = cache.get(input.toString());
-				if (cached && !isExpired(cached)) {
-					return cached.response.clone();
-				}
+  return {
+   fetchMiddleware: (fetchImpl) => async (input, init) => {
+    // Check cache first
+    const cached = cache.get(input.toString());
+    if (cached && !isExpired(cached)) {
+     return cached.response.clone();
+    }
 
-				// Fetch and cache
-				const response = await fetchImpl(input, init);
-				cache.set(input.toString(), { response: response.clone(), timestamp: Date.now() });
-				return response;
-			},
-		};
-	},
+    // Fetch and cache
+    const response = await fetchImpl(input, init);
+    cache.set(input.toString(), { response: response.clone(), timestamp: Date.now() });
+    return response;
+   },
+  };
+ },
 });
 ```
 
@@ -186,12 +186,12 @@ Dynamic params and query strings without the manual string building:
 ```ts
 // Dynamic params
 await callApi("/users/:id/posts/:postId", {
-	params: { id: 123, postId: 456 },
+ params: { id: 123, postId: 456 },
 }); // → /users/123/posts/456
 
 // Query strings
 await callApi("/search", {
-	query: { q: "javascript", limit: 10 },
+ query: { q: "javascript", limit: 10 },
 }); // → /search?q=javascript&limit=10
 
 // Method prefixes (because why not)
@@ -224,7 +224,7 @@ Objects become JSON. FormData stays FormData. Query strings get the right header
 
 ```ts
 await callApi("/api/data", {
-	timeout: 5000, // Abort after 5 seconds
+ timeout: 5000, // Abort after 5 seconds
 });
 ```
 
@@ -234,11 +234,11 @@ First-class support for streams with progress events:
 
 ```ts
 const { data: stream } = await callApi("/large-file", {
-	responseType: "stream",
-	onResponseStream: ({ event }) => {
-		updateProgress(event.progress); // 0-100
-		console.log(`${event.transferredBytes} / ${event.totalBytes}`);
-	},
+ responseType: "stream",
+ onResponseStream: ({ event }) => {
+  updateProgress(event.progress); // 0-100
+  console.log(`${event.transferredBytes} / ${event.totalBytes}`);
+ },
 });
 ```
 
@@ -270,11 +270,11 @@ const { data, error } = await callApi("/api/users");
 
 // Or create a configured client
 const api = createFetchClient({
-	baseURL: "https://api.example.com",
-	retryAttempts: 2,
-	timeout: 10000,
-	dedupeStrategy: "cancel",
-	onError: ({ error }) => trackError(error),
+ baseURL: "https://api.example.com",
+ retryAttempts: 2,
+ timeout: 10000,
+ dedupeStrategy: "cancel",
+ onError: ({ error }) => trackError(error),
 });
 
 const users = await api("/users");
@@ -309,7 +309,7 @@ It's free, open source, and actually maintained. Give it a shot.
 
 **What features would you actually use? What am I missing?**
 
-# WebDev #JavaScript #TypeScript #OpenSource #HTTP #API #Fetch
+ #WebDev #JavaScript #TypeScript #OpenSource #HTTP #API #Fetch
 
 ---
 
@@ -457,7 +457,7 @@ What would you use? 👇
 
 ### LinkedIn Post
 
-**Introducing CallApi: A Modern Fetch Wrapper for Production Applications**
+#### Introducing CallApi: A Modern Fetch Wrapper for Production Applications
 
 After years of writing the same HTTP boilerplate across projects, I built CallApi - a fetch wrapper that actually solves real problems.
 
@@ -503,13 +503,13 @@ const { data, error } = await callApi("/api/users");
 
 // Configured client
 const api = createFetchClient({
-	baseURL: "https://api.example.com",
-	retryAttempts: 3,
-	dedupeStrategy: "cancel",
-	schema: defineSchema({
-		/* ... */
-	}),
-	onError: ({ error }) => trackError(error),
+ baseURL: "https://api.example.com",
+ retryAttempts: 3,
+ dedupeStrategy: "cancel",
+ schema: defineSchema({
+  /* ... */
+ }),
+ onError: ({ error }) => trackError(error),
 });
 ```
 
@@ -525,7 +525,7 @@ CallApi aims to be the most comprehensive yet intuitive fetching library availab
 
 I'd love to hear your thoughts! What HTTP client features matter most to you?
 
-# WebDevelopment #JavaScript #TypeScript #OpenSource #SoftwareEngineering #API #HTTP
+ #WebDevelopment #JavaScript #TypeScript #OpenSource #SoftwareEngineering #API #HTTP
 
 ---
 
