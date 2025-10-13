@@ -153,7 +153,7 @@ const callBackendApi = createFetchClient({
 Plugins can define fetch middleware to wrap the native fetch function, enabling powerful features like caching, upload/download progress tracking, and request interception. Unlike `customFetchImpl` which replaces fetch entirely, middlewares compose together automatically.
 
 ```ts
-type FetchMiddleware = (fetchImpl: FetchFunction) => FetchFunction;
+type FetchMiddleware = (fetchImpl: FetchImpl) => FetchImpl;
 ```
 
 #### Creating Plugin Middlewares
@@ -164,20 +164,21 @@ Use the `middlewares` property to define fetch middleware in your plugin:
 
 ```ts twoslash title="plugins.ts"
 import { definePlugin, type PluginSetupContext } from "@zayne-labs/callapi";
-import { z } from "zod/v3";
+import { z } from "zod";
 
-const cachingPlugin = definePlugin({
+const CacheExtraOptionsSchema = z.object({
+	cachePolicy: z.enum(["cache-first", "no-cache"]).default("cache-first"),
+	cacheLifetimeMs: z.number().int().positive().default(60_000),
+});
+
+const cachingPlugin = definePlugin(() => ({
 	id: "caching-plugin",
 	name: "Caching Plugin",
 	version: "1.0.0",
 
-	defineExtraOptions: () =>
-		z.object({
-			cachePolicy: z.enum(["cache-first", "no-cache"]).default("cache-first"),
-			cacheLifetimeMs: z.number().int().positive().default(60_000),
-		}),
+	defineExtraOptions: () => CacheExtraOptionsSchema,
 
-	middlewares: ({ options }) => {
+	middlewares: ({ options }: PluginSetupContext<z.infer<typeof CacheExtraOptionsSchema>>) => {
 		const cache = new Map<string, { data: Response; timestamp: number }>();
 		const cacheLifetime = options.cacheLifetimeMs;
 		const cachePolicy = options.cachePolicy;
@@ -193,12 +194,12 @@ const cachingPlugin = definePlugin({
 
 				// Return cached response if still valid
 				if (cached && Date.now() - cached.timestamp < cacheLifetime) {
-					console.log(`Cache hit: ${cacheKey}`);
+					console.info(`Cache hit: ${cacheKey}`);
 					return cached.data.clone();
 				}
 
 				// Fetch and cache the response
-				console.log(`Cache miss: ${cacheKey}`);
+				console.info(`Cache miss: ${cacheKey}`);
 				const response = await fetchImpl(input, init);
 
 				if (response.ok) {
@@ -212,7 +213,7 @@ const cachingPlugin = definePlugin({
 			},
 		};
 	},
-});
+}));
 ```
 
 **Example: Upload Progress with XHR**
