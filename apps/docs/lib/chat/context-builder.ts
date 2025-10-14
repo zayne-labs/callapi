@@ -1,9 +1,18 @@
-import { callApi } from "@zayne-labs/callapi";
+// import { callApi } from "@zayne-labs/callapi";
+import { source } from "../source";
+import { getLLMText } from "../get-llm-text";
 
-const baseURL = process.env.URL ?? "http://localhost:3000";
+// const baseURL = process.env.URL ?? "http://localhost:3000";
 
 export const getDocumentationContext = async () => {
-	const { data: scannedPages } = await callApi("/llms-full.txt", { baseURL });
+	const scan = source.getPages().map((page) => getLLMText(page));
+
+	const scannedPages = await Promise.all(scan);
+
+	// if (error) {
+	// 	console.error("Failed to fetch documentation context:", error.message);
+	// 	throw error.originalError;
+	// }
 
 	const contextParts = [
 		"=== CALLAPI DOCUMENTATION CONTEXT ===",

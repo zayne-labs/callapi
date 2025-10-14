@@ -2,48 +2,69 @@
 
 import { type UIMessage, type UseChatHelpers, useChat } from "@ai-sdk/react";
 import { on } from "@zayne-labs/toolkit-core";
-import { useCallbackRef } from "@zayne-labs/toolkit-react";
+import { createCustomContext, useCallbackRef } from "@zayne-labs/toolkit-react";
 import type { InferProps } from "@zayne-labs/toolkit-react/utils";
 import { Presence } from "@zayne-labs/ui-react/common/presence";
 import { DefaultChatTransport } from "ai";
 import Link from "fumadocs-core/link";
 import { Loader2, RefreshCw, SearchIcon, Send, X } from "lucide-react";
-import { createContext, use, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RemoveScroll } from "react-remove-scroll";
-import type { z } from "zod";
+import { z } from "zod";
 import type { ProvideLinksToolSchema } from "@/lib/chat/ai-tools-schema";
 import { cnMerge } from "@/lib/utils/cn";
 import { Button } from "../ui/button";
 import { Markdown } from "./markdown";
+import { toast } from "sonner";
 
 type GeneralContextType = {
 	chat: UseChatHelpers<UIMessage>;
 	setOpen: (open: boolean) => void;
 };
 
-const GeneralContext = createContext<GeneralContextType | null>(null);
+const [ChatContextProvider, useInitChatContext] = createCustomContext<GeneralContextType>({
+	hookName: "useChatContext",
+	name: "GeneralChatContext",
+	providerName: "GeneralChatContextProvider",
+});
 
 function useChatContext() {
-	const context = use(GeneralContext);
-
-	if (!context) {
-		throw new Error("useChatContext must be used within a ChatContext");
-	}
+	const context = useInitChatContext();
 
 	return context.chat;
 }
 
 function SearchAIActions() {
-	const { messages, regenerate, setMessages, status } = useChatContext();
+	const { error, messages, regenerate, setMessages, status } = useChatContext();
 	const isLoading = status === "streaming";
+
+	const errorMessage = error?.message;
+
+	useEffect(() => {
+		if (errorMessage) {
+			toast.error(errorMessage);
+		}
+	}, [errorMessage]);
 
 	if (messages.length === 0) {
 		return null;
 	}
 
+	const shouldShowRetry = (!isLoading && messages.at(-1)?.role === "assistant") || errorMessage;
+
 	return (
 		<>
-			{!isLoading && messages.at(-1)?.role === "assistant" && (
+			<Button
+				type="button"
+				size="sm"
+				theme="secondary"
+				className="rounded-full"
+				onClick={() => setMessages([])}
+			>
+				Clear Chat
+			</Button>
+
+			{shouldShowRetry && (
 				<Button
 					size="sm"
 					theme="secondary"
@@ -54,16 +75,6 @@ function SearchAIActions() {
 					<p>Retry</p>
 				</Button>
 			)}
-
-			<Button
-				type="button"
-				size="sm"
-				theme="secondary"
-				className="rounded-full"
-				onClick={() => setMessages([])}
-			>
-				Clear Chat
-			</Button>
 		</>
 	);
 }
@@ -108,7 +119,6 @@ function SearchAIInput(props: InferProps<"form">) {
 
 			{isLoading ?
 				<Button
-					key="bn"
 					theme="secondary"
 					className="mt-2 gap-2 rounded-full transition-all"
 					onClick={() => void stop()}
@@ -117,7 +127,6 @@ function SearchAIInput(props: InferProps<"form">) {
 					<p>Abort Answer</p>
 				</Button>
 			:	<Button
-					key="bn"
 					type="submit"
 					theme="secondary"
 					className="mt-2 rounded-full transition-all"
@@ -166,9 +175,8 @@ function MessageList(props: Omit<InferProps<"div">, "dir">) {
 
 		const callback = () => {
 			const container = containerRef.current;
-			if (!container) return;
 
-			container.scrollTo({
+			container?.scrollTo({
 				behavior: "instant",
 				top: container.scrollHeight,
 			});
@@ -287,7 +295,7 @@ export function AISearchTrigger() {
 	const contextValue = useMemo(() => ({ chat, open, setOpen }), [chat, open]);
 
 	return (
-		<GeneralContext value={contextValue}>
+		<ChatContextProvider value={contextValue}>
 			<RemoveScroll enabled={open}>
 				<Presence present={open}>
 					<div
@@ -380,6 +388,6 @@ export function AISearchTrigger() {
 					</Presence>
 				</div>
 			</RemoveScroll>
-		</GeneralContext>
+		</ChatContextProvider>
 	);
 }

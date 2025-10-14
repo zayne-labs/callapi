@@ -7,7 +7,7 @@ const google = createGoogleGenerativeAI({
 	apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
 });
 
-export const runtime = "edge";
+export const maxDuration = 30;
 
 export async function POST(req: Request) {
 	const systemPromptContext = getSystemPromptContext();
@@ -37,11 +37,8 @@ export async function POST(req: Request) {
 
 	const result = streamText({
 		messages,
-
 		model: google("gemini-2.5-flash"),
-
 		toolChoice: "auto",
-
 		tools: {
 			provideLinks: {
 				inputSchema: ProvideLinksToolSchema,

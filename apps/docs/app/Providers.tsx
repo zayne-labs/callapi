@@ -1,37 +1,14 @@
 "use client";
 
 import { ProgressProvider } from "@bprogress/next/app";
-import { isBrowser } from "@zayne-labs/toolkit-core";
-import { useEffectOnce } from "@zayne-labs/toolkit-react";
 import { RootProvider as FumaThemeProvider } from "fumadocs-ui/provider";
-import { useMemo, useState } from "react";
+import { useIsDarkMode } from "@/lib/hooks/useIsDarkMode";
+import { SonnerToaster } from "@/components/common/Toaster";
 
 function Providers(props: { children: React.ReactNode }) {
 	const { children } = props;
 
-	const [isDarkMode, setIsDarkMode] = useState(false);
-
-	const mutationObserver = useMemo(() => {
-		if (!isBrowser()) return;
-
-		return new MutationObserver((mutations) => {
-			const classAttributeMutation = mutations.find(
-				(mutation) => mutation.type === "attributes" && mutation.attributeName === "class"
-			);
-
-			if (!classAttributeMutation) return;
-
-			const newState = document.documentElement.classList.contains("dark");
-
-			setIsDarkMode(newState);
-		});
-	}, []);
-
-	useEffectOnce(() => {
-		mutationObserver?.observe(document.documentElement, { attributes: true });
-
-		return () => mutationObserver?.disconnect();
-	});
+	const isDarkMode = useIsDarkMode();
 
 	return (
 		<FumaThemeProvider>
@@ -42,6 +19,7 @@ function Providers(props: { children: React.ReactNode }) {
 				shallowRouting={true}
 			>
 				{children}
+				<SonnerToaster />
 			</ProgressProvider>
 		</FumaThemeProvider>
 	);

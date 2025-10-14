@@ -11,7 +11,7 @@ const withMDX = createMDX();
 
 const getRoot = (rootPath = "/") => fileURLToPath(new URL(rootPath, import.meta.url));
 
-const isDev = process.env.NODE_ENV !== "production";
+const isDevMode = process.env.NODE_ENV !== "production";
 
 const config = {
 	devIndicators: {
@@ -34,10 +34,8 @@ const config = {
 		];
 	},
 
-	...(isDev && {
-		turbopack: {
-			root: getRoot(),
-		},
+	...(isDevMode && {
+		outputFileTracingRoot: getRoot(),
 	}),
 
 	typescript: {
