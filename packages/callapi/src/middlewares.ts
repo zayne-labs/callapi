@@ -1,3 +1,4 @@
+import type { RequestContext } from "./hooks";
 import type { UnmaskType } from "./types/type-helpers";
 
 export type FetchImpl = UnmaskType<
@@ -8,9 +9,9 @@ export interface Middlewares {
 	/**
 	 * Wraps the fetch implementation to intercept requests at the network layer.
 	 *
-	 * Takes the current fetch function and returns a new one. Use it to cache responses,
-	 * add logging, handle offline mode, or short-circuit requests etc. Multiple middleware
-	 * compose in order: plugins → base config → per-request.
+	 * Takes a context object containing the current fetch function and returns a new fetch function.
+	 * Use it to cache responses, add logging, handle offline mode, or short-circuit requests etc.
+	 * Multiple middleware compose in order: plugins → base config → per-request.
 	 *
 	 * Unlike `customFetchImpl`, middleware can call through to the original fetch.
 	 *
@@ -18,25 +19,25 @@ export interface Middlewares {
 	 * ```ts
 	 * // Cache responses
 	 * const cache = new Map();
-	 * fetchMiddleware: (fetchImpl) => async (input, init) => {
+	 * fetchMiddleware: (ctx) => async (input, init) => {
 	 *   const key = input.toString();
 	 *   if (cache.has(key)) return cache.get(key).clone();
 	 *
-	 *   const response = await fetchImpl(input, init);
+	 *   const response = await ctx.fetchImpl(input, init);
 	 *   cache.set(key, response.clone());
 	 *   return response;
 	 * }
 	 *
 	 * // Handle offline
-	 * fetchMiddleware: (fetchImpl) => async (input, init) => {
+	 * fetchMiddleware: (ctx) => async (input, init) => {
 	 *   if (!navigator.onLine) {
 	 *     return new Response('{"error": "offline"}', { status: 503 });
 	 *   }
-	 *   return fetchImpl(input, init);
+	 *   return ctx.fetchImpl(input, init);
 	 * }
 	 * ```
 	 */
-	fetchMiddleware?: (fetchImpl: FetchImpl) => FetchImpl;
+	fetchMiddleware?: (context: RequestContext & { fetchImpl: FetchImpl }) => FetchImpl;
 }
 
 type MiddlewareRegistries = Required<{
@@ -53,7 +54,7 @@ export const getMiddlewareRegistriesAndKeys = () => {
 	return { middlewareRegistries, middlewareRegistryKeys };
 };
 
-export const composeAllMiddlewares = (
+export const composeMiddlewaresFromArray = (
 	middlewareArray: Array<Middlewares[keyof Middlewares] | undefined>
 ) => {
 	let composedMiddleware: Middlewares[keyof Middlewares];
@@ -63,10 +64,17 @@ export const composeAllMiddlewares = (
 
 		const previousMiddleware = composedMiddleware;
 
-		composedMiddleware =
-			previousMiddleware ?
-				(fetchImpl) => currentMiddleware(previousMiddleware(fetchImpl))
-			:	currentMiddleware;
+		if (!previousMiddleware) {
+			composedMiddleware = currentMiddleware;
+			continue;
+		}
+
+		composedMiddleware = (context) => {
+			const prevFetchImpl = previousMiddleware(context);
+			const fetchImpl = currentMiddleware({ ...context, fetchImpl: prevFetchImpl });
+
+			return fetchImpl;
+		};
 	}
 
 	return composedMiddleware;

@@ -1,13 +1,17 @@
 import { extraOptionDefaults } from "./constants/default-options";
 import {
-	composeAllHooks,
+	composeHooksFromArray,
 	getHookRegistriesAndKeys,
 	type Hooks,
 	type HooksOrHooksArray,
 	type PluginExtraOptions,
 	type RequestContext,
 } from "./hooks";
-import { composeAllMiddlewares, getMiddlewareRegistriesAndKeys, type Middlewares } from "./middlewares";
+import {
+	composeMiddlewaresFromArray,
+	getMiddlewareRegistriesAndKeys,
+	type Middlewares,
+} from "./middlewares";
 import type { CallApiRequestOptions, CallApiRequestOptionsForHooks } from "./types/common";
 import type { Awaitable } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
@@ -249,7 +253,7 @@ const setupHooksAndMiddlewares = (
 
 			const hooksExecutionMode = options.hooksExecutionMode ?? extraOptionDefaults.hooksExecutionMode;
 
-			const composedHook = composeAllHooks(flattenedHookArray, hooksExecutionMode);
+			const composedHook = composeHooksFromArray(flattenedHookArray, hooksExecutionMode);
 
 			resolvedHooks[hookName as keyof Hooks] = composedHook;
 		}
@@ -267,7 +271,7 @@ const setupHooksAndMiddlewares = (
 
 			if (middlewareArray.length === 0) continue;
 
-			const composedMiddleware = composeAllMiddlewares(middlewareArray);
+			const composedMiddleware = composeMiddlewaresFromArray(middlewareArray);
 
 			resolvedMiddlewares[middlewareName as keyof Middlewares] = composedMiddleware;
 		}

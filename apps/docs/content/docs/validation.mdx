@@ -14,7 +14,7 @@ To create a validation schema, you need to import the `defineSchema` function fr
 
 ```ts twoslash title="api.ts"
 import { defineSchema, createFetchClient } from "@zayne-labs/callapi";
-import * as z from "zod";
+import { z } from "zod";
 
 export const baseSchema = defineSchema({
 	// [!code highlight]
@@ -57,7 +57,7 @@ If any validation fails, a `ValidationError` will be thrown.
 
 ```ts twoslash title="client.ts"
 import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
-import * as z from "zod";
+import { z } from "zod";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
@@ -95,9 +95,9 @@ const { data, error } = await callApi("/products/:id", {
 - `params`: Validates URL parameters (`:param`)
 - `query`: Validates query string parameters before they're added to the URL
 
-```ts twoslash title="client.ts"
+```ts title="client.ts"
 import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
-import * as z from "zod";
+import { z } from "zod";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
@@ -120,7 +120,7 @@ The `body` key is used to validate the request body data, as well provide type s
 
 ```ts twoslash title="client.ts"
 import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
-import * as z from "zod";
+import { z } from "zod";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
@@ -147,7 +147,7 @@ The `headers` key validates request headers. This is useful for enforcing requir
 
 ```ts twoslash title="client.ts"
 import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
-import * as z from "zod";
+import { z } from "zod";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
@@ -175,7 +175,7 @@ The query schema validates query parameters. If you define a query schema, the p
 
 ```ts twoslash title="client.ts"
 import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
-import * as z from "zod";
+import { z } from "zod";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
@@ -206,7 +206,7 @@ The params schema validates URL parameters. You can define dynamic parameters in
 
 ```ts twoslash title="client.ts"
 import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
-import * as z from "zod";
+import { z } from "zod";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
@@ -282,9 +282,9 @@ The supported method modifiers are:
 
 If you use the `@method-name` prefix, it will added to the request options automatically. You can override it by passing the `method` option to the `callApi` function.
 
-```ts twoslash title="client.ts"
+```ts title="client.ts"
 import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
-import * as z from "zod";
+import { z } from "zod";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
@@ -309,9 +309,9 @@ const callApi = createFetchClient({
 
 You can also define a validation schema for a specific instance of `callApi` instead of globally on `createFetchClient`:
 
-```ts twoslash title="api.ts"
+```ts title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
-import * as z from "zod";
+import { z } from "zod";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
@@ -421,7 +421,7 @@ You can override the base schema by passing a schema to the `schema` option:
 
 ```ts twoslash title="api.ts"
 import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
-import * as z from "zod";
+import { z } from "zod";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
@@ -453,7 +453,7 @@ In case you want to extend the base schema instead of overriding it, you can pas
 
 ```ts twoslash title="api.ts"
 import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
-import * as z from "zod";
+import { z } from "zod";
 
 const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
@@ -487,7 +487,7 @@ By default, CallAPI allows requests to paths not defined in the schema. Enable s
 
 ```ts twoslash title="api.ts"
 import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
-import * as z from "zod";
+import { z } from "zod";
 
 const callApi = createFetchClient({
 	schema: defineSchema(

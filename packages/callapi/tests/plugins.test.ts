@@ -536,6 +536,227 @@ describe("plugins", () => {
 		});
 	});
 
+	describe("plugin middleware", () => {
+		it("should execute multiple plugin middlewares in reverse order", async () => {
+			const executionOrder: string[] = [];
+
+			const plugin1: CallApiPlugin = {
+				id: "plugin-1",
+				name: "Plugin 1",
+				middlewares: {
+					fetchMiddleware: (ctx) => async (input, init) => {
+						executionOrder.push("plugin1-before");
+						const response = await ctx.fetchImpl(input, init);
+						executionOrder.push("plugin1-after");
+						return response;
+					},
+				},
+			};
+
+			const plugin2: CallApiPlugin = {
+				id: "plugin-2",
+				name: "Plugin 2",
+				middlewares: {
+					fetchMiddleware: (ctx) => async (input, init) => {
+						executionOrder.push("plugin2-before");
+						const response = await ctx.fetchImpl(input, init);
+						executionOrder.push("plugin2-after");
+						return response;
+					},
+				},
+			};
+
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				plugins: [plugin1, plugin2],
+			});
+
+			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
+			await client("/users/1");
+
+			// Middlewares execute in reverse: plugin2 wraps plugin1
+			expect(executionOrder).toEqual([
+				"plugin2-before",
+				"plugin1-before",
+				"plugin1-after",
+				"plugin2-after",
+			]);
+		});
+
+		it("should allow plugin middleware to short-circuit request", async () => {
+			const shortCircuitPlugin: CallApiPlugin = {
+				id: "short-circuit-plugin",
+				name: "Short Circuit Plugin",
+				middlewares: {
+					fetchMiddleware: () => async () => {
+						return createMockResponse({ cached: true });
+					},
+				},
+			};
+
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				plugins: [shortCircuitPlugin],
+			});
+
+			const result = await client("/users/1");
+
+			expectSuccessResult(result);
+			expect(result.data).toEqual({ cached: true });
+			expect(mockFetch).not.toHaveBeenCalled();
+		});
+
+		it("should allow plugin middleware to modify request and response", async () => {
+			const transformPlugin: CallApiPlugin = {
+				id: "transform-plugin",
+				name: "Transform Plugin",
+				middlewares: {
+					fetchMiddleware: (ctx) => async (input, init) => {
+						// Modify request
+						const modifiedInit = {
+							...init,
+							headers: {
+								...init?.headers,
+								"X-Modified": "true",
+							},
+						};
+
+						const response = await ctx.fetchImpl(input, modifiedInit);
+						const data = (await response.json()) as Record<string, unknown>;
+
+						// Modify response
+						return new Response(
+							JSON.stringify({
+								...data,
+								transformed: true,
+							}),
+							{
+								status: response.status,
+								headers: response.headers,
+							}
+						);
+					},
+				},
+			};
+
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				plugins: [transformPlugin],
+			});
+
+			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
+			const result = await client("/users/1");
+
+			expectSuccessResult(result);
+			expect(result.data).toMatchObject({
+				...mockUser,
+				transformed: true,
+			});
+			expect(mockFetch).toHaveBeenCalledWith(
+				"https://api.example.com/users/1",
+				expect.objectContaining({
+					headers: expect.objectContaining({
+						"X-Modified": "true",
+					}),
+				})
+			);
+		});
+
+		it("should support dynamic middleware from setup context", async () => {
+			const executionOrder: string[] = [];
+
+			const dynamicPlugin: CallApiPlugin = {
+				id: "dynamic-plugin",
+				name: "Dynamic Plugin",
+				middlewares: (context) => {
+					executionOrder.push(`setup-url:${context.initURL}`);
+
+					return {
+						fetchMiddleware: (ctx) => async (input, init) => {
+							executionOrder.push("middleware-execute");
+							return ctx.fetchImpl(input, init);
+						},
+					};
+				},
+			};
+
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				plugins: [dynamicPlugin],
+			});
+
+			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
+			await client("/users/1");
+
+			expect(executionOrder).toEqual(["setup-url:/users/1", "middleware-execute"]);
+		});
+
+		it("should compose plugin middleware with base and instance middleware", async () => {
+			const executionOrder: string[] = [];
+
+			const plugin: CallApiPlugin = {
+				id: "plugin",
+				name: "Plugin",
+				middlewares: {
+					fetchMiddleware: (ctx) => async (input, init) => {
+						executionOrder.push("plugin");
+						return ctx.fetchImpl(input, init);
+					},
+				},
+			};
+
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				plugins: [plugin],
+				fetchMiddleware: (ctx) => async (input, init) => {
+					executionOrder.push("base");
+					return ctx.fetchImpl(input, init);
+				},
+			});
+
+			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
+
+			await client("/users/1", {
+				fetchMiddleware: (ctx) => async (input, init) => {
+					executionOrder.push("instance");
+					return ctx.fetchImpl(input, init);
+				},
+			});
+
+			// Execution order: instance → base → plugin → fetch
+			expect(executionOrder).toEqual(["instance", "base", "plugin"]);
+		});
+
+		it("should allow plugin middleware to access request context", async () => {
+			let capturedContext: any;
+
+			const contextPlugin: CallApiPlugin = {
+				id: "context-plugin",
+				name: "Context Plugin",
+				middlewares: {
+					fetchMiddleware: (ctx) => async (input, init) => {
+						capturedContext = ctx;
+						return ctx.fetchImpl(input, init);
+					},
+				},
+			};
+
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				plugins: [contextPlugin],
+				timeout: 5000,
+			});
+
+			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
+			await client("/users/1");
+
+			expect(capturedContext).toBeDefined();
+			expect(capturedContext.baseConfig).toBeDefined();
+			expect(capturedContext.options.timeout).toBe(5000);
+			expect(capturedContext.fetchImpl).toBeTypeOf("function");
+		});
+	});
+
 	describe("plugin edge cases and error handling", () => {
 		it("should handle plugin without hooks and without setup", async () => {
 			const noOpPlugin: CallApiPlugin = { id: "noop", name: "Noop" } as CallApiPlugin;

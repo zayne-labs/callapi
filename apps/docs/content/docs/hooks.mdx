@@ -3,10 +3,15 @@ title: Hooks
 description: Learn how to use hooks in CallApi
 ---
 
-Hooks are essentially callback functions that you register with callapi. Think of them like event listeners for your API requests.
-CallApi runs these functions (sync or async) automatically at specific points during the request's lifecycle – before sending, after receiving a response, when an error occurs, and so on.
+Hooks are callback functions that let you observe and react to events during the request lifecycle. Think of them like event listeners for your API requests.
 
-These hooks allow you to "tap into" the process and run custom code without cluttering your main API call logic. They are sometimes referred to as interceptors in other libraries.
+CallApi runs these functions (sync or async) automatically at specific points – before sending, after receiving a response, when an error occurs, and so on. Hooks are great for logging, metrics, error handling, and side effects.
+
+<Callout type="info">
+	**Hooks vs Middleware:** Hooks observe and react to events, but their return values are ignored. If you
+	need explicit control over execution flow (return a custom response, short-circuit operations etc.), use
+	[Middleware](./middlewares) instead.
+</Callout>
 
 You can configure how hooks execute using `hooksExecutionMode` (parallel vs sequential). Plugin hooks always execute before main hooks. See the [Hook Configuration Options](#hook-configuration-options) section for details.
 
@@ -342,42 +347,43 @@ const result = await callApi("/api/data", {
 });
 ```
 
-## Default Hook Execution Order
+## Hook Execution Order
 
-Hooks can be defined at three levels as we've seen above, executing in the following order:
+Hooks execute in the following order:
 
-**Default Order: Plugin Hooks -> Base Client Hooks -> Instance Hooks**
+**Plugin Hooks → Base Client Hooks → Instance Hooks**
 
 ```ts title="example.ts"
 import { createFetchClient, definePlugin } from "@zayne-labs/callapi";
 
-// Plugin hooks (register first by default)
+// Plugin hooks execute first
 const loggingPlugin = definePlugin({
-	name: "logger",
+	id: "logger",
+	name: "Logger Plugin",
 	hooks: {
 		onRequest: () => console.log("1. Plugin onRequest"),
 		onResponse: () => console.log("1. Plugin onResponse"),
 	},
 });
 
-// Base client hooks (registered second by default)
-const client = createFetchClient({
+// Base client hooks execute second
+const callMainApi = createFetchClient({
 	plugins: [loggingPlugin],
 	onRequest: () => console.log("2. Base onRequest"),
 	onResponse: () => console.log("2. Base onResponse"),
 });
 
-// Request-specific hooks (registered last)
-await client("/api/data", {
-	onRequest: () => console.log("3. Request onRequest"),
-	onResponse: () => console.log("3. Request onResponse"),
+// Instance hooks execute last
+await callMainApi("/api/data", {
+	onRequest: () => console.log("3. Instance onRequest"),
+	onResponse: () => console.log("3. Instance onResponse"),
 });
 
-// With parallel execution (default), all hooks run simultaneously
-// With sequential execution, they run in registration order: 1 → 2 → 3
+// With parallel execution (default), all hooks at each level run simultaneously
+// With sequential execution, they run in order: 1 → 2 → 3
 ```
 
-You can customize whether all hooks run sequentially or in parallel using the `hooksExecutionMode` configuration option. Plugin hooks always execute before main hooks, providing a predictable execution order.
+Use `hooksExecutionMode` to control whether hooks run in parallel or sequentially. Plugin hooks always execute before base and instance hooks.
 
 ## Hook Configuration Options
 

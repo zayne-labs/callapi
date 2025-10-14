@@ -60,7 +60,7 @@ You can specify the data type and error type via TypeScript generics, or using a
 
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
-import * as z from "zod";
+import { z } from "zod";
 
 type Todo = {
 	userId: string;
@@ -148,7 +148,7 @@ Here's a quick example of how to validate your API responses:
 
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
-import * as z from "zod"; // You can use any schema validation library that implements the Standard Schema specification
+import { z } from "zod"; // You can use any schema validation library that implements the Standard Schema specification
 
 const dataSchema = z.object({
 	id: z.number(),

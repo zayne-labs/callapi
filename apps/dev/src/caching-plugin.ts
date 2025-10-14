@@ -1,20 +1,12 @@
-import { definePlugin, type CallApiPlugin } from "@zayne-labs/callapi";
+import { type CallApiPlugin, definePlugin, type PluginSetupContext } from "@zayne-labs/callapi";
+import { z } from "zod";
 
-type CacheConfigOptions = {
-	/**
-	 * How long cached responses should be considered valid (in milliseconds).
-	 * @default 60000 (1 minute)
-	 */
-	cacheLifetime: number;
+const CacheConfigSchema = z.object({
+	cacheLifetime: z.int().positive().optional(),
+	cachePolicy: z.literal(["cache-first", "no-cache"]).optional(),
+});
 
-	/**
-	 * Cache policy to use for requests.
-	 * - 'cache-first': Check cache before making network request
-	 * - 'no-cache': Always make network request, bypass cache
-	 * @default 'cache-first'
-	 */
-	cachePolicy: "cache-first" | "no-cache";
-};
+type CacheConfig = z.infer<typeof CacheConfigSchema>;
 
 /**
  * Response caching plugin that intercepts fetch requests at the network layer.
@@ -57,54 +49,58 @@ type CacheConfigOptions = {
  * });
  * ```
  */
-export const cachingPlugin = definePlugin((configOptions: CacheConfigOptions) => {
-	const { cacheLifetime, cachePolicy } = configOptions;
+
+export const cachingPlugin = definePlugin((cacheConfig: CacheConfig) => {
+	const {
+		cacheLifetime: initCacheLifeTime = 1 * 60 * 1000,
+		cachePolicy: initCachePolicy = "cache-first",
+	} = cacheConfig;
 
 	return {
-		description: "Caching plugin for CallApi",
 		id: "caching-plugin",
 		name: "Caching Plugin",
 
 		// eslint-disable-next-line perfectionist/sort-objects -- Ignore
-		middlewares: () => {
+		defineExtraOptions: () => CacheConfigSchema,
+
+		middlewares: ({ options }: PluginSetupContext<CacheConfig>) => {
+			const { cacheLifetime = initCacheLifeTime, cachePolicy = initCachePolicy } = options;
+
 			const cache = new Map<string, { data: Response; timestamp: number }>();
 
 			return {
-				fetchMiddleware: (fetchImpl) => async (input, init) => {
+				fetchMiddleware: (ctx) => async (input, init) => {
 					if (cachePolicy === "no-cache") {
-						return fetchImpl(input, init);
+						return ctx.fetchImpl(input, init);
 					}
 
-					// Generate cache key from request
-					const cacheKey =
-						typeof input === "string" ? input
-							// eslint-disable-next-line unicorn/no-nested-ternary -- Ignore
-						: input instanceof Request ? input.url
-						: input.toString();
+					const cacheKey = input instanceof Request ? input.url : input.toString();
+					const cachedEntry = cache.get(cacheKey);
 
-					const cached = cache.get(cacheKey);
+					const fetchAndCache = async () => {
+						const response = await ctx.fetchImpl(input, init);
 
-					// Check if we have a valid cached response
-					if (cached && Date.now() - cached.timestamp < cacheLifetime) {
-						console.info(`[Caching Plugin] Cache hit: ${cacheKey}`);
-						// Clone the response since Response bodies can only be read once
-						return cached.data.clone();
+						cache.set(cacheKey, { data: response.clone(), timestamp: Date.now() });
+
+						return response;
+					};
+
+					if (!cachedEntry) {
+						console.info(`[Caching Plugin] Cache miss: ${cacheKey}`);
+						return fetchAndCache();
 					}
 
-					// Cache miss or expired - make network request
-					console.info(`[Caching Plugin] Cache miss: ${cacheKey}`);
-					const response = await fetchImpl(input, init);
+					const isCacheExpired = Date.now() - cachedEntry.timestamp > cacheLifetime;
 
-					// Only cache successful responses
-					if (response.ok) {
-						cache.set(cacheKey, {
-							data: response.clone(),
-							timestamp: Date.now(),
-						});
-						console.info(`[Caching Plugin] Cached response for: ${cacheKey}`);
+					if (isCacheExpired) {
+						console.info(`[Caching Plugin] Cache miss (expired): ${cacheKey}`);
+						cache.delete(cacheKey);
+
+						return fetchAndCache();
 					}
 
-					return response;
+					console.info(`[Caching Plugin] Cache hit: ${cacheKey}`);
+					return cachedEntry.data.clone();
 				},
 			};
 		},

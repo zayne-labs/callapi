@@ -1,0 +1,285 @@
+---
+title: Middlewares
+description: Intercept and wrap internal operations in CallApi
+---
+
+Middleware lets you wrap and intercept internal operations in CallApi. Currently, only fetch middleware is available for intercepting requests at the network layer, but the system is designed to support additional middleware types in the future.
+
+When a given middleware is defined at multiple levels (plugins, base config, per-request), they compose automatically (i.e. each one wrapping the next in a chain).
+
+## Fetch Middleware
+
+Fetch middleware wraps the underlying fetch implementation (native fetch or your custom implementation via `customFetchImpl`), giving you full control over when and how requests execute.
+
+```ts
+type FetchMiddleware = (context: RequestContext & { fetchImpl: FetchImpl }) => FetchImpl;
+```
+
+Each middleware receives a context object (containing the fetch implementation and request context) and returns a new fetch function. Use this to:
+
+- Cache responses
+- Track upload/download progress
+- Handle offline mode
+- Add logging or metrics
+- Short-circuit requests
+- Modify requests/responses
+
+## Using Fetch Middleware
+
+### Base Config
+
+Apply fetch middleware to all requests by adding it to your client configuration:
+
+```ts twoslash title="api.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+const client = createFetchClient({
+	baseURL: "https://api.example.com",
+	fetchMiddleware: (ctx) => async (input, init) => {
+		console.log("Request:", input);
+		const response = await ctx.fetchImpl(input, init);
+		console.log("Response:", response.status);
+		return response;
+	},
+});
+```
+
+### Per-Request
+
+Add fetch middleware to individual requests for one-off modifications:
+
+```ts twoslash title="api.ts"
+import { callApi } from "@zayne-labs/callapi";
+
+const { data, error } = await callApi("/users", {
+	fetchMiddleware: (ctx) => async (input, init) => {
+		const start = Date.now();
+		const response = await ctx.fetchImpl(input, init);
+		console.log(`Took ${Date.now() - start}ms`);
+		return response;
+	},
+});
+```
+
+### In Plugins
+
+Plugins can define fetch middleware to add reusable functionality. See [Plugins](./plugins) for details.
+
+```ts twoslash title="plugins.ts"
+import { definePlugin } from "@zayne-labs/callapi";
+
+const loggingPlugin = definePlugin({
+	id: "logging",
+	name: "Logging Plugin",
+
+	middlewares: {
+		fetchMiddleware: (ctx) => async (input, init) => {
+			console.log("→", init?.method || "GET", input);
+			const response = await ctx.fetchImpl(input, init);
+			console.log("←", response.status, input);
+			return response;
+		},
+	},
+});
+```
+
+## Fetch Middleware Composition
+
+When multiple fetch middlewares are defined, they compose in reverse order, wrapping each other like onion layers:
+
+**Execution flow: Instance → Base → Plugins (reverse order) → customFetchImpl → fetch**
+
+```ts title="example.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+const client = createFetchClient({
+	plugins: [cachingPlugin, loggingPlugin],
+	fetchMiddleware: (ctx) => async (input, init) => {
+		console.log("Base middleware");
+		return ctx.fetchImpl(input, init);
+	},
+});
+
+await client("/users", {
+	fetchMiddleware: (ctx) => async (input, init) => {
+		console.log("Instance middleware");
+		return ctx.fetchImpl(input, init);
+	},
+});
+
+// Execution order: Instance → Base → loggingPlugin → cachingPlugin → fetch
+```
+
+This reverse composition means the last middleware added gets the first chance to intercept the request.
+
+## Examples
+
+### Response Caching
+
+```ts title="caching-plugin.ts"
+import { definePlugin, type PluginSetupContext } from "@zayne-labs/callapi";
+import { z } from "zod";
+
+const CacheOptionsSchema = z.object({
+	cacheLifetime: z.int().positive().optional(),
+	cachePolicy: z.literal(["cache-first", "no-cache"]).optional(),
+});
+
+type CacheOptions = z.infer<typeof CacheOptionsSchema>;
+
+export const cachingPlugin = definePlugin({
+	id: "caching-plugin",
+	name: "Caching Plugin",
+
+	defineExtraOptions: () => CacheOptionsSchema,
+
+	middlewares: ({ options }: PluginSetupContext<CacheOptions>) => {
+		const { cacheLifetime = 60_000, cachePolicy = "cache-first" } = options;
+
+		const cache = new Map<string, { data: Response; timestamp: number }>();
+
+		return {
+			fetchMiddleware: (ctx) => async (input, init) => {
+				if (cachePolicy === "no-cache") {
+					return ctx.fetchImpl(input, init);
+				}
+
+				const cacheKey = input instanceof Request ? input.url : input.toString();
+				const cachedEntry = cache.get(cacheKey);
+
+				const fetchAndCache = async () => {
+					const response = await ctx.fetchImpl(input, init);
+
+					cache.set(cacheKey, { data: response.clone(), timestamp: Date.now() });
+
+					return response;
+				};
+
+				if (!cachedEntry) {
+					console.info(`[Caching Plugin] Cache miss: ${cacheKey}`);
+					return fetchAndCache();
+				}
+
+				const isCacheExpired = Date.now() - cachedEntry.timestamp > cacheLifetime;
+
+				if (isCacheExpired) {
+					console.info(`[Caching Plugin] Cache miss (expired): ${cacheKey}`);
+					cache.delete(cacheKey);
+
+					return fetchAndCache();
+				}
+
+				console.info(`[Caching Plugin] Cache hit: ${cacheKey}`);
+				return cachedEntry.data.clone();
+			},
+		};
+	},
+});
+
+// Usage
+import { createFetchClient } from "@zayne-labs/callapi";
+
+const callBackendApi = createFetchClient({
+	baseURL: "https://api.example.com",
+	plugins: [cachingPlugin],
+	cachePolicy: "cache-first",
+	cacheLifetime: 2 * 60 * 1000, // 2 minutes
+});
+
+await callBackendApi("/users");
+
+await callBackendApi("/users/:id", {
+	cachePolicy: "no-cache", // Skip cache for this request
+});
+```
+
+### Offline Detection
+
+```ts title="offline.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+const client = createFetchClient({
+	fetchMiddleware: (ctx) => async (input, init) => {
+		if (!navigator.onLine) {
+			return new Response(JSON.stringify({ error: "No internet connection" }), {
+				status: 503,
+				headers: { "Content-Type": "application/json" },
+			});
+		}
+
+		return ctx.fetchImpl(input, init);
+	},
+});
+```
+
+### Request Timing
+
+```ts title="timing.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+const client = createFetchClient({
+	fetchMiddleware: (ctx) => async (input, init) => {
+		const start = performance.now();
+
+		try {
+			const response = await ctx.fetchImpl(input, init);
+			const duration = performance.now() - start;
+			console.log(`${init?.method || "GET"} ${input} - ${duration.toFixed(2)}ms`);
+			return response;
+		} catch (error) {
+			const duration = performance.now() - start;
+			console.error(`${init?.method || "GET"} ${input} - Failed after ${duration.toFixed(2)}ms`);
+			throw error;
+		}
+	},
+});
+```
+
+### Mock Responses for Testing
+
+```ts title="mock.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+const mockData = {
+	"/users/1": { id: 1, name: "John" },
+	"/users/2": { id: 2, name: "Jane" },
+};
+
+const client = createFetchClient({
+	fetchMiddleware: (ctx) => async (input, init) => {
+		const url = input.toString();
+
+		// Return mock data without calling fetch
+		if (url in mockData) {
+			return new Response(JSON.stringify(mockData[url as keyof typeof mockData]), {
+				status: 200,
+				headers: { "Content-Type": "application/json" },
+			});
+		}
+
+		// Fall through to real fetch for unmocked URLs
+		return ctx.fetchImpl(input, init);
+	},
+});
+```
+
+## Middleware vs Hooks
+
+The key difference: **middleware controls execution flow, hooks observe and react**.
+
+**Use fetch middleware when you need to:**
+
+- **Control whether fetch is called** - Short-circuit requests, return cached responses without hitting the network
+- **Replace the fetch implementation** - Use XHR, mock responses, or alternative HTTP clients
+- **Transform the response** - Return a completely different Response object
+- **Wrap the network call** - Add retry logic, circuit breakers, or request queuing at the fetch level
+
+**Use hooks when you need to:**
+
+- **Observe lifecycle events** - React to what's happening without controlling the flow
+- **Log or track metrics** - Record timing, errors, or success rates
+- **Modify request options** - Change headers, body, or other options before the request (by mutation)
+- **Handle errors** - Process errors after they occur
+- **Side effects** - Update UI, trigger analytics, or perform other actions
+
+**Key distinction:** Hooks receive context and can mutate objects, but their return values are ignored. Middleware wraps functions and controls what gets called and what gets returned. If you need to prevent a fetch call or return a custom response, use middleware. If you need to observe or react to events, use hooks.

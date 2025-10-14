@@ -1,6 +1,7 @@
 import { getAuthHeader } from "../auth";
 import { fetchSpecificKeys } from "../constants/common";
 import { extraOptionDefaults, requestOptionDefaults } from "../constants/default-options";
+import type { RequestContext } from "../hooks";
 import type { Middlewares } from "../middlewares";
 import type { BaseCallApiExtraOptions, CallApiExtraOptions, CallApiRequestOptions } from "../types/common";
 import { extractMethodFromURL } from "../url";
@@ -168,15 +169,19 @@ export const getInitFetchImpl = (customFetchImpl: CallApiExtraOptions["customFet
 	throw new Error("No fetch implementation found");
 };
 
-export const getFetchImpl = (
-	customFetchImpl: CallApiExtraOptions["customFetchImpl"],
-	fetchMiddleware: Middlewares["fetchMiddleware"]
-) => {
-	const initFetchApi = getInitFetchImpl(customFetchImpl);
+export const getFetchImpl = (context: {
+	customFetchImpl: CallApiExtraOptions["customFetchImpl"];
+	fetchMiddleware: Middlewares["fetchMiddleware"];
+	requestContext: RequestContext;
+}) => {
+	const { customFetchImpl, fetchMiddleware, requestContext } = context;
 
-	const fetchImpl = fetchMiddleware ? fetchMiddleware(initFetchApi) : initFetchApi;
+	const initFetchImpl = getInitFetchImpl(customFetchImpl);
 
-	return fetchImpl;
+	const resolvedFetchImpl =
+		fetchMiddleware ? fetchMiddleware({ ...requestContext, fetchImpl: initFetchImpl }) : initFetchImpl;
+
+	return resolvedFetchImpl;
 };
 
 const PromiseWithResolvers = () => {

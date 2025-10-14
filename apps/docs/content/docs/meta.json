@@ -18,6 +18,7 @@
 		"---Advanced---",
 		"validation",
 		"hooks",
+		"middlewares",
 		"plugins",
 
 		"---Plugins---",

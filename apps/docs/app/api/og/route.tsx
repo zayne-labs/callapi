@@ -1,6 +1,6 @@
 import { callApi } from "@zayne-labs/callapi";
 import { ImageResponse } from "next/og";
-import * as z from "zod";
+import { z } from "zod";
 
 export const runtime = "edge";
 

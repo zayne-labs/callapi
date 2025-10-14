@@ -3,11 +3,11 @@ title: Plugins
 description: Extend Callapi's functionality with plugins
 ---
 
-Plugins allow you to extend `CallApi` with extra functionality.
+Plugins extend CallApi with reusable functionality like authentication, logging, caching, or custom request/response handling. They can modify requests before they're sent, intercept the fetch call, and hook into the request lifecycle.
 
 ## Creating a Plugin
 
-To provide type safety when creating a plugin, you can use the `definePlugin` helper:
+Use the `definePlugin` helper for type-safe plugin creation:
 
 ```ts twoslash title="plugins.ts"
 import { definePlugin, createFetchClient } from "@zayne-labs/callapi";
@@ -76,14 +76,55 @@ const envPlugin = {
 } satisfies CallApiPlugin;
 ```
 
+## Using Plugins
+
+### Base Plugins
+
+Add plugins when creating a client to apply them to all requests:
+
+```ts title="api.ts"
+const callBackendApi = createFetchClient({
+	plugins: [
+		envPlugin, // Handle environment-specific configurations
+		loggingPlugin, // Log request/response details
+	],
+});
+```
+
+### Per-Request Plugins
+
+Add plugins to individual requests when you need them for specific calls only:
+
+```ts title="api.ts"
+const { data } = await callBackendApi("/users", {
+	plugins: [metricsPlugin], // Only track metrics for this request
+});
+```
+
+**NOTE**: By default, passing `plugins` to a request replaces the base plugins. To keep base plugins and add new ones, use a callback:
+
+```ts title="api.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+import { metricsPlugin, envPlugin, loggingPlugin } from "./plugins";
+
+const callBackendApi = createFetchClient({
+	plugins: [envPlugin, loggingPlugin],
+});
+
+const { data } = await callBackendApi("/users", {
+	plugins: ({ basePlugins }) => [...basePlugins, metricsPlugin], // Add metrics plugin while keeping base plugins
+});
+```
+
+## Plugin Anatomy
+
 ### Setup Function
 
-The `setup` function is called before the request is made and any of CallApi's internal functions are called. It takes the url, options, and request as arguments and is expected to return the modified url, options and request if necessary.
+The `setup` function runs before any request processing begins. It receives the initial URL, options, and request, and can return modified versions of these values. This is useful for transforming requests before CallApi's internal processing.
 
 ```ts twoslash title="plugins.ts"
 import { definePlugin } from "@zayne-labs/callapi";
 
-// ---cut---
 const envPlugin = definePlugin({
 	id: "env-plugin",
 	name: "Environment Plugin",
@@ -112,9 +153,60 @@ const envPlugin = definePlugin({
 });
 ```
 
+### Defining Extra Options
+
+Plugins can define custom options that users can pass to `callApi`. Use `defineExtraOptions` to return a validation schema (like Zod) that defines these options.
+
+Here's a plugin that adds an `apiVersion` option to automatically set the API version header:
+
+```ts twoslash title="plugins.ts"
+import { createFetchClient, definePlugin, type PluginSetupContext } from "@zayne-labs/callapi";
+import { z } from "zod";
+
+const apiVersionSchema = z.object({
+	apiVersion: z.literal(["v1", "v2", "v3"]).optional(),
+});
+
+const apiVersionPlugin = definePlugin({
+	id: "api-version-plugin",
+	name: "API Version Plugin",
+	description: "Adds API version header to requests",
+	version: "1.0.0",
+
+	defineExtraOptions: () => apiVersionSchema,
+
+	setup: (ctx: PluginSetupContext<z.infer<typeof apiVersionSchema>>) => {
+		const version = ctx.options.apiVersion ?? "v1";
+
+		return {
+			request: {
+				...ctx.request,
+				headers: { ...ctx.request.headers, "X-API-Version": version },
+			},
+		};
+	},
+});
+
+const callBackendApi = createFetchClient({
+	baseURL: "https://api.example.com",
+	plugins: [apiVersionPlugin],
+	apiVersion: "v2", // Default for all requests
+});
+
+// Use default v2
+const { data: users } = await callBackendApi("/users");
+
+// Override to v3 for this request
+const { data: posts } = await callBackendApi("/posts", {
+	apiVersion: "v3",
+});
+```
+
+The Zod schema validates the `apiVersion` option, making it available in the `setup` function with full type safety.
+
 ### Hooks
 
-Hooks are callback functions that are called at different stages of the request lifecycle. See [Hooks](./hooks) for more information.
+Plugins can define hooks that run at different stages of the request lifecycle. Hooks can be an object or a function that returns an object (useful for accessing setup context). See [Hooks](./hooks) for detailed information about available hooks.
 
 ```ts twoslash title="plugins.ts"
 import { definePlugin, createFetchClient } from "@zayne-labs/callapi";
@@ -143,302 +235,90 @@ const callBackendApi = createFetchClient({
 });
 ```
 
-<Callout type="info">
-	If more than one plugin is registered, the `setup` and `hooks` for each plugin will be called in the
-	order they are registered.
-</Callout>
+**Dynamic Hooks:**
 
-### Fetch Middleware
-
-Plugins can define fetch middleware to wrap the native fetch function, enabling powerful features like caching, upload/download progress tracking, and request interception. Unlike `customFetchImpl` which replaces fetch entirely, middlewares compose together automatically.
-
-```ts
-type FetchMiddleware = (fetchImpl: FetchImpl) => FetchImpl;
-```
-
-#### Creating Plugin Middlewares
-
-Use the `middlewares` property to define fetch middleware in your plugin:
-
-**Example: Response Caching Plugin**
-
-```ts twoslash title="plugins.ts"
-import { definePlugin, type PluginSetupContext } from "@zayne-labs/callapi";
-import { z } from "zod";
-
-const CacheExtraOptionsSchema = z.object({
-	cachePolicy: z.enum(["cache-first", "no-cache"]),
-	cacheLifetimeMs: z.number().int().positive(),
-});
-
-const cachingPlugin = definePlugin(() => ({
-	id: "caching-plugin",
-	name: "Caching Plugin",
-	version: "1.0.0",
-
-	defineExtraOptions: () => CacheExtraOptionsSchema,
-
-	middlewares: ({ options }: PluginSetupContext<z.infer<typeof CacheExtraOptionsSchema>>) => {
-		const cache = new Map<string, { data: Response; timestamp: number }>();
-
-		const cacheLifetime = options.cacheLifetimeMs ?? 60_000;
-		const cachePolicy = options.cachePolicy ?? "cache-first";
-
-		return {
-			fetchMiddleware: (fetchImpl) => async (input, init) => {
-				if (cachePolicy === "no-cache") {
-					return fetchImpl(input, init);
-				}
-
-				const cacheKey = input.toString();
-				const cached = cache.get(cacheKey);
-
-				// Return cached response if still valid
-				if (cached && Date.now() - cached.timestamp < cacheLifetime) {
-					console.info(`Cache hit: ${cacheKey}`);
-					const cachedResponse = cached.data.clone();
-
-					return cachedResponse;
-				}
-
-				// Else fetch and cache the response
-				console.info(`Cache miss: ${cacheKey}`);
-				const response = await fetchImpl(input, init);
-
-				if (response.ok) {
-					cache.set(cacheKey, { data: response.clone(), timestamp: Date.now() });
-				}
-
-				return response;
-			},
-		};
-	},
-}));
-```
-
-**Example: Upload Progress with XHR**
-
-```ts twoslash title="plugins.ts"
-import { definePlugin, type PluginSetupContext } from "@zayne-labs/callapi";
-import { z } from "zod/v3";
-
-const UploadExtraOptionsSchema = z.object({
-	onUploadProgress: z
-		.function()
-		.args(z.object({ loaded: z.number(), total: z.number() }))
-		.optional(),
-});
-
-const uploadProgressPlugin = definePlugin({
-	id: "upload-progress",
-	name: "Upload Progress Plugin",
-	version: "1.0.0",
-
-	defineExtraOptions: () => UploadExtraOptionsSchema,
-
-	middlewares: ({ options }: PluginSetupContext<z.infer<typeof UploadExtraOptionsSchema>>) => ({
-		fetchMiddleware: (fetchImpl) => async (input, init) => {
-			// Only intercept if onUploadProgress is provided
-			if (!options.onUploadProgress || !init?.body) {
-				return fetchImpl(input, init);
-			}
-
-			// Use XHR for upload progress tracking
-			return new Promise<Response>((resolve, reject) => {
-				const xhr = new XMLHttpRequest();
-				const url = typeof input === "string" ? input : input.toString();
-
-				xhr.open(init.method || "POST", url);
-
-				// Copy headers
-				if (init.headers) {
-					const headers = new Headers(init.headers);
-					headers.forEach((value, key) => xhr.setRequestHeader(key, value));
-				}
-
-				xhr.upload.addEventListener("progress", (event) => {
-					if (event.lengthComputable) {
-						options.onUploadProgress?.({ loaded: event.loaded, total: event.total });
-					}
-				});
-
-				xhr.onload = () => {
-					resolve(
-						new Response(xhr.response, {
-							status: xhr.status,
-							statusText: xhr.statusText,
-						})
-					);
-				};
-
-				xhr.onerror = () => reject(new Error("Upload failed"));
-				xhr.send(init.body as XMLHttpRequestBodyInit);
-			});
-		},
-	}),
-});
-```
-
-**Example: Offline Detection**
+Hooks can also be a function that receives the plugin setup context:
 
 ```ts twoslash title="plugins.ts"
 import { definePlugin } from "@zayne-labs/callapi";
 
-const offlinePlugin = definePlugin({
-	id: "offline-plugin",
-	name: "Offline Plugin",
+const dynamicPlugin = definePlugin({
+	id: "dynamic-plugin",
+	name: "Dynamic Plugin",
+
+	hooks: (context) => {
+		const startTime = Date.now();
+
+		return {
+			onSuccess: () => {
+				console.log(`Request to ${context.initURL} took ${Date.now() - startTime}ms`);
+			},
+		};
+	},
+});
+```
+
+<Callout type="info">
+	When multiple plugins are registered, their `setup` functions and hooks execute in the order they appear
+	in the plugins array.
+</Callout>
+
+### Middleware
+
+Plugins can define middleware to wrap internal operations. Currently, CallApi supports fetch middleware for intercepting requests at the network layer. See [Middleware](./middlewares) for detailed information.
+
+Define middleware using the `middlewares` property. Like hooks, middlewares can be an object or a function that receives the setup context.
+
+**Static Middleware:**
+
+```ts title="plugins.ts"
+import { definePlugin } from "@zayne-labs/callapi";
+
+const loggingPlugin = definePlugin({
+	id: "logging",
+	name: "Logging Plugin",
 	version: "1.0.0",
 
 	middlewares: {
-		fetchMiddleware: (fetchImpl) => async (input, init) => {
-			if (!navigator.onLine) {
-				return new Response(JSON.stringify({ error: "No internet connection" }), {
-					status: 503,
-					headers: { "Content-Type": "application/json" },
-				});
-			}
-
-			return fetchImpl(input, init);
+		fetchMiddleware: (ctx) => async (input, init) => {
+			console.log("→", init?.method || "GET", input);
+			const response = await ctx.fetchImpl(input, init);
+			console.log("←", response.status, input);
+			return response;
 		},
 	},
 });
 ```
 
-#### Middleware Composition
+**Dynamic Middleware:**
 
-Middlewares compose automatically in this order: **Per-request → Plugins (reverse) → Base → customFetchImpl → fetch**
-
-```ts
-const client = createFetchClient({
-	plugins: [cachingPlugin, loggingPlugin],
-});
-
-// Execution: Per-request → loggingPlugin → cachingPlugin → Base → fetch
-```
-
-#### Using Middleware Outside Plugins
-
-You can also use `fetchMiddleware` at the base config or per-request level:
-
-```ts
-// Base config - applies to all requests
-const client = createFetchClient({
-	fetchMiddleware: (fetchImpl) => async (input, init) => {
-		console.log("Request:", input);
-		return fetchImpl(input, init);
-	},
-});
-
-// Per-request - one-off modification
-await client("/users", {
-	fetchMiddleware: (fetchImpl) => async (input, init) => {
-		const start = Date.now();
-		const response = await fetchImpl(input, init);
-		console.log(`Took ${Date.now() - start}ms`);
-		return response;
-	},
-});
-```
-
-#### Middleware vs customFetchImpl
-
-| Feature            | `fetchMiddleware`                 | `customFetchImpl`          |
-| ------------------ | --------------------------------- | -------------------------- |
-| **Composition**    | ✅ Multiple compose automatically | ❌ Single implementation   |
-| **Use in plugins** | ✅ Via `middlewares` property     | ❌ No                      |
-| **Use cases**      | Caching, logging, auth, retry     | Complete fetch replacement |
-
-### Defining Extra Options
-
-Sometimes your plugin needs to define additional callapi options beyond what is provided. To handle this, you can use the `defineExtraOptions` function to return a validation schema that defines those options.
-
-For example, let's create a plugin that tracks upload progress and defines a custom option `onUploadProgress`:
+Middlewares can also be a function that receives the plugin setup context:
 
 ```ts twoslash title="plugins.ts"
-import { createFetchClient, definePlugin, type PluginSetupContext } from "@zayne-labs/callapi";
-import { z } from "zod/v3";
+import { definePlugin, type PluginSetupContext } from "@zayne-labs/callapi";
 
-const pluginOptionsSchema = z.object({
-	onUploadProgress: z.function().args(z.object({ loaded: z.number(), total: z.number() })),
-});
-
-const uploadProgressPlugin = definePlugin({
-	id: "upload-progress-plugin",
-	name: "Upload Progress Plugin",
-	description: "A plugin that tracks upload progress",
+const cachingPlugin = definePlugin({
+	id: "caching",
+	name: "Caching Plugin",
 	version: "1.0.0",
 
-	defineExtraOptions: () => pluginOptionsSchema,
+	middlewares: (context: PluginSetupContext) => {
+		const cache = new Map<string, Response>();
 
-	setup: ({ request, options }: PluginSetupContext<z.infer<typeof pluginOptionsSchema>>) => {
-		const xhr = new XMLHttpRequest();
+		return {
+			fetchMiddleware: (ctx) => async (input, init) => {
+				const key = input.toString();
 
-		xhr.open(request.method!, options.fullURL!);
+				if (cache.has(key)) {
+					return cache.get(key)!.clone();
+				}
 
-		xhr.send(request.body as XMLHttpRequestBodyInit);
-
-		xhr.upload.addEventListener("progress", (event) => {
-			if (!event.lengthComputable) {
-				console.error("Upload progress is not calculable");
-				return;
-			}
-
-			options.onUploadProgress?.({ loaded: event.loaded, total: event.total });
-		});
+				const response = await ctx.fetchImpl(input, init);
+				cache.set(key, response.clone());
+				return response;
+			},
+		};
 	},
-});
-
-const callBackendApi = createFetchClient({
-	baseURL: "http://localhost:3000",
-	plugins: [uploadProgressPlugin],
-});
-
-const { data } = await callBackendApi("/api/users", {
-	onUploadProgress: ({ loaded, total }) => {
-		console.log(`Uploaded ${loaded} bytes of ${total}`);
-	},
-});
-```
-
-Here we use Zod schemas to define the custom callapi option `onUploadProgress`, which is then called inside the `setup` function to set up progress tracking for XMLHttpRequest uploads.
-
-## Using Plugins
-
-### Adding Base Plugins
-
-You can add plugins when creating a CallApi instance. These plugins will be applied to all requests made with that instance:
-
-```ts title="api.ts"
-const callBackendApi = createFetchClient({
-	plugins: [
-		envPlugin, // Handle environment-specific configurations
-		loggingPlugin, // Log request/response details
-	],
-});
-```
-
-### Adding Plugins to Individual Requests
-
-For specific requests, you can add plugins that will only be active for that particular call:
-
-```ts title="api.ts"
-const { data } = await callBackendApi("/users", {
-	plugins: [metricsPlugin], // Only track metrics for this request
-});
-```
-
-**NOTE**: Using the `plugins` option directly on the CallApi instance will replace the base plugins array by default. If you want to keep the base plugins and still be able to add new ones, pass a callback to the `plugins` option that is called with the base plugins array:
-
-```ts title="api.ts"
-import { createFetchClient } from "@zayne-labs/callapi";
-import { metricsPlugin, envPlugin, loggingPlugin } from "./plugins";
-
-const callBackendApi = createFetchClient({
-	plugins: [envPlugin, loggingPlugin],
-});
-
-const { data } = await callBackendApi("/users", {
-	plugins: ({ basePlugins }) => [...basePlugins, metricsPlugin], // Add metrics plugin while keeping base plugins
 });
 ```
 

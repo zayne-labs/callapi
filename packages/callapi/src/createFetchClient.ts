@@ -5,6 +5,7 @@ import {
 	type ExecuteHookInfo,
 	executeHooks,
 	executeHooksInCatchBlock,
+	type RequestContext,
 	type RetryContext,
 	type SuccessContext,
 } from "./hooks";
@@ -294,9 +295,15 @@ export const createFetchClient = <
 				...(validMethod && { method: validMethod }),
 			});
 
-			await executeHooks(options.onRequestReady?.({ baseConfig, config, options, request }));
+			const readyRequestContext = { baseConfig, config, options, request } satisfies RequestContext;
 
-			const fetchApi = getFetchImpl(options.customFetchImpl, options.fetchMiddleware);
+			await executeHooks(options.onRequestReady?.(readyRequestContext));
+
+			const fetchApi = getFetchImpl({
+				customFetchImpl: options.customFetchImpl,
+				fetchMiddleware: options.fetchMiddleware,
+				requestContext: readyRequestContext,
+			});
 
 			const response = await handleRequestDeferStrategy({ fetchApi, options, request });
 

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const RecordTypes = z.enum([
+const RecordTypes = z.literal([
 	"documentation",
 	"site",
 	"discourse_post",
@@ -31,7 +31,7 @@ export const ProvideLinksToolSchema = z.object({
 	links: LinksSchema,
 });
 
-const KnownAnswerConfidence = z.enum([
+const KnownAnswerConfidence = z.literal([
 	"very_confident",
 	"somewhat_confident",
 	"not_confident",

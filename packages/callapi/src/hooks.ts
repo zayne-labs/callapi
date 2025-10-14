@@ -383,7 +383,7 @@ export const getHookRegistriesAndKeys = () => {
 	return { hookRegistries, hookRegistryKeys };
 };
 
-export const composeAllHooks = (
+export const composeHooksFromArray = (
 	hooksArray: Array<Hooks[keyof Hooks] | undefined>,
 	hooksExecutionMode: CallApiExtraOptionsForHooks["hooksExecutionMode"]
 ) => {

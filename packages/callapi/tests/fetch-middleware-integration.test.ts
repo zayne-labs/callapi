@@ -28,7 +28,7 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "caching-plugin",
 				name: "Caching Plugin",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						const cacheKey = input.toString();
 						const cached = cache.get(cacheKey);
 
@@ -36,7 +36,7 @@ describe("fetchMiddleware Integration Tests", () => {
 							return cached.data.clone();
 						}
 
-						const response = await fetchImpl(input, init);
+						const response = await ctx.fetchImpl(input, init);
 
 						if (response.ok) {
 							cache.set(cacheKey, {
@@ -83,9 +83,9 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "caching-plugin",
 				name: "Caching Plugin",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						if (cachePolicy === "no-cache") {
-							return fetchImpl(input, init);
+							return ctx.fetchImpl(input, init);
 						}
 
 						const cacheKey = input.toString();
@@ -95,7 +95,7 @@ describe("fetchMiddleware Integration Tests", () => {
 							return cached.data.clone();
 						}
 
-						const response = await fetchImpl(input, init);
+						const response = await ctx.fetchImpl(input, init);
 						cache.set(cacheKey, { data: response.clone(), timestamp: Date.now() });
 						return response;
 					},
@@ -124,7 +124,7 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "caching-plugin",
 				name: "Caching Plugin",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						const cacheKey = input.toString();
 						const cached = cache.get(cacheKey);
 
@@ -132,7 +132,7 @@ describe("fetchMiddleware Integration Tests", () => {
 							return cached.data.clone();
 						}
 
-						const response = await fetchImpl(input, init);
+						const response = await ctx.fetchImpl(input, init);
 						cache.set(cacheKey, { data: response.clone(), timestamp: Date.now() });
 						return response;
 					},
@@ -168,9 +168,9 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "logging-plugin",
 				name: "Logging Plugin",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						logs.push(`Request: ${input}`);
-						const response = await fetchImpl(input, init);
+						const response = await ctx.fetchImpl(input, init);
 						logs.push(`Response: ${response.status}`);
 						return response;
 					},
@@ -181,7 +181,7 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "caching-plugin",
 				name: "Caching Plugin",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						const cacheKey = input.toString();
 						const cached = cache.get(cacheKey);
 
@@ -191,7 +191,7 @@ describe("fetchMiddleware Integration Tests", () => {
 						}
 
 						logs.push("Cache miss");
-						const response = await fetchImpl(input, init);
+						const response = await ctx.fetchImpl(input, init);
 						cache.set(cacheKey, response.clone());
 						return response;
 					},
@@ -225,11 +225,11 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "auth-plugin",
 				name: "Auth Plugin",
 				middlewares: {
-					fetchMiddleware: (fetchApi) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						tokenRefreshCount++;
 						const token = `token-${tokenRefreshCount}`;
 
-						return fetchApi(input, {
+						return ctx.fetchImpl(input, {
 							...init,
 							headers: {
 								...init?.headers,
@@ -244,7 +244,7 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "caching-plugin",
 				name: "Caching Plugin",
 				middlewares: {
-					fetchMiddleware: (fetchApi) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						const cacheKey = input.toString();
 						const cached = cache.get(cacheKey);
 
@@ -252,7 +252,7 @@ describe("fetchMiddleware Integration Tests", () => {
 							return cached.clone();
 						}
 
-						const response = await fetchApi(input, init);
+						const response = await ctx.fetchImpl(input, init);
 						cache.set(cacheKey, response.clone());
 						return response;
 					},
@@ -291,9 +291,9 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "logging",
 				name: "Logging",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						logs.push("log-before");
-						const response = await fetchImpl(input, init);
+						const response = await ctx.fetchImpl(input, init);
 						logs.push("log-after");
 						return response;
 					},
@@ -304,9 +304,9 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "auth",
 				name: "Auth",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						logs.push("auth-before");
-						const response = await fetchImpl(input, {
+						const response = await ctx.fetchImpl(input, {
 							...init,
 							headers: { ...init?.headers, Authorization: "Bearer token" },
 						});
@@ -320,14 +320,14 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "caching",
 				name: "Caching",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						const cached = cache.get(input.toString());
 						if (cached) {
 							logs.push("cache-hit");
 							return cached.clone();
 						}
 						logs.push("cache-miss");
-						const response = await fetchImpl(input, init);
+						const response = await ctx.fetchImpl(input, init);
 						cache.set(input.toString(), response.clone());
 						return response;
 					},
@@ -357,7 +357,7 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "caching-plugin",
 				name: "Caching Plugin",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						const cacheKey = input.toString();
 						const cached = cache.get(cacheKey);
 
@@ -365,7 +365,7 @@ describe("fetchMiddleware Integration Tests", () => {
 							return cached.clone();
 						}
 
-						const response = await fetchImpl(input, init);
+						const response = await ctx.fetchImpl(input, init);
 						cache.set(cacheKey, response.clone());
 						return response;
 					},
@@ -384,10 +384,10 @@ describe("fetchMiddleware Integration Tests", () => {
 			expect(mockFetch).toHaveBeenCalledTimes(1);
 
 			// Second request with per-request interceptor that bypasses cache
-			const bypassCacheMiddleware: FetchMiddleware = (fetchImpl) => async (input, init) => {
+			const bypassCacheMiddleware: FetchMiddleware = (ctx) => async (input, init) => {
 				// Clear cache for this request
 				cache.delete(input.toString());
-				return fetchImpl(input, init);
+				return ctx.fetchImpl(input, init);
 			};
 
 			await client("/users/1", {
@@ -402,8 +402,8 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "logging",
 				name: "Logging",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
-						return fetchImpl(input, init);
+					fetchMiddleware: (ctx) => async (input, init) => {
+						return ctx.fetchImpl(input, init);
 					},
 				},
 			};
@@ -416,8 +416,8 @@ describe("fetchMiddleware Integration Tests", () => {
 			mockFetch.mockResolvedValue(createMockResponse(mockUser));
 
 			await client("/users/1", {
-				fetchMiddleware: (fetchImpl) => async (input, init) => {
-					return fetchImpl(input, {
+				fetchMiddleware: (ctx) => async (input, init) => {
+					return ctx.fetchImpl(input, {
 						...init,
 						headers: {
 							...init?.headers,
@@ -444,9 +444,9 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "plugin1",
 				name: "Plugin 1",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						executionOrder.push("plugin1");
-						return fetchImpl(input, init);
+						return ctx.fetchImpl(input, init);
 					},
 				},
 			};
@@ -455,9 +455,9 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "plugin2",
 				name: "Plugin 2",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						executionOrder.push("plugin2");
-						return fetchImpl(input, init);
+						return ctx.fetchImpl(input, init);
 					},
 				},
 			};
@@ -489,9 +489,9 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "logging",
 				name: "Logging",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						attemptCount++;
-						return fetchImpl(input, init);
+						return ctx.fetchImpl(input, init);
 					},
 				},
 			};
@@ -527,9 +527,9 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "logging",
 				name: "Logging",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						middlewareLogs.push("middleware-before");
-						const response = await fetchImpl(input, init);
+						const response = await ctx.fetchImpl(input, init);
 						middlewareLogs.push("middleware-after");
 						return response;
 					},
@@ -564,12 +564,12 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "caching",
 				name: "Caching",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						const cached = cache.get(input.toString());
 						if (cached) {
 							return cached.clone();
 						}
-						const response = await fetchImpl(input, init);
+						const response = await ctx.fetchImpl(input, init);
 						cache.set(input.toString(), response.clone());
 						return response;
 					},
@@ -608,9 +608,9 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "logging",
 				name: "Logging",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						executionOrder.push("plugin-middleware");
-						return fetchImpl(input, init);
+						return ctx.fetchImpl(input, init);
 					},
 				},
 			};
@@ -640,9 +640,9 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "logging",
 				name: "Logging",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						logs.push(`middleware-attempt-${++attemptCount}`);
-						return fetchImpl(input, init);
+						return ctx.fetchImpl(input, init);
 					},
 				},
 			};
@@ -695,7 +695,7 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "offline",
 				name: "Offline Plugin",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						const cacheKey = input.toString();
 						const cached = cache.get(cacheKey);
 
@@ -709,7 +709,7 @@ describe("fetchMiddleware Integration Tests", () => {
 
 						// If online, try network first
 						try {
-							const response = await fetchImpl(input, init);
+							const response = await ctx.fetchImpl(input, init);
 							cache.set(cacheKey, response.clone());
 							return response;
 						} catch (error) {
@@ -761,7 +761,7 @@ describe("fetchMiddleware Integration Tests", () => {
 					const minDelay = 30;
 
 					return {
-						fetchMiddleware: (fetchImpl) => async (input, init) => {
+						fetchMiddleware: (ctx) => async (input, init) => {
 							const now = Date.now();
 							const timeSinceLastRequest = now - lastRequestTime;
 
@@ -773,7 +773,7 @@ describe("fetchMiddleware Integration Tests", () => {
 							lastRequestTime = Date.now();
 							fetchCalls.push(input.toString());
 
-							return fetchImpl(input, init);
+							return ctx.fetchImpl(input, init);
 						},
 					};
 				},
@@ -806,7 +806,7 @@ describe("fetchMiddleware Integration Tests", () => {
 				id: "transform",
 				name: "Transform Plugin",
 				middlewares: {
-					fetchMiddleware: (fetchImpl) => async (input, init) => {
+					fetchMiddleware: (ctx) => async (input, init) => {
 						// Transform request - add timestamp
 						const modifiedInit = {
 							...init,
@@ -816,7 +816,7 @@ describe("fetchMiddleware Integration Tests", () => {
 							},
 						};
 
-						const response = await fetchImpl(input, modifiedInit);
+						const response = await ctx.fetchImpl(input, modifiedInit);
 
 						// Transform response - add metadata
 						const data = (await response.json()) as Record<string, unknown>;
