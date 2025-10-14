@@ -4,12 +4,9 @@ export default zayne(
 	{
 		ignores: ["packages/**/dist/**", "apps/docs/.source/**", "packages/callapi/tests/**"],
 		react: {
-			// compiler: true,
 			files: ["apps/docs/**/*.{ts,tsx}"],
 			nextjs: {
-				overrides: {
-					"nextjs/no-html-link-for-pages": ["error", "apps/docs"],
-				},
+				overrides: { "nextjs/no-html-link-for-pages": ["error", "apps/docs"] },
 			},
 		},
 		tailwindcssBetter: {
