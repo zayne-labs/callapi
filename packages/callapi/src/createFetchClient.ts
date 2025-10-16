@@ -22,13 +22,6 @@ import {
 } from "./result";
 import { createRetryStrategy } from "./retry";
 import type {
-	GetCurrentRouteSchema,
-	GetCurrentRouteSchemaKey,
-	InferHeadersOption,
-	InferInitURL,
-	ThrowOnErrorUnion,
-} from "./types";
-import type {
 	BaseCallApiConfig,
 	BaseCallApiExtraOptions,
 	CallApiExtraOptions,
@@ -38,6 +31,13 @@ import type {
 	CallApiRequestOptionsForHooks,
 	CallApiResult,
 } from "./types/common";
+import type {
+	GetCurrentRouteSchema,
+	GetCurrentRouteSchemaKey,
+	InferHeadersOption,
+	InferInitURL,
+	ThrowOnErrorUnion,
+} from "./types/conditional-types";
 import type { DefaultDataType, DefaultPluginArray, DefaultThrowOnError } from "./types/default-types";
 import type { AnyFunction, Writeable } from "./types/type-helpers";
 import { getFullAndNormalizedURL } from "./url";
@@ -113,6 +113,13 @@ export const createFetchClient = <
 			TCurrentRouteSchemaKey
 		>,
 		const TPluginArray extends CallApiPlugin[] = TBasePluginArray,
+		TComputedResult = CallApiResult<
+			InferSchemaOutputResult<TSchema["data"], TData>,
+			InferSchemaOutputResult<TSchema["errorData"], TErrorData>,
+			TResultMode,
+			TThrowOnError,
+			TResponseType
+		>,
 	>(
 		...parameters: CallApiParameters<
 			InferSchemaOutputResult<TSchema["data"], GetResponseType<TData, TResponseType>>,
@@ -129,13 +136,7 @@ export const createFetchClient = <
 			TBasePluginArray,
 			TPluginArray
 		>
-	): CallApiResult<
-		InferSchemaOutputResult<TSchema["data"], TData>,
-		InferSchemaOutputResult<TSchema["errorData"], TErrorData>,
-		TResultMode,
-		TThrowOnError,
-		TResponseType
-	> => {
+	): Promise<TComputedResult> => {
 		const [initURLOrURLObject, initConfig = {}] = parameters;
 
 		const [fetchOptions, extraOptions] = splitConfig(initConfig);
@@ -375,7 +376,7 @@ export const createFetchClient = <
 				resultMode: options.resultMode,
 			} satisfies ErrorInfo;
 
-			const { errorDetails, generalErrorResult } = resolveErrorResult(error, errorInfo);
+			const { errorDetails, errorResult } = resolveErrorResult(error, errorInfo);
 
 			const errorContext = {
 				baseConfig,
@@ -432,7 +433,7 @@ export const createFetchClient = <
 					throw error;
 				}
 
-				return generalErrorResult;
+				return errorResult;
 			};
 
 			if (isValidationErrorInstance(error)) {

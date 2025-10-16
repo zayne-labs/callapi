@@ -1,4 +1,4 @@
-import { extraOptionDefaults } from "./constants/default-options";
+import { extraOptionDefaults } from "./constants/defaults";
 import type { ErrorContext, RequestContext } from "./hooks";
 import type { MethodUnion } from "./types";
 import {

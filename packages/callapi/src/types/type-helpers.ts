@@ -9,8 +9,6 @@ export type AnyObject = Record<keyof any, any>;
 // eslint-disable-next-line ts-eslint/no-explicit-any -- Any is required here so that one can pass custom function type without type errors
 export type AnyFunction<TResult = unknown> = (...args: any[]) => TResult;
 
-export type CallbackFn<in TParams, out TResult = void> = (...params: TParams[]) => TResult;
-
 export type Prettify<TObject> = NonNullable<unknown> & { [Key in keyof TObject]: TObject[Key] };
 
 export type WriteableLevel = "deep" | "shallow";

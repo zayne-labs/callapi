@@ -1,6 +1,6 @@
 import { getAuthHeader } from "../auth";
 import { fetchSpecificKeys } from "../constants/common";
-import { extraOptionDefaults, requestOptionDefaults } from "../constants/default-options";
+import { extraOptionDefaults, requestOptionDefaults } from "../constants/defaults";
 import type { RequestContext } from "../hooks";
 import type { Middlewares } from "../middlewares";
 import type { BaseCallApiExtraOptions, CallApiExtraOptions, CallApiRequestOptions } from "../types/common";

@@ -1,4 +1,4 @@
-import { extraOptionDefaults } from "./constants/default-options";
+import { extraOptionDefaults } from "./constants/defaults";
 import type { CallApiExtraOptions } from "./types";
 import type { StandardSchemaV1 } from "./types/standard-schema";
 import { isObject, isString } from "./utils/guards";

@@ -1,4 +1,4 @@
-import { extraOptionDefaults } from "./constants/default-options";
+import { extraOptionDefaults } from "./constants/defaults";
 import {
 	composeHooksFromArray,
 	getHookRegistriesAndKeys,

@@ -4,7 +4,11 @@
 
 import { expect } from "vitest";
 import { HTTPError, ValidationError } from "../src/error";
-import type { CallApiResultSuccessVariant, CallApiResultErrorVariant } from "../src/result";
+import type {
+	CallApiResultErrorVariant,
+	CallApiResultSuccessVariant,
+	CallApiSuccessOrErrorVariant,
+} from "../src/result";
 
 // Simple mock response creator
 export function createMockResponse(
@@ -97,18 +101,18 @@ export function expectValidationError(
 }
 
 // Helper to check if result is successful (for "all" result mode)
-export function expectSuccessResult<T>(
-	result: CallApiResultErrorVariant<T> | CallApiResultSuccessVariant<T>
-): asserts result is CallApiResultSuccessVariant<T> {
+export function expectSuccessResult<TData, TError>(
+	result: CallApiSuccessOrErrorVariant<TData, TError>
+): asserts result is CallApiResultSuccessVariant<TData> {
 	expect(result.error).toBeNull();
 	expect(result.data).toBeDefined();
 	expect(result.response).toBeDefined();
 }
 
 // Helper to check if result is error (for "all" result mode)
-export function expectErrorResult<T>(
-	result: Record<string, unknown>
-): asserts result is CallApiResultErrorVariant<T> {
+export function expectErrorResult<TData, TError>(
+	result: CallApiSuccessOrErrorVariant<TData, TError>
+): asserts result is CallApiResultErrorVariant<TError> {
 	expect(result.data).toBeNull();
 	expect(result.error).toBeDefined();
 }

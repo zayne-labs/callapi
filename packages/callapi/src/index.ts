@@ -28,6 +28,7 @@ export {
 
 export {
 	type CallApiResultErrorVariant,
+	type CallApiSuccessOrErrorVariant,
 	type CallApiResultSuccessVariant,
 	type PossibleHTTPError,
 	type PossibleJavaScriptError,

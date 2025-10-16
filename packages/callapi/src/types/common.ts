@@ -292,7 +292,7 @@ type SharedExtraOptions<
 		 *
 		 * ```
 		 */
-		responseParser?: (responseString: string) => Awaitable<unknown>;
+		responseParser?: (responseString: string) => Awaitable<TData>;
 
 		/**
 		 * Expected response type, determines how the response body is parsed.
@@ -739,4 +739,4 @@ export type CallApiResult<
 	TResultMode extends ResultModeUnion,
 	TThrowOnError extends ThrowOnErrorUnion,
 	TResponseType extends ResponseTypeUnion,
-> = Promise<GetCallApiResult<TData, TErrorData, TResultMode, TThrowOnError, TResponseType>>;
+> = GetCallApiResult<TData, TErrorData, TResultMode, TThrowOnError, TResponseType>;

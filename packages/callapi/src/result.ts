@@ -1,4 +1,4 @@
-import { extraOptionDefaults } from "./constants/default-options";
+import { extraOptionDefaults } from "./constants/defaults";
 import type { HTTPError, ValidationError } from "./error";
 import type { CallApiExtraOptions, ThrowOnErrorUnion } from "./types";
 import type { DefaultDataType, DefaultThrowOnError } from "./types/default-types";
@@ -122,27 +122,38 @@ export type CallApiResultErrorVariant<TErrorData> =
 			response: Response | null;
 	  };
 
+export type CallApiSuccessOrErrorVariant<TData, TError> =
+	| CallApiResultErrorVariant<TError>
+	| CallApiResultSuccessVariant<TData>;
+
 export type ResultModeMapWithoutException<
 	TData,
 	TErrorData,
 	TResponseType extends ResponseTypeUnion,
 	TComputedData = GetResponseType<TData, TResponseType>,
 	TComputedErrorData = GetResponseType<TErrorData, TResponseType>,
+	TComputedResult extends CallApiSuccessOrErrorVariant<
+		TComputedData,
+		TComputedErrorData
+	> = CallApiSuccessOrErrorVariant<TComputedData, TComputedErrorData>,
 > = UnmaskType<{
-	all: CallApiResultErrorVariant<TComputedErrorData> | CallApiResultSuccessVariant<TComputedData>;
+	all: TComputedResult;
 
-	onlyData:
-		| CallApiResultErrorVariant<TComputedErrorData>["data"]
-		| CallApiResultSuccessVariant<TComputedData>["data"];
+	onlyData: TComputedResult["data"];
+
+	onlyResponse: TComputedResult["response"];
 }>;
 
 type ResultModeMapWithException<
 	TData,
 	TResponseType extends ResponseTypeUnion,
 	TComputedData = GetResponseType<TData, TResponseType>,
+	TComputedResult extends
+		CallApiResultSuccessVariant<TComputedData> = CallApiResultSuccessVariant<TComputedData>,
 > = {
-	all: CallApiResultSuccessVariant<TComputedData>;
-	onlyData: CallApiResultSuccessVariant<TComputedData>["data"];
+	all: TComputedResult;
+	onlyData: TComputedResult["data"];
+	onlyResponse: TComputedResult["response"];
 };
 
 export type ResultModeMap<
@@ -165,18 +176,26 @@ export type GetCallApiResult<
 	TResultMode extends ResultModeUnion,
 	TThrowOnError extends ThrowOnErrorUnion,
 	TResponseType extends ResponseTypeUnion,
+	TComputedResultModeMapWithException extends ResultModeMapWithException<
+		TData,
+		TResponseType
+	> = ResultModeMapWithException<TData, TResponseType>,
+	TComputedResultModeMap extends ResultModeMap<
+		TData,
+		TErrorData,
+		TResponseType,
+		TThrowOnError
+	> = ResultModeMap<TData, TErrorData, TResponseType, TThrowOnError>,
 > =
-	TErrorData extends false ? ResultModeMapWithException<TData, TResponseType>["onlyData"]
-	: TErrorData extends false | undefined ? ResultModeMapWithException<TData, TResponseType>["onlyData"]
-	: ResultModePlaceholder extends TResultMode ?
-		ResultModeMap<TData, TErrorData, TResponseType, TThrowOnError>["all"]
+	TErrorData extends false ? TComputedResultModeMapWithException["onlyData"]
+	: TErrorData extends false | undefined ? TComputedResultModeMapWithException["onlyData"]
+	: ResultModePlaceholder extends TResultMode ? TComputedResultModeMap["all"]
 	: TResultMode extends Exclude<ResultModeUnion, ResultModePlaceholder> ?
-		ResultModeMap<TData, TErrorData, TResponseType, TThrowOnError>[TResultMode]
+		TComputedResultModeMap[TResultMode]
 	:	never;
 
-type SuccessInfo = {
+type SuccessInfo = Pick<CallApiExtraOptions, "resultMode"> & {
 	response: Response;
-	resultMode: CallApiExtraOptions["resultMode"];
 };
 
 type LazyResultModeMap = {
@@ -187,12 +206,13 @@ const getResultModeMap = (details: ResultModeMap["all"]): LazyResultModeMap => {
 	return {
 		all: () => details,
 		onlyData: () => details.data,
+		onlyResponse: () => details.response,
 	};
 };
 
 type SuccessResult = CallApiResultSuccessVariant<unknown> | null;
 
-// == The CallApiResult type is used to cast all return statements due to a design limitation in ts.
+// The CallApiResult type is used to cast all return statements due to a design limitation in ts.
 // LINK - See https://www.zhenghao.io/posts/type-functions for more info
 export const resolveSuccessResult = (data: unknown, info: SuccessInfo): SuccessResult => {
 	const { response, resultMode } = info;
@@ -210,15 +230,14 @@ export const resolveSuccessResult = (data: unknown, info: SuccessInfo): SuccessR
 	return successResult as SuccessResult;
 };
 
-export type ErrorInfo = {
-	cloneResponse: CallApiExtraOptions["cloneResponse"];
-	message?: string;
-	resultMode: CallApiExtraOptions["resultMode"];
-};
+export type ErrorInfo = Omit<SuccessInfo, "response">
+	& Pick<CallApiExtraOptions, "cloneResponse"> & {
+		message?: string;
+	};
 
 type ErrorResult = {
 	errorDetails: CallApiResultErrorVariant<unknown>;
-	generalErrorResult: CallApiResultErrorVariant<unknown> | null;
+	errorResult: CallApiResultErrorVariant<unknown> | null;
 };
 
 export const resolveErrorResult = (error: unknown, info: ErrorInfo): ErrorResult => {
@@ -263,18 +282,15 @@ export const resolveErrorResult = (error: unknown, info: ErrorInfo): ErrorResult
 
 	const resultModeMap = getResultModeMap(errorDetails);
 
-	const generalErrorResult = resultModeMap[resultMode ?? "all"]() as never;
+	const errorResult = resultModeMap[resultMode ?? "all"]() as never;
 
-	return {
-		errorDetails,
-		generalErrorResult,
-	};
+	return { errorDetails, errorResult };
 };
 
 export const getCustomizedErrorResult = (
-	errorResult: ErrorResult["generalErrorResult"],
+	errorResult: ErrorResult["errorResult"],
 	customErrorInfo: { message: string | undefined }
-): ErrorResult["generalErrorResult"] => {
+): ErrorResult["errorResult"] => {
 	if (!errorResult) {
 		return null;
 	}
@@ -286,6 +302,6 @@ export const getCustomizedErrorResult = (
 		error: {
 			...errorResult.error,
 			message,
-		} satisfies NonNullable<ErrorResult["generalErrorResult"]>["error"] as never,
+		} satisfies NonNullable<ErrorResult["errorResult"]>["error"] as never,
 	};
 };

@@ -1,4 +1,4 @@
-import { extraOptionDefaults } from "./constants/default-options";
+import { extraOptionDefaults } from "./constants/defaults";
 import type { RequestContext } from "./hooks";
 import { toStreamableRequest, toStreamableResponse } from "./stream";
 import type { AnyString, RemovePrefix, UnmaskType } from "./types/type-helpers";

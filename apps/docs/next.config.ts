@@ -13,7 +13,7 @@ const getRoot = (rootPath = "/") => fileURLToPath(new URL(rootPath, import.meta.
 
 const isDevMode = process.env.NODE_ENV !== "production";
 
-const config = {
+const config: NextConfig = {
 	devIndicators: {
 		position: "bottom-right",
 	},
@@ -41,6 +41,6 @@ const config = {
 	typescript: {
 		ignoreBuildErrors: true,
 	},
-} satisfies NextConfig;
+};
 
 export default withAnalyzer(withMDX(config));
