@@ -183,10 +183,9 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 		$RequestInfoCacheOrNull?.set(dedupeKey, { controller: newFetchController, responsePromise });
 
-		return toStreamableResponse({
-			...streamableContext,
-			response: await responsePromise,
-		});
+		const response = await responsePromise;
+
+		return toStreamableResponse({ ...streamableContext, response });
 	};
 
 	const removeDedupeKeyFromCache = () => {
