@@ -170,7 +170,6 @@ export const createFetchClient = <
 		// == Merged Request Options
 		const mergedRequestOptions = {
 			headers: {}, // == Making sure headers is always an object
-
 			...baseFetchOptions,
 			...(!shouldSkipAutoMergeForRequest && fetchOptions),
 		} satisfies CallApiRequestOptions;
@@ -209,11 +208,11 @@ export const createFetchClient = <
 
 		const newFetchController = new AbortController();
 
-		const timeoutSignal = options.timeout != null ? createTimeoutSignal(options.timeout) : null;
+		const timeoutSignal = createTimeoutSignal(options.timeout);
 
 		const combinedSignal = createCombinedSignal(
-			resolvedRequestOptions.signal,
 			timeoutSignal,
+			resolvedRequestOptions.signal,
 			newFetchController.signal
 		);
 

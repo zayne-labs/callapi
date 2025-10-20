@@ -875,7 +875,7 @@ describe("Utility Functions", () => {
 			it("should create timeout signal", () => {
 				const signal = createTimeoutSignal(1000);
 				expect(signal).toBeInstanceOf(AbortSignal);
-				expect(signal.aborted).toBe(false);
+				expect(signal?.aborted).toBe(false);
 			});
 		});
 
@@ -1155,7 +1155,7 @@ describe("Utility Functions", () => {
 				const signal = createTimeoutSignal(0);
 				expect(signal).toBeInstanceOf(AbortSignal);
 				// Zero timeout doesn't abort immediately in this implementation
-				expect(signal.aborted).toBe(false);
+				expect(signal?.aborted).toBe(false);
 			});
 		});
 

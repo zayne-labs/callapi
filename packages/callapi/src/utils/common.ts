@@ -218,7 +218,11 @@ export const createCombinedSignal = (...signals: Array<AbortSignal | null | unde
 	return combinedSignal;
 };
 
-export const createTimeoutSignal = (milliseconds: number) => {
+export const createTimeoutSignal = (milliseconds: number | null | undefined) => {
+	if (milliseconds == null) {
+		return null;
+	}
+
 	if (!("timeout" in AbortSignal)) {
 		return createTimeoutSignalPolyfill(milliseconds);
 	}
