@@ -97,7 +97,21 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 			return resolvedDedupeKey;
 		}
 
-		return `${globalOptions.fullURL}-${deterministicHashFn({ options: globalOptions, request: globalRequest })}`;
+		const defaultDedupeKey = `${globalOptions.fullURL}-${deterministicHashFn({ options: globalOptions, request: globalRequest })}`;
+
+		return defaultDedupeKey;
+	};
+
+	const getDedupeCacheScopeKey = () => {
+		const dedupeCacheScopeKey =
+			globalOptions.dedupeCacheScopeKey
+			?? globalOptions.dedupe?.cacheScopeKey
+			?? extraOptionDefaults.dedupeCacheScopeKey;
+
+		const resolvedDedupeCacheScopeKey =
+			isFunction(dedupeCacheScopeKey) ? dedupeCacheScopeKey(context) : dedupeCacheScopeKey;
+
+		return resolvedDedupeCacheScopeKey;
 	};
 
 	const dedupeKey = getDedupeKey();
@@ -107,10 +121,7 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 		?? globalOptions.dedupe?.cacheScope
 		?? extraOptionDefaults.dedupeCacheScope;
 
-	const dedupeCacheScopeKey =
-		globalOptions.dedupeCacheScopeKey
-		?? globalOptions.dedupe?.cacheScopeKey
-		?? extraOptionDefaults.dedupeCacheScopeKey;
+	const dedupeCacheScopeKey = getDedupeCacheScopeKey();
 
 	if (dedupeCacheScope === "global" && !$GlobalRequestInfoCache.has(dedupeCacheScopeKey)) {
 		$GlobalRequestInfoCache.set(dedupeCacheScopeKey, new Map());
@@ -299,7 +310,7 @@ export type DedupeOptions = {
 	 *
 	 * @default "default"
 	 */
-	dedupeCacheScopeKey?: "default" | AnyString;
+	dedupeCacheScopeKey?: "default" | AnyString | ((context: RequestContext) => string);
 
 	/**
 	 * Custom key generator for request deduplication.
