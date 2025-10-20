@@ -1,5 +1,13 @@
 # @zayne-labs/callapi
 
+## 1.11.4
+
+### Patch Changes
+
+- 8c31997: refactor(dedupe): extract dedupe cache scope key logic to function
+
+   Move the dedupe cache scope key resolution logic into a separate function for better maintainability and reusability. Also update the type definition to support function values.
+
 ## 1.11.3
 
 ### Patch Changes
