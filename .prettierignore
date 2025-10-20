@@ -1,5 +1,4 @@
 dist
 pnpm-lock.yaml
-*.md
 *.tsbuildinfo
 .next

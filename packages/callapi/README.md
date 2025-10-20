@@ -57,9 +57,10 @@ const { data } = await callApi("/api/data"); // JSON? Parsed.
 
 ```js
 const { data, error } = await callApi("/api/users");
+
 if (error) {
-	console.log(error.name); // "HTTPError", "ValidationError"
-	console.log(error.errorData); // Actual API response
+ console.log(error.name); // "HTTPError", "ValidationError"
+ console.log(error.errorData); // Actual API response
 }
 ```
 
@@ -67,9 +68,9 @@ if (error) {
 
 ```js
 await callApi("/api/data", {
-	retryAttempts: 3,
-	retryStrategy: "exponential",
-	retryStatusCodes: [429, 500, 502, 503],
+ retryAttempts: 3,
+ retryStrategy: "exponential",
+ retryStatusCodes: [429, 500, 502, 503],
 });
 ```
 
@@ -79,65 +80,72 @@ await callApi("/api/data", {
 import { z } from "zod";
 import { defineSchema, createFetchClient } from "@zayne-labs/callapi";
 
-const api = createFetchClient({
-	schema: defineSchema({
-		"/users/:id": {
-			data: z.object({
-				id: z.number(),
-				name: z.string(),
-			}),
-		},
-	}),
+const callMainApi = createFetchClient({
+ schema: defineSchema({
+  "/users/:id": {
+   data: z.object({
+    id: z.number(),
+    name: z.string(),
+   }),
+  },
+ }),
 });
 
-const user = await api("/users/123"); // Fully typed + validated
+const user = await callMainApi("/users/123"); // Fully typed + validated
 ```
 
 **Hooks** - Intercept at any point.
 
 ```js
 const api = createFetchClient({
-	onRequest: ({ request }) => {
-		request.headers.set("Authorization", `Bearer ${token}`);
-	},
-	onError: ({ error }) => {
-		Sentry.captureException(error);
-	},
-	onResponseStream: ({ event }) => {
-		console.log(`Downloaded ${event.progress}%`);
-	},
+ onRequest: ({ request }) => {
+  request.headers.set("Authorization", `Bearer ${token}`);
+ },
+ onError: ({ error }) => {
+  Sentry.captureException(error);
+ },
+ onResponseStream: ({ event }) => {
+  console.log(`Downloaded ${event.progress}%`);
+ },
 });
 ```
 
-**Plugins** - Extend with middleware.
+**Plugins** - Extend with setup, hooks, and middleware.
 
 ```js
-const cachingPlugin = definePlugin({
-	id: "caching-plugin",
-	name: "Caching plugin",
+const metricsPlugin = definePlugin({
+ id: "metrics",
+ name: "Metrics Plugin",
 
-	middlewares: (ctx) => {
-		const cache = new Map();
+ setup: ({ options }) => ({
+  options: {
+   ...options,
+   meta: { startTime: Date.now() },
+  },
+ }),
 
-		return {
-			fetchMiddleware: (fetchImpl) => async (input, init) => {
-				const key = input.toString();
+ hooks: {
+  onSuccess: ({ options }) => {
+   const duration = Date.now() - options.meta.startTime;
 
-				if (cache.has(key)) {
-					return cache.get(key).clone();
-				}
+   console.info(`Request took ${duration}ms`);
+  },
+ },
 
-				const response = await fetchImpl(input, init);
-				cache.set(key, response.clone());
+ middlewares: {
+  fetchMiddleware: (ctx) => async (input, init) => {
+   console.info("→", input);
 
-				return response;
-			},
-		};
-	},
+   const response = await ctx.fetchImpl(input, init);
+
+   console.info("←", response.status);
+   return response;
+  },
+ },
 });
 
-const callBackendApi = createFetchClient({
-	plugins: [cachingPlugin],
+const api = createFetchClient({
+ plugins: [metricsPlugin],
 });
 ```
 
@@ -149,7 +157,7 @@ await callApi("/search", { query: { q: "test" } });
 await callApi("@delete/users/123");
 ```
 
-And so much more.
+**See the [full documentation](https://zayne-labs-callapi.netlify.app/docs) for all features.**
 
 ## Installation
 
@@ -165,10 +173,10 @@ const { data } = await callApi("/api/users");
 
 // Configured
 const api = createFetchClient({
-	baseURL: "https://api.example.com",
-	retryAttempts: 2,
-	timeout: 10000,
-	onError: ({ error }) => trackError(error),
+ baseURL: "https://api.example.com",
+ retryAttempts: 2,
+ timeout: 10000,
+ onError: ({ error }) => trackError(error),
 });
 ```
 
@@ -176,7 +184,7 @@ const api = createFetchClient({
 
 ```html
 <script type="module">
-	import { callApi } from "https://esm.run/@zayne-labs/callapi";
+ import { callApi } from "https://esm.run/@zayne-labs/callapi";
 </script>
 ```
 
