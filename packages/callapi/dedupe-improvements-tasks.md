@@ -25,37 +25,37 @@ Default key includes ALL headers and query params, even volatile ones like times
 
 ```ts
 const generateSmartDedupeKey = (context: RequestContext): string => {
- // Exclude volatile headers
- const volatileHeaders = new Set([
-  "date",
-  "authorization",
-  "user-agent",
-  "x-request-id",
-  "x-trace-id",
-  "timestamp",
- ]);
+	// Exclude volatile headers
+	const volatileHeaders = new Set([
+		"date",
+		"authorization",
+		"user-agent",
+		"x-request-id",
+		"x-trace-id",
+		"timestamp",
+	]);
 
- const stableHeaders: Record<string, string> = {};
- for (const [key, value] of context.request.headers.entries()) {
-  if (!volatileHeaders.has(key.toLowerCase())) {
-   stableHeaders[key] = value;
-  }
- }
+	const stableHeaders: Record<string, string> = {};
+	for (const [key, value] of context.request.headers.entries()) {
+		if (!volatileHeaders.has(key.toLowerCase())) {
+			stableHeaders[key] = value;
+		}
+	}
 
- // Exclude volatile query params
- const url = new URL(context.options.fullURL);
- const volatileParams = new Set(["timestamp", "_t", "cache_bust", "cb", "_"]);
+	// Exclude volatile query params
+	const url = new URL(context.options.fullURL);
+	const volatileParams = new Set(["timestamp", "_t", "cache_bust", "cb", "_"]);
 
- for (const param of volatileParams) {
-  url.searchParams.delete(param);
- }
+	for (const param of volatileParams) {
+		url.searchParams.delete(param);
+	}
 
- return deterministicHashFn({
-  url: url.toString(),
-  method: context.options.method,
-  body: context.request.body,
-  headers: stableHeaders,
- });
+	return deterministicHashFn({
+		url: url.toString(),
+		method: context.options.method,
+		body: context.request.body,
+		headers: stableHeaders,
+	});
 };
 ```
 
@@ -75,27 +75,27 @@ Limit request rate to prevent API rate-limiting.
 type DedupeStrategyUnion = UnmaskType<"cancel" | "defer" | "none" | "throttle">;
 
 export type DedupeOptions = {
- // ... existing options
+	// ... existing options
 
- /**
-  * Configuration for throttle strategy.
-  * Limits requests within a time window.
-  *
-  * @example
-  * ```ts
-  * const client = createFetchClient({
-  *   dedupeStrategy: "throttle",
-  *   throttleConfig: {
-  *     maxRequests: 10,
-  *     timeWindow: 60000 // 10 requests per minute
-  *   }
-  * });
-  * ```
-  */
- throttleConfig?: {
-  maxRequests: number;
-  timeWindow: number; // milliseconds
- };
+	/**
+	 * Configuration for throttle strategy.
+	 * Limits requests within a time window.
+	 *
+	 * @example
+	 * ```ts
+	 * const client = createFetchClient({
+	 *   dedupeStrategy: "throttle",
+	 *   throttleConfig: {
+	 *     maxRequests: 10,
+	 *     timeWindow: 60000 // 10 requests per minute
+	 *   }
+	 * });
+	 * ```
+	 */
+	throttleConfig?: {
+		maxRequests: number;
+		timeWindow: number; // milliseconds
+	};
 };
 ````
 
@@ -103,35 +103,35 @@ export type DedupeOptions = {
 
 ```ts
 const createThrottleStrategy = (config: { maxRequests: number; timeWindow: number }) => {
- const requestCounts = new Map<string, { count: number; windowStart: number }>();
+	const requestCounts = new Map<string, { count: number; windowStart: number }>();
 
- const canExecute = (key: string): boolean => {
-  const now = Date.now();
-  const existing = requestCounts.get(key);
+	const canExecute = (key: string): boolean => {
+		const now = Date.now();
+		const existing = requestCounts.get(key);
 
-  if (!existing || now - existing.windowStart >= config.timeWindow) {
-   requestCounts.set(key, { count: 1, windowStart: now });
-   return true;
-  }
+		if (!existing || now - existing.windowStart >= config.timeWindow) {
+			requestCounts.set(key, { count: 1, windowStart: now });
+			return true;
+		}
 
-  if (existing.count < config.maxRequests) {
-   existing.count++;
-   return true;
-  }
+		if (existing.count < config.maxRequests) {
+			existing.count++;
+			return true;
+		}
 
-  return false;
- };
+		return false;
+	};
 
- const cleanup = () => {
-  const now = Date.now();
-  for (const [key, data] of requestCounts.entries()) {
-   if (now - data.windowStart >= config.timeWindow) {
-    requestCounts.delete(key);
-   }
-  }
- };
+	const cleanup = () => {
+		const now = Date.now();
+		for (const [key, data] of requestCounts.entries()) {
+			if (now - data.windowStart >= config.timeWindow) {
+				requestCounts.delete(key);
+			}
+		}
+	};
 
- return { canExecute, cleanup };
+	return { canExecute, cleanup };
 };
 ```
 
@@ -149,33 +149,33 @@ Wait for quiet period before executing (perfect for search-as-you-type).
 type DedupeStrategyUnion = UnmaskType<"cancel" | "defer" | "none" | "throttle" | "debounce">;
 
 export type DedupeOptions = {
- // ... existing options
+	// ... existing options
 
- /**
-  * Configuration for debounce strategy.
-  * Waits for quiet period before executing.
-  *
-  * @example
-  * ```ts
-  * const searchClient = createFetchClient({
-  *   dedupeStrategy: "debounce",
-  *   debounceConfig: {
-  *     delay: 300 // Wait 300ms after last request
-  *   }
-  * });
-  *
-  * // Perfect for search-as-you-type
-  * const handleSearch = (query: string) => {
-  *   searchClient("/api/search", {
-  *     query: { q: query },
-  *     dedupeKey: "search"
-  *   });
-  * };
-  * ```
-  */
- debounceConfig?: {
-  delay: number; // milliseconds
- };
+	/**
+	 * Configuration for debounce strategy.
+	 * Waits for quiet period before executing.
+	 *
+	 * @example
+	 * ```ts
+	 * const searchClient = createFetchClient({
+	 *   dedupeStrategy: "debounce",
+	 *   debounceConfig: {
+	 *     delay: 300 // Wait 300ms after last request
+	 *   }
+	 * });
+	 *
+	 * // Perfect for search-as-you-type
+	 * const handleSearch = (query: string) => {
+	 *   searchClient("/api/search", {
+	 *     query: { q: query },
+	 *     dedupeKey: "search"
+	 *   });
+	 * };
+	 * ```
+	 */
+	debounceConfig?: {
+		delay: number; // milliseconds
+	};
 };
 ````
 
@@ -183,70 +183,70 @@ export type DedupeOptions = {
 
 ```ts
 const createDebounceStrategy = (delay: number) => {
- const timers = new Map<string, NodeJS.Timeout>();
- const pending = new Map<string, { resolve: Function; reject: Function }>();
+	const timers = new Map<string, NodeJS.Timeout>();
+	const pending = new Map<string, { resolve: Function; reject: Function }>();
 
- const schedule = <T>(key: string, executor: () => Promise<T>): Promise<T> => {
-  return new Promise<T>((resolve, reject) => {
-   // Clear existing timer
-   const existingTimer = timers.get(key);
-   if (existingTimer) {
-    clearTimeout(existingTimer);
-   }
+	const schedule = <T>(key: string, executor: () => Promise<T>): Promise<T> => {
+		return new Promise<T>((resolve, reject) => {
+			// Clear existing timer
+			const existingTimer = timers.get(key);
+			if (existingTimer) {
+				clearTimeout(existingTimer);
+			}
 
-   // Reject previous pending request
-   const existingRequest = pending.get(key);
-   if (existingRequest) {
-    existingRequest.reject(new DOMException("Superseded", "AbortError"));
-   }
+			// Reject previous pending request
+			const existingRequest = pending.get(key);
+			if (existingRequest) {
+				existingRequest.reject(new DOMException("Superseded", "AbortError"));
+			}
 
-   // Store new request
-   pending.set(key, { resolve, reject });
+			// Store new request
+			pending.set(key, { resolve, reject });
 
-   // Set new timer
-   const timer = setTimeout(async () => {
-    try {
-     const result = await executor();
-     resolve(result);
-    } catch (error) {
-     reject(error);
-    } finally {
-     pending.delete(key);
-     timers.delete(key);
-    }
-   }, delay);
+			// Set new timer
+			const timer = setTimeout(async () => {
+				try {
+					const result = await executor();
+					resolve(result);
+				} catch (error) {
+					reject(error);
+				} finally {
+					pending.delete(key);
+					timers.delete(key);
+				}
+			}, delay);
 
-   timers.set(key, timer);
-  });
- };
+			timers.set(key, timer);
+		});
+	};
 
- const cancel = (key: string): boolean => {
-  const timer = timers.get(key);
-  const request = pending.get(key);
+	const cancel = (key: string): boolean => {
+		const timer = timers.get(key);
+		const request = pending.get(key);
 
-  if (timer) {
-   clearTimeout(timer);
-   timers.delete(key);
-  }
+		if (timer) {
+			clearTimeout(timer);
+			timers.delete(key);
+		}
 
-  if (request) {
-   request.reject(new DOMException("Request cancelled", "AbortError"));
-   pending.delete(key);
-   return true;
-  }
+		if (request) {
+			request.reject(new DOMException("Request cancelled", "AbortError"));
+			pending.delete(key);
+			return true;
+		}
 
-  return false;
- };
+		return false;
+	};
 
- const cleanup = () => {
-  for (const timer of timers.values()) {
-   clearTimeout(timer);
-  }
-  timers.clear();
-  pending.clear();
- };
+	const cleanup = () => {
+		for (const timer of timers.values()) {
+			clearTimeout(timer);
+		}
+		timers.clear();
+		pending.clear();
+	};
 
- return { schedule, cancel, cleanup };
+	return { schedule, cancel, cleanup };
 };
 ```
 
@@ -264,39 +264,39 @@ Add optional metrics for debugging and monitoring.
 
 ````ts
 export type CacheMetrics = {
- hits: number;
- misses: number;
- size: number;
- hitRate: number;
+	hits: number;
+	misses: number;
+	size: number;
+	hitRate: number;
 };
 
 export type DedupeOptions = {
- // ... existing options
+	// ... existing options
 
- /**
-  * Enable cache metrics collection.
-  *
-  * @default false
-  * @example
-  * ```ts
-  * const client = createFetchClient({
-  *   enableMetrics: true,
-  *   onCacheEvent: (event) => {
-  *     console.log(`Cache ${event.type}: ${event.key}`);
-  *   }
-  * });
-  *
-  * // Later
-  * const metrics = getCacheMetrics();
-  * console.log(`Hit rate: ${metrics.hitRate}%`);
-  * ```
-  */
- enableMetrics?: boolean;
+	/**
+	 * Enable cache metrics collection.
+	 *
+	 * @default false
+	 * @example
+	 * ```ts
+	 * const client = createFetchClient({
+	 *   enableMetrics: true,
+	 *   onCacheEvent: (event) => {
+	 *     console.log(`Cache ${event.type}: ${event.key}`);
+	 *   }
+	 * });
+	 *
+	 * // Later
+	 * const metrics = getCacheMetrics();
+	 * console.log(`Hit rate: ${metrics.hitRate}%`);
+	 * ```
+	 */
+	enableMetrics?: boolean;
 
- /**
-  * Callback for cache events.
-  */
- onCacheEvent?: (event: { type: "hit" | "miss" | "removed"; key: string; timestamp: number }) => void;
+	/**
+	 * Callback for cache events.
+	 */
+	onCacheEvent?: (event: { type: "hit" | "miss" | "removed"; key: string; timestamp: number }) => void;
 };
 ````
 
@@ -312,49 +312,49 @@ New strategies integrate into `createDedupeStrategy`:
 
 ```ts
 export const createDedupeStrategy = async (context: DedupeContext) => {
- // ... existing code
+	// ... existing code
 
- const resolvedDedupeStrategy = isFunction(dedupeStrategy) ? dedupeStrategy(context) : dedupeStrategy;
+	const resolvedDedupeStrategy = isFunction(dedupeStrategy) ? dedupeStrategy(context) : dedupeStrategy;
 
- // Throttle strategy
- if (resolvedDedupeStrategy === "throttle") {
-  const throttleConfig = globalOptions.throttleConfig ?? { maxRequests: 10, timeWindow: 60000 };
-  const throttle = createThrottleStrategy(throttleConfig);
+	// Throttle strategy
+	if (resolvedDedupeStrategy === "throttle") {
+		const throttleConfig = globalOptions.throttleConfig ?? { maxRequests: 10, timeWindow: 60000 };
+		const throttle = createThrottleStrategy(throttleConfig);
 
-  if (!throttle.canExecute(dedupeKey)) {
-   throw new Error(
-    `Request throttled: exceeded ${throttleConfig.maxRequests} requests per ${throttleConfig.timeWindow}ms`
-   );
-  }
- }
+		if (!throttle.canExecute(dedupeKey)) {
+			throw new Error(
+				`Request throttled: exceeded ${throttleConfig.maxRequests} requests per ${throttleConfig.timeWindow}ms`
+			);
+		}
+	}
 
- // Debounce strategy
- if (resolvedDedupeStrategy === "debounce") {
-  const debounceConfig = globalOptions.debounceConfig ?? { delay: 300 };
-  const debounce = createDebounceStrategy(debounceConfig.delay);
+	// Debounce strategy
+	if (resolvedDedupeStrategy === "debounce") {
+		const debounceConfig = globalOptions.debounceConfig ?? { delay: 300 };
+		const debounce = createDebounceStrategy(debounceConfig.delay);
 
-  // Return debounced execution
-  return {
-   handleRequestDeferStrategy: async (deferContext) => {
-    return debounce.schedule(dedupeKey, async () => {
-     // Execute the actual request
-     const { fetchApi, options: localOptions, request: localRequest } = deferContext;
-     const streamableRequest = await toStreamableRequest({
-      ...context,
-      options: localOptions,
-      request: localRequest,
-     });
-     const response = await fetchApi(localOptions.fullURL, streamableRequest);
-     return toStreamableResponse({ ...context, response });
-    });
-   },
-   removeDedupeKeyFromCache: () => debounce.cancel(dedupeKey),
-   resolvedDedupeStrategy,
-   // ... other handlers
-  };
- }
+		// Return debounced execution
+		return {
+			handleRequestDeferStrategy: async (deferContext) => {
+				return debounce.schedule(dedupeKey, async () => {
+					// Execute the actual request
+					const { fetchApi, options: localOptions, request: localRequest } = deferContext;
+					const streamableRequest = await toStreamableRequest({
+						...context,
+						options: localOptions,
+						request: localRequest,
+					});
+					const response = await fetchApi(localOptions.fullURL, streamableRequest);
+					return toStreamableResponse({ ...context, response });
+				});
+			},
+			removeDedupeKeyFromCache: () => debounce.cancel(dedupeKey),
+			resolvedDedupeStrategy,
+			// ... other handlers
+		};
+	}
 
- // ... existing cancel/defer logic
+	// ... existing cancel/defer logic
 };
 ```
 
@@ -393,24 +393,24 @@ None. All new features are opt-in.
 ```ts
 // Before
 const client = createFetchClient({
- dedupeStrategy: "cancel",
+	dedupeStrategy: "cancel",
 });
 
 // After (with throttle for rate-limited APIs)
 const client = createFetchClient({
- dedupeStrategy: "throttle",
- throttleConfig: {
-  maxRequests: 10,
-  timeWindow: 60000,
- },
+	dedupeStrategy: "throttle",
+	throttleConfig: {
+		maxRequests: 10,
+		timeWindow: 60000,
+	},
 });
 
 // After (with debounce for search)
 const searchClient = createFetchClient({
- dedupeStrategy: "debounce",
- debounceConfig: {
-  delay: 300,
- },
+	dedupeStrategy: "debounce",
+	debounceConfig: {
+		delay: 300,
+	},
 });
 ```
 
