@@ -93,26 +93,23 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 		const resolvedDedupeKey = isFunction(dedupeKey) ? dedupeKey(context) : dedupeKey;
 
-		if (resolvedDedupeKey !== undefined) {
-			return resolvedDedupeKey;
+		if (resolvedDedupeKey === undefined) {
+			const defaultDedupeKey = `${globalOptions.fullURL}-${deterministicHashFn({ options: globalOptions, request: globalRequest })}`;
+
+			return defaultDedupeKey;
 		}
 
-		const defaultDedupeKey = `${globalOptions.fullURL}-${deterministicHashFn({ options: globalOptions, request: globalRequest })}`;
-
-		return defaultDedupeKey;
+		return resolvedDedupeKey;
 	};
 
 	const getDedupeCacheScopeKey = () => {
-		const dedupeCacheScopeKey =
-			globalOptions.dedupeCacheScopeKey
-			?? globalOptions.dedupe?.cacheScopeKey
-			?? extraOptionDefaults.dedupeCacheScopeKey;
+		const dedupeCacheScopeKey = globalOptions.dedupeCacheScopeKey ?? globalOptions.dedupe?.cacheScopeKey;
 
 		const resolvedDedupeCacheScopeKey =
 			isFunction(dedupeCacheScopeKey) ? dedupeCacheScopeKey(context) : dedupeCacheScopeKey;
 
-		if (resolvedDedupeCacheScopeKey !== undefined) {
-			return resolvedDedupeCacheScopeKey;
+		if (resolvedDedupeCacheScopeKey === undefined) {
+			return extraOptionDefaults.dedupeCacheScopeKey;
 		}
 
 		return resolvedDedupeCacheScopeKey;
