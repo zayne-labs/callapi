@@ -91,9 +91,9 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 		const dedupeKey = globalOptions.dedupeKey ?? globalOptions.dedupe?.key;
 
-		if (dedupeKey) {
-			const resolvedDedupeKey = isFunction(dedupeKey) ? dedupeKey(context) : dedupeKey;
+		const resolvedDedupeKey = isFunction(dedupeKey) ? dedupeKey(context) : dedupeKey;
 
+		if (resolvedDedupeKey !== undefined) {
 			return resolvedDedupeKey;
 		}
 
@@ -110,6 +110,10 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 		const resolvedDedupeCacheScopeKey =
 			isFunction(dedupeCacheScopeKey) ? dedupeCacheScopeKey(context) : dedupeCacheScopeKey;
+
+		if (resolvedDedupeCacheScopeKey !== undefined) {
+			return resolvedDedupeCacheScopeKey;
+		}
 
 		return resolvedDedupeCacheScopeKey;
 	};
@@ -310,7 +314,7 @@ export type DedupeOptions = {
 	 *
 	 * @default "default"
 	 */
-	dedupeCacheScopeKey?: "default" | AnyString | ((context: RequestContext) => string);
+	dedupeCacheScopeKey?: "default" | AnyString | ((context: RequestContext) => string | undefined);
 
 	/**
 	 * Custom key generator for request deduplication.
@@ -381,7 +385,7 @@ export type DedupeOptions = {
 	 *
 	 * @default Auto-generated from request details
 	 */
-	dedupeKey?: string | ((context: RequestContext) => string);
+	dedupeKey?: string | ((context: RequestContext) => string | undefined);
 
 	/**
 	 * Strategy for handling duplicate requests. Can be a static string or callback function.
