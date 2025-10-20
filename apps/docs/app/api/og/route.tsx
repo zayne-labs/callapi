@@ -2,8 +2,6 @@ import { callApi } from "@zayne-labs/callapi";
 import { ImageResponse } from "next/og";
 import { z } from "zod";
 
-export const runtime = "edge";
-
 const ogSchema = z.object({
 	heading: z.string(),
 	mode: z.string(),
