@@ -1,0 +1,211 @@
+---
+title: Advanced Options
+description: Advanced configuration options for fine-tuned control
+---
+
+This page covers advanced CallApi configuration options for specialized use cases and fine-tuned control over request/response handling.
+
+## Response Cloning
+
+Enable `cloneResponse` to read the response multiple times in different places (hooks and main code).
+
+```ts title="api.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+const callApi = createFetchClient({
+	cloneResponse: true,
+	onSuccess: async ({ response }) => {
+		const data = await response.json();
+		console.log(data);
+	},
+});
+```
+
+<Callout type="info">Automatically enabled when using `dedupeStrategy: "defer"`.</Callout>
+
+## Custom Fetch Implementation
+
+Replace the default fetch function for testing or using alternative HTTP clients.
+
+```ts title="api.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+// Mock fetch for testing
+const mockFetch = async (url: string | URL | Request, init?: RequestInit) => {
+	return new Response(JSON.stringify({ mocked: true }), {
+		status: 200,
+		headers: { "Content-Type": "application/json" },
+	});
+};
+
+const callApi = createFetchClient({
+	customFetchImpl: mockFetch,
+});
+```
+
+## Skip Auto-Merge
+
+Control which configuration parts skip automatic merging between base and instance configs.
+
+**How it works:**
+
+By default, CallApi automatically merges base config with instance config. When you set `skipAutoMergeFor`, CallApi stops automatically merging that part of the configuration - **you become responsible for manually spreading the skipped object if you want to preserve instance values**.
+
+This is essential when you need to manually spread instance options and then selectively override specific nested properties with defaults.
+
+**Available options:**
+
+- `"options"` - Skips auto-merge of extra options (plugins, hooks, meta, etc.). You must manually spread `ctx.options`.
+- `"request"` - Skips auto-merge of request options (headers, body, method, etc.). You must manually spread `ctx.request`.
+- `"all"` - Skips auto-merge of both. You must manually spread both `ctx.options` and `ctx.request`.
+
+```ts title="api.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+const client = createFetchClient((ctx) => ({
+	baseURL: "https://api.example.com",
+	plugins: [authPlugin()],
+	skipAutoMergeFor: "options",
+
+	// Spread instance options first
+	...(ctx.options as object),
+
+	// Then provide defaults for nested properties
+	meta: {
+		...ctx.options.meta,
+		auth: {
+			signInRoute: "/auth/signin",
+			// Instance values override these defaults
+			...ctx.options.meta?.auth,
+		},
+	},
+}));
+
+// Instance can override nested auth properties
+await client("/protected", {
+	meta: {
+		auth: {
+			redirectOnError: false,
+		},
+	},
+});
+```
+
+**Why use `skipAutoMergeFor: "options"`?**
+
+Without it, CallApi automatically merges `ctx.options` with your base config, which means you can't provide defaults for nested properties that can be overridden.
+
+With `skipAutoMergeFor: "options"`:
+
+1. CallApi stops automatically merging `ctx.options`
+2. **You must manually spread `ctx.options`** to preserve instance values: `...(ctx.options as object)`
+3. Then you can provide defaults for nested properties
+4. Instance-provided nested values override your defaults because they're spread last
+
+<Callout type="warn">
+	If you don't manually spread the skipped object, instance values will be lost!
+</Callout>
+
+## Body Serialization
+
+Customize how request body objects are serialized.
+
+```ts title="api.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+const callApi = createFetchClient({
+	bodySerializer: (data) => {
+		// Convert object to URL-encoded form data
+		const formData = new URLSearchParams();
+		Object.entries(data).forEach(([key, value]) => {
+			formData.append(key, String(value));
+		});
+		return formData.toString();
+	},
+});
+```
+
+## Response Parsing
+
+Customize how response strings are parsed.
+
+```ts title="api.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+// Parse XML responses
+const xmlClient = createFetchClient({
+	responseParser: (responseString) => {
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(responseString, "text/xml");
+		return xmlToObject(doc);
+	},
+});
+
+// Custom JSON parser with error handling
+const customClient = createFetchClient({
+	responseParser: (responseString) => {
+		try {
+			return JSON.parse(responseString);
+		} catch {
+			return { error: "Invalid JSON", raw: responseString };
+		}
+	},
+});
+```
+
+## Default HTTP Error Messages
+
+Customize the default error message when the server doesn't provide one.
+
+```ts title="api.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+const client = createFetchClient({
+	defaultHTTPErrorMessage: ({ response }) => {
+		switch (response.status) {
+			case 401:
+				return "Authentication required";
+			case 403:
+				return "Access denied";
+			case 404:
+				return "Resource not found";
+			default:
+				return `Request failed with status ${response.status}`;
+		}
+	},
+});
+```
+
+## Meta Field
+
+Associate metadata with requests for logging, tracing, or custom handling in hooks and middleware.
+
+```ts title="api.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+const callApi = createFetchClient({
+	onError: ({ options, error }) => {
+		// Access metadata passed with the request
+		logError({
+			userId: options.meta?.userId,
+			requestId: options.meta?.requestId,
+			error,
+		});
+	},
+});
+
+await callApi("/api/data", {
+	meta: {
+		userId: currentUser.id,
+		requestId: generateId(),
+	},
+});
+```
+
+## Types
+
+For complete type information on all options, see:
+
+- [Extra Options](./extra-options) - Instance-level options
+- [Base Extra Options](./base-extra-options) - Base client options
+- [Request Options](./request-options) - Fetch API options

@@ -20,6 +20,7 @@
 		"hooks",
 		"middlewares",
 		"plugins",
+		"advanced-options",
 
 		"---Plugins---",
 		"plugins/utility",

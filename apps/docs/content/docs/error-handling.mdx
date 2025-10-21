@@ -4,12 +4,12 @@ description: Learn more about how to handle errors in CallApi
 icon: ShieldAlert
 ---
 
-It prevalent knowledge that making network requests is inherently risky. Things can go wrong for many reasons:
+It's prevalent knowledge that making network requests is inherently risky. Things can go wrong for many reasons:
 
 - The server might be down.
 - The server might respond with an error status like 404 Not Found (the resource doesn't exist) or 500 Internal Server Error (something broke on the server).
 - There might be a network issue.
-- The request might time out.
+- The request might timeout.
 - The response data might not be in the format you expected (e.g., not valid JSON).
 
 When using the standard browser fetch API, handling these failures can sometimes be a bit clunky due to the following reasons:
@@ -33,13 +33,13 @@ The `error` property is an object that has the following properties:
 1. **name**: A string identifying the type of error (e.g., `'HTTPError'`, `'ValidationError'`, `'TypeError'`, `'TimeoutError'`, ...etc).
 
 2. **message**: A brief description of what went wrong:
-   - For HTTP errors: The error message from the server, or if not provided, falls back to the `defaultErrorMessage` option
+   - For HTTP errors: The error message from the server, or if not provided, falls back to the `defaultHTTPErrorMessage` option
    - For validation errors: A formatted error message derived from the validation issues array
    - For non-HTTP errors: The error message from the JavaScript error object that caused the error
 
 3. **errorData**: The detailed error information:
-   - For HTTP errors: It is set to the parsed response from the API
-   - For validation errors: It is set to the validation issues array
+   - For HTTP errors: It is set to the `parsed error response from the API`
+   - For validation errors: It is set to the `validation issues array`
    - For non-HTTP errors: It is set to `false`
 
 4. **originalError**: The original error object that caused the error:
@@ -141,8 +141,10 @@ As seen in the case above, if the data received from the API does not match the 
 
 ## Handling Thrown Errors
 
-Sometimes you might prefer that the error is thrown by CallApi instead of returned as a value in the result object. You can do this by setting the `throwOnError` option to `true`:
-This is especially useful when integrating with libraries that expect promises to reject on failure, such as React Query for example.
+Sometimes you might prefer that errors are thrown instead of returned in the result object. Set `throwOnError` to `true` to enable this behavior.
+This is useful when integrating with libraries that expect promises to reject on failure (like React Query, SWR, or TanStack Query).
+
+You can also pass a function to `throwOnError` for conditional throwing based on the error context.
 
 You can use the `isHTTPErrorInstance` and `isValidationErrorInstance` utilities to check if the error is an instance of `HTTPError` or `ValidationError` respectively.
 
@@ -181,6 +183,17 @@ try {
 		console.error(error.errorData);
 	}
 }
+```
+
+**Conditional throwing:**
+
+```ts twoslash title="api.ts"
+import { callApi } from "@zayne-labs/callapi";
+
+// Only throw for specific status codes
+const { data } = await callApi("https://my-api.com/api/v1/session", {
+	throwOnError: ({ error }) => error.response?.status === 401,
+});
 ```
 
 ## The `data` and `error` properties as a discriminated union

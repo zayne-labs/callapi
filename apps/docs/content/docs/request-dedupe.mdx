@@ -5,10 +5,10 @@ description: Optimize your API calls by preventing duplicate requests
 
 Request deduplication prevents redundant API calls when multiple requests are made to the same endpoint. For example, if a user rapidly clicks a "Refresh Profile" button - without deduplication, it would trigger multiple API calls for the same data. With deduplication, these duplicate calls are handled based on your strategy.
 
-**Key benefits include**:
+**Key benefits:**
 
 - Prevents duplicate API calls
-- Less network requests
+- Reduces network requests
 - Prevents race conditions
 
 ## How it works
@@ -35,7 +35,7 @@ const callApiThree = createFetchClient();
 // @log: Shared deduplication - these requests are from the same callApi instance, so they will be deduped according to the strategy
 
 const resultOne = callApiOne("/users");
-const resultTwo = callApiOne("/users"); // Will dedupe with callApiOne
+const resultTwo = callApiOne("/users"); // Will dedupe with resultOne
 
 // @log: Independent deduplication - these requests are from different callApi instances, therefore no deduplication occurs between them
 
@@ -161,10 +161,10 @@ The callback receives a `RequestContext` object with the following properties:
 
 ## Recommendations
 
-- Use `cancel` when you only need the most recent request to get through, which you'd want majority of the time.
-- Use `defer` when multiple parts of your app need the same data simultaneously.
-- Use `none` when requests must be independent, like in polling scenarios etc.
+- Use `cancel` when you only need the most recent request (most common)
+- Use `defer` when multiple parts of your app need the same data simultaneously
+- Use `none` when requests must be independent (polling, etc.)
 
-Types
+## Types
 
 <auto-type-table path="../../lib/callapi-options.ts" name="DedupeOptions" />

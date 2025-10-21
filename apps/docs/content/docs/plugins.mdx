@@ -93,15 +93,18 @@ const callBackendApi = createFetchClient({
 
 ### Per-Request Plugins
 
-Add plugins to individual requests when you need them for specific calls only:
+Add plugins to individual requests for specific calls:
 
 ```ts title="api.ts"
 const { data } = await callBackendApi("/users", {
-	plugins: [metricsPlugin], // Only track metrics for this request
+	plugins: [metricsPlugin],
 });
 ```
 
-**NOTE**: By default, passing `plugins` to a request replaces the base plugins. To keep base plugins and add new ones, use a callback:
+<Callout type="info">
+	By default, passing `plugins` to a request replaces base plugins. To keep base plugins and add new ones,
+	use a callback.
+</Callout>
 
 ```ts title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";

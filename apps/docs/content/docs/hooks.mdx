@@ -55,6 +55,7 @@ const callApi = createFetchClient({
 
 callApi("/api/data", {
 	onRequest: (ctx) => {},
+	onRequestReady: (ctx) => {},
 	onRequestError: (ctx) => {},
 	onResponse: (ctx) => {},
 	onResponseError: (ctx) => {},
@@ -73,7 +74,11 @@ callApi("/api/data", {
 
 #### onRequest
 
-This hook is called before a request is sent. You can use this to modify request configuration, add headers, or handle authentication.
+This hook is called before a request is sent and before any internal processing of the request object begins. You can use this to modify request configuration, add headers, or handle authentication.
+
+#### onRequestReady
+
+This hook is called just before the HTTP request is sent and after the request has been processed internally. Use this when you need to inspect or log the final request state.
 
 ```ts twoslash title="example.ts"
 import { createFetchClient } from "@zayne-labs/callapi";

@@ -65,7 +65,8 @@ const result = await callApi("/api/users", {
 	retryStrategy: "exponential",
 	retryAttempts: 5, // Retry up to 5 times
 	retryDelay: 1000, // Start with 1 second delay
-	retryMaxDelay: 10000, // Cap the delay at 10 seconds, so requests would go out after 1s then 2s, 4s, 8s, 10s
+	retryMaxDelay: 10000, // Cap the delay at 10 seconds
+	// Retry delays will be: 1s, 2s, 4s, 8s, 10s (capped at maxDelay)
 });
 ```
 

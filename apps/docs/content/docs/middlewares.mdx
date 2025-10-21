@@ -235,6 +235,40 @@ const client = createFetchClient({
 });
 ```
 
+### Error Handling in Middleware
+
+Middleware can catch and handle errors or transform them before they reach your application:
+
+```ts title="error-handling.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+const client = createFetchClient({
+	fetchMiddleware: (ctx) => async (input, init) => {
+		try {
+			const response = await ctx.fetchImpl(input, init);
+
+			if (response.status === 503) {
+				return new Response(JSON.stringify({ cached: true }), {
+					status: 200,
+					headers: { "Content-Type": "application/json" },
+				});
+			}
+
+			return response;
+		} catch (error) {
+			if (error instanceof TypeError && error.message.includes("fetch")) {
+				return new Response(JSON.stringify({ error: "Network error" }), {
+					status: 0,
+					headers: { "Content-Type": "application/json" },
+				});
+			}
+
+			throw error;
+		}
+	},
+});
+```
+
 ### Mock Responses for Testing
 
 ```ts title="mock.ts"

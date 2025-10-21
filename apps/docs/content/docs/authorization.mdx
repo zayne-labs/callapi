@@ -5,6 +5,11 @@ description: Learn how to use convenience authorization helpers callApi provides
 
 CallApi allows you to generate authorization headers conveniently by using an `auth` property.
 
+<Callout type="warn">
+	**Security Best Practice:** Never hardcode sensitive tokens or credentials in your source code. Always
+	use environment variables, secure storage, or runtime token retrieval functions.
+</Callout>
+
 ## Bearer
 
 The bearer authorization is used to add a bearer token to the request. Since this is the more commonly used authorization, passing a string to the `auth` property will generate a `Bearer` Authorization header. You can also pass an object with a `bearer` property to achieve the same result.

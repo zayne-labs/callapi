@@ -169,6 +169,33 @@ const { data } = await callApi("/products", {
 });
 ```
 
+#### Meta Validation
+
+The `meta` key validates the meta option, which can be used to pass arbitrary metadata through the request lifecycle:
+
+```ts twoslash title="client.ts"
+import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
+import { z } from "zod";
+
+const callApi = createFetchClient({
+	baseURL: "https://api.example.com",
+
+	schema: defineSchema({
+		"/analytics": {
+			meta: z.object({
+				trackingId: z.string(),
+				userId: z.string().optional(),
+			}),
+		},
+	}),
+});
+
+// @errors: 2739
+const { data } = await callApi("/analytics", {
+	meta: {},
+});
+```
+
 #### Query Parameters
 
 The query schema validates query parameters. If you define a query schema, the parameters will be validated before being added to the URL.
@@ -479,6 +506,39 @@ const { data, error } = await callApi("/user", {
 		}),
 	}),
 });
+```
+
+## Fallback Route Schema
+
+You can define a fallback schema that applies to all routes not explicitly defined in your schema using the special `.` key:
+
+```ts twoslash title="api.ts"
+import { createFetchClient, defineSchema } from "@zayne-labs/callapi";
+import { z } from "zod";
+
+const callApi = createFetchClient({
+	schema: defineSchema({
+		// Fallback schema for all routes
+		".": {
+			headers: z.object({
+				"x-api-key": z.string(),
+			}),
+		},
+		// Specific route schema (takes precedence over fallback)
+		"/users": {
+			data: z.object({
+				id: z.number(),
+				name: z.string(),
+			}),
+		},
+	}),
+});
+
+// This will use the fallback schema (requires x-api-key header)
+await callApi("/posts");
+
+// This will use both the fallback and specific schema
+await callApi("/users");
 ```
 
 ## Strict Mode

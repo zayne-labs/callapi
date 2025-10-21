@@ -5,7 +5,7 @@ description: Learn how to use CallApi with various higher order libraries and fr
 
 CallApi is designed to be flexible and can be easily integrated with various JavaScript libraries and frameworks. Since it's built on top of the native Fetch API, it works well with any library that expects a Promise-based HTTP client.
 
-<Callout>
+<Callout type="info">
 	Choose an integration guide from the sidebar to learn more about its specific details and best
 	practices.
 </Callout>
@@ -24,58 +24,18 @@ Here's a comprehensive example showing the common integration pattern:
 import { createFetchClient } from "@zayne-labs/callapi";
 import { isHTTPErrorInstance } from "@zayne-labs/callapi/utils";
 
-// @log: Create a configured instance
-
 const callMainApi = createFetchClient({
 	baseURL: "https://api.example.com",
-	resultMode: "onlyData", // Only data is needed for most integrations
-	throwOnError: true, // Most libraries expect errors to be thrown
+	resultMode: "onlyData", // Return just data, not { data, error, response }
+	throwOnError: true, // Libraries like React Query expect thrown errors
 });
 
-// @log: Use it in your data fetching logic
+// React Query
+const queryResult = useQuery({
+	queryKey: ["user", userId],
+	queryFn: () => callMainApi(`/users/${userId}`),
+});
 
-const fetchUserData = async (userId: string) => {
-	try {
-		const userData = await callMainApi(`/users/${userId}`);
-		return userData;
-	} catch (error) {
-		if (isHTTPErrorInstance(error)) {
-			// Handle specific HTTP errors
-			if (error.response.status === 404) {
-				throw new Error(`User ${userId} not found`);
-			}
-			if (error.response.status === 401) {
-				throw new Error("Authentication required");
-			}
-			// Re-throw other HTTP errors for the calling code to handle
-			throw error;
-		}
-
-		// Handle network errors, timeouts, etc.
-		console.error("Network or request error:", error);
-		throw new Error("Failed to fetch user data. Please try again.");
-	}
-};
-
-// @log: Example usage in different integration scenarios
-
-// For React Query
-const useUser = (userId: string) => {
-	return useQuery({
-		queryKey: ["user", userId],
-		queryFn: () => fetchUserData(userId),
-	});
-};
-
-// For SWR
-const useUserSWR = (userId: string) => {
-	return useSWR(`/users/${userId}`, () => fetchUserData(userId));
-};
-
-// For Apollo Client (as a REST data source)
-class UserAPI extends RESTDataSource {
-	async getUser(userId: string) {
-		return fetchUserData(userId);
-	}
-}
+// SWR
+const swrResult = useSWR(`/users/${userId}`, () => callMainApi(`/users/${userId}`));
 ```

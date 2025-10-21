@@ -91,7 +91,7 @@ export const useTodos = () => {
 		queryKey: ["todos"],
 		queryFn: () => {
 			return callApi("/todos", {
-				schemas: { data: todosSchema },
+				schema: { data: todosSchema },
 				throwOnError: true,
 				resultMode: "onlyData",
 			});
