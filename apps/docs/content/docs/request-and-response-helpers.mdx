@@ -173,6 +173,7 @@ You could also provide a custom serializer/stringifier, other than the default `
 
 ```ts title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
+
 const result = await callApi("https://api.example.com/data", {
 	method: "POST",
 	body: { name: "John", age: 30 },
@@ -200,5 +201,61 @@ fetch("https://api.example.com/search", {
 	method: "POST",
 	headers: { "Content-Type": "application/x-www-form-urlencoded" },
 	body: "name=John&age=30",
+});
+```
+
+**FormData**
+
+CallApi provides the `toFormData` utility that converts objects to FormData.
+
+```ts title="api.ts"
+import { callApi } from "@zayne-labs/callapi";
+import { toFormData } from "@zayne-labs/callapi/utils";
+
+const result = await callApi("https://api.example.com/upload", {
+	method: "POST",
+	body: toFormData({ name: "John", age: 30, active: true }),
+});
+```
+
+The utility handles various data types:
+
+- **Primitives/Files/Blobs**: Added directly to FormData
+- **Arrays**: Each item is appended to the same key (allows multiple values)
+- **Objects**: JSON stringified before adding to FormData
+
+```ts title="api.ts"
+import { callApi } from "@zayne-labs/callapi";
+import { toFormData } from "@zayne-labs/callapi/utils";
+
+const result = await callApi("https://api.example.com/upload", {
+	method: "POST",
+	body: toFormData({
+		avatar: fileBlob,
+		tags: ["developer", "designer"],
+		metadata: { role: "admin", level: 5 },
+	}),
+});
+```
+
+**ReturnType-preserving mode**
+
+When using schema validation libraries like Zod, you can preserve the input type while converting to FormData at runtime. This is useful when your callApi schema expects the original object type but needs to be transformed to FormData for transmission:
+
+```ts title="api.ts"
+import { callApi } from "@zayne-labs/callapi";
+import { toFormData } from "@zayne-labs/callapi/utils";
+import { z } from "zod";
+
+const uploadSchema = z.object({
+	name: z.string(),
+	file: z.instanceof(Blob),
+});
+
+const validatedData = uploadSchema.parse({ name: "John", file: blob });
+
+const result = await callApi("https://api.example.com/upload", {
+	method: "POST",
+	body: toFormData(validatedData, { returnType: "inputType" }),
 });
 ```

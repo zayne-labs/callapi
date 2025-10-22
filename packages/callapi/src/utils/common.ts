@@ -69,21 +69,6 @@ export const splitConfig = (config: Record<string, any>) =>
 		omitKeys(config, fetchSpecificKeys) as CallApiExtraOptions,
 	] as const;
 
-type ToQueryStringFn = {
-	(params: CallApiExtraOptions["query"]): string | null;
-	(params: Required<CallApiExtraOptions>["query"]): string;
-};
-
-export const toQueryString: ToQueryStringFn = (params) => {
-	if (!params) {
-		console.error("toQueryString:", "No query params provided!");
-
-		return null as never;
-	}
-
-	return new URLSearchParams(params as Record<string, string>).toString();
-};
-
 export const objectifyHeaders = (headers: CallApiRequestOptions["headers"]) => {
 	if (!headers || isPlainObject(headers)) {
 		return headers;

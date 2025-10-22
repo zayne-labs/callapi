@@ -12,7 +12,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { callApi, createFetchClient } from "../src";
 import { extractMethodFromURL, getFullAndNormalizedURL } from "../src/url";
-import { type GetMethodContext, getMethod, toQueryString } from "../src/utils/common";
+import { type GetMethodContext, getMethod } from "../src/utils/common";
+import { toQueryString } from "../src/utils/helpers";
 import { mockUser } from "./fixtures";
 import { createMockResponse, expectSuccessResult } from "./helpers";
 import { mockFetch } from "./setup";

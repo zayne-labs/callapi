@@ -1,18 +1,16 @@
+import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
 	test: {
 		browser: {
 			enabled: true,
-			// https://vitest.dev/guide/browser/playwright
 			instances: [{ browser: "chromium" }],
-			provider: "playwright",
+			provider: playwright(),
 		},
 
 		coverage: {
-			exclude: ["node_modules/", "dist/", "tests/", "**/*.d.ts", "**/*.config.*"],
-			provider: "v8",
-			reporter: ["json", "html"],
+			include: ["src/**/*.ts"],
 			thresholds: {
 				global: {
 					branches: 85,

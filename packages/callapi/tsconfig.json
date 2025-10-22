@@ -2,7 +2,7 @@
 	"extends": ["../../tsconfig.base.json", "@zayne-labs/tsconfig/bundler/dom/library"],
 
 	"compilerOptions": {
-		"baseUrl": "."
+		// "baseUrl": "."
 		// "paths": {
 		// 	"@/*": ["src/*"]
 		// }

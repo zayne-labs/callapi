@@ -21,7 +21,6 @@ import {
 	splitBaseConfig,
 	splitConfig,
 	toArray,
-	toQueryString,
 	waitFor,
 } from "../src/utils/common";
 import {
@@ -41,6 +40,7 @@ import {
 	isValidationErrorInstance,
 	isValidJsonString,
 } from "../src/utils/guards";
+import { toFormData, toQueryString } from "../src/utils/helpers";
 import { mockError } from "./fixtures";
 import { createMockErrorResponse, createMockResponse } from "./helpers";
 
@@ -1186,6 +1186,367 @@ describe("Utility Functions", () => {
 				expect(fetchOptions).toEqual({ method: "GET" });
 				expect(extraOptions).toEqual({});
 			});
+		});
+	});
+});
+
+describe("toFormData", () => {
+	describe("Basic functionality", () => {
+		it("should convert plain object with primitives to FormData", () => {
+			const data = {
+				name: "John",
+				age: 30,
+				active: true,
+			};
+
+			const formData = toFormData(data);
+
+			expect(formData).toBeInstanceOf(FormData);
+			expect(formData.get("name")).toBe("John");
+			expect(formData.get("age")).toBe("30");
+			expect(formData.get("active")).toBe("true");
+		});
+
+		it("should handle string values", () => {
+			const data = { message: "Hello World" };
+			const formData = toFormData(data);
+
+			expect(formData.get("message")).toBe("Hello World");
+		});
+
+		it("should handle number values", () => {
+			const data = { count: 42, price: 19.99 };
+			const formData = toFormData(data);
+
+			expect(formData.get("count")).toBe("42");
+			expect(formData.get("price")).toBe("19.99");
+		});
+
+		it("should handle boolean values", () => {
+			const data = { isActive: true, isDeleted: false };
+			const formData = toFormData(data);
+
+			expect(formData.get("isActive")).toBe("true");
+			expect(formData.get("isDeleted")).toBe("false");
+		});
+	});
+
+	describe("Array handling", () => {
+		it("should append array items with same key", () => {
+			const data = {
+				tags: ["javascript", "typescript", "react"],
+			};
+
+			const formData = toFormData(data);
+
+			expect(formData.getAll("tags")).toEqual(["javascript", "typescript", "react"]);
+		});
+
+		it("should handle arrays with numbers", () => {
+			const data = {
+				scores: [85, 90, 95],
+			};
+
+			const formData = toFormData(data);
+
+			expect(formData.getAll("scores")).toEqual(["85", "90", "95"]);
+		});
+
+		it("should handle arrays with booleans", () => {
+			const data = {
+				flags: [true, false, true],
+			};
+
+			const formData = toFormData(data);
+
+			expect(formData.getAll("flags")).toEqual(["true", "false", "true"]);
+		});
+
+		it("should handle empty arrays", () => {
+			const data = {
+				items: [] as string[],
+			};
+
+			const formData = toFormData(data);
+
+			expect(formData.getAll("items")).toEqual([]);
+		});
+
+		it("should handle mixed type arrays", () => {
+			const data = {
+				mixed: ["text", 123, true] as (string | number | boolean)[],
+			};
+
+			const formData = toFormData(data);
+
+			expect(formData.getAll("mixed")).toEqual(["text", "123", "true"]);
+		});
+	});
+
+	describe("Blob and File handling", () => {
+		it("should handle Blob values", () => {
+			const blob = new Blob(["test content"], { type: "text/plain" });
+			const data = {
+				file: blob,
+			};
+
+			const formData = toFormData(data);
+			const result = formData.get("file");
+
+			expect(result).toBeInstanceOf(Blob);
+			expect((result as Blob).type).toBe("text/plain");
+			expect((result as Blob).size).toBe(12);
+		});
+
+		it("should handle File values", () => {
+			const file = new File(["test content"], "test.txt", { type: "text/plain" });
+			const data = {
+				upload: file,
+			};
+
+			const formData = toFormData(data);
+
+			expect(formData.get("upload")).toBe(file);
+		});
+
+		it("should handle arrays of Blobs", () => {
+			const blob1 = new Blob(["content1"], { type: "text/plain" });
+			const blob2 = new Blob(["content2"], { type: "text/plain" });
+			const data = {
+				files: [blob1, blob2],
+			};
+
+			const formData = toFormData(data);
+			const results = formData.getAll("files");
+
+			expect(results).toHaveLength(2);
+			expect(results[0]).toBeInstanceOf(Blob);
+			expect(results[1]).toBeInstanceOf(Blob);
+			expect((results[0] as Blob).type).toBe("text/plain");
+			expect((results[1] as Blob).type).toBe("text/plain");
+		});
+
+		it("should handle mixed primitives and Blobs", () => {
+			const blob = new Blob(["test"], { type: "text/plain" });
+			const data = {
+				name: "John",
+				avatar: blob,
+				age: 30,
+			};
+
+			const formData = toFormData(data);
+			const avatar = formData.get("avatar");
+
+			expect(formData.get("name")).toBe("John");
+			expect(avatar).toBeInstanceOf(Blob);
+			expect((avatar as Blob).type).toBe("text/plain");
+			expect(formData.get("age")).toBe("30");
+		});
+	});
+
+	describe("Nested object handling (one level)", () => {
+		it("should JSON stringify nested objects", () => {
+			const data = {
+				user: {
+					name: "John",
+					age: 30,
+				},
+			};
+
+			const formData = toFormData(data);
+
+			expect(formData.get("user")).toBe('{"name":"John","age":30}');
+		});
+
+		it("should handle multiple nested objects", () => {
+			const data = {
+				user: { name: "John", age: 30 },
+				settings: { theme: "dark", notifications: true },
+			};
+
+			const formData = toFormData(data);
+
+			expect(formData.get("user")).toBe('{"name":"John","age":30}');
+			expect(formData.get("settings")).toBe('{"theme":"dark","notifications":true}');
+		});
+
+		it("should handle nested objects with Blob values", () => {
+			const blob = new Blob(["test"], { type: "text/plain" });
+			const data = {
+				file: blob,
+				metadata: { filename: "test.txt", size: 1024 },
+			};
+
+			const formData = toFormData(data);
+			const file = formData.get("file");
+
+			expect(file).toBeInstanceOf(Blob);
+			expect((file as Blob).type).toBe("text/plain");
+			expect(formData.get("metadata")).toBe('{"filename":"test.txt","size":1024}');
+		});
+	});
+
+	describe("Complex data structures", () => {
+		it("should handle mixed data types", () => {
+			const blob = new Blob(["avatar"], { type: "image/png" });
+			const data = {
+				name: "John",
+				age: 30,
+				active: true,
+				tags: ["developer", "designer"],
+				avatar: blob,
+				metadata: { role: "admin", level: 5 },
+			};
+
+			const formData = toFormData(data);
+			const avatar = formData.get("avatar");
+
+			expect(formData.get("name")).toBe("John");
+			expect(formData.get("age")).toBe("30");
+			expect(formData.get("active")).toBe("true");
+			expect(formData.getAll("tags")).toEqual(["developer", "designer"]);
+			expect(avatar).toBeInstanceOf(Blob);
+			expect((avatar as Blob).type).toBe("image/png");
+			expect(formData.get("metadata")).toBe('{"role":"admin","level":5}');
+		});
+
+		it("should handle empty object", () => {
+			const data = {};
+			const formData = toFormData(data);
+
+			expect(formData).toBeInstanceOf(FormData);
+			expect(Array.from(formData.keys())).toEqual([]);
+		});
+
+		it("should handle object with null prototype", () => {
+			const data = Object.create(null);
+			data.name = "John";
+			data.age = 30;
+
+			const formData = toFormData(data);
+
+			expect(formData.get("name")).toBe("John");
+			expect(formData.get("age")).toBe("30");
+		});
+	});
+
+	describe("Type preservation overload", () => {
+		it("should preserve input type when returnType is 'inputType'", () => {
+			const data = {
+				name: "John",
+				age: 30,
+			};
+
+			// This should return TData type but FormData at runtime
+			const result = toFormData(data, { returnType: "inputType" });
+
+			// Runtime check - it's actually FormData
+			expect(result).toBeInstanceOf(FormData);
+			expect((result as unknown as FormData).get("name")).toBe("John");
+			expect((result as unknown as FormData).get("age")).toBe("30");
+
+			// Type check - TypeScript sees it as the original type
+			// This is a compile-time check, so we just verify the runtime behavior
+			type ResultType = typeof result;
+			type ExpectedType = typeof data;
+			const typeCheck: ResultType extends ExpectedType ? true : false = true;
+			expect(typeCheck).toBe(true);
+		});
+
+		it("should work with complex types in type-preserving mode", () => {
+			const blob = new Blob(["test"], { type: "text/plain" });
+			const data = {
+				name: "John",
+				file: blob,
+				tags: ["a", "b"],
+			};
+
+			const result = toFormData(data, { returnType: "inputType" });
+			const file = (result as unknown as FormData).get("file");
+
+			expect(result).toBeInstanceOf(FormData);
+			expect((result as unknown as FormData).get("name")).toBe("John");
+			expect(file).toBeInstanceOf(Blob);
+			expect((file as Blob).type).toBe("text/plain");
+			expect((result as unknown as FormData).getAll("tags")).toEqual(["a", "b"]);
+		});
+	});
+
+	describe("Edge cases", () => {
+		it("should handle special characters in keys", () => {
+			const data = {
+				"user-name": "John",
+				"user.email": "john@example.com",
+				"user[id]": "123",
+			};
+
+			const formData = toFormData(data);
+
+			expect(formData.get("user-name")).toBe("John");
+			expect(formData.get("user.email")).toBe("john@example.com");
+			expect(formData.get("user[id]")).toBe("123");
+		});
+
+		it("should handle special characters in values", () => {
+			const data = {
+				message: "Hello & goodbye!",
+				url: "https://example.com?param=value",
+				emoji: "👋🌍",
+			};
+
+			const formData = toFormData(data);
+
+			expect(formData.get("message")).toBe("Hello & goodbye!");
+			expect(formData.get("url")).toBe("https://example.com?param=value");
+			expect(formData.get("emoji")).toBe("👋🌍");
+		});
+
+		it("should handle very long strings", () => {
+			const longString = "a".repeat(10000);
+			const data = { longText: longString };
+
+			const formData = toFormData(data);
+
+			expect(formData.get("longText")).toBe(longString);
+		});
+
+		it("should handle objects with many keys", () => {
+			const data: Record<string, string> = {};
+			for (let i = 0; i < 100; i++) {
+				data[`key${i}`] = `value${i}`;
+			}
+
+			const formData = toFormData(data);
+
+			for (let i = 0; i < 100; i++) {
+				expect(formData.get(`key${i}`)).toBe(`value${i}`);
+			}
+		});
+
+		it("should handle zero values", () => {
+			const data = {
+				count: 0,
+				price: 0.0,
+				active: false,
+			};
+
+			const formData = toFormData(data);
+
+			expect(formData.get("count")).toBe("0");
+			expect(formData.get("price")).toBe("0");
+			expect(formData.get("active")).toBe("false");
+		});
+
+		it("should handle negative numbers", () => {
+			const data = {
+				temperature: -10,
+				balance: -99.99,
+			};
+
+			const formData = toFormData(data);
+
+			expect(formData.get("temperature")).toBe("-10");
+			expect(formData.get("balance")).toBe("-99.99");
 		});
 	});
 });
