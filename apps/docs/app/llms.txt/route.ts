@@ -3,7 +3,7 @@ import { source } from "@/lib/source";
 export const revalidate = false;
 
 export function GET() {
-	const scanned: string[] = ["# Docs"];
+	const scanned = ["# Docs"];
 
 	const pageMap = new Map<string, string[]>();
 

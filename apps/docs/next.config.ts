@@ -18,10 +18,6 @@ const config: NextConfig = {
 		position: "bottom-right",
 	},
 
-	eslint: {
-		ignoreDuringBuilds: true,
-	},
-
 	reactStrictMode: true,
 
 	// eslint-disable-next-line ts-eslint/require-await

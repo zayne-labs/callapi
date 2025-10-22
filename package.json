@@ -2,7 +2,7 @@
 	"name": "@zayne-labs/callapi-root",
 	"type": "module",
 	"version": "0.0.0",
-	"packageManager": "pnpm@10.18.3",
+	"packageManager": "pnpm@10.19.0",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
@@ -43,10 +43,11 @@
 	"devDependencies": {
 		"@changesets/cli": "2.29.7",
 		"@eslint-react/eslint-plugin": "^2.2.3",
-		"@next/eslint-plugin-next": "^15.5.6",
+		"@next/eslint-plugin-next": "^16.0.0",
 		"@types/node": "^24.9.1",
-		"@zayne-labs/eslint-config": "0.11.0",
-		"@zayne-labs/prettier-config": "0.11.0",
+		"@zayne-labs/eslint-config": "0.11.2",
+		"@zayne-labs/prettier-config": "0.11.2",
+		"@zayne-labs/tsconfig": "0.11.2",
 		"eslint": "9.38.0",
 		"eslint-plugin-better-tailwindcss": "^3.7.10",
 		"eslint-plugin-react-hooks": "^7.0.0",

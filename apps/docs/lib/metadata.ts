@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const baseURL =
-	process.env.NODE_ENV === "development" ?
-		"http://localhost:3000"
-	:	"https://zayne-labs-callapi.netlify.app";
+	process.env.NODE_ENV === "development" || !process.env.URL ?
+		new URL("http://localhost:3000")
+	:	new URL(process.env.URL);
 
 export function createMetadata(overrides?: Metadata): Metadata {
 	return {

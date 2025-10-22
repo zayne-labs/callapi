@@ -144,8 +144,6 @@ As seen in the case above, if the data received from the API does not match the 
 Sometimes you might prefer that errors are thrown instead of returned in the result object. Set `throwOnError` to `true` to enable this behavior.
 This is useful when integrating with libraries that expect promises to reject on failure (like React Query, SWR, or TanStack Query).
 
-You can also pass a function to `throwOnError` for conditional throwing based on the error context.
-
 You can use the `isHTTPErrorInstance` and `isValidationErrorInstance` utilities to check if the error is an instance of `HTTPError` or `ValidationError` respectively.
 
 ```ts twoslash title="api.ts"
@@ -187,12 +185,17 @@ try {
 
 **Conditional throwing:**
 
+You can also pass a function to `throwOnError` for conditional throwing based on the error context.
+This function will be called with the error context object, and you can throw an error based on the context.
+
+For example, you can throw an error only if the response status is 401 (Unauthorized):
+
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
 
 // Only throw for specific status codes
 const { data } = await callApi("https://my-api.com/api/v1/session", {
-	throwOnError: ({ error }) => error.response?.status === 401,
+	throwOnError: ({ response }) => response?.status === 401,
 });
 ```
 

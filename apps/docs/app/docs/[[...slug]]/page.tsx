@@ -1,19 +1,18 @@
-import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/page";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { LLMCopyButton, ViewOptions } from "@/components/ai/page-actions";
 import { getMDXComponents } from "@/components/common";
 import { owner, repo } from "@/lib/github";
 import { createMetadata } from "@/lib/metadata";
 import { source } from "@/lib/source";
+import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/page";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 export const revalidate = 86400;
 
-export default async function Page(props: { params: Promise<{ slug?: string[] }> }) {
-	// eslint-disable-next-line react-x/prefer-destructuring-assignment -- Ignore this
-	const params = await props.params;
+export default async function Page({ params }: PageProps<"/docs/[[...slug]]">) {
+	const { slug } = await params;
 
-	const page = source.getPage(params.slug);
+	const page = source.getPage(slug);
 
 	if (!page) {
 		notFound();
@@ -52,12 +51,9 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
 	);
 }
 
-export function generateStaticParams() {
-	return source.generateParams();
-}
+export async function generateMetadata({ params }: PageProps<"/docs/[[...slug]]">): Promise<Metadata> {
+	const { slug = [] } = await params;
 
-export async function generateMetadata(props: { params: Promise<{ slug: string[] }> }): Promise<Metadata> {
-	const { slug = [] } = await props.params;
 	const page = source.getPage(slug);
 
 	if (!page) {
@@ -70,13 +66,13 @@ export async function generateMetadata(props: { params: Promise<{ slug: string[]
 
 	const image = {
 		height: 630,
-		url: ["/og", ...slug, "image.png"].join("/"),
+		url: ["/og", ...slug, "image.webp"].join("/"),
 		width: 1200,
 	};
 
 	return createMetadata({
 		description,
-		keywords: ["fetch", "api", "wrapper", "request", "cancel", "retry", "interceptor"],
+		keywords: ["fetch", "api", "wrapper", "request", "cancel", "retry", "interceptor", "callapi"],
 		openGraph: {
 			images: [image],
 			url: `/docs/${page.slugs.join("/")}`,
@@ -86,4 +82,8 @@ export async function generateMetadata(props: { params: Promise<{ slug: string[]
 			images: [image],
 		},
 	});
+}
+
+export function generateStaticParams() {
+	return source.generateParams();
 }

@@ -5,10 +5,10 @@
 ### Patch Changes
 
 - 63ecf19: fix(callapi): improve dedupe key handling and update docs formatting
-   - Fix dedupe key resolution logic to properly handle undefined values
-   - Update type definitions to allow undefined return values for dedupe callbacks
-   - Normalize indentation in README.md examples
-   - Add .\*md to prettierignore
+  - Fix dedupe key resolution logic to properly handle undefined values
+  - Update type definitions to allow undefined return values for dedupe callbacks
+  - Normalize indentation in README.md examples
+  - Add .\*md to prettierignore
 
 ## 1.11.4
 
@@ -23,11 +23,11 @@
 ### Patch Changes
 
 - 70ebf9e: refactor(callapi): consolidate default options and improve type safety
-   - Rename default-options.ts to defaults.ts for better clarity
-   - Add new CallApiSuccessOrErrorVariant type for better type safety
-   - Improve error handling with more specific error result types
-   - Update imports across multiple files to use new defaults.ts
-   - Refactor result type handling for better maintainability
+  - Rename default-options.ts to defaults.ts for better clarity
+  - Add new CallApiSuccessOrErrorVariant type for better type safety
+  - Improve error handling with more specific error result types
+  - Update imports across multiple files to use new defaults.ts
+  - Refactor result type handling for better maintainability
 
 ## 1.11.2
 
@@ -60,31 +60,31 @@
 ### Minor Changes
 
 - 3860cb7: feat(middleware): ✨ implement fetch middleware composition system
-   - Add fetchMiddleware option to enhance fetch function with composable middleware pattern
-   - Support middleware at base config, plugin, and per-request levels
-   - Implement proper composition order: per-request → plugins → base → customFetchImpl → fetch
-   - Add comprehensive tests for middleware composition, caching implementation, and integration
-   - Create example caching plugin implementation using the middleware system
+  - Add fetchMiddleware option to enhance fetch function with composable middleware pattern
+  - Support middleware at base config, plugin, and per-request levels
+  - Implement proper composition order: per-request → plugins → base → customFetchImpl → fetch
+  - Add comprehensive tests for middleware composition, caching implementation, and integration
+  - Create example caching plugin implementation using the middleware system
 
 ## 1.10.6
 
 ### Patch Changes
 
 - ee21de9: refactor(hooks): rename onBeforeRequest to onRequestReady and clean up schema config
-   - Rename onBeforeRequest hook to onRequestReady for better semantic meaning
-   - Remove unused schemaConfig from GetMethodContext type
-   - Reorder imports and clean up type definitions
-   - Update corresponding test cases to reflect hook name change
+  - Rename onBeforeRequest hook to onRequestReady for better semantic meaning
+  - Remove unused schemaConfig from GetMethodContext type
+  - Reorder imports and clean up type definitions
+  - Update corresponding test cases to reflect hook name change
 
 ## 1.10.5
 
 ### Patch Changes
 
 - 8437089: feat(callapi): add onBeforeRequest hook and refactor method handling
-   - Introduce new onBeforeRequest hook for early request lifecycle interception
-   - Move method-related utilities to utils/common.ts for better organization
-   - Update tests to cover new hook functionality
-   - Rename slot.tsx to slot.ts in docs components for consistency
+  - Introduce new onBeforeRequest hook for early request lifecycle interception
+  - Move method-related utilities to utils/common.ts for better organization
+  - Update tests to cover new hook functionality
+  - Rename slot.tsx to slot.ts in docs components for consistency
 
 ## 1.10.4
 
@@ -97,23 +97,23 @@
 ### Patch Changes
 
 - edf52fb: feat(validation): add issueCause to ValidationError and improve schema validation
-   - Add issueCause field to ValidationError to track validation failure source
-   - Refactor schema validation to use full schema context
-   - Update logger plugin to support basic and verbose modes
-   - Fix package.json exports configuration
-   - Update tests to include new issueCause field
+  - Add issueCause field to ValidationError to track validation failure source
+  - Refactor schema validation to use full schema context
+  - Update logger plugin to support basic and verbose modes
+  - Fix package.json exports configuration
+  - Update tests to include new issueCause field
 
 ## 1.10.2
 
 ### Patch Changes
 
 - c69f3d6: refactor: eliminate redundant resultMode variants, use throwOnError for type narrowing
-   - Remove 'allWithException' and 'onlySuccessWithException' result modes
-   - Use throwOnError: true to automatically narrow types and remove null variants
-   - Update type system to conditionally return non-null types when throwOnError: true
-   - Simplify API to just 'all' and 'onlySuccess' modes + throwOnError flag
-   - Update tests and documentation to use new pattern
-   - Fix flaky timing test in hooks.test.ts (>= instead of > for CI stability)
+  - Remove 'allWithException' and 'onlySuccessWithException' result modes
+  - Use throwOnError: true to automatically narrow types and remove null variants
+  - Update type system to conditionally return non-null types when throwOnError: true
+  - Simplify API to just 'all' and 'onlySuccess' modes + throwOnError flag
+  - Update tests and documentation to use new pattern
+  - Fix flaky timing test in hooks.test.ts (>= instead of > for CI stability)
 
 ## 1.10.1
 
@@ -221,11 +221,11 @@
    📝 docs: update plugin documentation to reflect API changes
 
    feat(url): ✨ enhance URL parameter handling and dedupe logic
-   - 🛠️ Improve URL parameter merging for both array and object params
-   - 🔄 Support both `:param` and `{param}` URL parameter patterns
-   - 🧹 Clean up and optimize dedupe cache implementation
-   - 🏗️ Update page actions with better caching and error handling
-   - 📝 Update related documentation and examples
+  - 🛠️ Improve URL parameter merging for both array and object params
+  - 🔄 Support both `:param` and `{param}` URL parameter patterns
+  - 🧹 Clean up and optimize dedupe cache implementation
+  - 🏗️ Update page actions with better caching and error handling
+  - 📝 Update related documentation and examples
 
 ## 1.8.22
 
@@ -255,18 +255,18 @@
 ### Patch Changes
 
 - 6e259a6: fix(cache): optimize global cache scope check in dedupe strategy
-   - Simplify the global cache scope check condition
+  - Simplify the global cache scope check condition
 
 ## 1.8.17
 
 ### Patch Changes
 
 - ee7659d: feat(dedupe): ✨ add scoped deduplication cache with namespacing
-   - feat(dedupe): add `dedupeCacheScopeKey` option for namespacing global dedupe caches
-   - refactor(dedupe): improve type safety with `GlobalRequestInfoCache` type
-   - fix(error): update error message reference to use `defaultHTTPErrorMessage`
-   - refactor(types): add type safety with `satisfies CallApiConfig` to default options
-   - chore: update error message constant name for consistency
+  - feat(dedupe): add `dedupeCacheScopeKey` option for namespacing global dedupe caches
+  - refactor(dedupe): improve type safety with `GlobalRequestInfoCache` type
+  - fix(error): update error message reference to use `defaultHTTPErrorMessage`
+  - refactor(types): add type safety with `satisfies CallApiConfig` to default options
+  - chore: update error message constant name for consistency
 
 ## 1.8.15
 
@@ -309,9 +309,9 @@
 ### Minor Changes
 
 - 7da7707: - Implementation of standard schema validation, both in runtime and at the type level
-   - Ability to override any of the schemas and configs at the instance level
-   - Handle errors specifically for validation failures
-   - Setting up the stage for open api spec generation and usage
+  - Ability to override any of the schemas and configs at the instance level
+  - Handle errors specifically for validation failures
+  - Setting up the stage for open api spec generation and usage
 
 ## 1.7.18
 
@@ -421,13 +421,13 @@
 - 6093711: feat: abstract validation and add new resultMode for allWithoutResponse
 
    This commit introduces data validation for both success and error responses using schemas and validators. It also refactors error handling to provide more context and flexibility.
-   - Implemented `handleValidation` function to validate response data against schemas and validators.
-   - Modified `createFetchClient` and `createFetchClientWithOptions` to include validation of success and error data.
-   - Updated `resolveErrorResult` to provide more detailed error information.
-   - Refactored dedupe strategy to improve readability and maintainability.
-   - Added `omitKeys` and `pickKeys` utility functions for object manipulation.
-   - Updated types and contexts to reflect the changes in error handling and validation.
-   - Increased size limit in `package.json` to accommodate the new features.
+  - Implemented `handleValidation` function to validate response data against schemas and validators.
+  - Modified `createFetchClient` and `createFetchClientWithOptions` to include validation of success and error data.
+  - Updated `resolveErrorResult` to provide more detailed error information.
+  - Refactored dedupe strategy to improve readability and maintainability.
+  - Added `omitKeys` and `pickKeys` utility functions for object manipulation.
+  - Updated types and contexts to reflect the changes in error handling and validation.
+  - Increased size limit in `package.json` to accommodate the new features.
 
 ## 1.6.7
 

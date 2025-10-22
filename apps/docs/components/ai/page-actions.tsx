@@ -7,7 +7,7 @@ import { useCopyButton } from "fumadocs-ui/utils/use-copy-button";
 import { Check, ChevronDown, Copy, ExternalLinkIcon, MessageCircleIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { tv } from "tailwind-variants";
-import { cn } from "@/lib/cn";
+import { cnMerge } from "@/lib/utils/cn";
 import { Button } from "../ui/button";
 
 const cache = new Map<string, string>();
@@ -32,7 +32,7 @@ export function LLMCopyButton(props: CopyBtnProps) {
 		const markDownPromise = callApi(markdownUrl, {
 			responseType: "text",
 		}).then((result) => {
-			const content = result.data as NonNullable<typeof result.data>;
+			const content = result.data ?? "";
 			cache.set(markdownUrl, content);
 			return content;
 		});
@@ -100,7 +100,7 @@ export function ViewOptions(props: ViewOptionsProps) {
 						href={item.href}
 						rel="noreferrer noopener"
 						target="_blank"
-						className={cn(optionVariants())}
+						className={cnMerge(optionVariants())}
 					>
 						{item.icon}
 						{item.title}
