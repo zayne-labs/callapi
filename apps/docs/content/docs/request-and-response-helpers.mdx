@@ -242,7 +242,7 @@ const result = await callApi("https://api.example.com/upload", {
 
 When using schema validation libraries like Zod, you can preserve the input type while converting to FormData at runtime. This is useful when your callApi schema expects the original object type but needs to be transformed to FormData for transmission:
 
-```ts title="api.ts"
+```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
 import { toFormData } from "@zayne-labs/callapi/utils";
 import { z } from "zod";
