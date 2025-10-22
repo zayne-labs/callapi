@@ -1,7 +1,7 @@
 import { source } from "@/lib/source";
 import { notFound } from "next/navigation";
 import { generate as MetadataImage, getImageResponseOptions } from "./generate";
-import { ImageResponse } from "@takumi-rs/image-response";
+import { ImageResponse } from "next/og";
 
 export const revalidate = false;
 
@@ -23,6 +23,6 @@ export function generateStaticParams(): Array<{
 }> {
 	return source.generateParams().map((page) => ({
 		...page,
-		slug: [...page.slug, "image.webp"],
+		slug: [...page.slug, "image.png"],
 	}));
 }

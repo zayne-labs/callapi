@@ -1,4 +1,4 @@
-import type { ImageResponseOptions } from "@takumi-rs/image-response";
+import { ImageResponse } from "next/og";
 import type { ReactNode } from "react";
 import fs from "node:fs/promises";
 import { baseURL } from "@/lib/metadata";
@@ -11,7 +11,9 @@ export type GenerateProps = {
 const font = fs.readFile("./lib/og/JetBrainsMono-Regular.ttf");
 const fontBold = fs.readFile("./lib/og/JetBrainsMono-Bold.ttf");
 
-export const getImageResponseOptions = async (): Promise<ImageResponseOptions> => {
+export const getImageResponseOptions = async (): Promise<
+	ConstructorParameters<typeof ImageResponse>[1]
+> => {
 	const [fontResult, fontBoldResult] = await Promise.all([font, fontBold]);
 
 	return {
@@ -27,7 +29,7 @@ export const getImageResponseOptions = async (): Promise<ImageResponseOptions> =
 				weight: 600,
 			},
 		],
-		format: "webp",
+		// format: "webp",
 		height: 630,
 		width: 1200,
 	};
