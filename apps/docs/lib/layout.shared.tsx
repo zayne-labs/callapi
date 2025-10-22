@@ -1,3 +1,4 @@
+import { source } from "@/lib/source";
 import { callApi } from "@zayne-labs/callapi";
 import { GithubInfo } from "fumadocs-ui/components/github-info";
 import type { DocsLayoutProps, LinkItemType } from "fumadocs-ui/layouts/docs";
@@ -6,7 +7,6 @@ import { TagIcon } from "lucide-react";
 import Image from "next/image";
 import Logo from "public/logo.png";
 import { z } from "zod";
-import { source } from "@/lib/source";
 
 /**
  * Shared layout configurations
@@ -37,9 +37,9 @@ const linkItems = [
 ] satisfies LinkItemType[];
 /* eslint-enable perfectionist/sort-objects -- Ignore sort here */
 
-export const baseOptions: BaseLayoutProps = {
+export const baseOptions = (): BaseLayoutProps => ({
 	links: linkItems,
-};
+});
 
 const callApiNpmDataPromise = callApi("https://registry.npmjs.org/@zayne-labs/callapi/latest", {
 	schema: {
@@ -47,78 +47,78 @@ const callApiNpmDataPromise = callApi("https://registry.npmjs.org/@zayne-labs/ca
 	},
 });
 
-export const docsOptions = {
-	...baseOptions,
+export const docsOptions = () =>
+	({
+		...baseOptions(),
 
-	links: [
-		// assertDefined(linkItems.at(-1)),
-		{
-			children: <GithubInfo owner="zayne-labs" repo="callapi" className="lg:-mx-2" />,
-			type: "custom",
-		},
-	],
-
-	nav: {
-		// children: (
-		// 	<AISearchTrigger
-		// 		theme="secondary"
-		// 		size="sm"
-		// 		className="absolute top-1/2 left-1/2 -translate-1/2 gap-2 rounded-full text-fd-muted-foreground md:hidden"
-		// 	>
-		// 		<Sparkles className="size-4.5 fill-current" />
-		// 		Ask AI
-		// 	</AISearchTrigger>
-		// ),
-
-		title: (
-			<>
-				<Image
-					alt="CallApi"
-					src={Logo as unknown as string}
-					width={18}
-					height={18}
-					className="rounded-[5px]"
-					aria-label="CallApi"
-				/>
-				<p className="font-medium [header_&]:text-[15px]">CallApi</p>
-			</>
-		),
-
-		transparentMode: "top",
-	},
-
-	// searchToggle: {
-	// 	components: {
-	// 		lg: (
-	// 			<div className="flex gap-1.5 max-md:hidden">
-	// 				<LargeSearchToggle className="grow" />
-	// 				<AISearchTrigger
-	// 					aria-label="Ask AI"
-	// 					theme="outline"
-	// 					size="icon"
-	// 					className="text-fd-muted-foreground"
-	// 				>
-	// 					<Sparkles className="size-4" />
-	// 				</AISearchTrigger>
-	// 			</div>
-	// 		),
-	// 	},
-	// },
-
-	sidebar: {
-		tabs: [
+		links: [
+			// assertDefined(linkItems.at(-1)),
 			{
-				// eslint-disable-next-line unicorn/prefer-top-level-await -- Ignore`
-				description: callApiNpmDataPromise.then((result) => `v${result.data?.version ?? "*.*.*"}`),
-				icon: (
-					<div className="grid size-full place-items-center rounded-lg max-md:border max-md:bg-fd-primary/10 max-md:p-1.5">
-						<TagIcon className="size-full text-fd-primary" />
-					</div>
-				),
-				title: "Latest",
-				url: "/docs",
+				children: <GithubInfo owner="zayne-labs" repo="callapi" className="lg:-mx-2" />,
+				type: "custom",
 			},
 		],
-	},
-	tree: source.pageTree,
-} satisfies DocsLayoutProps;
+
+		nav: {
+			// children: (
+			// 	<AISearchTrigger
+			// 		theme="secondary"
+			// 		size="sm"
+			// 		className="absolute top-1/2 left-1/2 -translate-1/2 gap-2 rounded-full text-fd-muted-foreground md:hidden"
+			// 	>
+			// 		<Sparkles className="size-4.5 fill-current" />
+			// 		Ask AI
+			// 	</AISearchTrigger>
+			// ),
+
+			title: (
+				<>
+					<Image
+						alt="CallApi"
+						src={Logo as unknown as string}
+						width={18}
+						height={18}
+						className="rounded-[5px]"
+						aria-label="CallApi"
+					/>
+					<p className="font-medium in-[header]:text-[15px]">CallApi</p>
+				</>
+			),
+
+			transparentMode: "top",
+		},
+
+		// searchToggle: {
+		// 	components: {
+		// 		lg: (
+		// 			<div className="flex gap-1.5 max-md:hidden">
+		// 				<LargeSearchToggle className="grow" />
+		// 				<AISearchTrigger
+		// 					aria-label="Ask AI"
+		// 					theme="outline"
+		// 					size="icon"
+		// 					className="text-fd-muted-foreground"
+		// 				>
+		// 					<Sparkles className="size-4" />
+		// 				</AISearchTrigger>
+		// 			</div>
+		// 		),
+		// 	},
+		// },
+
+		sidebar: {
+			tabs: [
+				{
+					description: callApiNpmDataPromise.then((result) => `v${result.data?.version ?? "*.*.*"}`),
+					icon: (
+						<div className="grid size-full place-items-center rounded-lg max-md:border max-md:bg-fd-primary/10 max-md:p-1.5">
+							<TagIcon className="size-full text-fd-primary" />
+						</div>
+					),
+					title: "Latest",
+					url: "/docs",
+				},
+			],
+		},
+		tree: source.pageTree,
+	}) satisfies DocsLayoutProps;

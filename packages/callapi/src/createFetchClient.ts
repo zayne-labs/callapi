@@ -12,13 +12,13 @@ import {
 import { type CallApiPlugin, initializePlugins } from "./plugins";
 import {
 	type ErrorInfo,
-	type GetResponseType,
 	getCustomizedErrorResult,
-	type ResponseTypeUnion,
-	type ResultModeUnion,
+	type GetResponseType,
 	resolveErrorResult,
 	resolveResponseData,
 	resolveSuccessResult,
+	type ResponseTypeUnion,
+	type ResultModeUnion,
 } from "./result";
 import { createRetryStrategy } from "./retry";
 import type {

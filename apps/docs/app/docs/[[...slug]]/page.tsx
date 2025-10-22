@@ -9,7 +9,7 @@ import { notFound } from "next/navigation";
 
 export const revalidate = 86400;
 
-export default async function Page({ params }: PageProps<"/docs/[[...slug]]">) {
+async function Page({ params }: PageProps<"/docs/[[...slug]]">) {
 	const { slug } = await params;
 
 	const page = source.getPage(slug);
@@ -50,6 +50,8 @@ export default async function Page({ params }: PageProps<"/docs/[[...slug]]">) {
 		</DocsPage>
 	);
 }
+
+export default Page;
 
 export async function generateMetadata({ params }: PageProps<"/docs/[[...slug]]">): Promise<Metadata> {
 	const { slug = [] } = await params;

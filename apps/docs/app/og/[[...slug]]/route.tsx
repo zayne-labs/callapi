@@ -1,12 +1,12 @@
 import { source } from "@/lib/source";
 import { notFound } from "next/navigation";
-import { generate as MetadataImage, getImageResponseOptions } from "./generate";
 import { ImageResponse } from "next/og";
+import { generate as MetadataImage, getImageResponseOptions } from "./generate";
 
 export const revalidate = false;
 
-export async function GET(_req: Request, { params }: RouteContext<"/og/[...slug]">) {
-	const { slug } = await params;
+export async function GET(_req: Request, { params }: RouteContext<"/og/[[...slug]]">) {
+	const { slug = [] } = await params;
 
 	const page = source.getPage(slug.slice(0, -1));
 

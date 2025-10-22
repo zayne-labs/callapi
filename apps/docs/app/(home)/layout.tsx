@@ -8,7 +8,9 @@ const jsonLd: WithContext<WebSite> = {
 	url: "https://zayne-labs-callapi.netlify.app",
 };
 
-function HomeLayout({ children }: { children: React.ReactNode }) {
+function HomeLayout(props: LayoutProps<"/">) {
+	const { children } = props;
+
 	return (
 		<>
 			{/* eslint-disable-next-line react-dom/no-dangerously-set-innerhtml -- It's fine  */}

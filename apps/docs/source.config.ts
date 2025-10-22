@@ -4,6 +4,7 @@ import { defineConfig, defineDocs } from "fumadocs-mdx/config";
 import { transformerTwoslash } from "fumadocs-twoslash";
 import { createFileSystemTypesCache } from "fumadocs-twoslash/cache-fs";
 import { remarkAutoTypeTable } from "fumadocs-typescript";
+import type { ElementContent } from "hast";
 
 export const docs = defineDocs({
 	dir: "content/docs",
@@ -15,9 +16,9 @@ export const docs = defineDocs({
 const defaultTwoSlashOptionsObject = defaultTwoslashOptions();
 
 export default defineConfig({
+	lastModifiedTime: "git",
 	mdxOptions: {
 		rehypeCodeOptions: {
-			experimentalJSEngine: true,
 			inline: "tailing-curly-colon",
 			langs: ["ts", "js", "html", "tsx", "mdx", "bash"],
 			lazy: true,
@@ -40,12 +41,32 @@ export default defineConfig({
 					},
 					typesCache: createFileSystemTypesCache(),
 				}),
+
+				{
+					code: (hast) => {
+						const replace = (node: ElementContent) => {
+							if (node.type === "text") {
+								// eslint-disable-next-line no-param-reassign
+								node.value = node.value.replace(String.raw`[\!code`, "[!code");
+							} else if ("children" in node) {
+								for (const child of node.children) {
+									replace(child);
+								}
+							}
+						};
+
+						replace(hast);
+						return hast;
+					},
+					name: "@shikijs/transformers:remove-notation-escape",
+				},
 			],
 		},
 
 		remarkCodeTabOptions: {
 			parseMdx: true,
 		},
+
 		remarkNpmOptions: {
 			persist: {
 				id: "package-manager",

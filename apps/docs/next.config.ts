@@ -1,7 +1,7 @@
-import { fileURLToPath } from "node:url";
 import createBundleAnalyzer from "@next/bundle-analyzer";
 import { createMDX } from "fumadocs-mdx/next";
 import type { NextConfig } from "next";
+import { fileURLToPath } from "node:url";
 
 const withAnalyzer = createBundleAnalyzer({
 	enabled: process.env.ANALYZE === "true",
@@ -18,6 +18,12 @@ const config: NextConfig = {
 		position: "bottom-right",
 	},
 
+	logging: {
+		fetches: {
+			fullUrl: true,
+		},
+	},
+
 	reactStrictMode: true,
 
 	// eslint-disable-next-line ts-eslint/require-await
@@ -29,6 +35,8 @@ const config: NextConfig = {
 			},
 		];
 	},
+
+	serverExternalPackages: ["typescript", "twoslash", "shiki"],
 
 	...(isDevMode && {
 		outputFileTracingRoot: getRoot(),

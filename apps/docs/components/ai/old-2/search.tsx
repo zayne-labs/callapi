@@ -3,59 +3,35 @@
 import type { ProvideLinksToolSchema } from "@/lib/chat/ai-tools-schema";
 import { cnMerge } from "@/lib/utils/cn";
 import { type UIMessage, type UseChatHelpers, useChat } from "@ai-sdk/react";
-import { css, on } from "@zayne-labs/toolkit-core";
+import { on } from "@zayne-labs/toolkit-core";
 import { createCustomContext, useCallbackRef } from "@zayne-labs/toolkit-react";
 import type { InferProps } from "@zayne-labs/toolkit-react/utils";
 import { Presence } from "@zayne-labs/ui-react/common/presence";
 import { DefaultChatTransport } from "ai";
 import Link from "fumadocs-core/link";
-import { Loader2, MessageCircleIcon, RefreshCw, Send, X } from "lucide-react";
+import { Loader2, RefreshCw, SearchIcon, Send, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { RemoveScroll } from "react-remove-scroll";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Button } from "../ui/button";
-import { Markdown } from "./markdown";
+import { Button } from "../../ui/button";
+import { Markdown } from "../markdown";
 
 type GeneralContextType = {
 	chat: UseChatHelpers<UIMessage>;
-	open: boolean;
 	setOpen: (open: boolean) => void;
 };
 
-const [GeneralContextProvider, useGeneralContext] = createCustomContext<GeneralContextType>({
-	hookName: "useGeneralContext",
-	name: "GeneralContext",
-	providerName: "GeneralContextProvider",
+const [ChatContextProvider, useInitChatContext] = createCustomContext<GeneralContextType>({
+	hookName: "useChatContext",
+	name: "GeneralChatContext",
+	providerName: "GeneralChatContextProvider",
 });
 
 function useChatContext() {
-	const context = useGeneralContext();
+	const context = useInitChatContext();
 
 	return context.chat;
-}
-
-function Header() {
-	const { setOpen } = useGeneralContext();
-
-	return (
-		<div className="sticky top-0 flex items-start gap-2">
-			<div className="flex-1 rounded-xl border bg-fd-card p-3 text-fd-card-foreground">
-				<p className="mb-2 text-sm font-medium">Ask AI</p>
-				<p className="text-xs text-fd-muted-foreground">Powered by Gemma</p>
-			</div>
-
-			<Button
-				size="icon-sm"
-				theme="secondary"
-				className="rounded-full"
-				aria-label="Close"
-				tabIndex={-1}
-				onClick={() => setOpen(false)}
-			>
-				<X />
-			</Button>
-		</div>
-	);
 }
 
 function SearchAIActions() {
@@ -78,7 +54,13 @@ function SearchAIActions() {
 
 	return (
 		<>
-			<Button size="sm" theme="secondary" className="rounded-full" onClick={() => setMessages([])}>
+			<Button
+				type="button"
+				size="sm"
+				theme="secondary"
+				className="rounded-full"
+				onClick={() => setMessages([])}
+			>
 				Clear Chat
 			</Button>
 
@@ -121,10 +103,10 @@ function SearchAIInput(props: InferProps<"form">) {
 		<form {...restOfProps} className={cnMerge("flex items-start pe-2", className)} onSubmit={onStart}>
 			<Input
 				value={input}
-				placeholder={isLoading ? "AI is answering..." : "Ask a question"}
+				placeholder={isLoading ? "AI is answering..." : "Ask AI something"}
 				autoFocus={true}
-				className="p-3"
-				disabled={isLoading}
+				className="p-4"
+				disabled={status === "streaming" || status === "submitted"}
 				onChange={(e) => {
 					setInput(e.target.value);
 				}}
@@ -137,7 +119,6 @@ function SearchAIInput(props: InferProps<"form">) {
 
 			{isLoading ?
 				<Button
-					key="bn"
 					theme="secondary"
 					className="mt-2 gap-2 rounded-full transition-all"
 					onClick={() => void stop()}
@@ -146,7 +127,6 @@ function SearchAIInput(props: InferProps<"form">) {
 					<p>Abort Answer</p>
 				</Button>
 			:	<Button
-					key="bn"
 					type="submit"
 					theme="secondary"
 					className="mt-2 rounded-full transition-all"
@@ -184,6 +164,54 @@ function Input(props: InferProps<"textarea">) {
 		</div>
 	);
 }
+
+function MessageList(props: Omit<InferProps<"div">, "dir">) {
+	const { children, className, ...restOfProps } = props;
+
+	const containerRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (!containerRef.current) return;
+
+		const callback = () => {
+			const container = containerRef.current;
+
+			container?.scrollTo({
+				behavior: "instant",
+				top: container.scrollHeight,
+			});
+		};
+
+		const observer = new ResizeObserver(callback);
+
+		callback();
+
+		const element = containerRef.current.firstElementChild;
+
+		if (element) {
+			observer.observe(element);
+		}
+
+		return () => {
+			observer.disconnect();
+		};
+	}, []);
+
+	return (
+		<div
+			ref={containerRef}
+			{...restOfProps}
+			className={cnMerge("fd-scroll-container flex min-w-0 flex-col overflow-y-auto", className)}
+		>
+			{children}
+		</div>
+	);
+}
+
+const roleName = {
+	assistant: "assistant",
+	user: "you",
+} satisfies Record<Exclude<UIMessage["role"], "system">, string> as Record<string, string>;
 
 function Message(props: InferProps<"div"> & { message: UIMessage }) {
 	const { message, ...restOfProps } = props;
@@ -238,62 +266,12 @@ function Message(props: InferProps<"div"> & { message: UIMessage }) {
 	);
 }
 
-function MessageList(props: Omit<InferProps<"div">, "dir">) {
-	const { children, className, ...restOfProps } = props;
-
-	const containerRef = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		if (!containerRef.current) return;
-
-		const callback = () => {
-			const container = containerRef.current;
-
-			container?.scrollTo({
-				behavior: "instant",
-				top: container.scrollHeight,
-			});
-		};
-
-		const observer = new ResizeObserver(callback);
-
-		callback();
-
-		const element = containerRef.current.firstElementChild;
-
-		if (element) {
-			observer.observe(element);
-		}
-
-		return () => {
-			observer.disconnect();
-		};
-	}, []);
-
-	return (
-		<div
-			ref={containerRef}
-			{...restOfProps}
-			className={cnMerge("fd-scroll-container flex min-w-0 flex-col overflow-y-auto", className)}
-		>
-			{children}
-		</div>
-	);
-}
-
-const roleName = {
-	assistant: "assistant",
-	user: "you",
-} satisfies Record<Exclude<UIMessage["role"], "system">, string> as Record<string, string>;
-
 export function AISearchTrigger() {
 	const [open, setOpen] = useState(false);
 
 	const chat = useChat({
 		id: "search",
-		transport: new DefaultChatTransport({
-			api: "/api/chat",
-		}),
+		transport: new DefaultChatTransport({ api: "/api/chat" }),
 	});
 
 	const onKeyPress = useCallbackRef((event: KeyboardEvent) => {
@@ -314,81 +292,102 @@ export function AISearchTrigger() {
 		return () => cleanup();
 	}, [onKeyPress]);
 
-	const contextValue = useMemo<GeneralContextType>(
-		() => ({ chat, open, setOpen }) satisfies GeneralContextType,
-		[chat, open]
-	);
+	const contextValue = useMemo(() => ({ chat, open, setOpen }), [chat, open]);
 
 	return (
-		<GeneralContextProvider value={contextValue}>
-			<style>
-				{css`
-					@keyframes ask-ai-open {
-						from {
-							translate: 100% 0;
-						}
-					}
-
-					@keyframes ask-ai-close {
-						to {
-							translate: 100% 0;
-							opacity: 0;
-						}
-					}
-				`}
-			</style>
-
-			<Presence present={open}>
-				<div
-					className={cnMerge(
-						`fixed inset-y-2 z-30 flex flex-col rounded-2xl border bg-fd-popover p-2
-						text-fd-popover-foreground shadow-lg max-sm:inset-x-2 sm:end-2 sm:w-[460px]`,
-						open ? "animate-[ask-ai-open_300ms]" : "animate-[ask-ai-close_300ms]"
-					)}
-				>
-					<Header />
-
-					<MessageList
-						className="flex-1 overscroll-contain px-3 py-4"
-						style={{
-							maskImage:
-								"linear-gradient(to bottom, transparent, white 1rem, white calc(100% - 1rem), transparent 100%)",
+		<ChatContextProvider value={contextValue}>
+			<RemoveScroll enabled={open}>
+				<Presence present={open}>
+					<div
+						data-id="Overlay"
+						className={cnMerge(
+							`fixed inset-0 right-(--removed-body-scroll-bar-size,0) z-50 flex flex-col
+							items-center bg-fd-background/80 p-2 pb-33.5 backdrop-blur-sm`,
+							open ? "animate-fd-fade-in" : "animate-fd-fade-out"
+						)}
+						onClick={(event) => {
+							if (event.target === event.currentTarget) {
+								event.preventDefault();
+								setOpen(false);
+							}
 						}}
 					>
-						<div className="flex flex-col gap-4">
-							{chat.messages
-								.filter((msg) => msg.role !== "system")
-								.map((item) => (
-									<Message key={item.id} message={item} />
-								))}
-						</div>
-					</MessageList>
+						<div className="sticky top-0 flex w-full max-w-[600px] items-center gap-2 py-2 pl-2">
+							<p className="flex-1 text-xs text-fd-muted-foreground">Powered by Gemma</p>
 
-					<div
-						className="rounded-xl border bg-fd-card text-fd-card-foreground has-focus-visible:ring-2
-							has-focus-visible:ring-fd-ring"
-					>
-						<SearchAIInput />
-						<div className="flex items-center gap-1.5 p-1 empty:hidden">
-							<SearchAIActions />
+							<Button
+								aria-label="Close"
+								tabIndex={-1}
+								size="icon"
+								theme="secondary"
+								className="rounded-full"
+								onClick={() => setOpen(false)}
+							>
+								<X />
+							</Button>
 						</div>
+
+						<MessageList
+							className="w-full max-w-[600px] overscroll-contain px-2 py-10"
+							style={{
+								maskImage:
+									"linear-gradient(to bottom, transparent, white 4rem, white calc(100% - 2rem), transparent 100%)",
+							}}
+						>
+							<div className="flex flex-col gap-4">
+								{chat.messages
+									.filter((msg) => msg.role !== "system")
+									.map((item) => (
+										<Message key={item.id} message={item} />
+									))}
+							</div>
+						</MessageList>
 					</div>
-				</div>
-			</Presence>
+				</Presence>
 
-			<Button
-				unstyled={true}
-				className={cnMerge(
-					`fixed bottom-4 z-20 flex h-10 w-24 items-center gap-3 rounded-2xl border bg-fd-secondary
-					px-2 text-sm font-medium text-fd-muted-foreground shadow-lg transition-[translate,opacity]`,
-					"end-[calc(var(--removed-body-scroll-bar-size,0px)+var(--fd-layout-offset)+1rem)]",
-					open && "translate-y-10 opacity-0"
-				)}
-				onClick={() => setOpen(true)}
-			>
-				<MessageCircleIcon className="size-4.5" />
-				Ask AI
-			</Button>
-		</GeneralContextProvider>
+				<div
+					className={cnMerge(
+						`fixed bottom-2 z-50 -translate-x-1/2 overflow-hidden rounded-2xl border shadow-xl
+						transition-[width,height] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]`,
+						open ?
+							"h-32 w-[min(600px,90vw)] bg-fd-popover"
+						:	"h-10 w-40 bg-fd-secondary text-fd-secondary-foreground shadow-fd-background"
+					)}
+					style={{
+						left: "calc(50% - var(--removed-body-scroll-bar-size,0px)/2)",
+					}}
+				>
+					<Presence present={!open}>
+						<Button
+							unstyled={true}
+							className={cnMerge(
+								`absolute inset-0 p-2 text-center text-sm text-fd-muted-foreground
+								transition-colors hover:bg-fd-accent hover:text-fd-accent-foreground`,
+								!open ? "animate-fd-fade-in" : "animate-fd-fade-out bg-fd-accent"
+							)}
+							onClick={() => setOpen(true)}
+						>
+							<SearchIcon className="absolute top-1/2 size-4.5 -translate-y-1/2" />
+							Ask AI
+						</Button>
+					</Presence>
+
+					<Presence present={open}>
+						<div
+							className={cnMerge(
+								"absolute inset-0 flex flex-col",
+								open ? "animate-fd-fade-in" : "animate-fd-fade-out"
+							)}
+						>
+							<SearchAIInput className="flex-1" />
+
+							<div className="flex items-center gap-1.5 p-1 empty:hidden">
+								<SearchAIActions />
+							</div>
+						</div>
+					</Presence>
+				</div>
+			</RemoveScroll>
+		</ChatContextProvider>
 	);
 }
