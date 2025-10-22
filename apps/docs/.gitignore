@@ -9,7 +9,7 @@
 # test & build
 /coverage
 /.next/*
-!.next/types/
+!.next/dev/types/
 /out/
 /build
 *.tsbuildinfo

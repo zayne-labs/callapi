@@ -1,3 +1,6 @@
 {
-	"extends": "@zayne-labs/tsconfig/bundler/dom/library"
+	"extends": ["./tsconfig.base.json", "@zayne-labs/tsconfig/bundler/dom/library"],
+
+	"include": ["stub.ts"],
+	"exclude": ["node_modules/**"]
 }
