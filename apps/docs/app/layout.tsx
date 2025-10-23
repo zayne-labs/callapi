@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = createMetadata({
 	description: "A lightweight, type-safe Fetch API wrapper with dozens of convenience features.",
-	keywords: ["fetch", "type-safe", "interceptors", "callapi", "dedupe"],
+	keywords: ["fetch", "type-safe", "interceptors", "callapi", "dedupe", "hooks", "zayne callapi"],
 	metadataBase: new URL(baseURL),
 	title: {
 		default: "CallApi",

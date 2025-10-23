@@ -5,21 +5,15 @@ export const baseURL =
 		new URL("http://localhost:3000")
 	:	new URL(process.env.URL);
 
+const banner = "https://res.cloudinary.com/djvestif4/image/upload/v1761236899/call-api/banner.png";
+
 export function createMetadata(overrides?: Metadata): Metadata {
 	return {
 		...overrides,
 
 		openGraph: {
 			description: overrides?.description ?? undefined,
-			images: [
-				{
-					alt: "CallApi - The Ultimate Fetch API Wrapper",
-					height: 630,
-					type: "image/png",
-					url: "/banner.png",
-					width: 1200,
-				},
-			],
+			images: banner,
 			siteName: "CallApi",
 			title: overrides?.title ?? undefined,
 			type: "website",
@@ -31,14 +25,7 @@ export function createMetadata(overrides?: Metadata): Metadata {
 			card: "summary_large_image",
 			creator: "@zayne_el_kaiser",
 			description: overrides?.description ?? undefined,
-			images: [
-				{
-					alt: "CallApi - The Ultimate Fetch API Wrapper",
-					height: 630,
-					url: "/banner.png",
-					width: 1200,
-				},
-			],
+			images: banner,
 			title: overrides?.title ?? undefined,
 
 			...overrides?.twitter,
