@@ -5,7 +5,7 @@ export const baseURL =
 		new URL("http://localhost:3000")
 	:	new URL(process.env.URL);
 
-const banner = "https://res.cloudinary.com/djvestif4/image/upload/v1761236899/call-api/banner.png";
+const banner = "/banner.png";
 
 export function createMetadata(overrides?: Metadata): Metadata {
 	return {
