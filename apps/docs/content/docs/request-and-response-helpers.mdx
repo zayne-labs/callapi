@@ -249,10 +249,13 @@ import { z } from "zod";
 
 const uploadSchema = z.object({
 	name: z.string(),
-	file: z.instanceof(Blob),
+	file: z.file(),
 });
 
-const validatedData = uploadSchema.parse({ name: "John", file: blob });
+const validatedData = uploadSchema.parse({
+	name: "John",
+	file: new File(["foo"], "foo.txt", { type: "text/plain" }),
+});
 
 const result = await callApi("https://api.example.com/upload", {
 	method: "POST",
