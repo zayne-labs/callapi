@@ -1,9 +1,9 @@
-import { Geist, Geist_Mono } from "next/font/google";
 import { baseURL, createMetadata } from "@/lib/metadata";
 import { cnJoin } from "@/lib/utils/cn";
-import { Providers } from "./Providers";
+import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import "../tailwind.css";
-import type { Metadata } from "next";
+import { Providers } from "./Providers";
 
 const geistSans = Geist({
 	subsets: ["latin"],
@@ -24,6 +24,13 @@ export const metadata: Metadata = createMetadata({
 		template: "%s | CallApi",
 	},
 });
+
+export const viewport: Viewport = {
+	themeColor: [
+		{ color: "#0A0A0A", media: "(prefers-color-scheme: dark)" },
+		{ color: "#fff", media: "(prefers-color-scheme: light)" },
+	],
+};
 
 function RootLayout({ children }: { children: React.ReactNode }) {
 	return (

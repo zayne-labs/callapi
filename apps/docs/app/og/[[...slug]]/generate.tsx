@@ -1,7 +1,7 @@
-import { ImageResponse } from "next/og";
-import type { ReactNode } from "react";
-import fs from "node:fs/promises";
 import { baseURL } from "@/lib/metadata";
+import type { ImageResponseOptions } from "next/server";
+import fs from "node:fs/promises";
+import type { ReactNode } from "react";
 
 export type GenerateProps = {
 	description?: ReactNode;
@@ -11,9 +11,7 @@ export type GenerateProps = {
 const font = fs.readFile("./lib/og/JetBrainsMono-Regular.ttf");
 const fontBold = fs.readFile("./lib/og/JetBrainsMono-Bold.ttf");
 
-export const getImageResponseOptions = async (): Promise<
-	ConstructorParameters<typeof ImageResponse>[1]
-> => {
+export const getImageResponseOptions = async (): Promise<ImageResponseOptions> => {
 	const [fontResult, fontBoldResult] = await Promise.all([font, fontBold]);
 
 	return {
@@ -29,6 +27,7 @@ export const getImageResponseOptions = async (): Promise<
 				weight: 600,
 			},
 		],
+		// format: "webp",
 		// format: "webp",
 		height: 630,
 		width: 1200,

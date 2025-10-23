@@ -18,6 +18,8 @@ const config: NextConfig = {
 		position: "bottom-right",
 	},
 
+	experimental: { turbopackFileSystemCacheForDev: true },
+
 	logging: {
 		fetches: {
 			fullUrl: true,

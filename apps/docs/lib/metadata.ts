@@ -16,7 +16,7 @@ export function createMetadata(overrides?: Metadata): Metadata {
 					alt: "CallApi - The Ultimate Fetch API Wrapper",
 					height: 630,
 					type: "image/png",
-					url: "/og.png",
+					url: "/banner.png",
 					width: 1200,
 				},
 			],
@@ -35,7 +35,7 @@ export function createMetadata(overrides?: Metadata): Metadata {
 				{
 					alt: "CallApi - The Ultimate Fetch API Wrapper",
 					height: 630,
-					url: "/og.png",
+					url: "/banner.png",
 					width: 1200,
 				},
 			],

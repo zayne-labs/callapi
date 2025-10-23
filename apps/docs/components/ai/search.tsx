@@ -347,7 +347,6 @@ export function AISearchTrigger() {
 					)}
 				>
 					<Header />
-
 					<MessageList
 						className="flex-1 overscroll-contain px-3 py-4"
 						style={{

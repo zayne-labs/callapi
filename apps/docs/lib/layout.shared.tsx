@@ -5,7 +5,7 @@ import type { DocsLayoutProps, LinkItemType } from "fumadocs-ui/layouts/docs";
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 import { TagIcon } from "lucide-react";
 import Image from "next/image";
-import Logo from "public/logo.png";
+import logoImage from "public/logo.png";
 import { z } from "zod";
 
 /**
@@ -75,7 +75,7 @@ export const docsOptions = () =>
 				<>
 					<Image
 						alt="CallApi"
-						src={Logo as unknown as string}
+						src={logoImage}
 						width={18}
 						height={18}
 						className="rounded-[5px]"

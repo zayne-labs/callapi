@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
-import fs from "node:fs/promises";
 import type { ImageResponseOptions } from "next/server";
+import fs from "node:fs/promises";
+import type { ReactNode } from "react";
 
 export type GenerateProps = {
 	description?: ReactNode;
@@ -13,15 +13,17 @@ const font = fs.readFile("./lib/og/JetBrainsMono-Regular.ttf");
 const fontBold = fs.readFile("./lib/og/JetBrainsMono-Bold.ttf");
 
 export async function getImageResponseOptions(): Promise<ImageResponseOptions> {
+	const [fontResult, fontBoldResult] = await Promise.all([font, fontBold]);
+
 	return {
 		fonts: [
 			{
-				data: await font,
+				data: fontResult,
 				name: "Mono",
 				weight: 400,
 			},
 			{
-				data: await fontBold,
+				data: fontBoldResult,
 				name: "Mono",
 				weight: 600,
 			},
