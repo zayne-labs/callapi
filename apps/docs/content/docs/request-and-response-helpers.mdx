@@ -151,7 +151,7 @@ const { data, error } = await callApi("https://api.example.com/data", {
 
 CallApi naturally supports all request body types that Fetch does, with a few additional conveniences:
 
-**Object literals**
+### Object literals
 
 ```ts title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
@@ -181,7 +181,7 @@ const result = await callApi("https://api.example.com/data", {
 });
 ```
 
-**Query Strings**
+### Query Strings
 
 Fetch supports [query strings](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) as a request body out of the box. However this usually requires manual setting with `new URLSearchParams()` and `set()` or `append()`.
 
@@ -204,7 +204,7 @@ fetch("https://api.example.com/search", {
 });
 ```
 
-**FormData**
+### FormData
 
 CallApi provides the `toFormData` utility that converts objects to FormData.
 
@@ -235,30 +235,5 @@ const result = await callApi("https://api.example.com/upload", {
 		tags: ["developer", "designer"],
 		metadata: { role: "admin", level: 5 },
 	}),
-});
-```
-
-**ReturnType-preserving mode**
-
-When using schema validation libraries like Zod, you can preserve the input type while converting to FormData at runtime. This is useful when your callApi schema expects the original object type but needs to be transformed to FormData for transmission:
-
-```ts twoslash title="api.ts"
-import { callApi } from "@zayne-labs/callapi";
-import { toFormData } from "@zayne-labs/callapi/utils";
-import { z } from "zod";
-
-const uploadSchema = z.object({
-	name: z.string(),
-	file: z.file(),
-});
-
-const validatedData = uploadSchema.parse({
-	name: "John",
-	file: new File(["foo"], "foo.txt", { type: "text/plain" }),
-});
-
-const result = await callApi("https://api.example.com/upload", {
-	method: "POST",
-	body: toFormData(validatedData, { returnType: "inputType" }),
 });
 ```
