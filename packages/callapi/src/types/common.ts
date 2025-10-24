@@ -649,6 +649,12 @@ export type CallApiExtraOptions<
 
 export type CallApiExtraOptionsForHooks = Hooks & Omit<CallApiExtraOptions, keyof Hooks>;
 
+export type BaseInstanceContext = {
+	initURL: string;
+	options: CallApiExtraOptions;
+	request: CallApiRequestOptions;
+};
+
 export type BaseCallApiConfig<
 	TBaseData = DefaultDataType,
 	TBaseErrorData = DefaultDataType,
@@ -657,31 +663,16 @@ export type BaseCallApiConfig<
 	TBaseResponseType extends ResponseTypeUnion = ResponseTypeUnion,
 	TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
-> =
-	| (CallApiRequestOptions // eslint-disable-next-line perfectionist/sort-intersection-types -- Allow
-			& BaseCallApiExtraOptions<
-				TBaseData,
-				TBaseErrorData,
-				TBaseResultMode,
-				TBaseThrowOnError,
-				TBaseResponseType,
-				TBasePluginArray,
-				TBaseSchemaAndConfig
-			>)
-	| ((instanceConfig: {
-			initURL: string;
-			options: CallApiExtraOptions;
-			request: CallApiRequestOptions;
-	  }) => CallApiRequestOptions // eslint-disable-next-line perfectionist/sort-intersection-types -- Allow
-			& BaseCallApiExtraOptions<
-				TBaseData,
-				TBaseErrorData,
-				TBaseResultMode,
-				TBaseThrowOnError,
-				TBaseResponseType,
-				TBasePluginArray,
-				TBaseSchemaAndConfig
-			>);
+> = CallApiRequestOptions // eslint-disable-next-line perfectionist/sort-intersection-types -- Allow
+	& BaseCallApiExtraOptions<
+		TBaseData,
+		TBaseErrorData,
+		TBaseResultMode,
+		TBaseThrowOnError,
+		TBaseResponseType,
+		TBasePluginArray,
+		TBaseSchemaAndConfig
+	>;
 
 export type CallApiConfig<
 	TData = DefaultDataType,

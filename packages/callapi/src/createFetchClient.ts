@@ -24,6 +24,7 @@ import { createRetryStrategy } from "./retry";
 import type {
 	BaseCallApiConfig,
 	BaseCallApiExtraOptions,
+	BaseInstanceContext,
 	CallApiConfig,
 	CallApiExtraOptions,
 	CallApiExtraOptionsForHooks,
@@ -78,8 +79,7 @@ export const createFetchClient = <
 	const TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TComputedBaseSchemaConfig extends CallApiSchemaConfig = GetBaseSchemaConfig<TBaseSchemaAndConfig>,
 	TComputedBaseSchemaRoutes extends BaseCallApiSchemaRoutes = GetBaseSchemaRoutes<TBaseSchemaAndConfig>,
->(
-	initBaseConfig: BaseCallApiConfig<
+	TComputedBaseConfig = BaseCallApiConfig<
 		TBaseData,
 		TBaseErrorData,
 		TBaseResultMode,
@@ -87,7 +87,11 @@ export const createFetchClient = <
 		TBaseResponseType,
 		TBaseSchemaAndConfig,
 		TBasePluginArray
-	> = {} as never
+	>,
+>(
+	initBaseConfig:
+		| TComputedBaseConfig
+		| ((context: BaseInstanceContext) => TComputedBaseConfig) = {} as never
 ) => {
 	const $LocalRequestInfoCache: RequestInfoCache = new Map();
 
