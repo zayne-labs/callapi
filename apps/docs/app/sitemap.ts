@@ -7,12 +7,13 @@ export const revalidate = false;
 const url = (path: string): string => new URL(path, baseURL).toString();
 
 const sitemap = (): MetadataRoute.Sitemap => {
-	const pages = source.getPages();
+	const docsSiteMap = source.getPages().map((page) => {
+		const lastModified =
+			page.data.lastModified ? new Date(page.data.lastModified).toISOString() : undefined;
 
-	const docsSiteMap = pages.map((page) => {
 		return {
 			changeFrequency: "weekly",
-			lastModified: page.data.lastModified ? new Date(page.data.lastModified) : undefined,
+			lastModified,
 			priority: 0.5,
 			url: url(page.url),
 		} satisfies MetadataRoute.Sitemap[number];
