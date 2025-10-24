@@ -23,12 +23,17 @@ import {
 	toArray,
 	waitFor,
 } from "../src/utils/common";
+import { toFormData, toQueryString } from "../src/utils/external/body";
 import {
-	isArray,
-	isFunction,
 	isHTTPError,
 	isHTTPErrorInstance,
 	isJavascriptError,
+	isValidationError,
+	isValidationErrorInstance,
+} from "../src/utils/external/guards";
+import {
+	isArray,
+	isFunction,
 	isJSONSerializable,
 	isObject,
 	isPlainObject,
@@ -36,14 +41,10 @@ import {
 	isReadableStream,
 	isSerializable,
 	isString,
-	isValidationError,
-	isValidationErrorInstance,
 	isValidJsonString,
 } from "../src/utils/guards";
-import { toFormData, toQueryString } from "../src/utils/helpers";
 import { mockError } from "./fixtures";
 import { createMockErrorResponse, createMockResponse } from "./helpers";
-
 describe("Utility Functions", () => {
 	describe("Type Guard Functions", () => {
 		describe("isHTTPError", () => {

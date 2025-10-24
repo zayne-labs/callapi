@@ -1,4 +1,5 @@
-import { type CallApiPlugin, definePlugin, type PluginSetupContext } from "@zayne-labs/callapi";
+import type { PluginSetupContext } from "@zayne-labs/callapi";
+import { definePlugin } from "@zayne-labs/callapi/utils";
 import { z } from "zod";
 
 const CacheConfigSchema = z.object({
@@ -50,13 +51,13 @@ type CacheConfig = z.infer<typeof CacheConfigSchema>;
  * ```
  */
 
-export const cachingPlugin = definePlugin((cacheConfig: CacheConfig) => {
+export const cachingPlugin = (cacheConfig: CacheConfig) => {
 	const {
 		cacheLifetime: initCacheLifeTime = 1 * 60 * 1000,
 		cachePolicy: initCachePolicy = "cache-first",
 	} = cacheConfig;
 
-	return {
+	return definePlugin({
 		id: "caching-plugin",
 		name: "Caching Plugin",
 
@@ -104,5 +105,5 @@ export const cachingPlugin = definePlugin((cacheConfig: CacheConfig) => {
 				},
 			};
 		},
-	} satisfies CallApiPlugin;
-});
+	});
+};

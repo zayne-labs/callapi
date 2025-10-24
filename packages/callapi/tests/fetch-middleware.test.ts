@@ -4,10 +4,10 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { definePlugin } from "../src";
 import { createFetchClient } from "../src/createFetchClient";
 import type { FetchImpl, Middlewares } from "../src/middlewares";
 import type { CallApiPlugin } from "../src/plugins";
+import { definePlugin } from "../src/utils/external/define";
 import { mockUser } from "./fixtures";
 import { createMockResponse, expectSuccessResult } from "./helpers";
 import { mockFetch } from "./setup";
@@ -428,16 +428,17 @@ describe("fetchMiddleware", () => {
 			let counter1 = 0;
 			let counter2 = 0;
 
-			const createCounterPlugin = definePlugin((id: string, counterRef: { value: number }) => ({
-				id,
-				name: `Counter ${id}`,
-				middlewares: {
-					fetchMiddleware: (ctx) => async (input, init) => {
-						counterRef.value++;
-						return ctx.fetchImpl(input, init);
+			const createCounterPlugin = (id: string, counterRef: { value: number }) =>
+				definePlugin({
+					id,
+					name: `Counter ${id}`,
+					middlewares: {
+						fetchMiddleware: (ctx) => async (input, init) => {
+							counterRef.value++;
+							return ctx.fetchImpl(input, init);
+						},
 					},
-				},
-			}));
+				});
 
 			const plugin1 = createCounterPlugin("counter-1", { value: counter1 });
 			const plugin2 = createCounterPlugin("counter-2", { value: counter2 });

@@ -1,5 +1,5 @@
-import type { CallApiExtraOptions } from "../types";
-import { isArray, isBlob, isObject } from "./guards";
+import type { CallApiExtraOptions } from "../../types/common";
+import { isArray, isBlob, isObject } from "../guards";
 
 type ToQueryStringFn = {
 	(query: CallApiExtraOptions["query"]): string | null;

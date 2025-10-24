@@ -24,12 +24,14 @@ import { createRetryStrategy } from "./retry";
 import type {
 	BaseCallApiConfig,
 	BaseCallApiExtraOptions,
+	CallApiConfig,
 	CallApiExtraOptions,
 	CallApiExtraOptionsForHooks,
-	CallApiParameters,
 	CallApiRequestOptions,
 	CallApiRequestOptionsForHooks,
 	CallApiResult,
+	GetBaseSchemaConfig,
+	GetBaseSchemaRoutes,
 } from "./types/common";
 import type {
 	GetCurrentRouteSchema,
@@ -39,7 +41,7 @@ import type {
 	ThrowOnErrorUnion,
 } from "./types/conditional-types";
 import type { DefaultDataType, DefaultPluginArray, DefaultThrowOnError } from "./types/default-types";
-import type { AnyFunction, Writeable } from "./types/type-helpers";
+import type { AnyFunction } from "./types/type-helpers";
 import { getFullAndNormalizedURL } from "./url";
 import {
 	createCombinedSignal,
@@ -52,7 +54,8 @@ import {
 	splitConfig,
 	waitFor,
 } from "./utils/common";
-import { isFunction, isHTTPErrorInstance, isValidationErrorInstance } from "./utils/guards";
+import { isHTTPErrorInstance, isValidationErrorInstance } from "./utils/external/guards";
+import { isFunction } from "./utils/guards";
 import {
 	type BaseCallApiSchemaAndConfig,
 	type BaseCallApiSchemaRoutes,
@@ -73,13 +76,8 @@ export const createFetchClient = <
 	TBaseResponseType extends ResponseTypeUnion = ResponseTypeUnion,
 	const TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
 	const TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
-	TComputedBaseSchemaConfig extends CallApiSchemaConfig = NonNullable<
-		Writeable<TBaseSchemaAndConfig["config"], "deep">
-	>,
-	TComputedBaseSchemaRoutes extends BaseCallApiSchemaRoutes = Writeable<
-		TBaseSchemaAndConfig["routes"],
-		"deep"
-	>,
+	TComputedBaseSchemaConfig extends CallApiSchemaConfig = GetBaseSchemaConfig<TBaseSchemaAndConfig>,
+	TComputedBaseSchemaRoutes extends BaseCallApiSchemaRoutes = GetBaseSchemaRoutes<TBaseSchemaAndConfig>,
 >(
 	initBaseConfig: BaseCallApiConfig<
 		TBaseData,
@@ -121,7 +119,8 @@ export const createFetchClient = <
 			TResponseType
 		>,
 	>(
-		...parameters: CallApiParameters<
+		initURL: TInitURL,
+		initConfig: CallApiConfig<
 			InferSchemaOutputResult<TSchema["data"], GetResponseType<TData, TResponseType>>,
 			InferSchemaOutputResult<TSchema["errorData"], GetResponseType<TErrorData, TResponseType>>,
 			TResultMode,
@@ -135,16 +134,14 @@ export const createFetchClient = <
 			TCurrentRouteSchemaKey,
 			TBasePluginArray,
 			TPluginArray
-		>
+		> = {} as never
 	): Promise<TComputedResult> => {
-		const [initURLOrURLObject, initConfig = {}] = parameters;
-
 		const [fetchOptions, extraOptions] = splitConfig(initConfig);
 
 		const resolvedBaseConfig =
 			isFunction(initBaseConfig) ?
 				initBaseConfig({
-					initURL: initURLOrURLObject.toString(),
+					initURL: initURL.toString(),
 					options: extraOptions,
 					request: fetchOptions,
 				})
@@ -184,7 +181,7 @@ export const createFetchClient = <
 		} = await initializePlugins({
 			baseConfig,
 			config,
-			initURL: initURLOrURLObject.toString(),
+			initURL: initURL.toString(),
 			options: mergedExtraOptions as CallApiExtraOptionsForHooks,
 			request: mergedRequestOptions as CallApiRequestOptionsForHooks,
 		});
@@ -425,7 +422,7 @@ export const createFetchClient = <
 						"~retryAttemptCount": currentAttemptCount + 1,
 					} satisfies typeof config;
 
-					return callApi(initURLOrURLObject as never, updatedOptions as never) as never;
+					return callApi(initURL as never, updatedOptions as never) as never;
 				}
 
 				if (shouldThrowOnError) {

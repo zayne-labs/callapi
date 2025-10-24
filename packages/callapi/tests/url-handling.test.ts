@@ -13,7 +13,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { callApi, createFetchClient } from "../src";
 import { extractMethodFromURL, getFullAndNormalizedURL } from "../src/url";
 import { type GetMethodContext, getMethod } from "../src/utils/common";
-import { toQueryString } from "../src/utils/helpers";
+import { toQueryString } from "../src/utils/external/body";
 import { mockUser } from "./fixtures";
 import { createMockResponse, expectSuccessResult } from "./helpers";
 import { mockFetch } from "./setup";

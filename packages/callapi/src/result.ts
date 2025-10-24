@@ -3,7 +3,7 @@ import type { HTTPError, ValidationError } from "./error";
 import type { CallApiExtraOptions, ThrowOnErrorUnion } from "./types";
 import type { DefaultDataType, DefaultThrowOnError } from "./types/default-types";
 import type { AnyString, Awaitable, UnmaskType } from "./types/type-helpers";
-import { isHTTPErrorInstance, isValidationErrorInstance } from "./utils/guards";
+import { isHTTPErrorInstance, isValidationErrorInstance } from "./utils/external/guards";
 
 export type ResponseType = "blob" | "json" | "text";
 

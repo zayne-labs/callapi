@@ -1,4 +1,5 @@
 // == These two types allows for adding arbitrary literal types, while still provided autocomplete for defaults.
+
 // == Usually intersection with "{}" or "NonNullable<unknown>" would make it work fine, but the placeholder with never type is added to make the AnyWhatever type appear last in a given union.
 export type AnyString = string & NonNullable<unknown>;
 export type AnyNumber = number & NonNullable<unknown>;
@@ -11,7 +12,7 @@ export type AnyFunction<TResult = unknown> = (...args: any[]) => TResult;
 
 export type Prettify<TObject> = NonNullable<unknown> & { [Key in keyof TObject]: TObject[Key] };
 
-export type WriteableLevel = "deep" | "shallow";
+type WriteableLevel = "deep" | "shallow";
 
 /**
  * Makes all properties in an object type writeable (removes readonly modifiers).
@@ -20,19 +21,15 @@ export type WriteableLevel = "deep" | "shallow";
  * @template TVariant - The level of writeable transformation ("shallow" | "deep")
  */
 
-type ArrayOrObject = Record<number | string | symbol, unknown> | unknown[];
+type ArrayOrObject = Record<number | string | symbol, unknown> | unknown[] | readonly unknown[];
 
 export type Writeable<TObject, TLevel extends WriteableLevel = "shallow"> =
-	TObject extends readonly [...infer TTupleItems] ?
-		[
-			...{
-				[Index in keyof TTupleItems]: TLevel extends "deep" ? Writeable<TTupleItems[Index], "deep">
-				:	TTupleItems[Index];
-			},
-		]
-	: TObject extends ArrayOrObject ?
+	TObject extends ArrayOrObject ?
 		{
-			-readonly [Key in keyof TObject]: TLevel extends "deep" ? Writeable<TObject[Key], "deep">
+			-readonly [Key in keyof TObject]: TLevel extends "deep" ?
+				NonNullable<TObject[Key]> extends ArrayOrObject ?
+					Writeable<TObject[Key], "deep">
+				:	TObject[Key]
 			:	TObject[Key];
 		}
 	:	TObject;
@@ -52,6 +49,10 @@ export type RemovePrefix<TPrefix extends "dedupe" | "retry", TKey extends string
 	TKey extends `${TPrefix}${infer TRest}` ? Uncapitalize<TRest> : TKey;
 
 export type Awaitable<TValue> = Promise<TValue> | TValue;
+
+export type MatchExactObjectType<TActualObject extends TExpectedObject, TExpectedObject> = {
+	[Key in keyof TActualObject]: Key extends keyof TExpectedObject ? TActualObject[Key] : never;
+};
 
 export type CommonRequestHeaders =
 	| "Access-Control-Allow-Credentials"

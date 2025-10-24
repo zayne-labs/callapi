@@ -576,6 +576,30 @@ export type BaseCallApiExtraOptions<
 	skipAutoMergeFor?: "all" | "options" | "request";
 };
 
+export type GetBaseSchemaRoutes<TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig> = Writeable<
+	TBaseSchemaAndConfig["routes"],
+	"deep"
+>;
+export type GetBaseSchemaConfig<TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig> = Writeable<
+	NonNullable<TBaseSchemaAndConfig["config"]>,
+	"deep"
+>;
+
+export type InferExtendSchemaContext<
+	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
+	TCurrentRouteSchemaKey extends string,
+> = {
+	baseSchemaRoutes: TBaseSchemaRoutes;
+	currentRouteSchema: GetCurrentRouteSchema<TBaseSchemaRoutes, TCurrentRouteSchemaKey>;
+};
+
+export type InferExtendSchemaConfigContext<TBaseSchemaConfig extends CallApiSchemaConfig> = {
+	baseSchemaConfig: TBaseSchemaConfig;
+};
+export type InferExtendPluginContext<TBasePluginArray extends CallApiPlugin[]> = {
+	basePlugins: TBasePluginArray;
+};
+
 export type CallApiExtraOptions<
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,
@@ -589,6 +613,9 @@ export type CallApiExtraOptions<
 	TBaseSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
 	TSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
 	TCurrentRouteSchemaKey extends string = string,
+	TComputedPluginContext = InferExtendPluginContext<TBasePluginArray>,
+	TComputedSchemaContext = InferExtendSchemaContext<TBaseSchemaRoutes, TCurrentRouteSchemaKey>,
+	TComputedSchemaConfigContext = InferExtendSchemaConfigContext<TBaseSchemaConfig>,
 > = SharedExtraOptions<TData, TErrorData, TResultMode, TThrowOnError, TResponseType, TPluginArray> & {
 	/**
 	 * Array of instance-specific CallApi plugins or a function to configure plugins.
@@ -598,9 +625,7 @@ export type CallApiExtraOptions<
 	 * that receives base plugins and returns the instance plugins.
 	 *
 	 */
-	plugins?:
-		| TPluginArray
-		| ((context: { basePlugins: Writeable<TBasePluginArray, "deep"> }) => TPluginArray);
+	plugins?: TPluginArray | ((context: TComputedPluginContext) => TPluginArray);
 
 	/**
 	 * For instance-specific validation schemas
@@ -610,12 +635,7 @@ export type CallApiExtraOptions<
 	 * Can be a static schema object or a function that receives base schema context and returns instance schemas.
 	 *
 	 */
-	schema?:
-		| TSchema
-		| ((context: {
-				baseSchemaRoutes: Writeable<TBaseSchemaRoutes, "deep">;
-				currentRouteSchema: GetCurrentRouteSchema<TBaseSchemaRoutes, TCurrentRouteSchemaKey>;
-		  }) => TSchema);
+	schema?: TSchema | ((context: TComputedSchemaContext) => TSchema);
 
 	/**
 	 * Instance-specific schema configuration or a function to configure schema behavior.
@@ -624,9 +644,7 @@ export type CallApiExtraOptions<
 	 * Can override base schema configuration or extend it with instance-specific validation rules.
 	 *
 	 */
-	schemaConfig?:
-		| TSchemaConfig
-		| ((context: { baseSchemaConfig: Writeable<TBaseSchemaConfig, "deep"> }) => TSchemaConfig);
+	schemaConfig?: TSchemaConfig | ((context: TComputedSchemaConfigContext) => TSchemaConfig);
 };
 
 export type CallApiExtraOptionsForHooks = Hooks & Omit<CallApiExtraOptions, keyof Hooks>;

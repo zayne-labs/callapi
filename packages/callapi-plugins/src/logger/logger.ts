@@ -1,4 +1,4 @@
-import { type CallApiPlugin, definePlugin } from "@zayne-labs/callapi";
+import { definePlugin } from "@zayne-labs/callapi/utils";
 import { type AnyFunction, isBoolean } from "@zayne-labs/toolkit-type-helpers";
 import { createConsola } from "consola";
 import { getStatusText } from "./utils";
@@ -58,7 +58,7 @@ export const defaultConsoleObject: ConsoleLikeObject = {
 };
 /* eslint-enable ts-eslint/no-unsafe-argument -- Ignore for now */
 
-export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
+export const loggerPlugin = (options?: LoggerOptions) => {
 	const { consoleObject = defaultConsoleObject, enabled = true, mode = "basic" } = options ?? {};
 
 	const isBasicMode = mode === "basic";
@@ -71,7 +71,7 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 	// eslint-disable-next-line ts-eslint/no-unnecessary-condition -- Ignore
 	const errorLog = consoleObject.error ?? consoleObject.fail ?? consoleObject.log;
 
-	return {
+	return definePlugin({
 		/* eslint-disable perfectionist/sort-objects -- Ignore for now */
 		id: "logger",
 		name: "Logger",
@@ -162,5 +162,5 @@ export const loggerPlugin = definePlugin((options?: LoggerOptions) => {
 				isVerboseMode && consoleObject.error(verboseMessage, ctx.error.errorData);
 			},
 		},
-	} satisfies CallApiPlugin;
-});
+	});
+};

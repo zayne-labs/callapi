@@ -1,4 +1,5 @@
-import { callApi, createFetchClient, definePlugin, defineSchema } from "@zayne-labs/callapi";
+import { callApi, createFetchClient } from "@zayne-labs/callapi";
+import { definePlugin, defineSchema } from "@zayne-labs/callapi/utils";
 
 import * as z from "zod";
 

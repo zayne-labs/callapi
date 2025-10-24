@@ -1,14 +1,13 @@
 import {
 	type CallApiParameters,
 	createFetchClient,
-	definePlugin,
-	defineSchema,
 	type PluginHooksWithMoreOptions,
 	type PluginSetupContext,
 	type ResultModeUnion,
 	type SuccessContext,
 } from "@zayne-labs/callapi";
 import { loggerPlugin } from "@zayne-labs/callapi-plugins";
+import { definePlugin, defineSchema } from "@zayne-labs/callapi/utils";
 import * as z from "zod";
 import * as zv3 from "zod/v3";
 
@@ -71,14 +70,8 @@ const pluginTwo = definePlugin({
 	},
 });
 
-const callMainApi = createFetchClient({
-	baseURL: "https://dummyjson.com",
-	onRequest: [() => console.info("OnRequest1 - BASE"), () => console.info("OnRequest2 - BASE")],
-	onUpload: (_progress) => {},
-	onUploadSuccess: (_progress) => {},
-	plugins: [pluginOne, pluginTwo, loggerPlugin({})],
-
-	schema: defineSchema({
+const apiSchema = defineSchema(
+	{
 		".": {
 			// data: z.object({ random: z.number() }),
 			// params: z.object({ per_page: z.number() }).optional(),
@@ -102,7 +95,16 @@ const callMainApi = createFetchClient({
 			// data: z.array(z.object({ version: z.string() })),
 			query: z.object({ per_page: z.number() }),
 		},
-	}),
+	},
+	{ strict: true }
+);
+const callMainApi = createFetchClient({
+	baseURL: "https://dummyjson.com",
+	onRequest: [() => console.info("OnRequest1 - BASE"), () => console.info("OnRequest2 - BASE")],
+	onUpload: (_progress) => {},
+	onUploadSuccess: (_progress) => {},
+	plugins: [pluginOne, pluginTwo, loggerPlugin({})],
+	schema: apiSchema,
 });
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

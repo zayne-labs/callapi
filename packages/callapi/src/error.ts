@@ -83,7 +83,7 @@ const prettifyValidationIssues = (issues: ValidationError["errorData"]) => {
 	return issuesString;
 };
 
-type LockedExtract<TUnion, TKey extends TUnion> = Extract<TUnion, TKey>;
+type SafeExtract<TUnion, TKey extends TUnion> = Extract<TUnion, TKey>;
 
 type ValidationErrorDetails = {
 	/**
@@ -93,7 +93,7 @@ type ValidationErrorDetails = {
 	 */
 	issueCause:
 		| "unknown"
-		| `schemaConfig-(${LockedExtract<keyof CallApiSchemaConfig, "strict">})`
+		| `schemaConfig-(${SafeExtract<keyof CallApiSchemaConfig, "strict">})`
 		| keyof CallApiSchema;
 
 	/**

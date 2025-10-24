@@ -90,15 +90,12 @@ export type GetCurrentRouteSchemaKey<TSchemaConfig extends CallApiSchemaConfig, 
 export type GetCurrentRouteSchema<
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
 	TCurrentRouteSchemaKey extends string,
-	TComputedRouteSchema extends CallApiSchema = Omit<
-		TBaseSchemaRoutes[FallBackRouteSchemaKey],
-		keyof TBaseSchemaRoutes[TCurrentRouteSchemaKey]
-	>
-		& TBaseSchemaRoutes[TCurrentRouteSchemaKey],
-	TComputedWriteableRouteSchema extends CallApiSchema = NonNullable<
-		Writeable<TComputedRouteSchema, "deep">
+	TComputedFallBackRouteSchema = TBaseSchemaRoutes[FallBackRouteSchemaKey],
+	TComputedCurrentRouteSchema = TBaseSchemaRoutes[TCurrentRouteSchemaKey],
+	TComputedRouteSchema extends CallApiSchema = NonNullable<
+		Omit<TComputedFallBackRouteSchema, keyof TComputedCurrentRouteSchema> & TComputedCurrentRouteSchema
 	>,
-> = TComputedWriteableRouteSchema extends CallApiSchema ? TComputedWriteableRouteSchema : CallApiSchema;
+> = TComputedRouteSchema extends CallApiSchema ? Writeable<TComputedRouteSchema, "deep"> : CallApiSchema;
 
 type JsonPrimitive = boolean | number | string | null | undefined;
 
