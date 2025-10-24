@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.11.8
+
+### Patch Changes
+
+- f64dae5: fix: enhance CallAPI type definitions and configuration options
+
 ## 1.11.7
 
 ### Patch Changes
