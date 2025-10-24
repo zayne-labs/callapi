@@ -1,6 +1,6 @@
-import type { MetadataRoute } from "next";
 import { baseURL } from "@/lib/metadata";
 import { source } from "@/lib/source";
+import type { MetadataRoute } from "next";
 
 export const revalidate = false;
 
@@ -12,7 +12,7 @@ const sitemap = (): MetadataRoute.Sitemap => {
 	const docsSiteMap = pages.map((page) => {
 		return {
 			changeFrequency: "weekly",
-			lastModified: page.data.lastModified,
+			lastModified: page.data.lastModified ? new Date(page.data.lastModified) : undefined,
 			priority: 0.5,
 			url: url(page.url),
 		} satisfies MetadataRoute.Sitemap[number];
