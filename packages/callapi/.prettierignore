@@ -1,0 +1,5 @@
+dist
+*.md
+pnpm-lock.yaml
+*.tsbuildinfo
+.next
