@@ -66,7 +66,7 @@ const { data, error } = await callApi("/users", {
 Plugins can define fetch middleware to add reusable functionality. See [Plugins](./plugins) for details.
 
 ```ts twoslash title="plugins.ts"
-import { definePlugin } from "@zayne-labs/callapi";
+import { definePlugin } from "@zayne-labs/callapi/utils";
 
 const loggingPlugin = definePlugin({
 	id: "logging",
@@ -117,7 +117,8 @@ This reverse composition means the last middleware added gets the first chance t
 ### Response Caching
 
 ```ts title="caching-plugin.ts"
-import { definePlugin, type PluginSetupContext } from "@zayne-labs/callapi";
+import type { PluginSetupContext } from "@zayne-labs/callapi";
+import { definePlugin } from "@zayne-labs/callapi/utils";
 import { z } from "zod";
 
 const CacheOptionsSchema = z.object({

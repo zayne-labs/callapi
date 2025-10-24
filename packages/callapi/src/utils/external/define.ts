@@ -12,7 +12,7 @@ export const defineSchema = <
 	const TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
 	const TSchemaConfig extends CallApiSchemaConfig,
 >(
-	routes: MatchExactObjectType<TBaseSchemaRoutes, BaseCallApiSchemaRoutes>,
+	routes: TBaseSchemaRoutes,
 	config?: MatchExactObjectType<TSchemaConfig, CallApiSchemaConfig>
 ) => {
 	return {

@@ -359,7 +359,8 @@ Hooks execute in the following order:
 **Plugin Hooks → Base Client Hooks → Instance Hooks**
 
 ```ts title="example.ts"
-import { createFetchClient, definePlugin } from "@zayne-labs/callapi";
+import { createFetchClient } from "@zayne-labs/callapi";
+import { definePlugin } from "@zayne-labs/callapi/utils";
 
 // Plugin hooks execute first
 const loggingPlugin = definePlugin({
@@ -448,7 +449,8 @@ const dependentClient = createFetchClient({
 </Callout>
 
 ```ts title="Hook Order and Merging Example"
-import { createFetchClient, definePlugin } from "@zayne-labs/callapi";
+import { createFetchClient } from "@zayne-labs/callapi";
+import { definePlugin } from "@zayne-labs/callapi/utils";
 
 // 1. Plugin Hook (Runs first)
 const examplePlugin = definePlugin({

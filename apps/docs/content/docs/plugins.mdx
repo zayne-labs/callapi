@@ -10,7 +10,8 @@ Plugins extend CallApi with reusable functionality like authentication, logging,
 Use the `definePlugin` helper for type-safe plugin creation:
 
 ```ts twoslash title="plugins.ts"
-import { definePlugin, createFetchClient } from "@zayne-labs/callapi";
+import { createFetchClient } from "@zayne-labs/callapi";
+import { definePlugin } from "@zayne-labs/callapi/utils";
 
 const envPlugin = definePlugin({
 	id: "env-plugin",
@@ -126,7 +127,7 @@ const { data } = await callBackendApi("/users", {
 The `setup` function runs before any request processing begins. It receives the initial URL, options, and request, and can return modified versions of these values. This is useful for transforming requests before CallApi's internal processing.
 
 ```ts twoslash title="plugins.ts"
-import { definePlugin } from "@zayne-labs/callapi";
+import { definePlugin } from "@zayne-labs/callapi/utils";
 
 const envPlugin = definePlugin({
 	id: "env-plugin",
@@ -163,7 +164,8 @@ Plugins can define custom options that users can pass to `callApi`. Use `defineE
 Here's a plugin that adds an `apiVersion` option to automatically set the API version header:
 
 ```ts twoslash title="plugins.ts"
-import { createFetchClient, definePlugin, type PluginSetupContext } from "@zayne-labs/callapi";
+import { createFetchClient, type PluginSetupContext } from "@zayne-labs/callapi";
+import { definePlugin } from "@zayne-labs/callapi/utils";
 import { z } from "zod";
 
 const apiVersionSchema = z.object({
@@ -212,7 +214,8 @@ The Zod schema validates the `apiVersion` option, making it available in the `se
 Plugins can define hooks that run at different stages of the request lifecycle. Hooks can be an object or a function that returns an object (useful for accessing setup context). See [Hooks](./hooks) for detailed information about available hooks.
 
 ```ts twoslash title="plugins.ts"
-import { definePlugin, createFetchClient } from "@zayne-labs/callapi";
+import { createFetchClient } from "@zayne-labs/callapi";
+import { definePlugin } from "@zayne-labs/callapi/utils";
 
 const myPlugin = definePlugin({
 	id: "my-plugin",
@@ -243,7 +246,7 @@ const callBackendApi = createFetchClient({
 Hooks can also be a function that receives the plugin setup context:
 
 ```ts twoslash title="plugins.ts"
-import { definePlugin } from "@zayne-labs/callapi";
+import { definePlugin } from "@zayne-labs/callapi/utils";
 
 const dynamicPlugin = definePlugin({
 	id: "dynamic-plugin",
@@ -275,7 +278,7 @@ Define middleware using the `middlewares` property. Like hooks, middlewares can 
 **Static Middleware:**
 
 ```ts title="plugins.ts"
-import { definePlugin } from "@zayne-labs/callapi";
+import { definePlugin } from "@zayne-labs/callapi/utils";
 
 const loggingPlugin = definePlugin({
 	id: "logging",
@@ -298,7 +301,8 @@ const loggingPlugin = definePlugin({
 Middlewares can also be a function that receives the plugin setup context:
 
 ```ts twoslash title="plugins.ts"
-import { definePlugin, type PluginSetupContext } from "@zayne-labs/callapi";
+import { type PluginSetupContext } from "@zayne-labs/callapi";
+import { definePlugin } from "@zayne-labs/callapi/utils";
 
 const cachingPlugin = definePlugin({
 	id: "caching",
@@ -330,7 +334,7 @@ const cachingPlugin = definePlugin({
 Here's a complete example of a plugin that tracks API metrics:
 
 ```ts title="plugins.ts"
-import { definePlugin } from "@zayne-labs/callapi";
+import { definePlugin } from "@zayne-labs/callapi/utils";
 
 declare module "@zayne-labs/callapi" {
 	interface Register {
