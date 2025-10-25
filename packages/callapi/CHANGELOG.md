@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.11.9
+
+### Patch Changes
+
+- 89c1cef: fix: slight error in types
+
 ## 1.11.8
 
 ### Patch Changes
