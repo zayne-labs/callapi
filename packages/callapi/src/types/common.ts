@@ -663,8 +663,7 @@ export type BaseCallApiConfig<
 	TBaseResponseType extends ResponseTypeUnion = ResponseTypeUnion,
 	TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
-> = CallApiRequestOptions // eslint-disable-next-line perfectionist/sort-intersection-types -- Allow
-	& BaseCallApiExtraOptions<
+	TComputedBaseConfig = BaseCallApiExtraOptions<
 		TBaseData,
 		TBaseErrorData,
 		TBaseResultMode,
@@ -672,7 +671,10 @@ export type BaseCallApiConfig<
 		TBaseResponseType,
 		TBasePluginArray,
 		TBaseSchemaAndConfig
-	>;
+	>,
+> =
+	| (CallApiRequestOptions & TComputedBaseConfig)
+	| ((context: BaseInstanceContext) => CallApiRequestOptions & TComputedBaseConfig);
 
 export type CallApiConfig<
 	TData = DefaultDataType,

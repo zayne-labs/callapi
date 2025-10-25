@@ -1,5 +1,5 @@
 import type { CallApiPlugin } from "../../plugins";
-import type { BaseCallApiConfig, BaseInstanceContext } from "../../types";
+import type { BaseCallApiConfig } from "../../types";
 import type { MatchExactObjectType, Writeable } from "../../types/type-helpers";
 import type {
 	BaseCallApiSchemaAndConfig,
@@ -37,10 +37,6 @@ export const definePlugin = <const TPlugin extends CallApiPlugin>(plugin: TPlugi
 	return plugin as Writeable<typeof plugin, "deep">;
 };
 
-export const defineBaseConfig = <
-	const TBaseConfig extends BaseCallApiConfig | ((context: BaseInstanceContext) => BaseCallApiConfig),
->(
-	baseConfig: TBaseConfig
-) => {
+export const defineBaseConfig = <const TBaseConfig extends BaseCallApiConfig>(baseConfig: TBaseConfig) => {
 	return baseConfig as Writeable<typeof baseConfig, "deep">;
 };
