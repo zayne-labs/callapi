@@ -1,7 +1,7 @@
 {
 	"name": "@zayne-labs/callapi-plugins",
 	"type": "module",
-	"version": "4.0.9",
+	"version": "4.0.10",
 	"description": "A collection of plugins for callapi",
 	"author": "Ryan Zayne",
 	"license": "MIT",
@@ -11,7 +11,7 @@
 		"url": "git+https://github.com/zayne-labs/callapi.git"
 	},
 	"sideEffects": false,
-	"exports": "./src/index.ts",
+	"exports": "./dist/esm/index.js",
 	"files": [
 		"dist"
 	],
