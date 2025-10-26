@@ -522,7 +522,7 @@ const { data, error } = await callApi("/user", {
 
 ## Fallback Route Schema
 
-You can define a fallback schema that applies to all routes not explicitly defined in your schema using the special `.` key:
+You can define a fallback schema that applies to all routes not explicitly defined in your schema using the special `.` key (or use the exported `fallBackRouteSchemaKey` constant):
 
 ```ts twoslash title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -554,9 +554,33 @@ await callApi("/posts");
 await callApi("/users");
 ```
 
+Alternatively, use the exported constant for better maintainability:
+
+```ts twoslash title="api.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+import { defineSchema, fallBackRouteSchemaKey } from "@zayne-labs/callapi/utils";
+import { z } from "zod";
+
+const callApi = createFetchClient({
+	schema: defineSchema({
+		[fallBackRouteSchemaKey]: {
+			headers: z.object({
+				"x-api-key": z.string(),
+			}),
+		},
+		"/users": {
+			data: z.object({
+				id: z.number(),
+				name: z.string(),
+			}),
+		},
+	}),
+});
+```
+
 ## Strict Mode
 
-By default, CallAPI allows requests to paths not defined in the schema. Enable strict mode to only allow defined paths:
+By default, CallAPI allows requests to paths not defined in the schema. Enable strict mode to prevent usage of undefined paths:
 
 ```ts twoslash title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";

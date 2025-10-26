@@ -6,7 +6,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { CallApiPlugin } from "../src";
 import { callApi, createFetchClient } from "../src/createFetchClient";
-import { HTTPError } from "../src/error";
+import { HTTPError } from "../src/utils/external/error";
 import {
 	mockBaseConfig,
 	mockConfigWithAuth,

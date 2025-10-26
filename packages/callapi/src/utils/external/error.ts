@@ -1,8 +1,8 @@
-import { extraOptionDefaults } from "./constants/defaults";
-import type { CallApiExtraOptions } from "./types";
-import type { StandardSchemaV1 } from "./types/standard-schema";
-import { isObject, isString } from "./utils/guards";
-import type { CallApiSchema, CallApiSchemaConfig } from "./validation";
+import { extraOptionDefaults } from "../../constants/defaults";
+import type { CallApiExtraOptions } from "../../types";
+import type { StandardSchemaV1 } from "../../types/standard-schema";
+import type { CallApiSchema, CallApiSchemaConfig } from "../../validation";
+import { isObject, isString } from "../guards";
 
 type HTTPErrorDetails<TErrorData> = Pick<CallApiExtraOptions, "defaultHTTPErrorMessage"> & {
 	errorData: TErrorData;

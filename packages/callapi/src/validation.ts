@@ -1,4 +1,3 @@
-import { ValidationError } from "./error";
 import type {
 	BaseCallApiExtraOptions,
 	Body,
@@ -19,6 +18,7 @@ import {
 } from "./types/type-helpers";
 import type { Params, Query } from "./url";
 import { toArray } from "./utils/common";
+import { ValidationError } from "./utils/external/error";
 import { isFunction } from "./utils/guards";
 
 type InferSchemaInput<TSchema extends CallApiSchema[keyof CallApiSchema]> =

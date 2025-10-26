@@ -5,7 +5,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 import { callApi } from "../src/createFetchClient";
-import { HTTPError, ValidationError } from "../src/error";
+import { HTTPError, ValidationError } from "../src/utils/external/error";
 import type { StandardSchemaV1 } from "../src/types/standard-schema";
 import { mockError, mockHTTPError, mockServerError, mockUser } from "./fixtures";
 import {

@@ -2,8 +2,6 @@ export { callApi, createFetchClient } from "./createFetchClient";
 
 export type { DedupeOptions } from "./dedupe";
 
-export { HTTPError, ValidationError } from "./error";
-
 export type {
 	ErrorContext,
 	Hooks,
@@ -58,7 +56,6 @@ export type {
 export type { URLOptions } from "./url";
 
 export {
-	fallBackRouteSchemaKey,
 	type BaseCallApiSchemaRoutes,
 	type CallApiSchema,
 	type CallApiSchemaConfig,

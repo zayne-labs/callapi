@@ -6,8 +6,8 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createFetchClient } from "../src";
-import { ValidationError } from "../src/error";
 import type { StandardSchemaV1 } from "../src/types/standard-schema";
+import { ValidationError } from "../src/utils/external/error";
 import { createMockResponse, expectErrorResult, expectValidationError } from "./helpers";
 import { mockFetch } from "./setup";
 

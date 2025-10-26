@@ -1,13 +1,13 @@
 import type { Auth } from "../auth";
 import type { fetchSpecificKeys } from "../constants/common";
 import type { DedupeOptions } from "../dedupe";
-import type { HTTPError } from "../error";
 import type { HookConfigOptions, Hooks, HooksOrHooksArray } from "../hooks";
 import type { FetchImpl, Middlewares } from "../middlewares";
 import type { CallApiPlugin } from "../plugins";
 import type { GetCallApiResult, ResponseTypeUnion, ResultModeUnion } from "../result";
 import type { RetryOptions } from "../retry";
 import type { InitURLOrURLObject, URLOptions } from "../url";
+import type { HTTPError } from "../utils/external/error";
 import type {
 	BaseCallApiSchemaAndConfig,
 	BaseCallApiSchemaRoutes,

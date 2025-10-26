@@ -1,8 +1,8 @@
 import { extraOptionDefaults } from "./constants/defaults";
-import type { HTTPError, ValidationError } from "./error";
 import type { CallApiExtraOptions, ThrowOnErrorUnion } from "./types";
 import type { DefaultDataType, DefaultThrowOnError } from "./types/default-types";
 import type { AnyString, Awaitable, UnmaskType } from "./types/type-helpers";
+import type { HTTPError, ValidationError } from "./utils/external/error";
 import { isHTTPErrorInstance, isValidationErrorInstance } from "./utils/external/guards";
 
 export type ResponseType = "blob" | "json" | "text";

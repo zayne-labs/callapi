@@ -3,7 +3,7 @@
  */
 
 import { expect } from "vitest";
-import { HTTPError, ValidationError } from "../src/error";
+import { HTTPError, ValidationError } from "../src/utils/external/error";
 import type {
 	CallApiResultErrorVariant,
 	CallApiResultSuccessVariant,

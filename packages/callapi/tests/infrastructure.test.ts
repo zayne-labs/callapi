@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
-import { HTTPError, ValidationError } from "../src/error";
+import { HTTPError, ValidationError } from "../src/utils/external/error";
 import { mockBaseConfig, mockError, mockPlugin, mockUser, resetMockHookTracker } from "./fixtures";
 import {
 	createCallTracker,

@@ -5,7 +5,7 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
-import { HTTPError, ValidationError } from "../src/error";
+import { HTTPError, ValidationError } from "../src/utils/external/error";
 import type { CallApiResultErrorVariant } from "../src/result";
 import {
 	createCombinedSignal,

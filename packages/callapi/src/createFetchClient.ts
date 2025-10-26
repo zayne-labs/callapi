@@ -1,5 +1,4 @@
 import { createDedupeStrategy, type GlobalRequestInfoCache, type RequestInfoCache } from "./dedupe";
-import { HTTPError } from "./error";
 import {
 	type ErrorContext,
 	type ExecuteHookInfo,
@@ -54,6 +53,7 @@ import {
 	splitConfig,
 	waitFor,
 } from "./utils/common";
+import { HTTPError } from "./utils/external/error";
 import { isHTTPErrorInstance, isValidationErrorInstance } from "./utils/external/guards";
 import { isFunction } from "./utils/guards";
 import {
