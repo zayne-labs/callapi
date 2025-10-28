@@ -1,13 +1,22 @@
 import { extraOptionDefaults } from "./constants/defaults";
-import type { ErrorContext, RequestContext } from "./hooks";
-import type { MethodUnion } from "./types";
 import {
+	executeHooksInCatchBlock,
+	type ErrorContext,
+	type ExecuteHookInfo,
+	type RequestContext,
+	type RetryContext,
+} from "./hooks";
+import type { CallApiResultErrorVariant } from "./result";
+import type { CallApiConfig, MethodUnion } from "./types";
+import {
+	defineEnum,
 	type AnyNumber,
 	type Awaitable,
-	defineEnum,
 	type RemovePrefix,
 	type UnmaskType,
 } from "./types/type-helpers";
+import type { InitURLOrURLObject } from "./url";
+import { waitFor } from "./utils/common";
 import { isBoolean, isFunction, isString } from "./utils/guards";
 
 // eslint-disable-next-line ts-eslint/no-unused-vars -- Ignore
@@ -109,7 +118,7 @@ const getExponentialDelay = (currentAttemptCount: number, options: RetryOptions<
 	return Math.min(exponentialDelay, maxDelay);
 };
 
-export const createRetryStrategy = (ctx: ErrorContext<unknown> & RequestContext) => {
+export const createRetryManager = (ctx: ErrorContext<unknown> & RequestContext) => {
 	const { options, request } = ctx;
 
 	// eslint-disable-next-line ts-eslint/no-deprecated -- Allowed for internal use
@@ -174,9 +183,42 @@ export const createRetryStrategy = (ctx: ErrorContext<unknown> & RequestContext)
 		return shouldRetry;
 	};
 
+	type CallApiImpl = (
+		initURL: never,
+		init?: CallApiConfig
+	) => Promise<CallApiResultErrorVariant<unknown>>;
+
+	const handleRetry = async <TCallapi extends CallApiImpl>(context: {
+		callApi: TCallapi;
+		callApiArgs: { config: CallApiConfig; initURL: InitURLOrURLObject };
+		errorContext: ErrorContext<unknown>;
+		hookInfo: ExecuteHookInfo;
+	}) => {
+		const { callApi, callApiArgs, errorContext, hookInfo } = context;
+
+		const retryContext = {
+			...errorContext,
+			retryAttemptCount: currentAttemptCount,
+		} satisfies RetryContext<unknown>;
+
+		const hookError = await executeHooksInCatchBlock([options.onRetry?.(retryContext)], hookInfo);
+
+		if (hookError) {
+			return hookError;
+		}
+
+		await waitFor(getDelay());
+
+		const updatedOptions = {
+			...callApiArgs.config,
+			"~retryAttemptCount": currentAttemptCount + 1,
+		} satisfies CallApiConfig;
+
+		return callApi(callApiArgs.initURL as never, updatedOptions);
+	};
+
 	return {
-		currentAttemptCount,
-		getDelay,
+		handleRetry,
 		shouldAttemptRetry,
 	};
 };

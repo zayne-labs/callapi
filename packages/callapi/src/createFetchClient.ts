@@ -5,7 +5,6 @@ import {
 	executeHooks,
 	executeHooksInCatchBlock,
 	type RequestContext,
-	type RetryContext,
 	type SuccessContext,
 } from "./hooks";
 import { type CallApiPlugin, initializePlugins } from "./plugins";
@@ -19,12 +18,10 @@ import {
 	type ResponseTypeUnion,
 	type ResultModeUnion,
 } from "./result";
-import { createRetryStrategy } from "./retry";
+import { createRetryManager } from "./retry";
 import type {
 	BaseCallApiConfig,
-	BaseCallApiExtraOptions,
 	CallApiConfig,
-	CallApiExtraOptions,
 	CallApiExtraOptionsForHooks,
 	CallApiRequestOptions,
 	CallApiRequestOptionsForHooks,
@@ -51,7 +48,6 @@ import {
 	getMethod,
 	splitBaseConfig,
 	splitConfig,
-	waitFor,
 } from "./utils/common";
 import { HTTPError } from "./utils/external/error";
 import { isHTTPErrorInstance, isValidationErrorInstance } from "./utils/external/guards";
@@ -147,8 +143,8 @@ export const createFetchClient = <
 				})
 			:	initBaseConfig;
 
-		const baseConfig = resolvedBaseConfig as BaseCallApiExtraOptions & CallApiRequestOptions;
-		const config = initConfig as CallApiExtraOptions & CallApiRequestOptions;
+		const baseConfig = resolvedBaseConfig as BaseCallApiConfig;
+		const config = initConfig as CallApiConfig;
 
 		const [baseFetchOptions, baseExtraOptions] = splitBaseConfig(baseConfig);
 
@@ -392,37 +388,18 @@ export const createFetchClient = <
 				shouldThrowOnError,
 			} satisfies ExecuteHookInfo;
 
-			const handleRetryOrGetErrorResult = async () => {
-				const { currentAttemptCount, getDelay, shouldAttemptRetry } =
-					createRetryStrategy(errorContext);
+			const { handleRetry, shouldAttemptRetry } = createRetryManager(errorContext);
 
+			const handleRetryOrGetErrorResult = async () => {
 				const shouldRetry = await shouldAttemptRetry();
 
 				if (shouldRetry) {
-					const retryContext = {
-						...errorContext,
-						retryAttemptCount: currentAttemptCount,
-					} satisfies RetryContext<unknown>;
-
-					const hookError = await executeHooksInCatchBlock(
-						[options.onRetry?.(retryContext)],
-						hookInfo
-					);
-
-					if (hookError) {
-						return hookError;
-					}
-
-					const delay = getDelay();
-
-					await waitFor(delay);
-
-					const updatedOptions = {
-						...config,
-						"~retryAttemptCount": currentAttemptCount + 1,
-					} satisfies typeof config;
-
-					return callApi(initURL as never, updatedOptions as never) as never;
+					return handleRetry({
+						callApi,
+						callApiArgs: { config, initURL },
+						errorContext,
+						hookInfo,
+					});
 				}
 
 				if (shouldThrowOnError) {

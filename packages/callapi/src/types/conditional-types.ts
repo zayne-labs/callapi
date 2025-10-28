@@ -102,8 +102,8 @@ type JsonPrimitive = boolean | number | string | null | undefined;
 export type SerializableObject = Record<keyof object, unknown>;
 
 export type SerializableArray =
-	| Array<JsonPrimitive | SerializableArray | SerializableObject>
-	| ReadonlyArray<JsonPrimitive | SerializableArray | SerializableObject>;
+	| Array<JsonPrimitive | SerializableObject>
+	| ReadonlyArray<JsonPrimitive | SerializableObject>;
 
 export type Body = UnmaskType<RequestInit["body"] | SerializableArray | SerializableObject>;
 

@@ -10,14 +10,13 @@ import {
 } from "./result";
 import type { StreamProgressEvent } from "./stream";
 import type {
-	BaseCallApiExtraOptions,
-	CallApiExtraOptions,
+	BaseCallApiConfig,
+	CallApiConfig,
 	CallApiExtraOptionsForHooks,
-	CallApiRequestOptions,
 	CallApiRequestOptionsForHooks,
 } from "./types/common";
 import type { DefaultDataType } from "./types/default-types";
-import type { Awaitable, Prettify, UnmaskType } from "./types/type-helpers";
+import type { AnyFunction, Awaitable, Prettify, UnmaskType } from "./types/type-helpers";
 
 export type PluginExtraOptions<TPluginOptions = unknown> = {
 	/** Plugin-specific options passed to the plugin configuration */
@@ -249,7 +248,7 @@ export type RequestContext = {
 	 * made by this client instance, such as baseURL, default headers, and
 	 * global options.
 	 */
-	baseConfig: BaseCallApiExtraOptions & CallApiRequestOptions;
+	baseConfig: Exclude<BaseCallApiConfig, AnyFunction>;
 
 	/**
 	 * Instance-specific configuration object passed to the callApi instance.
@@ -257,7 +256,7 @@ export type RequestContext = {
 	 * Contains configuration specific to this particular API call, which
 	 * can override or extend the base configuration.
 	 */
-	config: CallApiExtraOptions & CallApiRequestOptions;
+	config: CallApiConfig;
 
 	/**
 	 * Merged options combining base config, instance config, and default options.
@@ -431,12 +430,12 @@ export const executeHooksInCatchBlock = async (
 
 		return null;
 	} catch (hookError) {
-		const { errorResult: hookErrorResult } = resolveErrorResult(hookError, errorInfo);
-
 		if (shouldThrowOnError) {
 			throw hookError;
 		}
 
-		return hookErrorResult;
+		const { errorResult } = resolveErrorResult(hookError, errorInfo);
+
+		return errorResult;
 	}
 };
