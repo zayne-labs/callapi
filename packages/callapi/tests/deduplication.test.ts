@@ -980,7 +980,9 @@ describe("Request Deduplication", () => {
 		it("should use dedupe object per-request", async () => {
 			const client = createFetchClient({
 				baseURL: "https://api.example.com",
-				dedupeStrategy: "defer",
+				dedupe: {
+					strategy: "defer",
+				},
 			});
 
 			mockFetchSuccess(mockUser);
