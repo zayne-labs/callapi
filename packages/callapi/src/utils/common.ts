@@ -169,24 +169,10 @@ export const getFetchImpl = (context: {
 	return resolvedFetchImpl;
 };
 
-const PromiseWithResolvers = () => {
-	let reject!: (reason?: unknown) => void;
-	let resolve!: (value: unknown) => void;
-
-	const promise = new Promise((res, rej) => {
-		resolve = res;
-		reject = rej;
-	});
-
-	return { promise, reject, resolve };
-};
-
 export const waitFor = (delay: number) => {
 	if (delay === 0) return;
 
-	const { promise, resolve } = PromiseWithResolvers();
-
-	setTimeout(resolve, delay);
+	const promise = new Promise((resolve) => setTimeout(resolve, delay));
 
 	return promise;
 };

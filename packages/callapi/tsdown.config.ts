@@ -5,7 +5,7 @@ const isDevMode = process.env.NODE_ENV === "development";
 const commonOptions = {
 	clean: true,
 	dts: { newContext: true },
-	entry: ["src/index.ts", "src/utils/external/index.ts"],
+	entry: ["src/index.ts", "src/utils/external/index.ts", "src/constants/index.ts"],
 	platform: "neutral",
 	sourcemap: !isDevMode,
 	target: "esnext",

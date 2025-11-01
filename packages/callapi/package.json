@@ -25,7 +25,8 @@
 	"sideEffects": false,
 	"exports": {
 		".": "./dist/esm/index.js",
-		"./utils": "./dist/esm/utils/external/index.js"
+		"./utils": "./dist/esm/utils/external/index.js",
+		"./constants": "./dist/esm/constants/index.js"
 	},
 	"files": [
 		"dist"
@@ -89,7 +90,11 @@
 		},
 		{
 			"path": "./src/utils/external/index.ts",
-			"limit": "900 b"
+			"limit": "1 kb"
+		},
+		{
+			"path": "./src/constants/index.ts",
+			"limit": "1 kb"
 		}
 	]
 }

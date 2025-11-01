@@ -1,3 +1,4 @@
+import { fallBackRouteSchemaKey } from "./constants/validation";
 import type {
 	BaseCallApiExtraOptions,
 	Body,
@@ -21,22 +22,29 @@ import { toArray } from "./utils/common";
 import { ValidationError } from "./utils/external/error";
 import { isFunction } from "./utils/guards";
 
-type InferSchemaInput<TSchema extends CallApiSchema[keyof CallApiSchema]> =
-	TSchema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<TSchema> : never;
+type ResultVariant = "infer-input" | "infer-output";
 
-export type InferSchemaOutputResult<TSchema, TFallbackResult = unknown> =
+type InferSchemaResult<TSchema, TFallbackResult, TResultVariant extends ResultVariant> =
 	// == Checking for undefined first and returning fallback to avoid type errors when passing the config around (weird tbh)
 	undefined extends TSchema ? TFallbackResult
-	: TSchema extends StandardSchemaV1 ? StandardSchemaV1.InferOutput<TSchema>
+	: TSchema extends StandardSchemaV1 ?
+		TResultVariant extends "infer-input" ?
+			StandardSchemaV1.InferInput<TSchema>
+		:	StandardSchemaV1.InferOutput<TSchema>
 	: TSchema extends AnyFunction<infer TResult> ? Awaited<TResult>
 	: TFallbackResult;
 
-export type InferSchemaInputResult<TSchema, TFallbackResult = unknown> =
-	// == Checking for undefined first and returning fallback to avoid type errors when passing the config around (weird tbh)
-	undefined extends TSchema ? TFallbackResult
-	: TSchema extends StandardSchemaV1 ? StandardSchemaV1.InferInput<TSchema>
-	: TSchema extends AnyFunction<infer TResult> ? Awaited<TResult>
-	: TFallbackResult;
+export type InferSchemaOutput<TSchema, TFallbackResult = unknown> = InferSchemaResult<
+	TSchema,
+	TFallbackResult,
+	"infer-output"
+>;
+
+export type InferSchemaInput<TSchema, TFallbackResult = unknown> = InferSchemaResult<
+	TSchema,
+	TFallbackResult,
+	"infer-input"
+>;
 
 const handleValidatorFunction = async <TInput>(
 	validator: Extract<CallApiSchema[keyof CallApiSchema], AnyFunction>,
@@ -60,7 +68,7 @@ export const standardSchemaParser = async <
 	schemaName: TSchemaName,
 	inputData: InferSchemaInput<TSchema>,
 	response?: Response | null
-): Promise<InferSchemaOutputResult<TSchema>> => {
+): Promise<InferSchemaOutput<TSchema>> => {
 	const schema = fullSchema?.[schemaName];
 
 	if (!schema) {
@@ -203,7 +211,7 @@ export const handleSchemaValidation = async <
 	fullSchema: TFullSchema | undefined,
 	schemaName: TSchemaName,
 	validationOptions: ValidationOptions<TSchema>
-): Promise<InferSchemaOutputResult<TSchema>> => {
+): Promise<InferSchemaOutput<TSchema>> => {
 	const { inputValue, response, schemaConfig } = validationOptions;
 
 	if (schemaConfig?.disableRuntimeValidation) {
@@ -370,8 +378,6 @@ type GetResolvedSchemaContext = {
 	currentRouteSchemaKey: string;
 	extraOptions: CallApiExtraOptions;
 };
-
-export const fallBackRouteSchemaKey = ".";
 
 export type FallBackRouteSchemaKey = typeof fallBackRouteSchemaKey;
 

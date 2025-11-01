@@ -136,12 +136,32 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 	// == This is to ensure cache operations only occur when key is available
 	const $RequestInfoCacheOrNull = dedupeKey !== null ? $RequestInfoCache : null;
 
-	/******
-	 * == Add a small delay to the execution to ensure proper request deduplication when multiple requests with the same key start simultaneously.
-	 * == This gives time for the cache to be updated with the previous request info before the next request checks it.
-	 ******/
+	/**
+	 * Force sequential execution of parallel requests to enable proper cache-based deduplication.
+	 *
+	 * Problem: When Promise.all([callApi(url), callApi(url)]) executes, both requests
+	 * start synchronously and reach this point before either can populate the cache.
+	 *
+	 * Why `await Promise.resolve()` fails:
+	 * - All microtasks in a batch resolve together at the next microtask checkpoint
+	 * - Both requests resume execution simultaneously after the await
+	 * - Both check `prevRequestInfo` at the same time → both see empty cache
+	 * - Both proceed to populate cache → deduplication fails
+	 *
+	 * Why `wait new Promise(()=> setTimeout(resolve, number))` works:
+	 * - Each setTimeout creates a separate task in the task queue
+	 * - Tasks execute sequentially, not simultaneously
+	 * - Request 1's task runs first: checks cache (empty) → continues → populates cache
+	 * - Request 2's task runs after: checks cache (populated) → uses cached promise
+	 * - Deduplication succeeds
+	 *
+	 * IMPORTANT: The delay must be non-zero. setTimeout(fn, 0) fails because JavaScript engines
+	 * may optimize zero-delay timers by batching them together, causing all requests to resume
+	 * simultaneously (same problem as microtasks). Any non-zero value (even 0.0000000001) forces
+	 * proper sequential task queue scheduling, ensuring each request gets its own task slot.
+	 */
 	if (dedupeKey !== null) {
-		await waitFor(0.1);
+		await waitFor(0.001);
 	}
 
 	const prevRequestInfo = $RequestInfoCacheOrNull?.get(dedupeKey);

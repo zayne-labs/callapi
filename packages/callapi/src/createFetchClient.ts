@@ -59,7 +59,7 @@ import {
 	type CallApiSchemaConfig,
 	handleConfigValidation,
 	handleSchemaValidation,
-	type InferSchemaOutputResult,
+	type InferSchemaOutput,
 } from "./validation";
 
 const $GlobalRequestInfoCache: GlobalRequestInfoCache = new Map();
@@ -108,8 +108,8 @@ export const createFetchClient = <
 		>,
 		const TPluginArray extends CallApiPlugin[] = TBasePluginArray,
 		TComputedResult = CallApiResult<
-			InferSchemaOutputResult<TSchema["data"], TData>,
-			InferSchemaOutputResult<TSchema["errorData"], TErrorData>,
+			InferSchemaOutput<TSchema["data"], TData>,
+			InferSchemaOutput<TSchema["errorData"], TErrorData>,
 			TResultMode,
 			TThrowOnError,
 			TResponseType
@@ -117,8 +117,8 @@ export const createFetchClient = <
 	>(
 		initURL: TInitURL,
 		initConfig: CallApiConfig<
-			InferSchemaOutputResult<TSchema["data"], GetResponseType<TData, TResponseType>>,
-			InferSchemaOutputResult<TSchema["errorData"], GetResponseType<TErrorData, TResponseType>>,
+			InferSchemaOutput<TSchema["data"], GetResponseType<TData, TResponseType>>,
+			InferSchemaOutput<TSchema["errorData"], GetResponseType<TErrorData, TResponseType>>,
 			TResultMode,
 			TThrowOnError,
 			TResponseType,

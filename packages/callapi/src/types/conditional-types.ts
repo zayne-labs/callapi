@@ -7,8 +7,7 @@ import type {
 	CallApiSchema,
 	CallApiSchemaConfig,
 	FallBackRouteSchemaKey,
-	InferSchemaInputResult,
-	InferSchemaOutputResult,
+	InferSchemaInput,
 	RouteKeyMethods,
 	RouteKeyMethodsURLUnion,
 } from "../validation";
@@ -28,7 +27,7 @@ import type {
  * @description Makes a type partial if the output type of TSchema is not provided or has undefined in the union, otherwise makes it required
  */
 type MakeSchemaOptionRequiredIfDefined<TSchemaOption extends CallApiSchema[keyof CallApiSchema], TObject> =
-	undefined extends InferSchemaInputResult<TSchemaOption, undefined> ? TObject : Required<TObject>;
+	undefined extends InferSchemaInput<TSchemaOption, undefined> ? TObject : Required<TObject>;
 
 export type ApplyURLBasedConfig<
 	TSchemaConfig extends CallApiSchemaConfig,
@@ -113,7 +112,7 @@ export type InferBodyOption<TSchema extends CallApiSchema> = MakeSchemaOptionReq
 		/**
 		 * Body of the request, can be a object or any other supported body type.
 		 */
-		body?: InferSchemaInputResult<TSchema["body"], Body>;
+		body?: InferSchemaInput<TSchema["body"], Body>;
 	}
 >;
 
@@ -133,7 +132,7 @@ export type InferMethodOption<TSchema extends CallApiSchema, TInitURL> = MakeSch
 		 * HTTP method for the request.
 		 * @default "GET"
 		 */
-		method?: InferSchemaInputResult<TSchema["method"], InferMethodFromURL<TInitURL>>;
+		method?: InferSchemaInput<TSchema["method"], InferMethodFromURL<TInitURL>>;
 	}
 >;
 
@@ -153,10 +152,10 @@ export type InferHeadersOption<TSchema extends CallApiSchema> = MakeSchemaOption
 		 * Headers to be used in the request.
 		 */
 		headers?:
-			| InferSchemaInputResult<TSchema["headers"], HeadersOption>
+			| InferSchemaInput<TSchema["headers"], HeadersOption>
 			| ((context: {
 					baseHeaders: NonNullable<HeadersOption>;
-			  }) => InferSchemaInputResult<TSchema["headers"], HeadersOption>);
+			  }) => InferSchemaInput<TSchema["headers"], HeadersOption>);
 	}
 >;
 
@@ -199,7 +198,7 @@ export type InferMetaOption<TSchema extends CallApiSchema> = MakeSchemaOptionReq
 		 * });
 		 * ```
 		 */
-		meta?: InferSchemaInputResult<TSchema["meta"], GlobalMeta>;
+		meta?: InferSchemaInput<TSchema["meta"], GlobalMeta>;
 	}
 >;
 
@@ -209,7 +208,7 @@ export type InferQueryOption<TSchema extends CallApiSchema> = MakeSchemaOptionRe
 		/**
 		 * Parameters to be appended to the URL (i.e: /:id)
 		 */
-		query?: InferSchemaInputResult<TSchema["query"], Query>;
+		query?: InferSchemaInput<TSchema["query"], Query>;
 	}
 >;
 
@@ -307,7 +306,7 @@ type MakeParamsOptionRequired<
 	Params extends InferParamsFromRoute<TCurrentRouteSchemaKey> ? TObject
 	: TCurrentRouteSchemaKey extends Extract<keyof TBaseSchemaRoutes, TCurrentRouteSchemaKey> ?
 		// == If ParamsSchema option is defined but has undefined in the union, it should take precedence to remove the required flag
-		undefined extends InferSchemaInputResult<TParamsSchemaOption, null> ?
+		undefined extends InferSchemaInput<TParamsSchemaOption, null> ?
 			TObject
 		:	Required<TObject>
 	:	TObject
@@ -325,7 +324,7 @@ export type InferParamsOption<
 		/**
 		 * Parameters to be appended to the URL (i.e: /:id)
 		 */
-		params?: InferSchemaInputResult<TSchema["params"], InferParamsFromRoute<TCurrentRouteSchemaKey>>;
+		params?: InferSchemaInput<TSchema["params"], InferParamsFromRoute<TCurrentRouteSchemaKey>>;
 	}
 >;
 
@@ -341,7 +340,7 @@ export type InferPluginOptions<TPluginArray extends CallApiPlugin[]> = UnionToIn
 	TPluginArray extends Array<infer TPlugin> ?
 		TPlugin extends CallApiPlugin ?
 			TPlugin["defineExtraOptions"] extends AnyFunction<infer TReturnedSchema> ?
-				InferSchemaOutputResult<TReturnedSchema>
+				InferSchemaInput<TReturnedSchema>
 			:	never
 		:	never
 	:	never

@@ -55,9 +55,10 @@ export type {
 
 export type { URLOptions } from "./url";
 
-export {
-	type BaseCallApiSchemaRoutes,
-	type CallApiSchema,
-	type CallApiSchemaConfig,
-	type InferSchemaOutputResult,
+export type {
+	BaseCallApiSchemaRoutes,
+	CallApiSchema,
+	CallApiSchemaConfig,
+	InferSchemaInput,
+	InferSchemaOutput,
 } from "./validation";
