@@ -3,7 +3,7 @@ import {
 	createFetchClient,
 	type PluginHooksWithMoreOptions,
 	type PluginSetupContext,
-	type ResultModeUnion,
+	type ResultModeType,
 	type SuccessContext,
 } from "@zayne-labs/callapi";
 import { loggerPlugin } from "@zayne-labs/callapi-plugins";
@@ -191,7 +191,7 @@ const sharedFetchClient = createFetchClient({
 export const callBackendApi = <
 	TData = unknown,
 	TErrorData = unknown,
-	TResultMode extends ResultModeUnion = ResultModeUnion,
+	TResultMode extends ResultModeType = ResultModeType,
 >(
 	...parameters: CallApiParameters<ApiSuccessResponse<TData>, ApiErrorResponse<TErrorData>, TResultMode>
 ) => {
@@ -203,7 +203,7 @@ export const callBackendApi = <
 export const callBackendApiOne = <
 	TData = unknown,
 	TError = unknown,
-	TResultMode extends ResultModeUnion = ResultModeUnion,
+	TResultMode extends ResultModeType = ResultModeType,
 >(
 	...args: CallApiParameters<TData, TError, TResultMode>
 ) => {

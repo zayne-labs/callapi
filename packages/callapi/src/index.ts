@@ -30,8 +30,8 @@ export {
 	type PossibleJavaScriptError,
 	type PossibleJavaScriptOrValidationError,
 	type PossibleValidationError,
-	type ResponseTypeUnion,
-	type ResultModeUnion,
+	type ResponseTypeType,
+	type ResultModeType,
 } from "./result";
 
 export type { RetryOptions } from "./retry";

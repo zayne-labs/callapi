@@ -2,6 +2,7 @@ import { extraOptionDefaults } from "./constants/defaults";
 import type { CallApiExtraOptions, ThrowOnErrorUnion } from "./types";
 import type { DefaultDataType, DefaultThrowOnError } from "./types/default-types";
 import type { AnyString, Awaitable, UnmaskType } from "./types/type-helpers";
+import { omitKeys } from "./utils/common";
 import type { HTTPError, ValidationError } from "./utils/external/error";
 import { isHTTPErrorInstance, isValidationErrorInstance } from "./utils/external/guards";
 
@@ -23,7 +24,11 @@ export const getResponseType = <TResponse>(response: Response, parser: Parser<TR
 
 type InitResponseTypeMap<TResponse = unknown> = ReturnType<typeof getResponseType<TResponse>>;
 
-export type ResponseTypeUnion = keyof InitResponseTypeMap | null;
+type ResponseTypeUnion = keyof InitResponseTypeMap;
+
+type ResponseTypePlaceholder = null;
+
+export type ResponseTypeType = ResponseTypePlaceholder | ResponseTypeUnion;
 
 export type ResponseTypeMap<TResponse> = {
 	[Key in keyof InitResponseTypeMap<TResponse>]: Awaited<ReturnType<InitResponseTypeMap<TResponse>[Key]>>;
@@ -31,17 +36,17 @@ export type ResponseTypeMap<TResponse> = {
 
 export type GetResponseType<
 	TResponse,
-	TResponseType extends ResponseTypeUnion,
+	TResponseType extends ResponseTypeType,
 	TComputedResponseTypeMap extends ResponseTypeMap<TResponse> = ResponseTypeMap<TResponse>,
 > =
 	null extends TResponseType ? TComputedResponseTypeMap["json"]
-	: TResponseType extends NonNullable<ResponseTypeUnion> ? TComputedResponseTypeMap[TResponseType]
+	: TResponseType extends NonNullable<ResponseTypeType> ? TComputedResponseTypeMap[TResponseType]
 	: never;
 
 const textTypes = new Set(["image/svg", "application/xml", "application/xhtml", "application/html"]);
 const JSON_REGEX = /^application\/(?:[\w!#$%&*.^`~-]*\+)?json(;.+)?$/i;
 
-const detectResponseType = (response: Response): Extract<ResponseTypeUnion, "blob" | "json" | "text"> => {
+const detectResponseType = (response: Response): Extract<ResponseTypeType, "blob" | "json" | "text"> => {
 	const initContentType = response.headers.get("content-type");
 
 	if (!initContentType) {
@@ -63,7 +68,7 @@ const detectResponseType = (response: Response): Extract<ResponseTypeUnion, "blo
 
 export const resolveResponseData = <TResponse>(
 	response: Response,
-	responseType: ResponseTypeUnion | undefined,
+	responseType: ResponseTypeType | undefined,
 	parser: Parser<TResponse> | undefined
 ) => {
 	const selectedParser = parser ?? extraOptionDefaults.responseParser;
@@ -129,7 +134,7 @@ export type CallApiSuccessOrErrorVariant<TData, TError> =
 export type ResultModeMapWithoutException<
 	TData,
 	TErrorData,
-	TResponseType extends ResponseTypeUnion,
+	TResponseType extends ResponseTypeType,
 	TComputedData = GetResponseType<TData, TResponseType>,
 	TComputedErrorData = GetResponseType<TErrorData, TResponseType>,
 	TComputedResult extends CallApiSuccessOrErrorVariant<
@@ -138,15 +143,14 @@ export type ResultModeMapWithoutException<
 	> = CallApiSuccessOrErrorVariant<TComputedData, TComputedErrorData>,
 > = UnmaskType<{
 	all: TComputedResult;
-
 	onlyData: TComputedResult["data"];
-
 	onlyResponse: TComputedResult["response"];
+	withoutResponse: TComputedResult["data"] | TComputedResult["error"];
 }>;
 
 type ResultModeMapWithException<
 	TData,
-	TResponseType extends ResponseTypeUnion,
+	TResponseType extends ResponseTypeType,
 	TComputedData = GetResponseType<TData, TResponseType>,
 	TComputedResult extends
 		CallApiResultSuccessVariant<TComputedData> = CallApiResultSuccessVariant<TComputedData>,
@@ -154,12 +158,13 @@ type ResultModeMapWithException<
 	all: TComputedResult;
 	onlyData: TComputedResult["data"];
 	onlyResponse: TComputedResult["response"];
+	withoutResponse: TComputedResult["data"] | TComputedResult["error"];
 };
 
 export type ResultModeMap<
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,
-	TResponseType extends ResponseTypeUnion = ResponseTypeUnion,
+	TResponseType extends ResponseTypeType = ResponseTypeType,
 	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
 > =
 	TThrowOnError extends true ? ResultModeMapWithException<TData, TResponseType>
@@ -167,15 +172,19 @@ export type ResultModeMap<
 
 type ResultModePlaceholder = null;
 
-// eslint-disable-next-line perfectionist/sort-union-types -- Allow
-export type ResultModeUnion = keyof ResultModeMap | ResultModePlaceholder;
+type ResultModeUnion = keyof ResultModeMap;
+
+// FIXME - Revisit this idea later. Take inspirations from how zod does it with pick({}) and omit({d})
+// type ResultModeObject = { data?: boolean; error?: boolean; response?: boolean };
+
+export type ResultModeType = ResultModePlaceholder | ResultModeUnion;
 
 export type GetCallApiResult<
 	TData,
 	TErrorData,
-	TResultMode extends ResultModeUnion,
+	TResultMode extends ResultModeType,
 	TThrowOnError extends ThrowOnErrorUnion,
-	TResponseType extends ResponseTypeUnion,
+	TResponseType extends ResponseTypeType,
 	TComputedResultModeMapWithException extends ResultModeMapWithException<
 		TData,
 		TResponseType
@@ -190,9 +199,8 @@ export type GetCallApiResult<
 	TErrorData extends false ? TComputedResultModeMapWithException["onlyData"]
 	: TErrorData extends false | undefined ? TComputedResultModeMapWithException["onlyData"]
 	: ResultModePlaceholder extends TResultMode ? TComputedResultModeMap["all"]
-	: TResultMode extends Exclude<ResultModeUnion, ResultModePlaceholder> ?
-		TComputedResultModeMap[TResultMode]
-	:	never;
+	: TResultMode extends ResultModeUnion ? TComputedResultModeMap[TResultMode]
+	: never;
 
 type SuccessInfo = Pick<CallApiExtraOptions, "resultMode"> & {
 	response: Response;
@@ -207,6 +215,7 @@ const getResultModeMap = (details: ResultModeMap["all"]): LazyResultModeMap => {
 		all: () => details,
 		onlyData: () => details.data,
 		onlyResponse: () => details.response,
+		withoutResponse: () => omitKeys(details, ["response"]),
 	};
 };
 

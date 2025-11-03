@@ -15,8 +15,8 @@ import {
 	resolveErrorResult,
 	resolveResponseData,
 	resolveSuccessResult,
-	type ResponseTypeUnion,
-	type ResultModeUnion,
+	type ResponseTypeType,
+	type ResultModeType,
 } from "./result";
 import { createRetryManager } from "./retry";
 import type {
@@ -67,9 +67,9 @@ const $GlobalRequestInfoCache: GlobalRequestInfoCache = new Map();
 export const createFetchClient = <
 	TBaseData = DefaultDataType,
 	TBaseErrorData = DefaultDataType,
-	TBaseResultMode extends ResultModeUnion = ResultModeUnion,
+	TBaseResultMode extends ResultModeType = ResultModeType,
 	TBaseThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
-	TBaseResponseType extends ResponseTypeUnion = ResponseTypeUnion,
+	TBaseResponseType extends ResponseTypeType = ResponseTypeType,
 	const TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
 	const TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TComputedBaseSchemaConfig extends CallApiSchemaConfig = GetBaseSchemaConfig<TBaseSchemaAndConfig>,
@@ -90,9 +90,9 @@ export const createFetchClient = <
 	const callApi = async <
 		TData = TBaseData,
 		TErrorData = TBaseErrorData,
-		TResultMode extends ResultModeUnion = TBaseResultMode,
+		TResultMode extends ResultModeType = TBaseResultMode,
 		TThrowOnError extends ThrowOnErrorUnion = TBaseThrowOnError,
-		TResponseType extends ResponseTypeUnion = TBaseResponseType,
+		TResponseType extends ResponseTypeType = TBaseResponseType,
 		const TSchemaConfig extends CallApiSchemaConfig = TComputedBaseSchemaConfig,
 		TInitURL extends InferInitURL<TComputedBaseSchemaRoutes, TSchemaConfig> = InferInitURL<
 			TComputedBaseSchemaRoutes,

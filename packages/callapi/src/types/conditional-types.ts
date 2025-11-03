@@ -1,6 +1,6 @@
 import type { ErrorContext } from "../hooks";
 import type { CallApiPlugin } from "../plugins";
-import type { ResultModeUnion } from "../result";
+import type { ResultModeType } from "../result";
 import type { AllowedQueryParamValues, InitURLOrURLObject, Params, Query } from "../url";
 import type {
 	BaseCallApiSchemaRoutes,
@@ -346,7 +346,7 @@ export type InferPluginOptions<TPluginArray extends CallApiPlugin[]> = UnionToIn
 	:	never
 >;
 
-export type ResultModeOption<TErrorData, TResultMode extends ResultModeUnion> =
+export type ResultModeOption<TErrorData, TResultMode extends ResultModeType> =
 	TErrorData extends false ? { resultMode: "onlyData" }
 	: TErrorData extends false | undefined ? { resultMode?: "onlyData" }
 	: { resultMode?: TResultMode };

@@ -4,7 +4,7 @@ import type { DedupeOptions } from "../dedupe";
 import type { HookConfigOptions, Hooks, HooksOrHooksArray } from "../hooks";
 import type { FetchImpl, Middlewares } from "../middlewares";
 import type { CallApiPlugin } from "../plugins";
-import type { GetCallApiResult, ResponseTypeUnion, ResultModeUnion } from "../result";
+import type { GetCallApiResult, ResponseTypeType, ResultModeType } from "../result";
 import type { RetryOptions } from "../retry";
 import type { InitURLOrURLObject, URLOptions } from "../url";
 import type { HTTPError } from "../utils/external/error";
@@ -61,9 +61,9 @@ export type CallApiRequestOptionsForHooks = Omit<CallApiRequestOptions, "headers
 type SharedExtraOptions<
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,
-	TResultMode extends ResultModeUnion = ResultModeUnion,
+	TResultMode extends ResultModeType = ResultModeType,
 	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
-	TResponseType extends ResponseTypeUnion = ResponseTypeUnion,
+	TResponseType extends ResponseTypeType = ResponseTypeType,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
 > = DedupeOptions
 	& HookConfigOptions
@@ -461,9 +461,9 @@ type SharedExtraOptions<
 export type BaseCallApiExtraOptions<
 	TBaseData = DefaultDataType,
 	TBaseErrorData = DefaultDataType,
-	TBaseResultMode extends ResultModeUnion = ResultModeUnion,
+	TBaseResultMode extends ResultModeType = ResultModeType,
 	TBaseThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
-	TBaseResponseType extends ResponseTypeUnion = ResponseTypeUnion,
+	TBaseResponseType extends ResponseTypeType = ResponseTypeType,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
 > = SharedExtraOptions<
@@ -603,9 +603,9 @@ export type InferExtendPluginContext<TBasePluginArray extends CallApiPlugin[]> =
 export type CallApiExtraOptions<
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,
-	TResultMode extends ResultModeUnion = ResultModeUnion,
+	TResultMode extends ResultModeType = ResultModeType,
 	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
-	TResponseType extends ResponseTypeUnion = ResponseTypeUnion,
+	TResponseType extends ResponseTypeType = ResponseTypeType,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes = BaseCallApiSchemaRoutes,
@@ -658,9 +658,9 @@ export type BaseInstanceContext = {
 export type BaseCallApiConfig<
 	TBaseData = DefaultDataType,
 	TBaseErrorData = DefaultDataType,
-	TBaseResultMode extends ResultModeUnion = ResultModeUnion,
+	TBaseResultMode extends ResultModeType = ResultModeType,
 	TBaseThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
-	TBaseResponseType extends ResponseTypeUnion = ResponseTypeUnion,
+	TBaseResponseType extends ResponseTypeType = ResponseTypeType,
 	TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TComputedBaseConfig = BaseCallApiExtraOptions<
@@ -679,9 +679,9 @@ export type BaseCallApiConfig<
 export type CallApiConfig<
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,
-	TResultMode extends ResultModeUnion = ResultModeUnion,
+	TResultMode extends ResultModeType = ResultModeType,
 	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
-	TResponseType extends ResponseTypeUnion = ResponseTypeUnion,
+	TResponseType extends ResponseTypeType = ResponseTypeType,
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes = BaseCallApiSchemaRoutes,
 	TSchema extends CallApiSchema = CallApiSchema,
 	TBaseSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
@@ -714,9 +714,9 @@ export type CallApiConfig<
 export type CallApiParameters<
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,
-	TResultMode extends ResultModeUnion = ResultModeUnion,
+	TResultMode extends ResultModeType = ResultModeType,
 	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
-	TResponseType extends ResponseTypeUnion = ResponseTypeUnion,
+	TResponseType extends ResponseTypeType = ResponseTypeType,
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes = BaseCallApiSchemaRoutes,
 	TSchema extends CallApiSchema = CallApiSchema,
 	TBaseSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
@@ -747,7 +747,7 @@ export type CallApiParameters<
 export type CallApiResult<
 	TData,
 	TErrorData,
-	TResultMode extends ResultModeUnion,
+	TResultMode extends ResultModeType,
 	TThrowOnError extends ThrowOnErrorUnion,
-	TResponseType extends ResponseTypeUnion,
+	TResponseType extends ResponseTypeType,
 > = GetCallApiResult<TData, TErrorData, TResultMode, TThrowOnError, TResponseType>;
