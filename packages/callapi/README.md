@@ -30,7 +30,7 @@
 
 Fetch is too basic for real apps. You end up writing the same boilerplate: error handling, retries, deduplication, response parsing etc. CallApi handles all of that and practically more.
 
-**Drop-in replacement for fetch. Under 6KB. Zero dependencies.**
+**Drop-in replacement for fetch. Under 6KB. All kinds of convenience features. Zero dependencies.**
 
 ```js
 import { callApi } from "@zayne-labs/callapi";
@@ -44,7 +44,7 @@ const { data, error } = await callApi("/api/users");
 
 ```js
 const req1 = callApi("/api/user");
-const req2 = callApi("/api/user"); // Shares req1's response
+const req2 = callApi("/api/user"); // Cancels req1 (can be configured to share it's response instead)
 ```
 
 **Smart Response Parsing** - Looks at Content-Type, does the right thing.
@@ -53,7 +53,7 @@ const req2 = callApi("/api/user"); // Shares req1's response
 const { data } = await callApi("/api/data"); // JSON? Parsed.
 ```
 
-**Error Handling** - Structured errors you can actually use.
+**Error Handling** - Structured errors, making proper error handling trivial.
 
 ```js
 const { data, error } = await callApi("/api/users");
@@ -64,7 +64,7 @@ if (error) {
 }
 ```
 
-**Retries** - Exponential backoff, custom conditions.
+**Retries** - Exponential backoff, custom conditions etc.
 
 ```js
 await callApi("/api/data", {
@@ -98,7 +98,7 @@ const user = await callMainApi("/users/:id", {
 });
 ```
 
-**Hooks** - Intercept at any point.
+**Hooks** - Hook in callApi's lifecycle at any point.
 
 ```js
 const api = createFetchClient({
