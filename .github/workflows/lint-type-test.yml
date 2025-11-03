@@ -32,7 +32,7 @@ jobs:
          - name: Install dependencies and build
            run: |
               pnpm install --frozen-lockfile
-              pnpm build:callapi
+              pnpm build
 
          - name: Run linters
            run: |
