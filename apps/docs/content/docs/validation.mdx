@@ -558,7 +558,8 @@ Alternatively, use the exported constant for better maintainability:
 
 ```ts twoslash title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
-import { defineSchema, fallBackRouteSchemaKey } from "@zayne-labs/callapi/utils";
+import { defineSchema } from "@zayne-labs/callapi/utils";
+import { fallBackRouteSchemaKey } from "@zayne-labs/callapi/constants";
 import { z } from "zod";
 
 const callApi = createFetchClient({
