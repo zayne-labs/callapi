@@ -1,5 +1,13 @@
 # @zayne-labs/callapi
 
+## 1.11.18
+
+### Patch Changes
+
+- 165b969: refactor(result): improve type definition for withoutResponse mode
+
+   Use Omit<TComputedResult, "response"> instead of union type to better represent the structure when response is excluded
+
 ## 1.11.17
 
 ### Patch Changes
