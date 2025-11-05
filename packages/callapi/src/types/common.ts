@@ -751,3 +751,11 @@ export type CallApiResult<
 	TThrowOnError extends ThrowOnErrorUnion,
 	TResponseType extends ResponseTypeType,
 > = GetCallApiResult<TData, TErrorData, TResultMode, TThrowOnError, TResponseType>;
+
+export type CallApiResultLoose<
+	TData,
+	TErrorData,
+	TResultMode extends ResultModeType = ResultModeType,
+	TThrowOnError extends ThrowOnErrorUnion = ThrowOnErrorUnion,
+	TResponseType extends ResponseTypeType = ResponseTypeType,
+> = GetCallApiResult<TData, TErrorData, TResultMode, TThrowOnError, TResponseType>;

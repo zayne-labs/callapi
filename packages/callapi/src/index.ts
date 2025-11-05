@@ -46,7 +46,7 @@ export type {
 	CallApiParameters,
 	CallApiRequestOptions,
 	CallApiRequestOptionsForHooks,
-	CallApiResult,
+	CallApiResultLoose as CallApiResult,
 	InferExtendSchemaConfigContext,
 	InferExtendSchemaContext,
 	InferParamsFromRoute,
