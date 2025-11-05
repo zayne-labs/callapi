@@ -75,7 +75,7 @@ export const docsOptions = () =>
 				<>
 					<Image
 						alt="CallApi"
-						src={logoImage}
+						src={logoImage as unknown as string}
 						width={18}
 						height={18}
 						className="rounded-[5px]"
