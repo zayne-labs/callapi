@@ -98,7 +98,7 @@ export type GetCurrentRouteSchema<
 
 type JsonPrimitive = boolean | number | string | null | undefined;
 
-export type SerializableObject = Record<keyof object, unknown>;
+export type SerializableObject = Record<PropertyKey, unknown>;
 
 export type SerializableArray =
 	| Array<JsonPrimitive | SerializableObject>

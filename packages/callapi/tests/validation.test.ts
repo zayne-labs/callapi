@@ -172,7 +172,7 @@ describe("Validation System", () => {
 					if (!body || typeof body !== "object") {
 						throw new Error("Body must be an object");
 					}
-					return body;
+					return body as Record<string, unknown>;
 				});
 
 				const client = createFetchClient({
