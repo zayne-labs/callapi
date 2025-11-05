@@ -1,5 +1,13 @@
 # @zayne-labs/callapi
 
+## 1.11.20
+
+### Patch Changes
+
+- 8f2f684: fix(callapi): add response-less variant types for API results
+
+   Introduce new type variants (SuccessVariantWithoutResponse and ErrorVariantWithoutResponse) to properly type API results when response field is omitted. This provides better type safety than simple Omit operation.
+
 ## 1.11.18
 
 ### Patch Changes
