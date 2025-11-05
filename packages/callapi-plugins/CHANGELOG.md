@@ -1,5 +1,12 @@
 # @zayne-labs/callapi-plugins
 
+## 4.0.16
+
+### Patch Changes
+
+- Updated dependencies [dac80c9]
+   - @zayne-labs/callapi@1.11.16
+
 ## 4.0.15
 
 ### Patch Changes
