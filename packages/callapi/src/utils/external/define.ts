@@ -21,10 +21,16 @@ export const defineSchema = <
 	} satisfies BaseCallApiSchemaAndConfig;
 };
 
-export const defineSchemaRoutes = <const TSchemaRoutes extends CallApiSchema>(
-	routes: MatchExactObjectType<TSchemaRoutes, CallApiSchema>
+export const defineSchemaRoutes = <const TSchemaRoutes extends BaseCallApiSchemaRoutes>(
+	routes: MatchExactObjectType<TSchemaRoutes, BaseCallApiSchemaRoutes>
 ) => {
 	return routes as Writeable<typeof routes, "deep">;
+};
+
+export const defineMainSchema = <const TSchema extends CallApiSchema>(
+	mainSchema: MatchExactObjectType<TSchema, CallApiSchema>
+) => {
+	return mainSchema as Writeable<typeof mainSchema, "deep">;
 };
 
 export const defineSchemaConfig = <const TSchemaConfig extends CallApiSchemaConfig>(
