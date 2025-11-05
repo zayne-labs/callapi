@@ -1,4 +1,4 @@
-import { fallBackRouteSchemaKey } from "./constants/validation";
+import { fallBackRouteSchemaKey, type FallBackRouteSchemaKey } from "./constants/validation";
 import type {
 	BaseCallApiExtraOptions,
 	Body,
@@ -188,7 +188,9 @@ export type RouteKeyMethods = (typeof routeKeyMethods)[number];
 
 export type RouteKeyMethodsURLUnion = `@${RouteKeyMethods}/`;
 
-export type BaseCallApiSchemaRoutes = Partial<Record<AnyString | RouteKeyMethodsURLUnion, CallApiSchema>>;
+export type BaseCallApiSchemaRoutes = Partial<
+	Record<AnyString | FallBackRouteSchemaKey | RouteKeyMethodsURLUnion, CallApiSchema>
+>;
 
 export type BaseCallApiSchemaAndConfig = {
 	config?: CallApiSchemaConfig;
@@ -378,8 +380,6 @@ type GetResolvedSchemaContext = {
 	currentRouteSchemaKey: string;
 	extraOptions: CallApiExtraOptions;
 };
-
-export type FallBackRouteSchemaKey = typeof fallBackRouteSchemaKey;
 
 export const getResolvedSchema = (context: GetResolvedSchemaContext) => {
 	const { baseExtraOptions, currentRouteSchemaKey, extraOptions } = context;

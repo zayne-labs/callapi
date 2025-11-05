@@ -6,6 +6,7 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createFetchClient } from "../src";
+import { fallBackRouteSchemaKey } from "../src/constants/validation";
 import type { StandardSchemaV1 } from "../src/types/standard-schema";
 import { ValidationError } from "../src/utils/external/error";
 import { createMockResponse, expectErrorResult, expectValidationError } from "./helpers";
@@ -784,7 +785,7 @@ describe("Validation System", () => {
 				baseURL: "https://api.example.com",
 				schema: {
 					routes: {
-						".": {
+						[fallBackRouteSchemaKey]: {
 							// Fallback route
 							body: fallbackValidator,
 						},

@@ -1,3 +1,4 @@
+import type { FallBackRouteSchemaKey } from "../constants/validation";
 import type { ErrorContext } from "../hooks";
 import type { CallApiPlugin } from "../plugins";
 import type { ResultModeType } from "../result";
@@ -6,7 +7,6 @@ import type {
 	BaseCallApiSchemaRoutes,
 	CallApiSchema,
 	CallApiSchemaConfig,
-	FallBackRouteSchemaKey,
 	InferSchemaInput,
 	RouteKeyMethods,
 	RouteKeyMethodsURLUnion,

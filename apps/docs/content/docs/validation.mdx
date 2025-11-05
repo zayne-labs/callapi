@@ -522,7 +522,7 @@ const { data, error } = await callApi("/user", {
 
 ## Fallback Route Schema
 
-You can define a fallback schema that applies to all routes not explicitly defined in your schema using the special `.` key (or use the exported `fallBackRouteSchemaKey` constant):
+You can define a fallback schema that applies to all routes not explicitly defined in your schema using the special `@default` key (or use the exported `fallBackRouteSchemaKey` constant):
 
 ```ts twoslash title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
