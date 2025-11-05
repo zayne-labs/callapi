@@ -8,8 +8,10 @@
 
 # test & build
 /coverage
-/.next/*
-!.next/types/
+.next/**
+!.next/dev/
+!.next/dev/types/
+!.next/dev/types/*
 /out/
 /build
 *.tsbuildinfo
