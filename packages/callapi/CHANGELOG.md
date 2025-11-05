@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.11.17
+
+### Patch Changes
+
+- ab889c8: feat: add missing define helpers
+
 ## 1.11.16
 
 ### Patch Changes
