@@ -88,6 +88,10 @@ export type CallApiResultSuccessVariant<TData> = {
 	error: null;
 	response: Response;
 };
+export type CallApiResultSuccessVariantWithoutResponse<TData> = {
+	data: NoInfer<TData>;
+	error: null;
+};
 
 export type PossibleJavaScriptError = UnmaskType<{
 	errorData: false;
@@ -127,9 +131,23 @@ export type CallApiResultErrorVariant<TErrorData> =
 			response: Response | null;
 	  };
 
+export type CallApiResultErrorVariantWithoutResponse<TErrorData> =
+	| {
+			data: null;
+			error: PossibleHTTPError<TErrorData>;
+	  }
+	| {
+			data: null;
+			error: PossibleJavaScriptOrValidationError;
+	  };
+
 export type CallApiSuccessOrErrorVariant<TData, TError> =
 	| CallApiResultErrorVariant<TError>
 	| CallApiResultSuccessVariant<TData>;
+
+export type CallApiSuccessOrErrorVariantWithoutResponse<TData, TErrorData> =
+	| CallApiResultErrorVariantWithoutResponse<TErrorData>
+	| CallApiResultSuccessVariantWithoutResponse<TData>;
 
 export type ResultModeMapWithoutException<
 	TData,
@@ -145,7 +163,7 @@ export type ResultModeMapWithoutException<
 	all: TComputedResult;
 	onlyData: TComputedResult["data"];
 	onlyResponse: TComputedResult["response"];
-	withoutResponse: Omit<TComputedResult, "response">;
+	withoutResponse: CallApiSuccessOrErrorVariantWithoutResponse<TComputedData, TComputedErrorData>;
 }>;
 
 type ResultModeMapWithException<
@@ -158,7 +176,7 @@ type ResultModeMapWithException<
 	all: TComputedResult;
 	onlyData: TComputedResult["data"];
 	onlyResponse: TComputedResult["response"];
-	withoutResponse: Omit<TComputedResult, "response">;
+	withoutResponse: CallApiResultSuccessVariantWithoutResponse<TComputedData>;
 };
 
 export type ResultModeMap<
@@ -215,7 +233,7 @@ const getResultModeMap = (details: ResultModeMap["all"]): LazyResultModeMap => {
 		all: () => details,
 		onlyData: () => details.data,
 		onlyResponse: () => details.response,
-		withoutResponse: () => omitKeys(details, ["response"]),
+		withoutResponse: () => omitKeys(details, ["response"]) as ResultModeMap["withoutResponse"],
 	};
 };
 
