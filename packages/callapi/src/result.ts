@@ -145,7 +145,7 @@ export type ResultModeMapWithoutException<
 	all: TComputedResult;
 	onlyData: TComputedResult["data"];
 	onlyResponse: TComputedResult["response"];
-	withoutResponse: TComputedResult["data"] | TComputedResult["error"];
+	withoutResponse: Omit<TComputedResult, "response">;
 }>;
 
 type ResultModeMapWithException<
@@ -158,7 +158,7 @@ type ResultModeMapWithException<
 	all: TComputedResult;
 	onlyData: TComputedResult["data"];
 	onlyResponse: TComputedResult["response"];
-	withoutResponse: TComputedResult["data"] | TComputedResult["error"];
+	withoutResponse: Omit<TComputedResult, "response">;
 };
 
 export type ResultModeMap<
