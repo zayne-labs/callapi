@@ -24,7 +24,7 @@ import { isFunction } from "./utils/guards";
 
 type ResultVariant = "infer-input" | "infer-output";
 
-type InferSchemaResult<TSchema, TFallbackResult, TResultVariant extends ResultVariant> =
+export type InferSchemaResult<TSchema, TFallbackResult, TResultVariant extends ResultVariant> =
 	// == Checking for undefined first and returning fallback to avoid type errors when passing the config around (weird tbh)
 	undefined extends TSchema ? TFallbackResult
 	: TSchema extends StandardSchemaV1 ?
