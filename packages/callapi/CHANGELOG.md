@@ -1,5 +1,13 @@
 # @zayne-labs/callapi
 
+## 1.11.21
+
+### Patch Changes
+
+- 6782be6: refactor(types): 🔄 Use InferSchemaInput instead of InferSchemaOutput for input types like query and params to avoid the issue of lying to ts
+
+   feat(validation): Export `InferSchemaResult` type from validation module.
+
 ## 1.11.20
 
 ### Patch Changes
