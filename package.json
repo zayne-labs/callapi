@@ -24,6 +24,7 @@
 		"lint:eslint:dev": "turbo run --filter=./packages/* lint:eslint:dev",
 		"lint:eslint:interactive": "turbo run --filter=./packages/* lint:eslint:interactive",
 		"lint:eslint:root": "eslint . --max-warnings 0",
+		"lint:eslint:root:dev": "pnpm build && pnpm lint:eslint:root",
 		"lint:eslint:root:interactive": "pnpx eslint-interactive@latest . --max-warnings 0 --fix",
 		"lint:format": "turbo run --filter=./packages/* lint:format",
 		"lint:format:root": "prettier --write .",
