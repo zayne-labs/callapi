@@ -66,19 +66,20 @@ export const standardSchemaParser = async <
 >(
 	fullSchema: TFullSchema | undefined,
 	schemaName: TSchemaName,
-	inputData: InferSchemaInput<TSchema>,
-	response?: Response | null
+	options: { inputValue: InferSchemaInput<TSchema>; response?: Response | null }
 ): Promise<InferSchemaOutput<TSchema>> => {
+	const { inputValue, response } = options;
+
 	const schema = fullSchema?.[schemaName];
 
 	if (!schema) {
-		return inputData as never;
+		return inputValue as never;
 	}
 
 	const result =
 		isFunction(schema) ?
-			await handleValidatorFunction(schema, inputData)
-		:	await schema["~standard"].validate(inputData);
+			await handleValidatorFunction(schema, inputValue)
+		:	await schema["~standard"].validate(inputValue);
 
 	// == If the `issues` field exists, it means the validation failed
 
@@ -138,7 +139,7 @@ export interface CallApiSchema {
 	/**
 	 *  The schema to use for validating the request body.
 	 */
-	body?: StandardSchemaV1<Body> | ((body: Body) => Awaitable<Body>);
+	body?: StandardSchemaV1<Body | undefined> | ((body: Body) => Awaitable<Body | undefined>);
 
 	/**
 	 *  The schema to use for validating the response data.
@@ -220,7 +221,7 @@ export const handleSchemaValidation = async <
 		return inputValue as never;
 	}
 
-	const validResult = await standardSchemaParser(fullSchema, schemaName, inputValue, response);
+	const validResult = await standardSchemaParser(fullSchema, schemaName, { inputValue, response });
 
 	return validResult as never;
 };

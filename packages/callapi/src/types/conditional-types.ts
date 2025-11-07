@@ -104,7 +104,9 @@ export type SerializableArray =
 	| Array<JsonPrimitive | SerializableObject>
 	| ReadonlyArray<JsonPrimitive | SerializableObject>;
 
-export type Body = UnmaskType<RequestInit["body"] | SerializableArray | SerializableObject>;
+export type Body = UnmaskType<
+	Exclude<RequestInit["body"], undefined> | SerializableArray | SerializableObject
+>;
 
 export type InferBodyOption<TSchema extends CallApiSchema> = MakeSchemaOptionRequiredIfDefined<
 	TSchema["body"],
