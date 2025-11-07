@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.11.22
+
+### Patch Changes
+
+- de2f92a: refactor: change how validation errors are displayed
+
 ## 1.11.21
 
 ### Patch Changes
