@@ -5,8 +5,8 @@
 
 import { describe, expect, it, vi } from "vitest";
 import { callApi } from "../src/createFetchClient";
-import { HTTPError, ValidationError } from "../src/utils/external/error";
 import type { StandardSchemaV1 } from "../src/types/standard-schema";
+import { HTTPError, ValidationError } from "../src/utils/external/error";
 import { mockError, mockHTTPError, mockServerError, mockUser } from "./fixtures";
 import {
 	createMockErrorResponse,
@@ -190,7 +190,7 @@ describe("Error Handling", () => {
 				response: null,
 			});
 
-			expect(validationError.message).toBe("✖ Root level validation error");
+			expect(validationError.message).toContain("Root level validation error");
 		});
 	});
 

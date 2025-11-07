@@ -6,6 +6,7 @@ const commonOptions = {
 	clean: true,
 	dts: { newContext: true },
 	entry: ["src/index.ts", "src/utils/external/index.ts", "src/constants/index.ts"],
+	ignoreWatch: [".turbo"],
 	platform: "neutral",
 	sourcemap: !isDevMode,
 	target: "esnext",
@@ -17,6 +18,6 @@ export default defineConfig([
 	{
 		...commonOptions,
 		format: ["esm"],
-		outDir: "./dist/esm",
+		// outDir: "./dist/esm",
 	},
 ]);

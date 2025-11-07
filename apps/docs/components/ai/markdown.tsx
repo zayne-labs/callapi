@@ -22,6 +22,7 @@ export type Processor = {
 };
 
 function rehypeWrapWords() {
+	// eslint-disable-next-line unicorn/consistent-function-scoping
 	return (tree: Root) => {
 		visit(tree, ["text", "element"], (node, index, parent) => {
 			if (node.type === "element" && node.tagName === "pre") {

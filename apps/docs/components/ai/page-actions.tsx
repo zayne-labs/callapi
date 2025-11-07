@@ -1,5 +1,6 @@
 "use client";
 
+import { cnMerge } from "@/lib/utils/cn";
 import { callApi } from "@zayne-labs/callapi";
 import { isBrowser } from "@zayne-labs/toolkit-core";
 import { Popover, PopoverContent, PopoverTrigger } from "fumadocs-ui/components/ui/popover";
@@ -7,7 +8,6 @@ import { useCopyButton } from "fumadocs-ui/utils/use-copy-button";
 import { Check, ChevronDown, Copy, ExternalLinkIcon, MessageCircleIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { tv } from "tailwind-variants";
-import { cnMerge } from "@/lib/utils/cn";
 import { Button } from "../ui/button";
 
 const cache = new Map<string, string>();
@@ -33,7 +33,7 @@ export function LLMCopyButton(props: CopyBtnProps) {
 			responseType: "text",
 		}).then((result) => {
 			const content = result.data ?? "";
-			cache.set(markdownUrl, content);
+			content && cache.set(markdownUrl, content);
 			return content;
 		});
 

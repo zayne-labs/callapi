@@ -123,7 +123,9 @@ export class ValidationError extends Error {
 	constructor(details: ValidationErrorDetails, errorOptions?: ErrorOptions) {
 		const { issueCause, issues, response } = details;
 
-		const message = prettifyValidationIssues(issues);
+		const prettyMessage = prettifyValidationIssues(issues);
+
+		const message = `(${issueCause.toUpperCase()}) - ${prettyMessage}`;
 
 		super(message, errorOptions);
 

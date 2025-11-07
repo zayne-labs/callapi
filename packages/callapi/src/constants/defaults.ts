@@ -5,7 +5,7 @@ export const extraOptionDefaults = Object.freeze(
 	defineEnum({
 		// Common defaults
 		bodySerializer: JSON.stringify,
-		defaultHTTPErrorMessage: "HTTP request failed unexpectedly",
+		defaultHTTPErrorMessage: "Request failed unexpectedly",
 
 		// Dedupe defaults
 		/* eslint-disable perfectionist/sort-objects -- Allow */
