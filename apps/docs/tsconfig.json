@@ -12,6 +12,6 @@
 		// "checkMdx": true
 	},
 
-	"include": ["**/*", "next-env.d.ts", ".next/types/**/*.ts"],
+	"include": ["**/*.ts", "./*.ts"],
 	"exclude": ["node_modules"]
 }
