@@ -1,6 +1,6 @@
 import type { CallApiPlugin } from "../../plugins";
 import type { BaseCallApiConfig } from "../../types";
-import type { MatchExactObjectType, Writeable } from "../../types/type-helpers";
+import type { AnyFunction, Satisfies, Writeable } from "../../types/type-helpers";
 import type {
 	BaseCallApiSchemaAndConfig,
 	BaseCallApiSchemaRoutes,
@@ -13,28 +13,28 @@ export const defineSchema = <
 	const TSchemaConfig extends CallApiSchemaConfig,
 >(
 	routes: TBaseSchemaRoutes,
-	config?: MatchExactObjectType<TSchemaConfig, CallApiSchemaConfig>
+	config?: Satisfies<TSchemaConfig, CallApiSchemaConfig>
 ) => {
 	return {
-		config: config as NonNullable<Writeable<typeof config, "deep">>,
-		routes: routes as Writeable<typeof routes, "deep">,
+		config: defineSchemaConfig(config as NonNullable<typeof config>),
+		routes: defineSchemaRoutes(routes),
 	} satisfies BaseCallApiSchemaAndConfig;
 };
 
 export const defineSchemaRoutes = <const TSchemaRoutes extends BaseCallApiSchemaRoutes>(
-	routes: MatchExactObjectType<TSchemaRoutes, BaseCallApiSchemaRoutes>
+	routes: TSchemaRoutes
 ) => {
 	return routes as Writeable<typeof routes, "deep">;
 };
 
 export const defineMainSchema = <const TSchema extends CallApiSchema>(
-	mainSchema: MatchExactObjectType<TSchema, CallApiSchema>
+	mainSchema: Satisfies<TSchema, CallApiSchema>
 ) => {
 	return mainSchema as Writeable<typeof mainSchema, "deep">;
 };
 
 export const defineSchemaConfig = <const TSchemaConfig extends CallApiSchemaConfig>(
-	config: MatchExactObjectType<TSchemaConfig, CallApiSchemaConfig>
+	config: Satisfies<TSchemaConfig, CallApiSchemaConfig>
 ) => {
 	return config as Writeable<typeof config, "deep">;
 };
@@ -43,6 +43,19 @@ export const definePlugin = <const TPlugin extends CallApiPlugin>(plugin: TPlugi
 	return plugin as Writeable<typeof plugin, "deep">;
 };
 
-export const defineBaseConfig = <const TBaseConfig extends BaseCallApiConfig>(baseConfig: TBaseConfig) => {
-	return baseConfig as Writeable<typeof baseConfig, "deep">;
+type BaseConfigObject = Exclude<BaseCallApiConfig, AnyFunction>;
+
+type BaseConfigFn = Extract<BaseCallApiConfig, AnyFunction>;
+
+type DefineBaseConfig = {
+	<const TBaseConfig extends BaseConfigObject>(
+		baseConfig: Satisfies<TBaseConfig, BaseConfigObject>
+	): Writeable<typeof baseConfig, "deep">;
+	<TBaseConfig extends BaseConfigFn>(baseConfig: TBaseConfig): TBaseConfig;
+};
+
+export const defineBaseConfig: DefineBaseConfig = <const TBaseConfig extends BaseCallApiConfig>(
+	baseConfig: TBaseConfig
+) => {
+	return baseConfig;
 };

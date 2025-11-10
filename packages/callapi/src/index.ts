@@ -39,7 +39,6 @@ export type { RetryOptions } from "./retry";
 export type {
 	BaseCallApiConfig,
 	BaseCallApiExtraOptions,
-	BaseInstanceContext,
 	CallApiConfig,
 	CallApiExtraOptions,
 	CallApiExtraOptionsForHooks,
@@ -50,6 +49,7 @@ export type {
 	InferExtendSchemaConfigContext,
 	InferExtendSchemaContext,
 	InferParamsFromRoute,
+	InstanceContext,
 	Register,
 } from "./types";
 

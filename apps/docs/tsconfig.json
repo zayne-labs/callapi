@@ -12,6 +12,6 @@
 		// "checkMdx": true
 	},
 
-	"include": ["**/*.ts", "./*.ts"],
+	"include": ["**/*", "./*"],
 	"exclude": ["node_modules"]
 }

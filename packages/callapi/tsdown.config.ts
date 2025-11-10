@@ -1,4 +1,4 @@
-import { defineConfig, type Options } from "tsdown";
+import { defineConfig, type UserConfig } from "tsdown";
 
 const isDevMode = process.env.NODE_ENV === "development";
 
@@ -12,7 +12,7 @@ const commonOptions = {
 	target: "esnext",
 	treeshake: true,
 	tsconfig: "tsconfig.json",
-} satisfies Options;
+} satisfies UserConfig;
 
 export default defineConfig([
 	{

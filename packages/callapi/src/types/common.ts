@@ -649,7 +649,7 @@ export type CallApiExtraOptions<
 
 export type CallApiExtraOptionsForHooks = Hooks & Omit<CallApiExtraOptions, keyof Hooks>;
 
-export type BaseInstanceContext = {
+export type InstanceContext = {
 	initURL: string;
 	options: CallApiExtraOptions;
 	request: CallApiRequestOptions;
@@ -674,7 +674,7 @@ export type BaseCallApiConfig<
 	>,
 > =
 	| (CallApiRequestOptions & TComputedBaseConfig)
-	| ((context: BaseInstanceContext) => CallApiRequestOptions & TComputedBaseConfig);
+	| ((context: InstanceContext) => CallApiRequestOptions & TComputedBaseConfig);
 
 export type CallApiConfig<
 	TData = DefaultDataType,
