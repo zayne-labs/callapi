@@ -189,8 +189,10 @@ export type RouteKeyMethods = (typeof routeKeyMethods)[number];
 
 export type RouteKeyMethodsURLUnion = `@${RouteKeyMethods}/`;
 
+export type BaseSchemaRouteKeyPrefixes = FallBackRouteSchemaKey | RouteKeyMethodsURLUnion;
+
 export type BaseCallApiSchemaRoutes = Partial<
-	Record<AnyString | FallBackRouteSchemaKey | RouteKeyMethodsURLUnion, CallApiSchema>
+	Record<AnyString | BaseSchemaRouteKeyPrefixes, CallApiSchema>
 >;
 
 export type BaseCallApiSchemaAndConfig = {

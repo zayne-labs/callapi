@@ -57,6 +57,7 @@ export type { URLOptions } from "./url";
 
 export type {
 	BaseCallApiSchemaRoutes,
+	BaseSchemaRouteKeyPrefixes,
 	CallApiSchema,
 	CallApiSchemaConfig,
 	InferSchemaInput,
