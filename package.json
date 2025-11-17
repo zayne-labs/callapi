@@ -43,9 +43,9 @@
 	},
 	"devDependencies": {
 		"@changesets/cli": "2.29.7",
-		"@eslint-react/eslint-plugin": "^2.3.1",
-		"@next/eslint-plugin-next": "^16.0.1",
-		"@types/node": "^24.10.0",
+		"@eslint-react/eslint-plugin": "^2.3.5",
+		"@next/eslint-plugin-next": "^16.0.3",
+		"@types/node": "^24.10.1",
 		"@zayne-labs/eslint-config": "0.11.5",
 		"@zayne-labs/prettier-config": "0.11.5",
 		"@zayne-labs/tsconfig": "0.11.5",
@@ -58,7 +58,7 @@
 		"lint-staged": "16.2.6",
 		"prettier": "3.6.2",
 		"tailwindcss": "^4.1.17",
-		"turbo": "^2.6.0",
+		"turbo": "^2.6.1",
 		"typescript": "^5.9.3"
 	}
 }
