@@ -29,4 +29,3 @@ yarn-error.log*
 .env
 .env*.local
 .vercel
-next-env.d.ts
