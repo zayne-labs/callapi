@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.11.24
+
+### Patch Changes
+
+- 8671045: refactor(type-helpers): revert to older version of satisfies type due to errors from callback properties in defineBaseConfig
+
 ## 1.11.23
 
 ### Patch Changes
