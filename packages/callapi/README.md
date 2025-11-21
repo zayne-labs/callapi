@@ -26,7 +26,7 @@
 
 ---
 
-## Why?
+## Why CallApi?
 
 Fetch is too basic for real apps. You end up writing the same boilerplate: error handling, retries, deduplication, response parsing etc. CallApi handles all of that and practically more.
 
@@ -40,20 +40,26 @@ const { data, error } = await callApi("/api/users");
 
 ## Features
 
-**Request Deduplication** - User spam-clicks a button? Handled. No race conditions.
+### Request Deduplication
+
+User spam-clicks a button? Handled. No race conditions.
 
 ```js
 const req1 = callApi("/api/user");
 const req2 = callApi("/api/user"); // Cancels req1 (can be configured to share it's response instead)
 ```
 
-**Smart Response Parsing** - Looks at Content-Type, does the right thing.
+### Smart Response Parsing
+
+Looks at Content-Type and parses accordingly.
 
 ```js
 const { data } = await callApi("/api/data"); // JSON? Parsed.
 ```
 
-**Error Handling** - Structured errors, making proper error handling trivial.
+### Error Handling
+
+Structured errors make robust error handling trivial.
 
 ```js
 const { data, error } = await callApi("/api/users");
@@ -64,7 +70,9 @@ if (error) {
 }
 ```
 
-**Retries** - Exponential backoff, custom conditions etc.
+### Retries
+
+Supports exponential backoff and custom retry conditions.
 
 ```js
 await callApi("/api/data", {
@@ -74,9 +82,11 @@ await callApi("/api/data", {
 });
 ```
 
-**Schema Validation** - TypeScript types + runtime validation.
+### Schema Validation
 
-```js
+TypeScript-first types with runtime validation.
+
+```ts
 import { z } from "zod";
 import { createFetchClient } from "@zayne-labs/callapi";
 import { defineSchema } from "@zayne-labs/callapi/utils";
@@ -98,7 +108,9 @@ const user = await callMainApi("/users/:id", {
 });
 ```
 
-**Hooks** - Hook in callApi's lifecycle at any point.
+### Hooks
+
+Hook into CallApi's lifecycle at any point.
 
 ```js
 const api = createFetchClient({
@@ -114,7 +126,9 @@ const api = createFetchClient({
 });
 ```
 
-**Plugins** - Extend with setup, hooks, and middleware.
+### Plugins
+
+Extend functionality with setup, hooks, and middleware.
 
 ```js
 const metricsPlugin = definePlugin({
@@ -153,7 +167,9 @@ const api = createFetchClient({
 });
 ```
 
-**URL Helpers** - Dynamic params, query strings, method prefixes.
+### URL Helpers
+
+Dynamic params, query strings, and method prefixes.
 
 ```js
 await callApi("/users/:id", { params: { id: 123 } });
@@ -161,7 +177,9 @@ await callApi("/search", { query: { q: "test" } });
 await callApi("@delete/users/123");
 ```
 
-**See the [full documentation](https://zayne-labs-callapi.netlify.app/docs) for all features.**
+And so many more
+
+See the [full documentation](https://zayne-labs-callapi.netlify.app/docs) for the full list of features.
 
 ## Installation
 
