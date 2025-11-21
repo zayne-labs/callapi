@@ -3,6 +3,7 @@ import { getMDXComponents } from "@/components/common";
 import { owner, repo } from "@/lib/github";
 import { createMetadata } from "@/lib/metadata";
 import { source } from "@/lib/source";
+import { createRelativeLink } from "fumadocs-ui/mdx";
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/page";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -45,7 +46,7 @@ async function Page({ params }: PageProps<"/docs/[[...slug]]">) {
 						githubUrl={`https://github.com/${owner}/${repo}/blob/main/apps/docs/content/docs/${page.path}`}
 					/>
 				</div>
-				<MDX components={getMDXComponents()} />
+				<MDX components={getMDXComponents({ a: createRelativeLink(source, page) })} />
 			</DocsBody>
 		</DocsPage>
 	);

@@ -41,10 +41,8 @@ export const baseOptions = (): BaseLayoutProps => ({
 	links: linkItems,
 });
 
-const callApiNpmDataPromise = callApi("https://registry.npmjs.org/@zayne-labs/callapi/latest", {
-	schema: {
-		data: z.object({ version: z.string() }),
-	},
+const npmDataPromise = callApi("https://registry.npmjs.org/@zayne-labs/callapi/latest", {
+	schema: { data: z.object({ version: z.string() }) },
 });
 
 export const docsOptions = () =>
@@ -52,7 +50,6 @@ export const docsOptions = () =>
 		...baseOptions(),
 
 		links: [
-			// assertDefined(linkItems.at(-1)),
 			{
 				children: <GithubInfo owner="zayne-labs" repo="callapi" className="lg:-mx-2" />,
 				type: "custom",
@@ -109,7 +106,7 @@ export const docsOptions = () =>
 		sidebar: {
 			tabs: [
 				{
-					description: callApiNpmDataPromise.then((result) => `v${result.data?.version ?? "*.*.*"}`),
+					description: npmDataPromise.then((result) => `v${result.data?.version ?? "*.*.*"}`),
 					icon: (
 						<div className="grid size-full place-items-center rounded-lg max-md:border max-md:bg-fd-primary/10 max-md:p-1.5">
 							<TagIcon className="size-full text-fd-primary" />
