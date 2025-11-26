@@ -16,7 +16,7 @@ export const toQueryString: ToQueryStringFn = (query) => {
 	return new URLSearchParams(query as Record<string, string>).toString();
 };
 
-type AllowedPrimitives = boolean | number | string | Blob;
+type AllowedPrimitives = boolean | number | string | Blob | null | undefined;
 
 type AllowedValues = AllowedPrimitives | AllowedPrimitives[] | Record<string, AllowedPrimitives>;
 
