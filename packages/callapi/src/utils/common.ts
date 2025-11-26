@@ -4,6 +4,7 @@ import { extraOptionDefaults, requestOptionDefaults } from "../constants/default
 import type { RequestContext } from "../hooks";
 import type { Middlewares } from "../middlewares";
 import type { BaseCallApiExtraOptions, CallApiExtraOptions, CallApiRequestOptions } from "../types/common";
+import type { DistributiveOmit } from "../types/type-helpers";
 import { extractMethodFromURL } from "../url";
 import {
 	isArray,
@@ -32,7 +33,7 @@ export const omitKeys = <
 		}
 	}
 
-	return updatedObject as Omit<TObject, TOmitArray[number]>;
+	return updatedObject as DistributiveOmit<TObject, TOmitArray[number]>;
 };
 
 export const pickKeys = <

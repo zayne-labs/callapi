@@ -45,7 +45,7 @@ Stop writing `await response.json()` everywhere. CallApi looks at the Content-Ty
 ```js
 const resultOne = await callApi("/api/data"); // JSON? Parsed.
 const resultTwo = await callApi("/page.html"); // HTML? String.
-const resultThree = await callApi("/image.png"); // Image? Blob.
+const resultThree = await callApi("/pg.png"); // Image? Blob.
 ```
 
 It just works. Like it should have from the start.

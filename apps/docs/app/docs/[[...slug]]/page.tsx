@@ -69,7 +69,7 @@ export async function generateMetadata({ params }: PageProps<"/docs/[[...slug]]"
 
 	const image = {
 		height: 630,
-		url: ["/og", ...slug, "image.png"].join("/"),
+		url: ["/og", ...slug, "image.webp"].join("/"),
 		width: 1200,
 	};
 

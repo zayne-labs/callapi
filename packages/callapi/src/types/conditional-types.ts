@@ -1,3 +1,4 @@
+import type { CallApiEnv } from ".";
 import type { FallBackRouteSchemaKey } from "../constants/validation";
 import type { ErrorContext } from "../hooks";
 import type { CallApiPlugin } from "../plugins";
@@ -174,7 +175,10 @@ export interface Register {
 export type GlobalMeta =
 	Register extends { meta?: infer TMeta extends Record<string, unknown> } ? TMeta : never;
 
-export type InferMetaOption<TSchema extends CallApiSchema> = MakeSchemaOptionRequiredIfDefined<
+export type InferMetaOption<
+	TSchema extends CallApiSchema,
+	TCallApiEnv extends CallApiEnv,
+> = MakeSchemaOptionRequiredIfDefined<
 	TSchema["meta"],
 	{
 		/**
@@ -200,7 +204,7 @@ export type InferMetaOption<TSchema extends CallApiSchema> = MakeSchemaOptionReq
 		 * });
 		 * ```
 		 */
-		meta?: InferSchemaOutput<TSchema["meta"], GlobalMeta>;
+		meta?: InferSchemaOutput<TSchema["meta"], TCallApiEnv["Meta"]>;
 	}
 >;
 
@@ -334,7 +338,8 @@ export type InferExtraOptions<
 	TSchema extends CallApiSchema,
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
 	TCurrentRouteSchemaKey extends string,
-> = InferMetaOption<TSchema>
+	TCallApiEnv extends CallApiEnv,
+> = InferMetaOption<TSchema, TCallApiEnv>
 	& InferParamsOption<TSchema, TBaseSchemaRoutes, TCurrentRouteSchemaKey>
 	& InferQueryOption<TSchema>;
 

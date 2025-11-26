@@ -1,7 +1,7 @@
 import { extraOptionDefaults } from "./constants/defaults";
 import type { CallApiExtraOptions, ThrowOnErrorUnion } from "./types";
 import type { DefaultDataType, DefaultThrowOnError } from "./types/default-types";
-import type { AnyString, Awaitable, UnmaskType } from "./types/type-helpers";
+import type { AnyString, Awaitable, DistributiveOmit, UnmaskType } from "./types/type-helpers";
 import { omitKeys } from "./utils/common";
 import type { HTTPError, ValidationError } from "./utils/external/error";
 import { isHTTPErrorInstance, isValidationErrorInstance } from "./utils/external/guards";
@@ -88,11 +88,6 @@ export type CallApiResultSuccessVariant<TData> = {
 	error: null;
 	response: Response;
 };
-export type CallApiResultSuccessVariantWithoutResponse<TData> = {
-	data: NoInfer<TData>;
-	error: null;
-};
-
 export type PossibleJavaScriptError = UnmaskType<{
 	errorData: false;
 	message: string;
@@ -131,23 +126,9 @@ export type CallApiResultErrorVariant<TErrorData> =
 			response: Response | null;
 	  };
 
-export type CallApiResultErrorVariantWithoutResponse<TErrorData> =
-	| {
-			data: null;
-			error: PossibleHTTPError<TErrorData>;
-	  }
-	| {
-			data: null;
-			error: PossibleJavaScriptOrValidationError;
-	  };
-
 export type CallApiSuccessOrErrorVariant<TData, TError> =
 	| CallApiResultErrorVariant<TError>
 	| CallApiResultSuccessVariant<TData>;
-
-export type CallApiSuccessOrErrorVariantWithoutResponse<TData, TErrorData> =
-	| CallApiResultErrorVariantWithoutResponse<TErrorData>
-	| CallApiResultSuccessVariantWithoutResponse<TData>;
 
 export type ResultModeMapWithoutException<
 	TData,
@@ -163,7 +144,7 @@ export type ResultModeMapWithoutException<
 	all: TComputedResult;
 	onlyData: TComputedResult["data"];
 	onlyResponse: TComputedResult["response"];
-	withoutResponse: CallApiSuccessOrErrorVariantWithoutResponse<TComputedData, TComputedErrorData>;
+	withoutResponse: DistributiveOmit<TComputedResult, "response">;
 }>;
 
 type ResultModeMapWithException<
@@ -176,7 +157,7 @@ type ResultModeMapWithException<
 	all: TComputedResult;
 	onlyData: TComputedResult["data"];
 	onlyResponse: TComputedResult["response"];
-	withoutResponse: CallApiResultSuccessVariantWithoutResponse<TComputedData>;
+	withoutResponse: DistributiveOmit<TComputedResult, "response">;
 };
 
 export type ResultModeMap<
@@ -233,7 +214,7 @@ const getResultModeMap = (details: ResultModeMap["all"]): LazyResultModeMap => {
 		all: () => details,
 		onlyData: () => details.data,
 		onlyResponse: () => details.response,
-		withoutResponse: () => omitKeys(details, ["response"]) as ResultModeMap["withoutResponse"],
+		withoutResponse: () => omitKeys(details, ["response"]),
 	};
 };
 

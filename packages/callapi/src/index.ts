@@ -1,4 +1,4 @@
-export { callApi, createFetchClient } from "./createFetchClient";
+export { callApi, createFetchClient, createFetchClientWithEnv } from "./createFetchClient";
 
 export type { DedupeOptions } from "./dedupe";
 

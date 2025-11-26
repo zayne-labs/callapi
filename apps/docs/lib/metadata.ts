@@ -5,7 +5,7 @@ export const baseURL =
 		new URL("http://localhost:3000")
 	:	new URL(process.env.URL);
 
-const banner = "/banner.png";
+const banner = "/banner.webp";
 
 export function createMetadata(overrides?: Metadata): Metadata {
 	return {

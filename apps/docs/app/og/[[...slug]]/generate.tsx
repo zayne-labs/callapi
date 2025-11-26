@@ -1,5 +1,5 @@
 import { baseURL } from "@/lib/metadata";
-import type { ImageResponseOptions } from "next/server";
+import type { ImageResponseOptions } from "@takumi-rs/image-response";
 import fs from "node:fs/promises";
 import type { ReactNode } from "react";
 
@@ -27,8 +27,7 @@ export const getImageResponseOptions = async (): Promise<ImageResponseOptions> =
 				weight: 600,
 			},
 		],
-		// format: "webp",
-		// format: "webp",
+		format: "webp",
 		height: 630,
 		width: 1200,
 	};

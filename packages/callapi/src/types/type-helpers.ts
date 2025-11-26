@@ -61,6 +61,9 @@ export type Satisfies<TActualObject extends TExpectedObject, TExpectedObject> = 
 // 	[Key in keyof TActualObject & keyof TExpectedObject]: TActualObject[Key];
 // };
 
+export type DistributiveOmit<TObject, TKeysToOmit extends keyof TObject> =
+	TObject extends unknown ? Omit<TObject, TKeysToOmit> : never;
+
 export type CommonRequestHeaders =
 	| "Access-Control-Allow-Credentials"
 	| "Access-Control-Allow-Headers"

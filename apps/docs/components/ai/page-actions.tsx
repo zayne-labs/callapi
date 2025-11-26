@@ -33,7 +33,7 @@ export function LLMCopyButton(props: CopyBtnProps) {
 			responseType: "text",
 		}).then((result) => {
 			const content = result.data ?? "";
-			content && cache.set(markdownUrl, content);
+			Boolean(content) && cache.set(markdownUrl, content);
 			return content;
 		});
 
