@@ -1,4 +1,4 @@
-import type { CallApiEnv } from ".";
+import type { CallApiContext } from ".";
 import type { FallBackRouteSchemaKey } from "../constants/validation";
 import type { ErrorContext } from "../hooks";
 import type { CallApiPlugin } from "../plugins";
@@ -167,17 +167,9 @@ export type InferRequestOptions<
 	TInitURL extends InferInitURL<BaseCallApiSchemaRoutes, CallApiSchemaConfig>,
 > = InferBodyOption<TSchema> & InferHeadersOption<TSchema> & InferMethodOption<TSchema, TInitURL>;
 
-// eslint-disable-next-line ts-eslint/no-empty-object-type -- This needs to be empty to allow users to register their own meta
-export interface Register {
-	// == meta: Meta
-}
-
-export type GlobalMeta =
-	Register extends { meta?: infer TMeta extends Record<string, unknown> } ? TMeta : never;
-
 export type InferMetaOption<
 	TSchema extends CallApiSchema,
-	TCallApiEnv extends CallApiEnv,
+	TCallApiContext extends CallApiContext,
 > = MakeSchemaOptionRequiredIfDefined<
 	TSchema["meta"],
 	{
@@ -204,7 +196,7 @@ export type InferMetaOption<
 		 * });
 		 * ```
 		 */
-		meta?: InferSchemaOutput<TSchema["meta"], TCallApiEnv["Meta"]>;
+		meta?: InferSchemaOutput<TSchema["meta"], TCallApiContext["Meta"]>;
 	}
 >;
 
@@ -338,8 +330,8 @@ export type InferExtraOptions<
 	TSchema extends CallApiSchema,
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
 	TCurrentRouteSchemaKey extends string,
-	TCallApiEnv extends CallApiEnv,
-> = InferMetaOption<TSchema, TCallApiEnv>
+	TCallApiContext extends CallApiContext,
+> = InferMetaOption<TSchema, TCallApiContext>
 	& InferParamsOption<TSchema, TBaseSchemaRoutes, TCurrentRouteSchemaKey>
 	& InferQueryOption<TSchema>;
 

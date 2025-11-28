@@ -21,13 +21,13 @@ import {
 import { createRetryManager } from "./retry";
 import type {
 	BaseCallApiConfig,
-	BlankCallApiEnv,
 	CallApiConfig,
-	CallApiEnv,
+	CallApiContext,
 	CallApiExtraOptionsForHooks,
 	CallApiRequestOptions,
 	CallApiRequestOptionsForHooks,
 	CallApiResult,
+	DefaultCallApiContext,
 	GetBaseSchemaConfig,
 	GetBaseSchemaRoutes,
 } from "./types/common";
@@ -66,12 +66,14 @@ import {
 
 const $GlobalRequestInfoCache: GlobalRequestInfoCache = new Map();
 
-export const createFetchClientWithEnv = <TOuterCallApiEnv extends CallApiEnv = BlankCallApiEnv>() => {
+export const createFetchClientWithContext = <
+	TOuterCallApiContext extends CallApiContext = DefaultCallApiContext,
+>() => {
 	const createFetchClient = <
 		TBaseData = DefaultDataType,
 		TBaseErrorData = DefaultDataType,
 		TBaseResultMode extends ResultModeType = ResultModeType,
-		TBaseCallApiEnv extends CallApiEnv = TOuterCallApiEnv,
+		TBaseCallApiContext extends CallApiContext = TOuterCallApiContext,
 		TBaseThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
 		TBaseResponseType extends ResponseTypeType = ResponseTypeType,
 		const TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
@@ -81,10 +83,10 @@ export const createFetchClientWithEnv = <TOuterCallApiEnv extends CallApiEnv = B
 			BaseCallApiSchemaRoutes = GetBaseSchemaRoutes<TBaseSchemaAndConfig>,
 	>(
 		initBaseConfig: BaseCallApiConfig<
+			TBaseCallApiContext,
 			TBaseData,
 			TBaseErrorData,
 			TBaseResultMode,
-			TBaseCallApiEnv,
 			TBaseThrowOnError,
 			TBaseResponseType,
 			TBaseSchemaAndConfig,
@@ -94,10 +96,10 @@ export const createFetchClientWithEnv = <TOuterCallApiEnv extends CallApiEnv = B
 		const $LocalRequestInfoCache: RequestInfoCache = new Map();
 
 		const callApi = async <
+			TCallApiContext extends CallApiContext = TBaseCallApiContext,
 			TData = TBaseData,
 			TErrorData = TBaseErrorData,
 			TResultMode extends ResultModeType = TBaseResultMode,
-			TCallApiEnv extends CallApiEnv = TBaseCallApiEnv,
 			TThrowOnError extends ThrowOnErrorUnion = TBaseThrowOnError,
 			TResponseType extends ResponseTypeType = TBaseResponseType,
 			const TSchemaConfig extends CallApiSchemaConfig = TComputedBaseSchemaConfig,
@@ -124,10 +126,10 @@ export const createFetchClientWithEnv = <TOuterCallApiEnv extends CallApiEnv = B
 		>(
 			initURL: TInitURL,
 			initConfig: CallApiConfig<
+				TCallApiContext,
 				InferSchemaOutput<TSchema["data"], GetResponseType<TData, TResponseType>>,
 				InferSchemaOutput<TSchema["errorData"], GetResponseType<TErrorData, TResponseType>>,
 				TResultMode,
-				TCallApiEnv,
 				TThrowOnError,
 				TResponseType,
 				TComputedBaseSchemaRoutes,
@@ -474,6 +476,6 @@ export const createFetchClientWithEnv = <TOuterCallApiEnv extends CallApiEnv = B
 	return createFetchClient;
 };
 
-export const createFetchClient = createFetchClientWithEnv();
+export const createFetchClient = createFetchClientWithContext();
 
 export const callApi = createFetchClient();

@@ -18,8 +18,8 @@ import type { InitURLOrURLObject } from "./url";
 import { isArray, isFunction, isPlainObject, isString } from "./utils/guards";
 import { type BaseCallApiSchemaAndConfig, getCurrentRouteSchemaKeyAndMainInitURL } from "./validation";
 
-export type PluginSetupContext<TPluginExtraOptions = unknown> = RequestContext // eslint-disable-next-line perfectionist/sort-intersection-types -- Allow
-	& PluginExtraOptions<TPluginExtraOptions> & { initURL: string };
+export type PluginSetupContext<TPluginExtraOptions = unknown> = PluginExtraOptions<TPluginExtraOptions>
+	& RequestContext & { initURL: string };
 
 export type PluginInitResult = Partial<
 	Omit<PluginSetupContext, "initURL" | "request"> & {

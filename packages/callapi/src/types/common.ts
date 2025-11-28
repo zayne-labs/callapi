@@ -17,7 +17,6 @@ import type {
 import type {
 	Body,
 	GetCurrentRouteSchema,
-	GlobalMeta,
 	HeadersOption,
 	InferExtraOptions,
 	InferPluginOptions,
@@ -31,10 +30,20 @@ import type {
 import type { DefaultDataType, DefaultPluginArray, DefaultThrowOnError } from "./default-types";
 import type { Awaitable, Prettify, Writeable } from "./type-helpers";
 
-// eslint-disable-next-line ts-eslint/no-empty-object-type -- Ignore
-export type BlankCallApiEnv = {};
+// eslint-disable-next-line ts-eslint/no-empty-object-type -- This needs to be empty to allow users to register their own meta
+export interface Register {
+	// == meta: MetaObject
+}
 
-export type CallApiEnv = {
+type MetaObjectType = Record<string, unknown>;
+
+export type GlobalMeta = Register extends { meta?: infer TMeta extends MetaObjectType } ? TMeta : never;
+
+export type CallApiContext = {
+	Meta?: MetaObjectType;
+};
+
+export type DefaultCallApiContext = {
 	Meta?: GlobalMeta;
 };
 
@@ -66,10 +75,10 @@ export type CallApiRequestOptionsForHooks = Omit<CallApiRequestOptions, "headers
 };
 
 type SharedExtraOptions<
+	TCallApiContext extends CallApiContext = CallApiContext,
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,
 	TResultMode extends ResultModeType = ResultModeType,
-	TCallApiEnv extends CallApiEnv = CallApiEnv,
 	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
 	TResponseType extends ResponseTypeType = ResponseTypeType,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
@@ -264,7 +273,7 @@ type SharedExtraOptions<
 		 * });
 		 * ```
 		 */
-		meta?: TCallApiEnv["Meta"];
+		meta?: TCallApiContext["Meta"];
 
 		/**
 		 * Custom function to parse response strings into actual value instead of the default response.json().
@@ -467,19 +476,19 @@ type SharedExtraOptions<
 	};
 
 export type BaseCallApiExtraOptions<
+	TBaseCallApiContext extends CallApiContext = CallApiContext,
 	TBaseData = DefaultDataType,
 	TBaseErrorData = DefaultDataType,
 	TBaseResultMode extends ResultModeType = ResultModeType,
-	TBaseCallApiEnv extends CallApiEnv = CallApiEnv,
 	TBaseThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
 	TBaseResponseType extends ResponseTypeType = ResponseTypeType,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
 > = SharedExtraOptions<
+	TBaseCallApiContext,
 	TBaseData,
 	TBaseErrorData,
 	TBaseResultMode,
-	TBaseCallApiEnv,
 	TBaseThrowOnError,
 	TBaseResponseType,
 	TBasePluginArray
@@ -611,10 +620,10 @@ export type InferExtendPluginContext<TBasePluginArray extends CallApiPlugin[]> =
 };
 
 export type CallApiExtraOptions<
+	TCallApiContext extends CallApiContext = CallApiContext,
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,
 	TResultMode extends ResultModeType = ResultModeType,
-	TCallApiEnv extends CallApiEnv = CallApiEnv,
 	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
 	TResponseType extends ResponseTypeType = ResponseTypeType,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
@@ -628,10 +637,10 @@ export type CallApiExtraOptions<
 	TComputedSchemaContext = InferExtendSchemaContext<TBaseSchemaRoutes, TCurrentRouteSchemaKey>,
 	TComputedSchemaConfigContext = InferExtendSchemaConfigContext<TBaseSchemaConfig>,
 > = SharedExtraOptions<
+	TCallApiContext,
 	TData,
 	TErrorData,
 	TResultMode,
-	TCallApiEnv,
 	TThrowOnError,
 	TResponseType,
 	TPluginArray
@@ -666,7 +675,8 @@ export type CallApiExtraOptions<
 	schemaConfig?: TSchemaConfig | ((context: TComputedSchemaConfigContext) => TSchemaConfig);
 };
 
-export type CallApiExtraOptionsForHooks = Hooks & Omit<CallApiExtraOptions, keyof Hooks>;
+export type CallApiExtraOptionsForHooks<TCallApiContext extends CallApiContext = CallApiContext> = Hooks
+	& Omit<CallApiExtraOptions<TCallApiContext>, keyof Hooks>;
 
 export type InstanceContext = {
 	initURL: string;
@@ -675,19 +685,19 @@ export type InstanceContext = {
 };
 
 export type BaseCallApiConfig<
+	TBaseCallApiContext extends CallApiContext = CallApiContext,
 	TBaseData = DefaultDataType,
 	TBaseErrorData = DefaultDataType,
 	TBaseResultMode extends ResultModeType = ResultModeType,
-	TBaseCallApiEnv extends CallApiEnv = CallApiEnv,
 	TBaseThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
 	TBaseResponseType extends ResponseTypeType = ResponseTypeType,
 	TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TComputedBaseConfig = BaseCallApiExtraOptions<
+		TBaseCallApiContext,
 		TBaseData,
 		TBaseErrorData,
 		TBaseResultMode,
-		TBaseCallApiEnv,
 		TBaseThrowOnError,
 		TBaseResponseType,
 		TBasePluginArray,
@@ -698,10 +708,10 @@ export type BaseCallApiConfig<
 	| ((context: InstanceContext) => CallApiRequestOptions & TComputedBaseConfig);
 
 export type CallApiConfig<
+	TCallApiContext extends CallApiContext = CallApiContext,
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,
 	TResultMode extends ResultModeType = ResultModeType,
-	TCallApiEnv extends CallApiEnv = CallApiEnv,
 	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
 	TResponseType extends ResponseTypeType = ResponseTypeType,
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes = BaseCallApiSchemaRoutes,
@@ -712,14 +722,14 @@ export type CallApiConfig<
 	TCurrentRouteSchemaKey extends string = string,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
-> = InferExtraOptions<TSchema, TBaseSchemaRoutes, TCurrentRouteSchemaKey, TCallApiEnv>
+> = InferExtraOptions<TSchema, TBaseSchemaRoutes, TCurrentRouteSchemaKey, TCallApiContext>
 	& InferRequestOptions<TSchema, TInitURL>
 	& Omit<
 		CallApiExtraOptions<
+			TCallApiContext,
 			TData,
 			TErrorData,
 			TResultMode,
-			TCallApiEnv,
 			TThrowOnError,
 			TResponseType,
 			TBasePluginArray,
@@ -730,15 +740,15 @@ export type CallApiConfig<
 			TSchemaConfig,
 			TCurrentRouteSchemaKey
 		>,
-		keyof InferExtraOptions<CallApiSchema, BaseCallApiSchemaRoutes, string, CallApiEnv>
+		keyof InferExtraOptions<CallApiSchema, BaseCallApiSchemaRoutes, string, CallApiContext>
 	>
 	& Omit<CallApiRequestOptions, keyof InferRequestOptions<CallApiSchema, string>>;
 
 export type CallApiParameters<
+	TCallApiContext extends CallApiContext = CallApiContext,
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,
 	TResultMode extends ResultModeType = ResultModeType,
-	TCallApiEnv extends CallApiEnv = CallApiEnv,
 	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
 	TResponseType extends ResponseTypeType = ResponseTypeType,
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes = BaseCallApiSchemaRoutes,
@@ -752,10 +762,10 @@ export type CallApiParameters<
 > = [
 	initURL: TInitURL,
 	config?: CallApiConfig<
+		TCallApiContext,
 		TData,
 		TErrorData,
 		TResultMode,
-		TCallApiEnv,
 		TThrowOnError,
 		TResponseType,
 		TBaseSchemaRoutes,
