@@ -76,9 +76,7 @@ const prettifyPath = (path: ValidationError["errorData"][number]["path"]) => {
 };
 
 const prettifyValidationIssues = (issues: ValidationError["errorData"]) => {
-	const issuesString = issues
-		.map((issue) => `✖ ${issue.message}${prettifyPath(issue.path)}`)
-		.join(" | ");
+	const issuesString = issues.map((issue) => `✖ ${issue.message}${prettifyPath(issue.path)}`).join(" | ");
 
 	return issuesString;
 };
