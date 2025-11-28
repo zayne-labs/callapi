@@ -140,7 +140,6 @@ export const cachingPlugin = () => {
 		middlewares: ({ options }: PluginSetupContext<CacheOptions>) => {
 			const { cacheLifetime = 60_000, cachePolicy = "cache-first" } = options;
 
-
 			return {
 				fetchMiddleware: (ctx) => async (input, init) => {
 					if (cachePolicy === "no-cache") {
@@ -177,7 +176,8 @@ export const cachingPlugin = () => {
 				},
 			};
 		},
-})};
+	});
+};
 
 // Usage
 import { createFetchClient } from "@zayne-labs/callapi";
