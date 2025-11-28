@@ -20,8 +20,10 @@ import type { DefaultCallApiContext } from "./types/default-types";
 import type { AnyFunction, Awaitable, Prettify, UnmaskType } from "./types/type-helpers";
 
 export interface Hooks<
-	TCallApiContext extends Pick<CallApiContext, "Data" | "ErrorData" | "InferredPluginOptions" | "Meta"> =
-		DefaultCallApiContext,
+	TCallApiContext extends Pick<
+		CallApiContext,
+		"Data" | "ErrorData" | "InferredPluginOptions" | "Meta"
+	> = DefaultCallApiContext,
 	TData = TCallApiContext["Data"],
 	TErrorData = TCallApiContext["ErrorData"],
 > {
@@ -232,8 +234,10 @@ export type ValidationErrorContext<
 >;
 
 export type SuccessContext<
-	TCallApiContext extends Pick<CallApiContext, "Data" | "InferredPluginOptions" | "Meta"> =
-		DefaultCallApiContext,
+	TCallApiContext extends Pick<
+		CallApiContext,
+		"Data" | "InferredPluginOptions" | "Meta"
+	> = DefaultCallApiContext,
 	TData = TCallApiContext["Data"],
 > = UnmaskType<
 	RequestContext<TCallApiContext> & {
@@ -243,8 +247,10 @@ export type SuccessContext<
 >;
 
 export type ResponseContext<
-	TCallApiContext extends Pick<CallApiContext, "Data" | "ErrorData" | "InferredPluginOptions" | "Meta"> =
-		DefaultCallApiContext,
+	TCallApiContext extends Pick<
+		CallApiContext,
+		"Data" | "ErrorData" | "InferredPluginOptions" | "Meta"
+	> = DefaultCallApiContext,
 	TData = TCallApiContext["Data"],
 	TErrorData = TCallApiContext["ErrorData"],
 > = UnmaskType<
@@ -265,8 +271,10 @@ export type RequestErrorContext<
 };
 
 export type ErrorContext<
-	TCallApiContext extends Pick<CallApiContext, "ErrorData" | "InferredPluginOptions" | "Meta"> =
-		DefaultCallApiContext,
+	TCallApiContext extends Pick<
+		CallApiContext,
+		"ErrorData" | "InferredPluginOptions" | "Meta"
+	> = DefaultCallApiContext,
 	TErrorData = TCallApiContext["ErrorData"],
 > = UnmaskType<
 	RequestContext<TCallApiContext>
@@ -283,8 +291,10 @@ export type ErrorContext<
 >;
 
 export type ResponseErrorContext<
-	TCallApiContext extends Pick<CallApiContext, "ErrorData" | "InferredPluginOptions" | "Meta"> =
-		DefaultCallApiContext,
+	TCallApiContext extends Pick<
+		CallApiContext,
+		"ErrorData" | "InferredPluginOptions" | "Meta"
+	> = DefaultCallApiContext,
 	TErrorData = TCallApiContext["ErrorData"],
 > = UnmaskType<
 	Extract<ErrorContext<TCallApiContext, TErrorData>, { error: PossibleHTTPError<TErrorData> }>
@@ -292,8 +302,10 @@ export type ResponseErrorContext<
 >;
 
 export type RetryContext<
-	TCallApiContext extends Pick<CallApiContext, "ErrorData" | "InferredPluginOptions" | "Meta"> =
-		DefaultCallApiContext,
+	TCallApiContext extends Pick<
+		CallApiContext,
+		"ErrorData" | "InferredPluginOptions" | "Meta"
+	> = DefaultCallApiContext,
 	TErrorData = TCallApiContext["ErrorData"],
 > = UnmaskType<
 	ErrorContext<TCallApiContext, TErrorData> & {

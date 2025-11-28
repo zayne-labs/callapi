@@ -84,8 +84,8 @@ export const createFetchClientWithContext = <
 		const TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
 		const TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 		TComputedBaseSchemaConfig extends CallApiSchemaConfig = GetBaseSchemaConfig<TBaseSchemaAndConfig>,
-		TComputedBaseSchemaRoutes extends BaseCallApiSchemaRoutes =
-			GetBaseSchemaRoutes<TBaseSchemaAndConfig>,
+		TComputedBaseSchemaRoutes extends
+			BaseCallApiSchemaRoutes = GetBaseSchemaRoutes<TBaseSchemaAndConfig>,
 	>(
 		initBaseConfig: BaseCallApiConfig<
 			TBaseCallApiContext,
@@ -112,8 +112,10 @@ export const createFetchClientWithContext = <
 				TComputedBaseSchemaRoutes,
 				TSchemaConfig
 			>,
-			TCurrentRouteSchemaKey extends GetCurrentRouteSchemaKey<TSchemaConfig, TInitURL> =
-				GetCurrentRouteSchemaKey<TSchemaConfig, TInitURL>,
+			TCurrentRouteSchemaKey extends GetCurrentRouteSchemaKey<
+				TSchemaConfig,
+				TInitURL
+			> = GetCurrentRouteSchemaKey<TSchemaConfig, TInitURL>,
 			const TSchema extends CallApiSchema = GetCurrentRouteSchema<
 				TComputedBaseSchemaRoutes,
 				TCurrentRouteSchemaKey
