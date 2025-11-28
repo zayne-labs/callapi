@@ -1,5 +1,14 @@
 # @zayne-labs/callapi
 
+## 1.11.26
+
+### Patch Changes
+
+- 6f5b3f9: feat: add null and undefined to allowed values
+- 829431b: refactor(callapi): rename CallApiEnv to CallApiContext and related types
+
+   Rename CallApiEnv to CallApiContext to better reflect its purpose as a context provider rather than environment configuration. Update all related types and functions to use the new naming convention, including createFetchClientWithEnv becoming createFetchClientWithContext. This change improves code clarity and maintainability.
+
 ## 1.11.25
 
 ### Patch Changes
