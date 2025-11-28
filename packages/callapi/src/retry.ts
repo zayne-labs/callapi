@@ -7,7 +7,8 @@ import {
 	type RetryContext,
 } from "./hooks";
 import type { CallApiResultErrorVariant } from "./result";
-import type { CallApiConfig, MethodUnion } from "./types";
+import type { CallApiConfig } from "./types/common";
+import type { MethodUnion } from "./types/conditional-types";
 import {
 	defineEnum,
 	type AnyNumber,
@@ -34,7 +35,7 @@ const defaultRetryStatusCodesLookup = () =>
 
 type RetryStatusCodes = UnmaskType<AnyNumber | keyof ReturnType<typeof defaultRetryStatusCodesLookup>>;
 
-type RetryCondition<TErrorData> = (context: ErrorContext<TErrorData>) => Awaitable<boolean>;
+type RetryCondition<TErrorData> = (context: ErrorContext<{ ErrorData: TErrorData }>) => Awaitable<boolean>;
 
 type RetryOptionKeys<TErrorData> = Exclude<keyof RetryOptions<TErrorData>, "~retryAttemptCount" | "retry">;
 
@@ -118,7 +119,7 @@ const getExponentialDelay = (currentAttemptCount: number, options: RetryOptions<
 	return Math.min(exponentialDelay, maxDelay);
 };
 
-export const createRetryManager = (ctx: ErrorContext<unknown> & RequestContext) => {
+export const createRetryManager = (ctx: ErrorContext<{ ErrorData: unknown }> & RequestContext) => {
 	const { options, request } = ctx;
 
 	// eslint-disable-next-line ts-eslint/no-deprecated -- Allowed for internal use
@@ -191,7 +192,7 @@ export const createRetryManager = (ctx: ErrorContext<unknown> & RequestContext) 
 	const handleRetry = async <TCallapi extends CallApiImpl>(context: {
 		callApi: TCallapi;
 		callApiArgs: { config: CallApiConfig; initURL: InitURLOrURLObject };
-		errorContext: ErrorContext<unknown>;
+		errorContext: ErrorContext<{ ErrorData: unknown }>;
 		hookInfo: ExecuteHookInfo;
 	}) => {
 		const { callApi, callApiArgs, errorContext, hookInfo } = context;
@@ -199,7 +200,7 @@ export const createRetryManager = (ctx: ErrorContext<unknown> & RequestContext) 
 		const retryContext = {
 			...errorContext,
 			retryAttemptCount: currentAttemptCount,
-		} satisfies RetryContext<unknown>;
+		} satisfies RetryContext<{ ErrorData: unknown }>;
 
 		const hookError = await executeHooksInCatchBlock([options.onRetry?.(retryContext)], hookInfo);
 

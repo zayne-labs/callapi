@@ -1,4 +1,3 @@
-import type { CallApiContext } from ".";
 import type { FallBackRouteSchemaKey } from "../constants/validation";
 import type { ErrorContext } from "../hooks";
 import type { CallApiPlugin } from "../plugins";
@@ -12,6 +11,7 @@ import type {
 	RouteKeyMethods,
 	RouteKeyMethodsURLUnion,
 } from "../validation";
+import type { CallApiContext } from "./common";
 import type {
 	AnyFunction,
 	AnyString,
@@ -354,7 +354,7 @@ export type ThrowOnErrorUnion = boolean;
 
 export type ThrowOnErrorType<TErrorData, TThrowOnError extends ThrowOnErrorUnion> =
 	| TThrowOnError
-	| ((context: ErrorContext<TErrorData>) => TThrowOnError);
+	| ((context: ErrorContext<{ ErrorData: TErrorData }>) => TThrowOnError);
 
 export type ThrowOnErrorOption<TErrorData, TThrowOnError extends ThrowOnErrorUnion> =
 	TErrorData extends false ? { throwOnError: true }

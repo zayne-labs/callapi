@@ -1,5 +1,6 @@
 import { extraOptionDefaults } from "./constants/defaults";
-import type { CallApiExtraOptions, ThrowOnErrorUnion } from "./types";
+import type { CallApiExtraOptions } from "./types/common";
+import type { ThrowOnErrorUnion } from "./types/conditional-types";
 import type { DefaultDataType, DefaultThrowOnError } from "./types/default-types";
 import type { AnyString, Awaitable, DistributiveOmit, UnmaskType } from "./types/type-helpers";
 import { omitKeys } from "./utils/common";

@@ -4,7 +4,6 @@ import {
 	getHookRegistriesAndKeys,
 	type Hooks,
 	type HooksOrHooksArray,
-	type PluginExtraOptions,
 	type RequestContext,
 } from "./hooks";
 import {
@@ -12,14 +11,15 @@ import {
 	getMiddlewareRegistriesAndKeys,
 	type Middlewares,
 } from "./middlewares";
-import type { CallApiRequestOptions, CallApiRequestOptionsForHooks } from "./types/common";
+import type { CallApiContext, CallApiRequestOptions, CallApiRequestOptionsForHooks } from "./types/common";
+import type { DefaultCallApiContext } from "./types/default-types";
 import type { Awaitable } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
 import { isArray, isFunction, isPlainObject, isString } from "./utils/guards";
 import { type BaseCallApiSchemaAndConfig, getCurrentRouteSchemaKeyAndMainInitURL } from "./validation";
 
-export type PluginSetupContext<TPluginExtraOptions = unknown> = PluginExtraOptions<TPluginExtraOptions>
-	& RequestContext & { initURL: string };
+export type PluginSetupContext<TCallApiContext extends CallApiContext = DefaultCallApiContext> =
+	RequestContext<TCallApiContext> & { initURL: string };
 
 export type PluginInitResult = Partial<
 	Omit<PluginSetupContext, "initURL" | "request"> & {
@@ -28,17 +28,11 @@ export type PluginInitResult = Partial<
 	}
 >;
 
-export type PluginHooksWithMoreOptions<TMoreOptions = unknown> = HooksOrHooksArray<
-	never,
-	never,
-	TMoreOptions
->;
-
-export type PluginHooks<TData = never, TErrorData = never, TMoreOptions = unknown> = HooksOrHooksArray<
-	TData,
-	TErrorData,
-	TMoreOptions
->;
+export type PluginHooks<
+	TCallApiContext extends CallApiContext = DefaultCallApiContext,
+	TData = unknown extends TCallApiContext["Data"] ? never : TCallApiContext["Data"],
+	TErrorData = unknown extends TCallApiContext["ErrorData"] ? never : TCallApiContext["ErrorData"],
+> = HooksOrHooksArray<TCallApiContext, TData, TErrorData>;
 
 export type PluginMiddlewares = Middlewares;
 

@@ -1,7 +1,7 @@
 import {
 	type CallApiParameters,
 	createFetchClient,
-	type PluginHooksWithMoreOptions,
+	type PluginHooks,
 	type PluginSetupContext,
 	type ResultModeType,
 	type SuccessContext,
@@ -9,27 +9,25 @@ import {
 import { loggerPlugin } from "@zayne-labs/callapi-plugins";
 import { definePlugin, defineSchema } from "@zayne-labs/callapi/utils";
 import * as z from "zod";
-import * as zv3 from "zod/v3";
 
-const newOptionSchema1 = zv3.object({
-	onUpload: zv3.function().args(
-		zv3.object({
-			loaded: zv3.number(),
-			total: zv3.number(),
-		})
-	),
+const newOptionSchema1 = z.object({
+	onUpload: z.function({
+		input: [z.object({ loaded: z.number(), total: z.number() })],
+	}),
 });
 
-const newOptionSchema2 = zv3.object({
-	onUploadSuccess: zv3.function().args(
-		zv3.object({
-			load: zv3.number(),
-			tots: zv3.number(),
-		})
-	),
+const newOptionSchema2 = z.object({
+	onUploadSuccess: z.function({
+		input: [
+			z.object({
+				load: z.number(),
+				tots: z.number(),
+			}),
+		],
+	}),
 });
 
-type Plugin2Options = zv3.infer<typeof newOptionSchema2>;
+type Plugin2Options = z.infer<typeof newOptionSchema2>;
 
 const pluginOne = definePlugin({
 	defineExtraOptions: () => newOptionSchema1,
@@ -48,14 +46,18 @@ const pluginTwo = definePlugin({
 
 	hooks: {
 		onRequest: () => console.info("OnRequest - PLUGIN2"),
-		onSuccess: (_ctx: SuccessContext<{ foo: string }>) => console.info("OnSuccess - PLUGIN2"),
-	} satisfies PluginHooksWithMoreOptions<Plugin2Options>,
+		onResponseError: (_ctx) => console.info("OnSuccess - PLUGIN2"),
+		onSuccess: (_ctx: SuccessContext<{ Data: { foo: string } }>) => console.info("OnSuccess - PLUGIN2"),
+	} satisfies PluginHooks<{
+		ErrorData: { foo: string };
+		InferredPluginOptions: Plugin2Options;
+	}>,
 
 	id: "2",
 
 	name: "plugin",
 
-	setup: ({ options, request }: PluginSetupContext<Plugin2Options>) => {
+	setup: ({ options, request }: PluginSetupContext<{ InferredPluginOptions: Plugin2Options }>) => {
 		options.onUploadSuccess?.({ load: 0, tots: 0 });
 
 		return {
@@ -98,6 +100,7 @@ const apiSchema = defineSchema(
 	},
 	{ strict: true }
 );
+
 const callMainApi = createFetchClient({
 	baseURL: "https://dummyjson.com",
 	onRequest: [() => console.info("OnRequest1 - BASE"), () => console.info("OnRequest2 - BASE")],

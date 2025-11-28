@@ -4,7 +4,7 @@
 
 import type { HooksOrHooksArray } from "../src";
 import type { CallApiPlugin } from "../src/plugins";
-import type { BaseCallApiConfig, CallApiConfig } from "../src/types";
+import type { BaseCallApiConfig, CallApiConfig } from "../src/types/common";
 
 // Mock user data
 export const mockUser = {

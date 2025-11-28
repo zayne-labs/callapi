@@ -6,7 +6,6 @@ export type {
 	ErrorContext,
 	Hooks,
 	HooksOrHooksArray,
-	PluginExtraOptions,
 	RequestContext,
 	RequestStreamContext,
 	ResponseContext,
@@ -15,12 +14,7 @@ export type {
 	SuccessContext,
 } from "./hooks";
 
-export {
-	type CallApiPlugin,
-	type PluginHooks,
-	type PluginHooksWithMoreOptions,
-	type PluginSetupContext,
-} from "./plugins";
+export { type CallApiPlugin, type PluginHooks, type PluginSetupContext } from "./plugins";
 
 export {
 	type CallApiResultErrorVariant,
@@ -46,12 +40,15 @@ export type {
 	CallApiRequestOptions,
 	CallApiRequestOptionsForHooks,
 	CallApiResultLoose as CallApiResult,
-	InferExtendSchemaConfigContext,
+	GetExtendSchemaConfigContext,
 	InferExtendSchemaContext,
-	InferParamsFromRoute,
 	InstanceContext,
 	Register,
-} from "./types";
+} from "./types/common";
+
+export type { InferParamsFromRoute } from "./types/conditional-types";
+
+export type { DefaultCallApiContext } from "./types/default-types";
 
 export type { URLOptions } from "./url";
 

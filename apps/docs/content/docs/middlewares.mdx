@@ -128,54 +128,56 @@ const CacheOptionsSchema = z.object({
 
 type CacheOptions = z.infer<typeof CacheOptionsSchema>;
 
-export const cachingPlugin = definePlugin({
-	id: "caching-plugin",
-	name: "Caching Plugin",
+export const cachingPlugin = () => {
+	const cache = new Map<string, { data: Response; timestamp: number }>();
 
-	defineExtraOptions: () => CacheOptionsSchema,
+	return definePlugin({
+		id: "caching-plugin",
+		name: "Caching Plugin",
 
-	middlewares: ({ options }: PluginSetupContext<CacheOptions>) => {
-		const { cacheLifetime = 60_000, cachePolicy = "cache-first" } = options;
+		defineExtraOptions: () => CacheOptionsSchema,
 
-		const cache = new Map<string, { data: Response; timestamp: number }>();
+		middlewares: ({ options }: PluginSetupContext<CacheOptions>) => {
+			const { cacheLifetime = 60_000, cachePolicy = "cache-first" } = options;
 
-		return {
-			fetchMiddleware: (ctx) => async (input, init) => {
-				if (cachePolicy === "no-cache") {
-					return ctx.fetchImpl(input, init);
-				}
 
-				const cacheKey = input instanceof Request ? input.url : input.toString();
-				const cachedEntry = cache.get(cacheKey);
+			return {
+				fetchMiddleware: (ctx) => async (input, init) => {
+					if (cachePolicy === "no-cache") {
+						return ctx.fetchImpl(input, init);
+					}
 
-				const fetchAndCache = async () => {
-					const response = await ctx.fetchImpl(input, init);
+					const cacheKey = input instanceof Request ? input.url : input.toString();
+					const cachedEntry = cache.get(cacheKey);
 
-					cache.set(cacheKey, { data: response.clone(), timestamp: Date.now() });
+					const fetchAndCache = async () => {
+						const response = await ctx.fetchImpl(input, init);
 
-					return response;
-				};
+						cache.set(cacheKey, { data: response.clone(), timestamp: Date.now() });
 
-				if (!cachedEntry) {
-					console.info(`[Caching Plugin] Cache miss: ${cacheKey}`);
-					return fetchAndCache();
-				}
+						return response;
+					};
 
-				const isCacheExpired = Date.now() - cachedEntry.timestamp > cacheLifetime;
+					if (!cachedEntry) {
+						console.info(`[Caching Plugin] Cache miss: ${cacheKey}`);
+						return fetchAndCache();
+					}
 
-				if (isCacheExpired) {
-					console.info(`[Caching Plugin] Cache miss (expired): ${cacheKey}`);
-					cache.delete(cacheKey);
+					const isCacheExpired = Date.now() - cachedEntry.timestamp > cacheLifetime;
 
-					return fetchAndCache();
-				}
+					if (isCacheExpired) {
+						console.info(`[Caching Plugin] Cache miss (expired): ${cacheKey}`);
+						cache.delete(cacheKey);
 
-				console.info(`[Caching Plugin] Cache hit: ${cacheKey}`);
-				return cachedEntry.data.clone();
-			},
-		};
-	},
-});
+						return fetchAndCache();
+					}
+
+					console.info(`[Caching Plugin] Cache hit: ${cacheKey}`);
+					return cachedEntry.data.clone();
+				},
+			};
+		},
+})};
 
 // Usage
 import { createFetchClient } from "@zayne-labs/callapi";

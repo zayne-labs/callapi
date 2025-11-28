@@ -12,19 +12,19 @@ import type { StreamProgressEvent } from "./stream";
 import type {
 	BaseCallApiConfig,
 	CallApiConfig,
+	CallApiContext,
 	CallApiExtraOptionsForHooks,
 	CallApiRequestOptionsForHooks,
 } from "./types/common";
-import type { DefaultDataType } from "./types/default-types";
+import type { DefaultCallApiContext } from "./types/default-types";
 import type { AnyFunction, Awaitable, Prettify, UnmaskType } from "./types/type-helpers";
 
-export type PluginExtraOptions<TPluginOptions = unknown> = {
-	/** Plugin-specific options passed to the plugin configuration */
-	options: Partial<TPluginOptions>;
-};
-
-/* eslint-disable perfectionist/sort-intersection-types -- Plugin options should come last */
-export interface Hooks<TData = DefaultDataType, TErrorData = DefaultDataType, TPluginOptions = unknown> {
+export interface Hooks<
+	TCallApiContext extends Pick<CallApiContext, "Data" | "ErrorData" | "InferredPluginOptions" | "Meta"> =
+		DefaultCallApiContext,
+	TData = TCallApiContext["Data"],
+	TErrorData = TCallApiContext["ErrorData"],
+> {
 	/**
 	 * Hook called when any error occurs within the request/response lifecycle.
 	 *
@@ -35,9 +35,7 @@ export interface Hooks<TData = DefaultDataType, TErrorData = DefaultDataType, TP
 	 * @param context - Error context containing error details, request info, and response (if available)
 	 * @returns Promise or void - Hook can be async or sync
 	 */
-	onError?: (
-		context: ErrorContext<TErrorData> & PluginExtraOptions<TPluginOptions>
-	) => Awaitable<unknown>;
+	onError?: (context: ErrorContext<TCallApiContext, TErrorData>) => Awaitable<unknown>;
 
 	/**
 	 * Hook called before the HTTP request is sent and before any internal processing of the request object begins.
@@ -49,7 +47,7 @@ export interface Hooks<TData = DefaultDataType, TErrorData = DefaultDataType, TP
 	 * @returns Promise or void - Hook can be async or sync
 	 *
 	 */
-	onRequest?: (context: RequestContext & PluginExtraOptions<TPluginOptions>) => Awaitable<unknown>;
+	onRequest?: (context: RequestContext<TCallApiContext>) => Awaitable<unknown>;
 
 	/**
 	 * Hook called when an error occurs during the fetch request itself.
@@ -61,16 +59,14 @@ export interface Hooks<TData = DefaultDataType, TErrorData = DefaultDataType, TP
 	 * @param context - Request error context with error details and null response
 	 * @returns Promise or void - Hook can be async or sync
 	 */
-	onRequestError?: (
-		context: RequestErrorContext & PluginExtraOptions<TPluginOptions>
-	) => Awaitable<unknown>;
+	onRequestError?: (context: RequestErrorContext<TCallApiContext>) => Awaitable<unknown>;
 
 	/**
 	 * Hook called just before the HTTP request is sent and after the request has been processed.
 	 *
 	 * @param context - Request context with mutable request object and configuration
 	 */
-	onRequestReady?: (context: RequestContext & PluginExtraOptions<TPluginOptions>) => Awaitable<unknown>;
+	onRequestReady?: (context: RequestContext<TCallApiContext>) => Awaitable<unknown>;
 
 	/**
 	 * Hook called during upload stream progress tracking.
@@ -83,9 +79,7 @@ export interface Hooks<TData = DefaultDataType, TErrorData = DefaultDataType, TP
 	 * @returns Promise or void - Hook can be async or sync
 	 *
 	 */
-	onRequestStream?: (
-		context: RequestStreamContext & PluginExtraOptions<TPluginOptions>
-	) => Awaitable<unknown>;
+	onRequestStream?: (context: RequestStreamContext<TCallApiContext>) => Awaitable<unknown>;
 
 	/**
 	 * Hook called when any HTTP response is received from the API.
@@ -98,9 +92,7 @@ export interface Hooks<TData = DefaultDataType, TErrorData = DefaultDataType, TP
 	 * @returns Promise or void - Hook can be async or sync
 	 *
 	 */
-	onResponse?: (
-		context: ResponseContext<TData, TErrorData> & PluginExtraOptions<TPluginOptions>
-	) => Awaitable<unknown>;
+	onResponse?: (context: ResponseContext<TCallApiContext, TData, TErrorData>) => Awaitable<unknown>;
 
 	/**
 	 * Hook called when an HTTP error response (4xx, 5xx) is received from the API.
@@ -112,9 +104,7 @@ export interface Hooks<TData = DefaultDataType, TErrorData = DefaultDataType, TP
 	 * @param context - Response error context with HTTP error details and response
 	 * @returns Promise or void - Hook can be async or sync
 	 */
-	onResponseError?: (
-		context: ResponseErrorContext<TErrorData> & PluginExtraOptions<TPluginOptions>
-	) => Awaitable<unknown>;
+	onResponseError?: (context: ResponseErrorContext<TCallApiContext, TErrorData>) => Awaitable<unknown>;
 
 	/**
 	 * Hook called during download stream progress tracking.
@@ -127,9 +117,7 @@ export interface Hooks<TData = DefaultDataType, TErrorData = DefaultDataType, TP
 	 * @returns Promise or void - Hook can be async or sync
 	 *
 	 */
-	onResponseStream?: (
-		context: ResponseStreamContext & PluginExtraOptions<TPluginOptions>
-	) => Awaitable<unknown>;
+	onResponseStream?: (context: ResponseStreamContext<TCallApiContext>) => Awaitable<unknown>;
 
 	/**
 	 * Hook called when a request is being retried.
@@ -142,9 +130,7 @@ export interface Hooks<TData = DefaultDataType, TErrorData = DefaultDataType, TP
 	 * @returns Promise or void - Hook can be async or sync
 	 *
 	 */
-	onRetry?: (
-		response: RetryContext<TErrorData> & PluginExtraOptions<TPluginOptions>
-	) => Awaitable<unknown>;
+	onRetry?: (response: RetryContext<TCallApiContext, TErrorData>) => Awaitable<unknown>;
 
 	/**
 	 * Hook called when a successful response (2xx status) is received from the API.
@@ -157,7 +143,7 @@ export interface Hooks<TData = DefaultDataType, TErrorData = DefaultDataType, TP
 	 * @returns Promise or void - Hook can be async or sync
 	 *
 	 */
-	onSuccess?: (context: SuccessContext<TData> & PluginExtraOptions<TPluginOptions>) => Awaitable<unknown>;
+	onSuccess?: (context: SuccessContext<TCallApiContext, TData>) => Awaitable<unknown>;
 
 	/**
 	 * Hook called when a validation error occurs.
@@ -170,21 +156,18 @@ export interface Hooks<TData = DefaultDataType, TErrorData = DefaultDataType, TP
 	 * @returns Promise or void - Hook can be async or sync
 	 *
 	 */
-	onValidationError?: (
-		context: ValidationErrorContext & PluginExtraOptions<TPluginOptions>
-	) => Awaitable<unknown>;
+	onValidationError?: (context: ValidationErrorContext<TCallApiContext>) => Awaitable<unknown>;
 }
-/* eslint-enable perfectionist/sort-intersection-types -- Plugin options should come last */
 
 export type HooksOrHooksArray<
-	TData = DefaultDataType,
-	TErrorData = DefaultDataType,
-	TMoreOptions = unknown,
+	TCallApiContext extends CallApiContext = DefaultCallApiContext,
+	TData = TCallApiContext["Data"],
+	TErrorData = TCallApiContext["ErrorData"],
 > = {
-	[Key in keyof Hooks<TData, TErrorData, TMoreOptions>]:
-		| Hooks<TData, TErrorData, TMoreOptions>[Key]
+	[Key in keyof Hooks<TCallApiContext, TData, TErrorData>]:
+		| Hooks<TCallApiContext, TData, TErrorData>[Key]
 		// eslint-disable-next-line perfectionist/sort-union-types -- I need arrays to be last
-		| Array<Hooks<TData, TErrorData, TMoreOptions>[Key]>;
+		| Array<Hooks<TCallApiContext, TData, TErrorData>[Key]>;
 };
 
 export interface HookConfigOptions {
@@ -197,50 +180,13 @@ export interface HookConfigOptions {
 	 * This affects how ALL hooks execute together, regardless of their source (main or plugin).
 	 *
 	 * @default "parallel"
-	 *
-	 * @example
-	 * ```ts
-	 * // Parallel execution (default) - all hooks run simultaneously
-	 * hooksExecutionMode: "parallel"
-	 *
-	 * // Sequential execution - hooks run one after another
-	 * hooksExecutionMode: "sequential"
-	 *
-	 * // Use case: Hooks have dependencies and must run in order
-	 * const client = callApi.create({
-	 *   hooksExecutionMode: "sequential",
-	 *   plugins: [transformPlugin],
-	 *   onRequest: (ctx) => {
-	 *     // This runs first, then transform plugin runs
-	 *     ctx.request.headers["x-request-id"] = generateId();
-	 *   }
-	 * });
-	 *
-	 * // Use case: Independent operations can run in parallel for speed
-	 * const client = callApi.create({
-	 *   hooksExecutionMode: "parallel", // Default
-	 *   plugins: [metricsPlugin, cachePlugin, loggingPlugin],
-	 *   onRequest: (ctx) => {
-	 *     // All hooks (main + plugins) run simultaneously
-	 *     addRequestTimestamp(ctx.request);
-	 *   }
-	 * });
-	 *
-	 * // Use case: Error handling hooks that need sequential processing
-	 * const client = callApi.create({
-	 *   hooksExecutionMode: "sequential",
-	 *   onError: [
-	 *     (ctx) => logError(ctx.error),      // Log first
-	 *     (ctx) => reportError(ctx.error),   // Then report
-	 *     (ctx) => cleanupResources(ctx)     // Finally cleanup
-	 *   ]
-	 * });
-	 * ```
 	 */
 	hooksExecutionMode?: "parallel" | "sequential";
 }
 
-export type RequestContext = {
+export type RequestContext<
+	TCallApiContext extends Pick<CallApiContext, "InferredPluginOptions" | "Meta"> = DefaultCallApiContext,
+> = {
 	/**
 	 * Base configuration object passed to createFetchClient.
 	 *
@@ -264,7 +210,7 @@ export type RequestContext = {
 	 * This is the final resolved configuration that will be used for the request,
 	 * with proper precedence applied (instance > base > defaults).
 	 */
-	options: CallApiExtraOptionsForHooks;
+	options: CallApiExtraOptionsForHooks<TCallApiContext>;
 
 	/**
 	 * Merged request object ready to be sent.
@@ -276,26 +222,33 @@ export type RequestContext = {
 	request: CallApiRequestOptionsForHooks;
 };
 
-export type ValidationErrorContext = UnmaskType<
-	RequestContext & {
-		/** Validation error containing details about what failed validation */
+export type ValidationErrorContext<
+	TCallApiContext extends Pick<CallApiContext, "InferredPluginOptions" | "Meta"> = DefaultCallApiContext,
+> = UnmaskType<
+	RequestContext<TCallApiContext> & {
 		error: PossibleValidationError;
-		/** HTTP response object if validation failed on response, null if on request */
 		response: Response | null;
 	}
 >;
 
-export type SuccessContext<TData> = UnmaskType<
-	RequestContext & {
-		/** Parsed response data with the expected success type */
-		data: TData;
-		/** HTTP response object for the successful request */
+export type SuccessContext<
+	TCallApiContext extends Pick<CallApiContext, "Data" | "InferredPluginOptions" | "Meta"> =
+		DefaultCallApiContext,
+	TData = TCallApiContext["Data"],
+> = UnmaskType<
+	RequestContext<TCallApiContext> & {
+		data: NoInfer<TData>;
 		response: Response;
 	}
 >;
 
-export type ResponseContext<TData, TErrorData> = UnmaskType<
-	RequestContext
+export type ResponseContext<
+	TCallApiContext extends Pick<CallApiContext, "Data" | "ErrorData" | "InferredPluginOptions" | "Meta"> =
+		DefaultCallApiContext,
+	TData = TCallApiContext["Data"],
+	TErrorData = TCallApiContext["ErrorData"],
+> = UnmaskType<
+	RequestContext<TCallApiContext>
 		& (
 			| Prettify<CallApiResultSuccessVariant<TData>>
 			| Prettify<
@@ -304,56 +257,64 @@ export type ResponseContext<TData, TErrorData> = UnmaskType<
 		)
 >;
 
-export type RequestErrorContext = RequestContext & {
-	/** Error that occurred during the request (network, timeout, etc.) */
+export type RequestErrorContext<
+	TCallApiContext extends Pick<CallApiContext, "InferredPluginOptions" | "Meta"> = DefaultCallApiContext,
+> = RequestContext<TCallApiContext> & {
 	error: PossibleJavaScriptError;
-	/** Always null for request errors since no response was received */
 	response: null;
 };
 
-export type ErrorContext<TErrorData> = UnmaskType<
-	RequestContext
+export type ErrorContext<
+	TCallApiContext extends Pick<CallApiContext, "ErrorData" | "InferredPluginOptions" | "Meta"> =
+		DefaultCallApiContext,
+	TErrorData = TCallApiContext["ErrorData"],
+> = UnmaskType<
+	RequestContext<TCallApiContext>
 		& (
 			| {
-					/** HTTP error with response data */
 					error: PossibleHTTPError<TErrorData>;
-					/** HTTP response object containing error status */
 					response: Response;
 			  }
 			| {
-					/** Request-level error (network, timeout, validation, etc.) */
 					error: PossibleJavaScriptOrValidationError;
-					/** Response object if available, null for request errors */
 					response: Response | null;
 			  }
 		)
 >;
 
-export type ResponseErrorContext<TErrorData> = UnmaskType<
-	Extract<ErrorContext<TErrorData>, { error: PossibleHTTPError<TErrorData> }> & RequestContext
+export type ResponseErrorContext<
+	TCallApiContext extends Pick<CallApiContext, "ErrorData" | "InferredPluginOptions" | "Meta"> =
+		DefaultCallApiContext,
+	TErrorData = TCallApiContext["ErrorData"],
+> = UnmaskType<
+	Extract<ErrorContext<TCallApiContext, TErrorData>, { error: PossibleHTTPError<TErrorData> }>
+		& RequestContext<TCallApiContext>
 >;
 
-export type RetryContext<TErrorData> = UnmaskType<
-	ErrorContext<TErrorData> & {
-		/** Current retry attempt number (1-based, so 1 = first retry) */
+export type RetryContext<
+	TCallApiContext extends Pick<CallApiContext, "ErrorData" | "InferredPluginOptions" | "Meta"> =
+		DefaultCallApiContext,
+	TErrorData = TCallApiContext["ErrorData"],
+> = UnmaskType<
+	ErrorContext<TCallApiContext, TErrorData> & {
 		retryAttemptCount: number;
 	}
 >;
 
-export type RequestStreamContext = UnmaskType<
-	RequestContext & {
-		/** Progress event containing loaded/total bytes information */
+export type RequestStreamContext<
+	TCallApiContext extends Pick<CallApiContext, "InferredPluginOptions" | "Meta"> = DefaultCallApiContext,
+> = UnmaskType<
+	RequestContext<TCallApiContext> & {
 		event: StreamProgressEvent;
-		/** The actual Request instance being uploaded */
 		requestInstance: Request;
 	}
 >;
 
-export type ResponseStreamContext = UnmaskType<
-	RequestContext & {
-		/** Progress event containing loaded/total bytes information */
+export type ResponseStreamContext<
+	TCallApiContext extends Pick<CallApiContext, "InferredPluginOptions" | "Meta"> = DefaultCallApiContext,
+> = UnmaskType<
+	RequestContext<TCallApiContext> & {
 		event: StreamProgressEvent;
-		/** HTTP response object being downloaded */
 		response: Response;
 	}
 >;

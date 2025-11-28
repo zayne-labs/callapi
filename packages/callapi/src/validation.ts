@@ -1,13 +1,11 @@
 import { fallBackRouteSchemaKey, type FallBackRouteSchemaKey } from "./constants/validation";
 import type {
 	BaseCallApiExtraOptions,
-	Body,
 	CallApiExtraOptions,
 	CallApiRequestOptions,
 	GlobalMeta,
-	HeadersOption,
-	MethodUnion,
-} from "./types";
+} from "./types/common";
+import type { Body, HeadersOption, MethodUnion } from "./types/conditional-types";
 import type { StandardSchemaV1 } from "./types/standard-schema";
 import {
 	type AnyFunction,

@@ -52,6 +52,8 @@ type CacheConfig = z.infer<typeof CacheConfigSchema>;
  */
 
 export const cachingPlugin = (cacheConfig: CacheConfig) => {
+	const cache = new Map<string, { data: Response; timestamp: number }>();
+
 	const {
 		cacheLifetime: initCacheLifeTime = 1 * 60 * 1000,
 		cachePolicy: initCachePolicy = "cache-first",
@@ -64,10 +66,8 @@ export const cachingPlugin = (cacheConfig: CacheConfig) => {
 		// eslint-disable-next-line perfectionist/sort-objects -- Ignore
 		defineExtraOptions: () => CacheConfigSchema,
 
-		middlewares: ({ options }: PluginSetupContext<CacheConfig>) => {
+		middlewares: ({ options }: PluginSetupContext<{ InferredPluginOptions: CacheConfig }>) => {
 			const { cacheLifetime = initCacheLifeTime, cachePolicy = initCachePolicy } = options;
-
-			const cache = new Map<string, { data: Response; timestamp: number }>();
 
 			return {
 				fetchMiddleware: (ctx) => async (input, init) => {
