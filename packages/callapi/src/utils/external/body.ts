@@ -24,12 +24,6 @@ const toBlobOrString = (value: AllowedPrimitives): string | Blob => {
 	return isBlob(value) ? value : String(value);
 };
 
-type ToFormDataFn = {
-	(data: Record<string, AllowedValues>): FormData;
-
-	<TData extends Record<string, AllowedValues>>(data: TData, options: { returnType: "inputType" }): TData;
-};
-
 /**
  * @description Converts a plain object to FormData.
  *
@@ -65,15 +59,8 @@ type ToFormDataFn = {
  *   user: { name: "John", age: 30 },
  *   settings: { theme: "dark" }
  * });
- *
- * // Type-preserving usage with Zod
- * const schema = z.object({ name: z.string(), file: z.instanceof(Blob) });
- * const data = schema.parse({ name: "John", file: blob });
- * const typedFormData = toFormData(data, { returnType: "inputType" });
- * // Type is { name: string; file: Blob }, runtime is FormData
- * ```
  */
-export const toFormData: ToFormDataFn = (data: Record<string, AllowedValues>) => {
+export const toFormData = (data: Record<string, AllowedValues>) => {
 	const formData = new FormData();
 
 	for (const [key, value] of Object.entries(data)) {

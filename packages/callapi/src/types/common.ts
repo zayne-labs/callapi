@@ -52,6 +52,11 @@ export type CallApiContext = {
 	ResultMode?: ResultModeType;
 };
 
+export type GetMergedCallApiContext<
+	TFullCallApiContext extends CallApiContext,
+	TOverrideCallApiContext extends CallApiContext,
+> = Omit<TFullCallApiContext, keyof TOverrideCallApiContext> & TOverrideCallApiContext;
+
 type FetchSpecificKeysUnion = Exclude<(typeof fetchSpecificKeys)[number], "body" | "headers" | "method">;
 
 export type ModifiedRequestInit = RequestInit & { duplex?: "half" };
@@ -87,17 +92,18 @@ type SharedExtraOptions<
 	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
 	TResponseType extends ResponseTypeType = ResponseTypeType,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
-	TComputedPluginOptions = InferPluginOptions<TPluginArray> & TCallApiContext["InferredPluginOptions"],
-	TComputedInferredPluginOptions extends Pick<Required<CallApiContext>, "InferredPluginOptions"> = {
-		InferredPluginOptions: TComputedPluginOptions;
-	},
+	TComputedMergedPluginOptions = Partial<
+		InferPluginOptions<TPluginArray> & TCallApiContext["InferredPluginOptions"]
+	>,
 > = DedupeOptions
 	& HookConfigOptions
-	& HooksOrHooksArray<TComputedInferredPluginOptions, TData, TErrorData>
+	& HooksOrHooksArray<
+		GetMergedCallApiContext<TCallApiContext, { InferredPluginOptions: TComputedMergedPluginOptions }>
+	>
 	& Middlewares
-	& Partial<TComputedInferredPluginOptions["InferredPluginOptions"]>
 	& ResultModeOption<TErrorData, TResultMode>
 	& RetryOptions<TErrorData>
+	& TComputedMergedPluginOptions
 	& ThrowOnErrorOption<TErrorData, TThrowOnError>
 	& URLOptions & {
 		/**

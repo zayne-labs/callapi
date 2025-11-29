@@ -19,14 +19,7 @@ import type {
 import type { DefaultCallApiContext } from "./types/default-types";
 import type { AnyFunction, Awaitable, Prettify, UnmaskType } from "./types/type-helpers";
 
-export interface Hooks<
-	TCallApiContext extends Pick<
-		CallApiContext,
-		"Data" | "ErrorData" | "InferredPluginOptions" | "Meta"
-	> = DefaultCallApiContext,
-	TData = TCallApiContext["Data"],
-	TErrorData = TCallApiContext["ErrorData"],
-> {
+export interface Hooks<TCallApiContext extends CallApiContext = DefaultCallApiContext> {
 	/**
 	 * Hook called when any error occurs within the request/response lifecycle.
 	 *
@@ -37,7 +30,7 @@ export interface Hooks<
 	 * @param context - Error context containing error details, request info, and response (if available)
 	 * @returns Promise or void - Hook can be async or sync
 	 */
-	onError?: (context: ErrorContext<TCallApiContext, TErrorData>) => Awaitable<unknown>;
+	onError?: (context: ErrorContext<TCallApiContext>) => Awaitable<unknown>;
 
 	/**
 	 * Hook called before the HTTP request is sent and before any internal processing of the request object begins.
@@ -94,7 +87,7 @@ export interface Hooks<
 	 * @returns Promise or void - Hook can be async or sync
 	 *
 	 */
-	onResponse?: (context: ResponseContext<TCallApiContext, TData, TErrorData>) => Awaitable<unknown>;
+	onResponse?: (context: ResponseContext<TCallApiContext>) => Awaitable<unknown>;
 
 	/**
 	 * Hook called when an HTTP error response (4xx, 5xx) is received from the API.
@@ -106,7 +99,7 @@ export interface Hooks<
 	 * @param context - Response error context with HTTP error details and response
 	 * @returns Promise or void - Hook can be async or sync
 	 */
-	onResponseError?: (context: ResponseErrorContext<TCallApiContext, TErrorData>) => Awaitable<unknown>;
+	onResponseError?: (context: ResponseErrorContext<TCallApiContext>) => Awaitable<unknown>;
 
 	/**
 	 * Hook called during download stream progress tracking.
@@ -132,7 +125,7 @@ export interface Hooks<
 	 * @returns Promise or void - Hook can be async or sync
 	 *
 	 */
-	onRetry?: (response: RetryContext<TCallApiContext, TErrorData>) => Awaitable<unknown>;
+	onRetry?: (response: RetryContext<TCallApiContext>) => Awaitable<unknown>;
 
 	/**
 	 * Hook called when a successful response (2xx status) is received from the API.
@@ -145,7 +138,7 @@ export interface Hooks<
 	 * @returns Promise or void - Hook can be async or sync
 	 *
 	 */
-	onSuccess?: (context: SuccessContext<TCallApiContext, TData>) => Awaitable<unknown>;
+	onSuccess?: (context: SuccessContext<TCallApiContext>) => Awaitable<unknown>;
 
 	/**
 	 * Hook called when a validation error occurs.
@@ -161,15 +154,11 @@ export interface Hooks<
 	onValidationError?: (context: ValidationErrorContext<TCallApiContext>) => Awaitable<unknown>;
 }
 
-export type HooksOrHooksArray<
-	TCallApiContext extends CallApiContext = DefaultCallApiContext,
-	TData = TCallApiContext["Data"],
-	TErrorData = TCallApiContext["ErrorData"],
-> = {
-	[Key in keyof Hooks<TCallApiContext, TData, TErrorData>]:
-		| Hooks<TCallApiContext, TData, TErrorData>[Key]
+export type HooksOrHooksArray<TCallApiContext extends CallApiContext = DefaultCallApiContext> = {
+	[Key in keyof Hooks<TCallApiContext>]:
+		| Hooks<TCallApiContext>[Key]
 		// eslint-disable-next-line perfectionist/sort-union-types -- I need arrays to be last
-		| Array<Hooks<TCallApiContext, TData, TErrorData>[Key]>;
+		| Array<Hooks<TCallApiContext>[Key]>;
 };
 
 export interface HookConfigOptions {
@@ -238,10 +227,9 @@ export type SuccessContext<
 		CallApiContext,
 		"Data" | "InferredPluginOptions" | "Meta"
 	> = DefaultCallApiContext,
-	TData = TCallApiContext["Data"],
 > = UnmaskType<
 	RequestContext<TCallApiContext> & {
-		data: NoInfer<TData>;
+		data: NoInfer<TCallApiContext["Data"]>;
 		response: Response;
 	}
 >;
@@ -251,14 +239,15 @@ export type ResponseContext<
 		CallApiContext,
 		"Data" | "ErrorData" | "InferredPluginOptions" | "Meta"
 	> = DefaultCallApiContext,
-	TData = TCallApiContext["Data"],
-	TErrorData = TCallApiContext["ErrorData"],
 > = UnmaskType<
 	RequestContext<TCallApiContext>
 		& (
-			| Prettify<CallApiResultSuccessVariant<TData>>
+			| Prettify<CallApiResultSuccessVariant<TCallApiContext["Data"]>>
 			| Prettify<
-					Extract<CallApiResultErrorVariant<TErrorData>, { error: PossibleHTTPError<TErrorData> }>
+					Extract<
+						CallApiResultErrorVariant<TCallApiContext["ErrorData"]>,
+						{ error: PossibleHTTPError<TCallApiContext["ErrorData"]> }
+					>
 			  >
 		)
 >;
@@ -275,12 +264,11 @@ export type ErrorContext<
 		CallApiContext,
 		"ErrorData" | "InferredPluginOptions" | "Meta"
 	> = DefaultCallApiContext,
-	TErrorData = TCallApiContext["ErrorData"],
 > = UnmaskType<
 	RequestContext<TCallApiContext>
 		& (
 			| {
-					error: PossibleHTTPError<TErrorData>;
+					error: PossibleHTTPError<TCallApiContext["ErrorData"]>;
 					response: Response;
 			  }
 			| {
@@ -295,9 +283,8 @@ export type ResponseErrorContext<
 		CallApiContext,
 		"ErrorData" | "InferredPluginOptions" | "Meta"
 	> = DefaultCallApiContext,
-	TErrorData = TCallApiContext["ErrorData"],
 > = UnmaskType<
-	Extract<ErrorContext<TCallApiContext, TErrorData>, { error: PossibleHTTPError<TErrorData> }>
+	Extract<ErrorContext<TCallApiContext>, { error: PossibleHTTPError<TCallApiContext["ErrorData"]> }>
 		& RequestContext<TCallApiContext>
 >;
 
@@ -306,9 +293,8 @@ export type RetryContext<
 		CallApiContext,
 		"ErrorData" | "InferredPluginOptions" | "Meta"
 	> = DefaultCallApiContext,
-	TErrorData = TCallApiContext["ErrorData"],
 > = UnmaskType<
-	ErrorContext<TCallApiContext, TErrorData> & {
+	ErrorContext<TCallApiContext> & {
 		retryAttemptCount: number;
 	}
 >;

@@ -1,11 +1,13 @@
 import type { RequestContext } from "./hooks";
+import type { CallApiContext } from "./types/common";
+import type { DefaultCallApiContext } from "./types/default-types";
 import type { UnmaskType } from "./types/type-helpers";
 
 export type FetchImpl = UnmaskType<
 	(input: string | Request | URL, init?: RequestInit) => Promise<Response>
 >;
 
-export interface Middlewares {
+export interface Middlewares<TCallApiContext extends CallApiContext = DefaultCallApiContext> {
 	/**
 	 * Wraps the fetch implementation to intercept requests at the network layer.
 	 *
@@ -37,7 +39,7 @@ export interface Middlewares {
 	 * }
 	 * ```
 	 */
-	fetchMiddleware?: (context: RequestContext & { fetchImpl: FetchImpl }) => FetchImpl;
+	fetchMiddleware?: (context: RequestContext<TCallApiContext> & { fetchImpl: FetchImpl }) => FetchImpl;
 }
 
 type MiddlewareRegistries = Required<{

@@ -29,6 +29,7 @@ import type {
 	CallApiResult,
 	GetBaseSchemaConfig,
 	GetBaseSchemaRoutes,
+	GetMergedCallApiContext,
 } from "./types/common";
 import type {
 	GetCurrentRouteSchema,
@@ -83,6 +84,10 @@ export const createFetchClientWithContext = <
 		TBaseResponseType extends ResponseTypeType = ResponseTypeType,
 		const TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
 		const TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
+		TComputedBaseCallApiContext extends CallApiContext = GetMergedCallApiContext<
+			TBaseCallApiContext,
+			{ Data: TBaseData; ErrorData: TBaseErrorData; ResultMode: TBaseResultMode }
+		>,
 		TComputedBaseSchemaConfig extends CallApiSchemaConfig = GetBaseSchemaConfig<TBaseSchemaAndConfig>,
 		TComputedBaseSchemaRoutes extends
 			BaseCallApiSchemaRoutes = GetBaseSchemaRoutes<TBaseSchemaAndConfig>,
@@ -104,7 +109,10 @@ export const createFetchClientWithContext = <
 			TData = TBaseData,
 			TErrorData = TBaseErrorData,
 			TResultMode extends ResultModeType = TBaseResultMode,
-			TCallApiContext extends CallApiContext = TBaseCallApiContext,
+			TCallApiContext extends CallApiContext = GetMergedCallApiContext<
+				TComputedBaseCallApiContext,
+				{ Data: TData; ErrorData: TErrorData; ResultMode: TResultMode }
+			>,
 			TThrowOnError extends ThrowOnErrorUnion = TBaseThrowOnError,
 			TResponseType extends ResponseTypeType = TBaseResponseType,
 			const TSchemaConfig extends CallApiSchemaConfig = TComputedBaseSchemaConfig,

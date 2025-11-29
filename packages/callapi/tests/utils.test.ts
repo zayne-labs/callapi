@@ -5,7 +5,6 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
-import { HTTPError, ValidationError } from "../src/utils/external/error";
 import type { CallApiResultErrorVariant } from "../src/result";
 import {
 	createCombinedSignal,
@@ -24,6 +23,7 @@ import {
 	waitFor,
 } from "../src/utils/common";
 import { toFormData, toQueryString } from "../src/utils/external/body";
+import { HTTPError, ValidationError } from "../src/utils/external/error";
 import {
 	isHTTPError,
 	isHTTPErrorInstance,
@@ -1428,48 +1428,6 @@ describe("toFormData", () => {
 
 			expect(formData.get("name")).toBe("John");
 			expect(formData.get("age")).toBe("30");
-		});
-	});
-
-	describe("Type preservation overload", () => {
-		it("should preserve input type when returnType is 'inputType'", () => {
-			const data = {
-				name: "John",
-				age: 30,
-			};
-
-			// This should return TData type but FormData at runtime
-			const result = toFormData(data, { returnType: "inputType" });
-
-			// Runtime check - it's actually FormData
-			expect(result).toBeInstanceOf(FormData);
-			expect((result as unknown as FormData).get("name")).toBe("John");
-			expect((result as unknown as FormData).get("age")).toBe("30");
-
-			// Type check - TypeScript sees it as the original type
-			// This is a compile-time check, so we just verify the runtime behavior
-			type ResultType = typeof result;
-			type ExpectedType = typeof data;
-			const typeCheck: ResultType extends ExpectedType ? true : false = true;
-			expect(typeCheck).toBe(true);
-		});
-
-		it("should work with complex types in type-preserving mode", () => {
-			const blob = new Blob(["test"], { type: "text/plain" });
-			const data = {
-				name: "John",
-				file: blob,
-				tags: ["a", "b"],
-			};
-
-			const result = toFormData(data, { returnType: "inputType" });
-			const file = (result as unknown as FormData).get("file");
-
-			expect(result).toBeInstanceOf(FormData);
-			expect((result as unknown as FormData).get("name")).toBe("John");
-			expect(file).toBeInstanceOf(Blob);
-			expect((file as Blob).type).toBe("text/plain");
-			expect((result as unknown as FormData).getAll("tags")).toEqual(["a", "b"]);
 		});
 	});
 
