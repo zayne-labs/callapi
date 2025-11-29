@@ -223,10 +223,8 @@ export type ValidationErrorContext<
 >;
 
 export type SuccessContext<
-	TCallApiContext extends Pick<
-		CallApiContext,
-		"Data" | "InferredPluginOptions" | "Meta"
-	> = DefaultCallApiContext,
+	TCallApiContext extends Pick<CallApiContext, "Data" | "InferredPluginOptions" | "Meta"> =
+		DefaultCallApiContext,
 > = UnmaskType<
 	RequestContext<TCallApiContext> & {
 		data: NoInfer<TCallApiContext["Data"]>;
@@ -235,10 +233,8 @@ export type SuccessContext<
 >;
 
 export type ResponseContext<
-	TCallApiContext extends Pick<
-		CallApiContext,
-		"Data" | "ErrorData" | "InferredPluginOptions" | "Meta"
-	> = DefaultCallApiContext,
+	TCallApiContext extends Pick<CallApiContext, "Data" | "ErrorData" | "InferredPluginOptions" | "Meta"> =
+		DefaultCallApiContext,
 > = UnmaskType<
 	RequestContext<TCallApiContext>
 		& (
@@ -260,10 +256,8 @@ export type RequestErrorContext<
 };
 
 export type ErrorContext<
-	TCallApiContext extends Pick<
-		CallApiContext,
-		"ErrorData" | "InferredPluginOptions" | "Meta"
-	> = DefaultCallApiContext,
+	TCallApiContext extends Pick<CallApiContext, "ErrorData" | "InferredPluginOptions" | "Meta"> =
+		DefaultCallApiContext,
 > = UnmaskType<
 	RequestContext<TCallApiContext>
 		& (
@@ -279,20 +273,16 @@ export type ErrorContext<
 >;
 
 export type ResponseErrorContext<
-	TCallApiContext extends Pick<
-		CallApiContext,
-		"ErrorData" | "InferredPluginOptions" | "Meta"
-	> = DefaultCallApiContext,
+	TCallApiContext extends Pick<CallApiContext, "ErrorData" | "InferredPluginOptions" | "Meta"> =
+		DefaultCallApiContext,
 > = UnmaskType<
 	Extract<ErrorContext<TCallApiContext>, { error: PossibleHTTPError<TCallApiContext["ErrorData"]> }>
 		& RequestContext<TCallApiContext>
 >;
 
 export type RetryContext<
-	TCallApiContext extends Pick<
-		CallApiContext,
-		"ErrorData" | "InferredPluginOptions" | "Meta"
-	> = DefaultCallApiContext,
+	TCallApiContext extends Pick<CallApiContext, "ErrorData" | "InferredPluginOptions" | "Meta"> =
+		DefaultCallApiContext,
 > = UnmaskType<
 	ErrorContext<TCallApiContext> & {
 		retryAttemptCount: number;
