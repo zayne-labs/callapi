@@ -1,5 +1,15 @@
 # @zayne-labs/callapi
 
+## 1.11.29
+
+### Patch Changes
+
+- 75163e4: refactor(types): rename InferredPluginOptions to InferredExtraOptions for consistency
+
+   docs: update plugin and client type references in documentation
+   fix: downgrade prettier to 3.6.2 due to compatibility issues
+   style: reorganize imports in layout.shared.tsx
+
 ## 1.11.28
 
 ### Patch Changes
