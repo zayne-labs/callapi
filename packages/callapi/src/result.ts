@@ -137,8 +137,10 @@ export type ResultModeMapWithoutException<
 	TResponseType extends ResponseTypeType,
 	TComputedData = GetResponseType<TData, TResponseType>,
 	TComputedErrorData = GetResponseType<TErrorData, TResponseType>,
-	TComputedResult extends CallApiSuccessOrErrorVariant<TComputedData, TComputedErrorData> =
-		CallApiSuccessOrErrorVariant<TComputedData, TComputedErrorData>,
+	TComputedResult extends CallApiSuccessOrErrorVariant<
+		TComputedData,
+		TComputedErrorData
+	> = CallApiSuccessOrErrorVariant<TComputedData, TComputedErrorData>,
 > = UnmaskType<{
 	all: TComputedResult;
 	onlyData: TComputedResult["data"];
@@ -150,8 +152,8 @@ type ResultModeMapWithException<
 	TData,
 	TResponseType extends ResponseTypeType,
 	TComputedData = GetResponseType<TData, TResponseType>,
-	TComputedResult extends CallApiResultSuccessVariant<TComputedData> =
-		CallApiResultSuccessVariant<TComputedData>,
+	TComputedResult extends
+		CallApiResultSuccessVariant<TComputedData> = CallApiResultSuccessVariant<TComputedData>,
 > = {
 	all: TComputedResult;
 	onlyData: TComputedResult["data"];
@@ -183,10 +185,16 @@ export type GetCallApiResult<
 	TResultMode extends ResultModeType,
 	TThrowOnError extends ThrowOnErrorUnion,
 	TResponseType extends ResponseTypeType,
-	TComputedResultModeMapWithException extends ResultModeMapWithException<TData, TResponseType> =
-		ResultModeMapWithException<TData, TResponseType>,
-	TComputedResultModeMap extends ResultModeMap<TData, TErrorData, TResponseType, TThrowOnError> =
-		ResultModeMap<TData, TErrorData, TResponseType, TThrowOnError>,
+	TComputedResultModeMapWithException extends ResultModeMapWithException<
+		TData,
+		TResponseType
+	> = ResultModeMapWithException<TData, TResponseType>,
+	TComputedResultModeMap extends ResultModeMap<
+		TData,
+		TErrorData,
+		TResponseType,
+		TThrowOnError
+	> = ResultModeMap<TData, TErrorData, TResponseType, TThrowOnError>,
 > =
 	TErrorData extends false ? TComputedResultModeMapWithException["onlyData"]
 	: TErrorData extends false | undefined ? TComputedResultModeMapWithException["onlyData"]
