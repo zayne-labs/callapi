@@ -32,9 +32,13 @@ export function LLMCopyButton(props: CopyBtnProps) {
 		const markDownPromise = callApi(markdownUrl, {
 			responseType: "text",
 		}).then((result) => {
-			const content = result.data ?? "";
-			Boolean(content) && cache.set(markdownUrl, content);
-			return content;
+			if (result.error || !result.data) {
+				return "";
+			}
+
+			cache.set(markdownUrl, result.data);
+
+			return result.data;
 		});
 
 		const clipboardItem = new ClipboardItem({ "text/plain": markDownPromise });
@@ -58,7 +62,7 @@ export function LLMCopyButton(props: CopyBtnProps) {
 			{checked ?
 				<Check />
 			:	<Copy />}
-			<p>Copy Markdown</p>
+			Copy Markdown
 		</Button>
 	);
 }
@@ -88,12 +92,12 @@ export function ViewOptions(props: ViewOptionsProps) {
 		<Popover>
 			<PopoverTrigger asChild={true}>
 				<Button theme="secondary" size="sm" className="gap-2">
-					<p>Open</p>
+					Open
 					<ChevronDown className="size-3.5 text-fd-muted-foreground" />
 				</Button>
 			</PopoverTrigger>
 
-			<PopoverContent className="flex flex-col overflow-auto">
+			<PopoverContent className="flex flex-col">
 				{items.map((item) => (
 					<a
 						key={item.href}

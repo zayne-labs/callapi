@@ -10,7 +10,7 @@ import { Presence } from "@zayne-labs/ui-react/common/presence";
 import { DefaultChatTransport } from "ai";
 import Link from "fumadocs-core/link";
 import { Loader2, MessageCircleIcon, RefreshCw, Send, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useInsertionEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "../ui/button";
@@ -41,7 +41,12 @@ function Header() {
 		<div className="sticky top-0 flex items-start gap-2">
 			<div className="flex-1 rounded-xl border bg-fd-card p-3 text-fd-card-foreground">
 				<p className="mb-2 text-sm font-medium">Ask AI</p>
-				<p className="text-xs text-fd-muted-foreground">Powered by Gemma</p>
+				<p className="text-xs text-fd-muted-foreground">
+					Powered by{" "}
+					<a href="https://gemini.google.com" target="_blank" rel="noreferrer noopener">
+						Gemma
+					</a>
+				</p>
 			</div>
 
 			<Button
@@ -97,11 +102,13 @@ function SearchAIActions() {
 	);
 }
 
+const StorageKeyInput = "__ai_search_input";
+
 function SearchAIInput(props: InferProps<"form">) {
 	const { className, ...restOfProps } = props;
 	const { sendMessage, status, stop } = useChatContext();
 
-	const [input, setInput] = useState("");
+	const [input, setInput] = useState(() => localStorage.getItem(StorageKeyInput) ?? "");
 
 	const isLoading = status === "streaming" || status === "submitted";
 
@@ -110,6 +117,10 @@ function SearchAIInput(props: InferProps<"form">) {
 		void sendMessage({ text: input });
 		setInput("");
 	};
+
+	useInsertionEffect(() => {
+		localStorage.setItem(StorageKeyInput, input);
+	}, [input]);
 
 	useEffect(() => {
 		if (isLoading) {
@@ -286,7 +297,9 @@ const roleName = {
 	user: "you",
 } satisfies Record<Exclude<UIMessage["role"], "system">, string> as Record<string, string>;
 
-export function AISearchTrigger() {
+export function AISearchRoot(props: { children: React.ReactNode }) {
+	const { children } = props;
+
 	const [open, setOpen] = useState(false);
 
 	const chat = useChat({
@@ -295,6 +308,36 @@ export function AISearchTrigger() {
 			api: "/api/chat",
 		}),
 	});
+
+	const contextValue = useMemo<GeneralContextType>(
+		() => ({ chat, open, setOpen }) satisfies GeneralContextType,
+		[chat, open]
+	);
+
+	return <GeneralContextProvider value={contextValue}>{children}</GeneralContextProvider>;
+}
+
+export function AISearchTrigger() {
+	const { open, setOpen } = useGeneralContext();
+
+	return (
+		<Button
+			theme="secondary"
+			className={cnMerge(
+				`fixed end-[calc(--spacing(4)+var(--removed-body-scroll-bar-size,0px))] bottom-4 z-20 w-24
+				gap-3 rounded-2xl text-fd-muted-foreground shadow-lg transition-[translate,opacity]`,
+				open && "translate-y-10 opacity-0"
+			)}
+			onClick={() => setOpen(true)}
+		>
+			<MessageCircleIcon className="size-4.5" />
+			Ask AI
+		</Button>
+	);
+}
+
+export function AISearchPanel() {
+	const { chat, open, setOpen } = useGeneralContext();
 
 	const onKeyPress = useCallbackRef((event: KeyboardEvent) => {
 		if (event.key === "Escape" && open) {
@@ -314,25 +357,24 @@ export function AISearchTrigger() {
 		return () => cleanup();
 	}, [onKeyPress]);
 
-	const contextValue = useMemo<GeneralContextType>(
-		() => ({ chat, open, setOpen }) satisfies GeneralContextType,
-		[chat, open]
-	);
-
 	return (
-		<GeneralContextProvider value={contextValue}>
+		<>
 			<style>
 				{css`
 					@keyframes ask-ai-open {
 						from {
-							translate: 100% 0;
+							width: 0px;
+						}
+						to {
+							width: var(--ai-chat-width);
 						}
 					}
-
 					@keyframes ask-ai-close {
+						from {
+							width: var(--ai-chat-width);
+						}
 						to {
-							translate: 100% 0;
-							opacity: 0;
+							width: 0px;
 						}
 					}
 				`}
@@ -340,54 +382,62 @@ export function AISearchTrigger() {
 
 			<Presence present={open}>
 				<div
+					data-state={open ? "open" : "closed"}
+					className="fixed inset-0 z-30 bg-fd-overlay backdrop-blur-xs
+						data-[state=closed]:animate-fd-fade-out data-[state=open]:animate-fd-fade-in lg:hidden"
+					onClick={() => setOpen(false)}
+				/>
+			</Presence>
+
+			<Presence present={open}>
+				<div
 					className={cnMerge(
-						`fixed inset-y-2 z-30 flex flex-col rounded-2xl border bg-fd-popover p-2
-						text-fd-popover-foreground shadow-lg max-sm:inset-x-2 sm:end-2 sm:w-[460px]`,
-						open ? "animate-[ask-ai-open_300ms]" : "animate-[ask-ai-close_300ms]"
+						`z-30 overflow-hidden bg-fd-popover text-fd-popover-foreground [--ai-chat-width:400px]
+						xl:[--ai-chat-width:460px]`,
+						`max-lg:fixed max-lg:inset-x-2 max-lg:top-4 max-lg:rounded-2xl max-lg:border
+						max-lg:shadow-xl`,
+						`lg:sticky lg:top-0 lg:ms-auto lg:h-dvh lg:border-s
+						lg:in-[#nd-docs-layout]:[grid-area:toc] lg:in-[#nd-notebook-layout]:col-start-5
+						lg:in-[#nd-notebook-layout]:row-span-full`,
+						open ?
+							"animate-fd-dialog-in lg:animate-[ask-ai-open_200ms]"
+						:	"animate-fd-dialog-out lg:animate-[ask-ai-close_200ms]"
 					)}
 				>
-					<Header />
-					<MessageList
-						className="flex-1 overscroll-contain px-3 py-4"
-						style={{
-							maskImage:
-								"linear-gradient(to bottom, transparent, white 1rem, white calc(100% - 1rem), transparent 100%)",
-						}}
-					>
-						<div className="flex flex-col gap-4">
-							{chat.messages
-								.filter((msg) => msg.role !== "system")
-								.map((item) => (
-									<Message key={item.id} message={item} />
-								))}
-						</div>
-					</MessageList>
-
 					<div
-						className="rounded-xl border bg-fd-card text-fd-card-foreground has-focus-visible:ring-2
-							has-focus-visible:ring-fd-ring"
+						className="flex size-full flex-col p-2 max-lg:max-h-[80dvh] lg:w-(--ai-chat-width)
+							xl:p-4"
 					>
-						<SearchAIInput />
-						<div className="flex items-center gap-1.5 p-1 empty:hidden">
-							<SearchAIActions />
+						<Header />
+
+						<MessageList
+							className="flex-1 overscroll-contain px-3 py-4"
+							style={{
+								maskImage:
+									"linear-gradient(to bottom, transparent, white 1rem, white calc(100% - 1rem), transparent 100%)",
+							}}
+						>
+							<div className="flex flex-col gap-4">
+								{chat.messages
+									.filter((msg) => msg.role !== "system")
+									.map((item) => (
+										<Message key={item.id} message={item} />
+									))}
+							</div>
+						</MessageList>
+
+						<div
+							className="rounded-xl border bg-fd-card text-fd-card-foreground
+								has-focus-visible:ring-2 has-focus-visible:ring-fd-ring"
+						>
+							<SearchAIInput />
+							<div className="flex items-center gap-1.5 p-1 empty:hidden">
+								<SearchAIActions />
+							</div>
 						</div>
 					</div>
 				</div>
 			</Presence>
-
-			<Button
-				unstyled={true}
-				className={cnMerge(
-					`fixed bottom-4 z-20 flex h-10 w-24 items-center gap-3 rounded-2xl border bg-fd-secondary
-					px-2 text-sm font-medium text-fd-muted-foreground shadow-lg transition-[translate,opacity]`,
-					"end-[calc(var(--removed-body-scroll-bar-size,0px)+var(--fd-layout-offset)+1rem)]",
-					open && "translate-y-10 opacity-0"
-				)}
-				onClick={() => setOpen(true)}
-			>
-				<MessageCircleIcon className="size-4.5" />
-				Ask AI
-			</Button>
-		</GeneralContextProvider>
+		</>
 	);
 }

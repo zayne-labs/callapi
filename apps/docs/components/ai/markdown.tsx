@@ -1,3 +1,4 @@
+import { tw } from "@zayne-labs/toolkit-core";
 import { DynamicCodeBlock } from "fumadocs-ui/components/dynamic-codeblock";
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { ElementContent, Root, RootContent } from "hast";
@@ -42,7 +43,7 @@ function rehypeWrapWords() {
 				return {
 					children: [{ type: "text", value: word }],
 					properties: {
-						class: "animate-fd-fade-in",
+						class: tw`animate-fd-fade-in`,
 					},
 					tagName: "span",
 					type: "element",
@@ -110,11 +111,13 @@ function Pre(props: ComponentProps<"pre">) {
 
 const processor = createProcessor();
 
-export function Markdown({ text }: { text: string }) {
+export function Markdown(props: { text: string }) {
+	const { text } = props;
+
 	const deferredText = useDeferredValue(text);
 
 	return (
-		<Suspense fallback={text}>
+		<Suspense fallback={<p className="invisible">{text}</p>}>
 			<Renderer text={deferredText} />
 		</Suspense>
 	);
@@ -122,7 +125,9 @@ export function Markdown({ text }: { text: string }) {
 
 const cache = new Map<string, Promise<ReactNode>>();
 
-function Renderer({ text }: { text: string }) {
+function Renderer(props: { text: string }) {
+	const { text } = props;
+
 	const result = cache.get(text) ?? processor.process(text);
 	cache.set(text, result);
 

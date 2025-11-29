@@ -1,4 +1,4 @@
-import { AISearchTrigger } from "@/components/ai/search";
+import { AISearchPanel, AISearchRoot, AISearchTrigger } from "@/components/ai/search";
 import { BgPattern } from "@/components/icons";
 import "fumadocs-twoslash/twoslash.css";
 import { DocsLayout } from "fumadocs-ui/layouts/notebook";
@@ -18,7 +18,10 @@ function Layout(props: LayoutProps<"/docs">) {
 
 			{children}
 
-			<AISearchTrigger />
+			<AISearchRoot>
+				<AISearchPanel />
+				<AISearchTrigger />
+			</AISearchRoot>
 		</DocsLayout>
 	);
 }
