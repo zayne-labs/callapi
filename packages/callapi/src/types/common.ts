@@ -19,7 +19,7 @@ import type {
 	GetCurrentRouteSchema,
 	HeadersOption,
 	InferExtraOptions,
-	InferPluginOptions,
+	InferPluginExtraOptions,
 	InferRequestOptions,
 	MethodUnion,
 	ResultModeOption,
@@ -47,7 +47,7 @@ export type GlobalMeta =
 export type CallApiContext = {
 	Data?: DefaultDataType;
 	ErrorData?: DefaultDataType;
-	InferredPluginOptions?: unknown;
+	InferredExtraOptions?: unknown;
 	Meta?: DefaultMetaObject;
 	ResultMode?: ResultModeType;
 };
@@ -92,18 +92,18 @@ type SharedExtraOptions<
 	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
 	TResponseType extends ResponseTypeType = ResponseTypeType,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
-	TComputedMergedPluginOptions = Partial<
-		InferPluginOptions<TPluginArray> & TCallApiContext["InferredPluginOptions"]
+	TComputedMergedPluginExtraOptions = Partial<
+		InferPluginExtraOptions<TPluginArray> & TCallApiContext["InferredExtraOptions"]
 	>,
 > = DedupeOptions
 	& HookConfigOptions
 	& HooksOrHooksArray<
-		GetMergedCallApiContext<TCallApiContext, { InferredPluginOptions: TComputedMergedPluginOptions }>
+		GetMergedCallApiContext<TCallApiContext, { InferredExtraOptions: TComputedMergedPluginExtraOptions }>
 	>
 	& Middlewares
 	& ResultModeOption<TErrorData, TResultMode>
 	& RetryOptions<TErrorData>
-	& TComputedMergedPluginOptions
+	& TComputedMergedPluginExtraOptions
 	& ThrowOnErrorOption<TErrorData, TThrowOnError>
 	& URLOptions & {
 		/**

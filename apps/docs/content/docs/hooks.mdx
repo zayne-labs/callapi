@@ -217,7 +217,7 @@ type User = {
 
 const userCache = new Map<string, User>();
 
-const client = createFetchClient<User[]>({
+const client = createFetchClient<{ Data: User[] }>({
 	onSuccess: ({ data, response, request, options }) => {
 		// Cache user data
 		data.forEach((user) => userCache.set(user.id, user));
@@ -515,7 +515,7 @@ type User = {
 	name: string;
 };
 
-const client = createFetchClient<User>({
+const client = createFetchClient<{ Data: User }>({
 	onSuccess: ({ data }) => {
 		console.log(data.name);
 	},

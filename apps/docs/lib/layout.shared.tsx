@@ -1,8 +1,8 @@
 import { source } from "@/lib/source";
 import { callApi } from "@zayne-labs/callapi";
 import { GithubInfo } from "fumadocs-ui/components/github-info";
-import type { DocsLayoutProps, LinkItemType } from "fumadocs-ui/layouts/docs";
-import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
+import type { DocsLayoutProps } from "fumadocs-ui/layouts/docs";
+import type { BaseLayoutProps, LinkItemType } from "fumadocs-ui/layouts/shared";
 import { TagIcon } from "lucide-react";
 import Image from "next/image";
 import logoImage from "public/logo.png";

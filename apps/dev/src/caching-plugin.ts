@@ -66,7 +66,7 @@ export const cachingPlugin = (cacheConfig: CacheConfig) => {
 		// eslint-disable-next-line perfectionist/sort-objects -- Ignore
 		defineExtraOptions: () => CacheConfigSchema,
 
-		middlewares: ({ options }: PluginSetupContext<{ InferredPluginOptions: CacheConfig }>) => {
+		middlewares: ({ options }: PluginSetupContext<{ InferredExtraOptions: CacheConfig }>) => {
 			const { cacheLifetime = initCacheLifeTime, cachePolicy = initCachePolicy } = options;
 
 			return {

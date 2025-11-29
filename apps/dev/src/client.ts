@@ -50,14 +50,14 @@ const pluginTwo = definePlugin({
 		onSuccess: (_ctx: SuccessContext<{ Data: { foo: string } }>) => console.info("OnSuccess - PLUGIN2"),
 	} satisfies PluginHooks<{
 		ErrorData: { foo: string };
-		InferredPluginOptions: Plugin2Options;
+		InferredExtraOptions: Plugin2Options;
 	}>,
 
 	id: "2",
 
 	name: "plugin",
 
-	setup: ({ options, request }: PluginSetupContext<{ InferredPluginOptions: Plugin2Options }>) => {
+	setup: ({ options, request }: PluginSetupContext<{ InferredExtraOptions: Plugin2Options }>) => {
 		options.onUploadSuccess?.({ load: 0, tots: 0 });
 
 		return {

@@ -335,7 +335,7 @@ export type InferExtraOptions<
 	& InferParamsOption<TSchema, TBaseSchemaRoutes, TCurrentRouteSchemaKey>
 	& InferQueryOption<TSchema>;
 
-export type InferPluginOptions<TPluginArray extends CallApiPlugin[]> = UnionToIntersection<
+export type InferPluginExtraOptions<TPluginArray extends CallApiPlugin[]> = UnionToIntersection<
 	TPluginArray extends Array<infer TPlugin> ?
 		TPlugin extends CallApiPlugin ?
 			TPlugin["defineExtraOptions"] extends AnyFunction<infer TReturnedSchema> ?

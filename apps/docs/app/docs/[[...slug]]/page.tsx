@@ -3,8 +3,15 @@ import { getMDXComponents } from "@/components/common";
 import { owner, repo } from "@/lib/github";
 import { createMetadata } from "@/lib/metadata";
 import { source } from "@/lib/source";
+import {
+	DocsBody,
+	DocsDescription,
+	DocsPage,
+	DocsTitle,
+	PageLastUpdate,
+} from "fumadocs-ui/layouts/notebook/page";
 import { createRelativeLink } from "fumadocs-ui/mdx";
-import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/page";
+import { LucideEdit } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -21,18 +28,14 @@ async function Page({ params }: PageProps<"/docs/[[...slug]]">) {
 
 	const MDX = page.data.body;
 
+	const lastModified = page.data.lastModified;
+
 	return (
 		<DocsPage
 			toc={page.data.toc}
 			tableOfContent={{
 				single: false,
 				style: "clerk",
-			}}
-			editOnGithub={{
-				owner: "zayne-labs",
-				path: `apps/docs/content/docs/${page.path}`,
-				repo: "callapi",
-				sha: "main",
 			}}
 			full={page.data.full}
 		>
@@ -48,6 +51,20 @@ async function Page({ params }: PageProps<"/docs/[[...slug]]">) {
 				</div>
 				<MDX components={getMDXComponents({ a: createRelativeLink(source, page) })} />
 			</DocsBody>
+
+			<a
+				href={`https://github.com/zayne-labs/callapi/blob/main/content/docs/${page.path}`}
+				rel="noreferrer noopener"
+				target="_blank"
+				className="inline-flex w-fit items-center justify-center gap-1.5 rounded-md border
+					bg-fd-secondary p-2 text-sm font-medium text-fd-secondary-foreground transition-colors
+					hover:bg-fd-accent hover:text-fd-accent-foreground"
+			>
+				<LucideEdit className="size-3.5" />
+				Edit on GitHub
+			</a>
+
+			{lastModified && <PageLastUpdate date={lastModified} />}
 		</DocsPage>
 	);
 }

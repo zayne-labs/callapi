@@ -17,7 +17,7 @@ import type {
 	CallApiRequestOptionsForHooks,
 } from "./types/common";
 import type { DefaultCallApiContext } from "./types/default-types";
-import type { AnyFunction, Awaitable, Prettify, UnmaskType } from "./types/type-helpers";
+import type { AnyFunction, Awaitable, Prettify } from "./types/type-helpers";
 
 export interface Hooks<TCallApiContext extends CallApiContext = DefaultCallApiContext> {
 	/**
@@ -176,7 +176,7 @@ export interface HookConfigOptions {
 }
 
 export type RequestContext<
-	TCallApiContext extends Pick<CallApiContext, "InferredPluginOptions" | "Meta"> = DefaultCallApiContext,
+	TCallApiContext extends Pick<CallApiContext, "InferredExtraOptions" | "Meta"> = DefaultCallApiContext,
 > = {
 	/**
 	 * Base configuration object passed to createFetchClient.
@@ -214,98 +214,92 @@ export type RequestContext<
 };
 
 export type ValidationErrorContext<
-	TCallApiContext extends Pick<CallApiContext, "InferredPluginOptions" | "Meta"> = DefaultCallApiContext,
-> = UnmaskType<
-	RequestContext<TCallApiContext> & {
-		error: PossibleValidationError;
-		response: Response | null;
-	}
->;
+	TCallApiContext extends Pick<CallApiContext, "InferredExtraOptions" | "Meta"> = DefaultCallApiContext,
+> = RequestContext<TCallApiContext> & {
+	error: PossibleValidationError;
+	response: Response | null;
+};
 
 export type SuccessContext<
-	TCallApiContext extends Pick<CallApiContext, "Data" | "InferredPluginOptions" | "Meta"> =
-		DefaultCallApiContext,
-> = UnmaskType<
-	RequestContext<TCallApiContext> & {
-		data: NoInfer<TCallApiContext["Data"]>;
-		response: Response;
-	}
->;
+	TCallApiContext extends Pick<
+		CallApiContext,
+		"Data" | "InferredExtraOptions" | "Meta"
+	> = DefaultCallApiContext,
+> = RequestContext<TCallApiContext> & {
+	data: NoInfer<TCallApiContext["Data"]>;
+	response: Response;
+};
 
 export type ResponseContext<
-	TCallApiContext extends Pick<CallApiContext, "Data" | "ErrorData" | "InferredPluginOptions" | "Meta"> =
-		DefaultCallApiContext,
-> = UnmaskType<
-	RequestContext<TCallApiContext>
-		& (
-			| Prettify<CallApiResultSuccessVariant<TCallApiContext["Data"]>>
-			| Prettify<
-					Extract<
-						CallApiResultErrorVariant<TCallApiContext["ErrorData"]>,
-						{ error: PossibleHTTPError<TCallApiContext["ErrorData"]> }
-					>
-			  >
-		)
->;
+	TCallApiContext extends Pick<
+		CallApiContext,
+		"Data" | "ErrorData" | "InferredExtraOptions" | "Meta"
+	> = DefaultCallApiContext,
+> = RequestContext<TCallApiContext>
+	& (
+		| Prettify<CallApiResultSuccessVariant<TCallApiContext["Data"]>>
+		| Prettify<
+				Extract<
+					CallApiResultErrorVariant<TCallApiContext["ErrorData"]>,
+					{ error: PossibleHTTPError<TCallApiContext["ErrorData"]> }
+				>
+		  >
+	);
 
 export type RequestErrorContext<
-	TCallApiContext extends Pick<CallApiContext, "InferredPluginOptions" | "Meta"> = DefaultCallApiContext,
+	TCallApiContext extends Pick<CallApiContext, "InferredExtraOptions" | "Meta"> = DefaultCallApiContext,
 > = RequestContext<TCallApiContext> & {
 	error: PossibleJavaScriptError;
 	response: null;
 };
 
 export type ErrorContext<
-	TCallApiContext extends Pick<CallApiContext, "ErrorData" | "InferredPluginOptions" | "Meta"> =
-		DefaultCallApiContext,
-> = UnmaskType<
-	RequestContext<TCallApiContext>
-		& (
-			| {
-					error: PossibleHTTPError<TCallApiContext["ErrorData"]>;
-					response: Response;
-			  }
-			| {
-					error: PossibleJavaScriptOrValidationError;
-					response: Response | null;
-			  }
-		)
->;
+	TCallApiContext extends Pick<
+		CallApiContext,
+		"ErrorData" | "InferredExtraOptions" | "Meta"
+	> = DefaultCallApiContext,
+> = RequestContext<TCallApiContext>
+	& (
+		| {
+				error: PossibleHTTPError<TCallApiContext["ErrorData"]>;
+				response: Response;
+		  }
+		| {
+				error: PossibleJavaScriptOrValidationError;
+				response: Response | null;
+		  }
+	);
 
 export type ResponseErrorContext<
-	TCallApiContext extends Pick<CallApiContext, "ErrorData" | "InferredPluginOptions" | "Meta"> =
-		DefaultCallApiContext,
-> = UnmaskType<
-	Extract<ErrorContext<TCallApiContext>, { error: PossibleHTTPError<TCallApiContext["ErrorData"]> }>
-		& RequestContext<TCallApiContext>
->;
+	TCallApiContext extends Pick<
+		CallApiContext,
+		"ErrorData" | "InferredExtraOptions" | "Meta"
+	> = DefaultCallApiContext,
+> = Extract<ErrorContext<TCallApiContext>, { error: PossibleHTTPError<TCallApiContext["ErrorData"]> }>
+	& RequestContext<TCallApiContext>;
 
 export type RetryContext<
-	TCallApiContext extends Pick<CallApiContext, "ErrorData" | "InferredPluginOptions" | "Meta"> =
-		DefaultCallApiContext,
-> = UnmaskType<
-	ErrorContext<TCallApiContext> & {
-		retryAttemptCount: number;
-	}
->;
+	TCallApiContext extends Pick<
+		CallApiContext,
+		"ErrorData" | "InferredExtraOptions" | "Meta"
+	> = DefaultCallApiContext,
+> = ErrorContext<TCallApiContext> & {
+	retryAttemptCount: number;
+};
 
 export type RequestStreamContext<
-	TCallApiContext extends Pick<CallApiContext, "InferredPluginOptions" | "Meta"> = DefaultCallApiContext,
-> = UnmaskType<
-	RequestContext<TCallApiContext> & {
-		event: StreamProgressEvent;
-		requestInstance: Request;
-	}
->;
+	TCallApiContext extends Pick<CallApiContext, "InferredExtraOptions" | "Meta"> = DefaultCallApiContext,
+> = RequestContext<TCallApiContext> & {
+	event: StreamProgressEvent;
+	requestInstance: Request;
+};
 
 export type ResponseStreamContext<
-	TCallApiContext extends Pick<CallApiContext, "InferredPluginOptions" | "Meta"> = DefaultCallApiContext,
-> = UnmaskType<
-	RequestContext<TCallApiContext> & {
-		event: StreamProgressEvent;
-		response: Response;
-	}
->;
+	TCallApiContext extends Pick<CallApiContext, "InferredExtraOptions" | "Meta"> = DefaultCallApiContext,
+> = RequestContext<TCallApiContext> & {
+	event: StreamProgressEvent;
+	response: Response;
+};
 
 type HookRegistries = Required<{
 	[Key in keyof Hooks]: Set<Hooks[Key]>;

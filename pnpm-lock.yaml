@@ -51,8 +51,8 @@ importers:
         specifier: 16.2.7
         version: 16.2.7
       prettier:
-        specifier: 3.7.2
-        version: 3.7.2
+        specifier: 3.6.2
+        version: 3.6.2
       tailwindcss:
         specifier: ^4.1.17
         version: 4.1.17
@@ -252,13 +252,13 @@ importers:
         version: 8.5.6
       prettier-plugin-classnames:
         specifier: ^0.8.5
-        version: 0.8.5(prettier@3.7.2)
+        version: 0.8.5(prettier@3.6.2)
       prettier-plugin-merge:
         specifier: ^0.8.0
-        version: 0.8.0(prettier@3.7.2)
+        version: 0.8.0(prettier@3.6.2)
       prettier-plugin-tailwindcss:
         specifier: ^0.7.1
-        version: 0.7.1(prettier@3.7.2)
+        version: 0.7.1(prettier@3.6.2)
       tailwindcss:
         specifier: 4.1.17
         version: 4.1.17
@@ -5327,8 +5327,8 @@ packages:
     engines: {node: '>=10.13.0'}
     hasBin: true
 
-  prettier@3.7.2:
-    resolution: {integrity: sha512-n3HV2J6QhItCXndGa3oMWvWFAgN1ibnS7R9mt6iokScBOC0Ul9/iZORmU2IWUMcyAQaMPjTlY3uT34TqocUxMA==}
+  prettier@3.6.2:
+    resolution: {integrity: sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -6022,8 +6022,11 @@ packages:
   ufo@1.6.1:
     resolution: {integrity: sha512-9a4/uxlTWJ4+a5i0ooc1rU7C7YOw3wT+UGqdeNNHWnOF9qcMBgLRS+4IYUqbczewFx4mLEig6gawh7X6mFlEkA==}
 
-  unconfig@7.3.3:
-    resolution: {integrity: sha512-QCkQoOnJF8L107gxfHL0uavn7WD9b3dpBcFX6HtfQYmjw2YzWxGuFQ0N0J6tE9oguCBJn9KOvfqYDCMPHIZrBA==}
+  unconfig-core@7.4.1:
+    resolution: {integrity: sha512-Bp/bPZjV2Vl/fofoA2OYLSnw1Z0MOhCX7zHnVCYrazpfZvseBbGhwcNQMxsg185Mqh7VZQqK3C8hFG/Dyng+yA==}
+
+  unconfig@7.4.1:
+    resolution: {integrity: sha512-uyQ7LElcGizrOGZyIq9KU+xkuEjcRf9IpmDTkCSYv5mEeZzrXSj6rb51C0L+WTedsmAoVxW9WKrLWhSwebIM9Q==}
 
   undici-types@7.16.0:
     resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
@@ -11435,23 +11438,23 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-classnames@0.8.5(prettier@3.7.2):
+  prettier-plugin-classnames@0.8.5(prettier@3.6.2):
     dependencies:
-      prettier: 3.7.2
+      prettier: 3.6.2
       zod: 3.22.4
 
-  prettier-plugin-merge@0.8.0(prettier@3.7.2):
+  prettier-plugin-merge@0.8.0(prettier@3.6.2):
     dependencies:
       diff: 5.1.0
-      prettier: 3.7.2
+      prettier: 3.6.2
 
-  prettier-plugin-tailwindcss@0.7.1(prettier@3.7.2):
+  prettier-plugin-tailwindcss@0.7.1(prettier@3.6.2):
     dependencies:
-      prettier: 3.7.2
+      prettier: 3.6.2
 
   prettier@2.8.8: {}
 
-  prettier@3.7.2: {}
+  prettier@3.6.2: {}
 
   property-information@7.1.0: {}
 
@@ -12163,7 +12166,7 @@ snapshots:
       tinyexec: 1.0.2
       tinyglobby: 0.2.15
       tree-kill: 1.2.2
-      unconfig: 7.3.3
+      unconfig: 7.4.1
     optionalDependencies:
       '@arethetypeswrong/core': 0.18.2
       publint: 0.3.15
@@ -12244,12 +12247,18 @@ snapshots:
 
   ufo@1.6.1: {}
 
-  unconfig@7.3.3:
+  unconfig-core@7.4.1:
+    dependencies:
+      '@quansync/fs': 0.1.5
+      quansync: 0.2.11
+
+  unconfig@7.4.1:
     dependencies:
       '@quansync/fs': 0.1.5
       defu: 6.1.4
       jiti: 2.6.1
       quansync: 0.2.11
+      unconfig-core: 7.4.1
 
   undici-types@7.16.0: {}
 

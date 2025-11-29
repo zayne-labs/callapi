@@ -180,7 +180,7 @@ const apiVersionPlugin = definePlugin({
 
 	defineExtraOptions: () => apiVersionSchema,
 
-	setup: (ctx: PluginSetupContext<z.infer<typeof apiVersionSchema>>) => {
+	setup: (ctx: PluginSetupContext<{ InferredExtraOptions: z.infer<typeof apiVersionSchema> }>) => {
 		const version = ctx.options.apiVersion ?? "v1";
 
 		return {
