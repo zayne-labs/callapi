@@ -11,7 +11,10 @@
 		"url": "git+https://github.com/zayne-labs/callapi.git"
 	},
 	"sideEffects": false,
-	"exports": "./dist/index.js",
+	"exports": {
+		".": "./dist/index.js",
+		"./*": "./dist/plugins/*/index.js"
+	},
 	"files": [
 		"dist"
 	],

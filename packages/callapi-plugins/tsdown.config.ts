@@ -5,7 +5,7 @@ const isDevMode = process.env.NODE_ENV === "development";
 const commonOptions = {
 	clean: true, // clean up dist folder,
 	dts: { newContext: true },
-	entry: ["src/index.ts"],
+	entry: ["src/index.ts", "src/plugins/*/index.ts"],
 	ignoreWatch: [".turbo"],
 	platform: "browser",
 	sourcemap: !isDevMode,

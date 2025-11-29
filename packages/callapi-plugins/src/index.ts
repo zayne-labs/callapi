@@ -1,1 +1,1 @@
-export * from "./logger";
+export * from "./plugins/logger";

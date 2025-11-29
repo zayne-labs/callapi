@@ -12,8 +12,25 @@ import * as z from "zod";
 
 const newOptionSchema1 = z.object({
 	onUpload: z.function({
-		input: [z.object({ loaded: z.number(), total: z.number() })],
+		input: [
+			z.object({
+				loaded: z.number(),
+				total: z.number(),
+			}),
+		],
 	}),
+});
+
+const pluginOne = definePlugin({
+	defineExtraOptions: () => newOptionSchema1,
+
+	hooks: {
+		onRequest: () => console.info("OnRequest - PLUGIN1"),
+	},
+
+	id: "1",
+
+	name: "plugin",
 });
 
 const newOptionSchema2 = z.object({
@@ -29,18 +46,6 @@ const newOptionSchema2 = z.object({
 
 type Plugin2Options = z.infer<typeof newOptionSchema2>;
 
-const pluginOne = definePlugin({
-	defineExtraOptions: () => newOptionSchema1,
-
-	hooks: {
-		onRequest: () => console.info("OnRequest - PLUGIN1"),
-	},
-
-	id: "1",
-
-	name: "plugin",
-});
-
 const pluginTwo = definePlugin({
 	defineExtraOptions: () => newOptionSchema2,
 
@@ -49,7 +54,7 @@ const pluginTwo = definePlugin({
 		onResponseError: (_ctx) => console.info("OnSuccess - PLUGIN2"),
 		onSuccess: (_ctx: SuccessContext<{ Data: { foo: string } }>) => console.info("OnSuccess - PLUGIN2"),
 	} satisfies PluginHooks<{
-		ErrorData: { foo: string };
+		ErrorData: { trash: string };
 		InferredExtraOptions: Plugin2Options;
 	}>,
 
@@ -58,7 +63,10 @@ const pluginTwo = definePlugin({
 	name: "plugin",
 
 	setup: ({ options, request }: PluginSetupContext<{ InferredExtraOptions: Plugin2Options }>) => {
-		options.onUploadSuccess?.({ load: 0, tots: 0 });
+		options.onUploadSuccess?.({
+			load: 0,
+			tots: 0,
+		});
 
 		return {
 			request: {
