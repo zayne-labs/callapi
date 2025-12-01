@@ -221,20 +221,16 @@ export type ValidationErrorContext<
 };
 
 export type SuccessContext<
-	TCallApiContext extends Pick<
-		CallApiContext,
-		"Data" | "InferredExtraOptions" | "Meta"
-	> = DefaultCallApiContext,
+	TCallApiContext extends Pick<CallApiContext, "Data" | "InferredExtraOptions" | "Meta"> =
+		DefaultCallApiContext,
 > = RequestContext<TCallApiContext> & {
 	data: NoInfer<TCallApiContext["Data"]>;
 	response: Response;
 };
 
 export type ResponseContext<
-	TCallApiContext extends Pick<
-		CallApiContext,
-		"Data" | "ErrorData" | "InferredExtraOptions" | "Meta"
-	> = DefaultCallApiContext,
+	TCallApiContext extends Pick<CallApiContext, "Data" | "ErrorData" | "InferredExtraOptions" | "Meta"> =
+		DefaultCallApiContext,
 > = RequestContext<TCallApiContext>
 	& (
 		| Prettify<CallApiResultSuccessVariant<TCallApiContext["Data"]>>
@@ -254,10 +250,8 @@ export type RequestErrorContext<
 };
 
 export type ErrorContext<
-	TCallApiContext extends Pick<
-		CallApiContext,
-		"ErrorData" | "InferredExtraOptions" | "Meta"
-	> = DefaultCallApiContext,
+	TCallApiContext extends Pick<CallApiContext, "ErrorData" | "InferredExtraOptions" | "Meta"> =
+		DefaultCallApiContext,
 > = RequestContext<TCallApiContext>
 	& (
 		| {
@@ -271,18 +265,14 @@ export type ErrorContext<
 	);
 
 export type ResponseErrorContext<
-	TCallApiContext extends Pick<
-		CallApiContext,
-		"ErrorData" | "InferredExtraOptions" | "Meta"
-	> = DefaultCallApiContext,
+	TCallApiContext extends Pick<CallApiContext, "ErrorData" | "InferredExtraOptions" | "Meta"> =
+		DefaultCallApiContext,
 > = Extract<ErrorContext<TCallApiContext>, { error: PossibleHTTPError<TCallApiContext["ErrorData"]> }>
 	& RequestContext<TCallApiContext>;
 
 export type RetryContext<
-	TCallApiContext extends Pick<
-		CallApiContext,
-		"ErrorData" | "InferredExtraOptions" | "Meta"
-	> = DefaultCallApiContext,
+	TCallApiContext extends Pick<CallApiContext, "ErrorData" | "InferredExtraOptions" | "Meta"> =
+		DefaultCallApiContext,
 > = ErrorContext<TCallApiContext> & {
 	retryAttemptCount: number;
 };
