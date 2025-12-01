@@ -1,5 +1,23 @@
 # @zayne-labs/callapi
 
+## 1.11.29
+
+### Patch Changes
+
+- d49f07d: fix(callapi): Fix snd refactor types
+   - refactor(types): Rename `GetCallApiResult` to `InferCallApiResult`
+   - refactor(core): Improve `SharedExtraOptions` to support context overriding
+   - fix(stream): Add default generic to `ReadableStream` augmentation
+   - docs(middlewares): Fix caching plugin usage and enable twoslash
+   - ci(workflows): Update pnpm version to 10.24.0
+   - chore(deps): Update lockfile
+
+- 75163e4: refactor(types): rename InferredPluginOptions to InferredExtraOptions for consistency
+
+   docs: update plugin and client type references in documentation
+   fix: downgrade prettier to 3.6.2 due to compatibility issues
+   style: reorganize imports in layout.shared.tsx
+
 ## 1.11.28
 
 ### Patch Changes
