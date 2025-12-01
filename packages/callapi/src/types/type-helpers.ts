@@ -43,7 +43,16 @@ export type UnionToIntersection<TUnion> =
 	:	never;
 
 // == Using this Immediately Indexed Mapped type helper to help show computed type of anything passed to it instead of just the type name
-export type UnmaskType<TValue> = { _: TValue }["_"];
+export type UnmaskType<TValue> = { value: TValue }["value"];
+
+/**
+ * @description Userland implementation of NoInfer intrinsic type, but this one doesn't show up on hover like the intrinsic one
+ *
+ * Prevents TypeScript from inferring `TGeneric` at this position by creating a circular dependency.
+ * The tuple index `[TGeneric extends unknown ? 0 : never]` depends on `TGeneric`, forcing TS to
+ * skip this site for inference and use other arguments or defaults instead.
+ */
+export type NoInferUnMasked<TGeneric> = [TGeneric][TGeneric extends unknown ? 0 : never];
 
 export type RemovePrefix<TPrefix extends "dedupe" | "retry", TKey extends string> =
 	TKey extends `${TPrefix}${infer TRest}` ? Uncapitalize<TRest> : TKey;

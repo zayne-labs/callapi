@@ -25,13 +25,6 @@ export type StreamProgressEvent = {
 	transferredBytes: number;
 };
 
-declare global {
-	// eslint-disable-next-line ts-eslint/no-explicit-any -- Ignore
-	interface ReadableStream<R = any> {
-		[Symbol.asyncIterator]: () => AsyncIterableIterator<R>;
-	}
-}
-
 const createProgressEvent = (options: {
 	chunk: Uint8Array;
 	totalBytes: number;

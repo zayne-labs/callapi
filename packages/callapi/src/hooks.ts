@@ -154,7 +154,7 @@ export interface Hooks<TCallApiContext extends CallApiContext = DefaultCallApiCo
 	onValidationError?: (context: ValidationErrorContext<TCallApiContext>) => Awaitable<unknown>;
 }
 
-export type HooksOrHooksArray<TCallApiContext extends CallApiContext = DefaultCallApiContext> = {
+export type HooksOrHooksArray<TCallApiContext extends NoInfer<CallApiContext> = DefaultCallApiContext> = {
 	[Key in keyof Hooks<TCallApiContext>]:
 		| Hooks<TCallApiContext>[Key]
 		// eslint-disable-next-line perfectionist/sort-union-types -- I need arrays to be last
@@ -224,7 +224,7 @@ export type SuccessContext<
 	TCallApiContext extends Pick<CallApiContext, "Data" | "InferredExtraOptions" | "Meta"> =
 		DefaultCallApiContext,
 > = RequestContext<TCallApiContext> & {
-	data: NoInfer<TCallApiContext["Data"]>;
+	data: TCallApiContext["Data"];
 	response: Response;
 };
 

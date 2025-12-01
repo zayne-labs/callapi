@@ -7,7 +7,7 @@ export type FetchImpl = UnmaskType<
 	(input: string | Request | URL, init?: RequestInit) => Promise<Response>
 >;
 
-export interface Middlewares<TCallApiContext extends CallApiContext = DefaultCallApiContext> {
+export interface Middlewares<TCallApiContext extends NoInfer<CallApiContext> = DefaultCallApiContext> {
 	/**
 	 * Wraps the fetch implementation to intercept requests at the network layer.
 	 *

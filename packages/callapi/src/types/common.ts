@@ -34,7 +34,7 @@ import type {
 	DefaultPluginArray,
 	DefaultThrowOnError,
 } from "./default-types";
-import type { Awaitable, Prettify, Writeable } from "./type-helpers";
+import type { Awaitable, NoInferUnMasked, Prettify, Writeable } from "./type-helpers";
 
 // eslint-disable-next-line ts-eslint/no-empty-object-type -- This needs to be empty to allow users to register their own meta
 export interface Register {
@@ -108,8 +108,8 @@ type SharedExtraOptions<
 	>,
 > = DedupeOptions
 	& HookConfigOptions
-	& HooksOrHooksArray<TComputedCallApiContext>
-	& Middlewares<TComputedCallApiContext>
+	& HooksOrHooksArray<NoInferUnMasked<TComputedCallApiContext>>
+	& Middlewares<NoInferUnMasked<TComputedCallApiContext>>
 	& ResultModeOption<TErrorData, TResultMode>
 	& RetryOptions<TErrorData>
 	& TComputedMergedPluginExtraOptions

@@ -2,7 +2,13 @@ import { extraOptionDefaults } from "./constants/defaults";
 import type { CallApiExtraOptions } from "./types/common";
 import type { ThrowOnErrorUnion } from "./types/conditional-types";
 import type { DefaultDataType, DefaultThrowOnError } from "./types/default-types";
-import type { AnyString, Awaitable, DistributiveOmit, UnmaskType } from "./types/type-helpers";
+import type {
+	AnyString,
+	Awaitable,
+	DistributiveOmit,
+	NoInferUnMasked,
+	UnmaskType,
+} from "./types/type-helpers";
 import { omitKeys } from "./utils/common";
 import type { HTTPError, ValidationError } from "./utils/external/error";
 import { isHTTPErrorInstance, isValidationErrorInstance } from "./utils/external/guards";
@@ -85,7 +91,7 @@ export const resolveResponseData = <TResponse>(
 };
 
 export type CallApiResultSuccessVariant<TData> = {
-	data: NoInfer<TData>;
+	data: NoInferUnMasked<TData>;
 	error: null;
 	response: Response;
 };
@@ -97,7 +103,7 @@ export type PossibleJavaScriptError = UnmaskType<{
 }>;
 
 export type PossibleHTTPError<TErrorData> = UnmaskType<{
-	errorData: NoInfer<TErrorData>;
+	errorData: NoInferUnMasked<TErrorData>;
 	message: string;
 	name: "HTTPError";
 	originalError: HTTPError;
