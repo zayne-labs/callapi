@@ -82,7 +82,7 @@ const pluginTwo = definePlugin({
 
 const apiSchema = defineSchema(
 	{
-		".": {
+		"@default": {
 			// data: z.object({ random: z.number() }),
 			// params: z.object({ per_page: z.number() }).optional(),
 		},

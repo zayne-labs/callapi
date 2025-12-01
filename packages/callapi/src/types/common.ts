@@ -4,7 +4,7 @@ import type { DedupeOptions } from "../dedupe";
 import type { HookConfigOptions, Hooks, HooksOrHooksArray } from "../hooks";
 import type { FetchImpl, Middlewares } from "../middlewares";
 import type { CallApiPlugin } from "../plugins";
-import type { GetCallApiResult, ResponseTypeType, ResultModeType } from "../result";
+import type { InferCallApiResult, ResponseTypeType, ResultModeType } from "../result";
 import type { RetryOptions } from "../retry";
 import type { InitURLOrURLObject, URLOptions } from "../url";
 import type { HTTPError } from "../utils/external/error";
@@ -52,7 +52,9 @@ export type CallApiContext = {
 	ResultMode?: ResultModeType;
 };
 
-export type GetMergedCallApiContext<
+export type GetCallApiContext<TCallApiContext extends CallApiContext> = TCallApiContext;
+
+export type OverrideCallApiContext<
 	TFullCallApiContext extends CallApiContext,
 	TOverrideCallApiContext extends CallApiContext,
 > = Omit<TFullCallApiContext, keyof TOverrideCallApiContext> & TOverrideCallApiContext;
@@ -95,12 +97,19 @@ type SharedExtraOptions<
 	TComputedMergedPluginExtraOptions = Partial<
 		InferPluginExtraOptions<TPluginArray> & TCallApiContext["InferredExtraOptions"]
 	>,
+	TComputedCallApiContext extends CallApiContext = OverrideCallApiContext<
+		TCallApiContext,
+		{
+			Data: TData;
+			ErrorData: TErrorData;
+			InferredExtraOptions: TComputedMergedPluginExtraOptions;
+			ResultMode: TResultMode;
+		}
+	>,
 > = DedupeOptions
 	& HookConfigOptions
-	& HooksOrHooksArray<
-		GetMergedCallApiContext<TCallApiContext, { InferredExtraOptions: TComputedMergedPluginExtraOptions }>
-	>
-	& Middlewares
+	& HooksOrHooksArray<TComputedCallApiContext>
+	& Middlewares<TComputedCallApiContext>
 	& ResultModeOption<TErrorData, TResultMode>
 	& RetryOptions<TErrorData>
 	& TComputedMergedPluginExtraOptions
@@ -800,13 +809,11 @@ export type CallApiResult<
 	TErrorData,
 	TResultMode extends ResultModeType,
 	TThrowOnError extends ThrowOnErrorUnion,
-	TResponseType extends ResponseTypeType,
-> = GetCallApiResult<TData, TErrorData, TResultMode, TThrowOnError, TResponseType>;
+> = InferCallApiResult<TData, TErrorData, TResultMode, TThrowOnError>;
 
 export type CallApiResultLoose<
 	TData,
 	TErrorData,
 	TResultMode extends ResultModeType = ResultModeType,
 	TThrowOnError extends ThrowOnErrorUnion = ThrowOnErrorUnion,
-	TResponseType extends ResponseTypeType = ResponseTypeType,
-> = GetCallApiResult<TData, TErrorData, TResultMode, TThrowOnError, TResponseType>;
+> = InferCallApiResult<TData, TErrorData, TResultMode, TThrowOnError>;

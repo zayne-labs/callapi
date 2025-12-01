@@ -134,13 +134,10 @@ export type CallApiSuccessOrErrorVariant<TData, TError> =
 export type ResultModeMapWithoutException<
 	TData,
 	TErrorData,
-	TResponseType extends ResponseTypeType,
-	TComputedData = GetResponseType<TData, TResponseType>,
-	TComputedErrorData = GetResponseType<TErrorData, TResponseType>,
-	TComputedResult extends CallApiSuccessOrErrorVariant<
-		TComputedData,
-		TComputedErrorData
-	> = CallApiSuccessOrErrorVariant<TComputedData, TComputedErrorData>,
+	TComputedResult extends CallApiSuccessOrErrorVariant<TData, TErrorData> = CallApiSuccessOrErrorVariant<
+		TData,
+		TErrorData
+	>,
 > = UnmaskType<{
 	all: TComputedResult;
 	onlyData: TComputedResult["data"];
@@ -150,10 +147,7 @@ export type ResultModeMapWithoutException<
 
 type ResultModeMapWithException<
 	TData,
-	TResponseType extends ResponseTypeType,
-	TComputedData = GetResponseType<TData, TResponseType>,
-	TComputedResult extends
-		CallApiResultSuccessVariant<TComputedData> = CallApiResultSuccessVariant<TComputedData>,
+	TComputedResult extends CallApiResultSuccessVariant<TData> = CallApiResultSuccessVariant<TData>,
 > = {
 	all: TComputedResult;
 	onlyData: TComputedResult["data"];
@@ -164,11 +158,10 @@ type ResultModeMapWithException<
 export type ResultModeMap<
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,
-	TResponseType extends ResponseTypeType = ResponseTypeType,
 	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
 > =
-	TThrowOnError extends true ? ResultModeMapWithException<TData, TResponseType>
-	:	ResultModeMapWithoutException<TData, TErrorData, TResponseType>;
+	TThrowOnError extends true ? ResultModeMapWithException<TData>
+	:	ResultModeMapWithoutException<TData, TErrorData>;
 
 type ResultModePlaceholder = null;
 
@@ -179,22 +172,18 @@ type ResultModeUnion = keyof ResultModeMap;
 
 export type ResultModeType = ResultModePlaceholder | ResultModeUnion;
 
-export type GetCallApiResult<
+export type InferCallApiResult<
 	TData,
 	TErrorData,
 	TResultMode extends ResultModeType,
 	TThrowOnError extends ThrowOnErrorUnion,
-	TResponseType extends ResponseTypeType,
-	TComputedResultModeMapWithException extends ResultModeMapWithException<
-		TData,
-		TResponseType
-	> = ResultModeMapWithException<TData, TResponseType>,
-	TComputedResultModeMap extends ResultModeMap<
+	TComputedResultModeMapWithException extends ResultModeMapWithException<TData> =
+		ResultModeMapWithException<TData>,
+	TComputedResultModeMap extends ResultModeMap<TData, TErrorData, TThrowOnError> = ResultModeMap<
 		TData,
 		TErrorData,
-		TResponseType,
 		TThrowOnError
-	> = ResultModeMap<TData, TErrorData, TResponseType, TThrowOnError>,
+	>,
 > =
 	TErrorData extends false ? TComputedResultModeMapWithException["onlyData"]
 	: TErrorData extends false | undefined ? TComputedResultModeMapWithException["onlyData"]

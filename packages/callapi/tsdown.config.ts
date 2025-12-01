@@ -17,7 +17,7 @@ const commonOptions = {
 export default defineConfig([
 	{
 		...commonOptions,
-		format: ["es"],
+		format: ["esm"],
 		// outDir: "./dist/esm",
 	},
 ]);

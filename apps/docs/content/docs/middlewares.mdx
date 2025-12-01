@@ -116,7 +116,7 @@ This reverse composition means the last middleware added gets the first chance t
 
 ### Response Caching
 
-```ts title="caching-plugin.ts"
+```ts twoslash title="caching-plugin.ts"
 import type { PluginSetupContext } from "@zayne-labs/callapi";
 import { definePlugin } from "@zayne-labs/callapi/utils";
 import { z } from "zod";
@@ -137,7 +137,7 @@ export const cachingPlugin = () => {
 
 		defineExtraOptions: () => CacheOptionsSchema,
 
-		middlewares: ({ options }: PluginSetupContext<CacheOptions>) => {
+		middlewares: ({ options }: PluginSetupContext<{ InferredExtraOptions: CacheOptions }>) => {
 			const { cacheLifetime = 60_000, cachePolicy = "cache-first" } = options;
 
 			return {
@@ -184,7 +184,7 @@ import { createFetchClient } from "@zayne-labs/callapi";
 
 const callBackendApi = createFetchClient({
 	baseURL: "https://api.example.com",
-	plugins: [cachingPlugin],
+	plugins: [cachingPlugin()],
 	cachePolicy: "cache-first",
 	cacheLifetime: 2 * 60 * 1000, // 2 minutes
 });

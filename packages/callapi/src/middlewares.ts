@@ -21,6 +21,7 @@ export interface Middlewares<TCallApiContext extends CallApiContext = DefaultCal
 	 * ```ts
 	 * // Cache responses
 	 * const cache = new Map();
+	 *
 	 * fetchMiddleware: (ctx) => async (input, init) => {
 	 *   const key = input.toString();
 	 *   if (cache.has(key)) return cache.get(key).clone();

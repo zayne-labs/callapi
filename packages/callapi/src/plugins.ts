@@ -15,7 +15,7 @@ import type {
 	CallApiContext,
 	CallApiRequestOptions,
 	CallApiRequestOptionsForHooks,
-	GetMergedCallApiContext,
+	OverrideCallApiContext,
 } from "./types/common";
 import type { DefaultCallApiContext, DefaultDataType } from "./types/default-types";
 import type { Awaitable } from "./types/type-helpers";
@@ -35,7 +35,7 @@ export type PluginInitResult<TCallApiContext extends CallApiContext = DefaultCal
 
 export type PluginHooks<TCallApiContext extends CallApiContext = DefaultCallApiContext> =
 	HooksOrHooksArray<
-		GetMergedCallApiContext<
+		OverrideCallApiContext<
 			TCallApiContext,
 			{
 				Data: DefaultDataType extends TCallApiContext["Data"] ? never : TCallApiContext["Data"];
