@@ -65,8 +65,8 @@ Structured errors make robust error handling trivial.
 const { data, error } = await callApi("/api/users");
 
 if (error) {
- console.log(error.name); // "HTTPError", "ValidationError"
- console.log(error.errorData); // Actual API response
+	console.log(error.name); // "HTTPError", "ValidationError"
+	console.log(error.errorData); // Actual API response
 }
 ```
 
@@ -76,9 +76,9 @@ Supports exponential backoff and custom retry conditions.
 
 ```js
 await callApi("/api/data", {
- retryAttempts: 3,
- retryStrategy: "exponential",
- retryStatusCodes: [429, 500, 502, 503],
+	retryAttempts: 3,
+	retryStrategy: "exponential",
+	retryStatusCodes: [429, 500, 502, 503],
 });
 ```
 
@@ -92,19 +92,19 @@ import { createFetchClient } from "@zayne-labs/callapi";
 import { defineSchema } from "@zayne-labs/callapi/utils";
 
 const callMainApi = createFetchClient({
- schema: defineSchema({
-  "/users/:id": {
-   data: z.object({
-    id: z.number(),
-    name: z.string(),
-   }),
-  },
- }),
+	schema: defineSchema({
+		"/users/:id": {
+			data: z.object({
+				id: z.number(),
+				name: z.string(),
+			}),
+		},
+	}),
 });
 
 // Fully typed + validated
 const user = await callMainApi("/users/:id", {
- params: { id: 123 },
+	params: { id: 123 },
 });
 ```
 
@@ -114,15 +114,15 @@ Hook into CallApi's lifecycle at any point.
 
 ```js
 const api = createFetchClient({
- onRequest: ({ request }) => {
-  request.headers.set("Authorization", `Bearer ${token}`);
- },
- onError: ({ error }) => {
-  Sentry.captureException(error);
- },
- onResponseStream: ({ event }) => {
-  console.log(`Downloaded ${event.progress}%`);
- },
+	onRequest: ({ request }) => {
+		request.headers.set("Authorization", `Bearer ${token}`);
+	},
+	onError: ({ error }) => {
+		Sentry.captureException(error);
+	},
+	onResponseStream: ({ event }) => {
+		console.log(`Downloaded ${event.progress}%`);
+	},
 });
 ```
 
@@ -132,38 +132,38 @@ Extend functionality with setup, hooks, and middleware.
 
 ```js
 const metricsPlugin = definePlugin({
- id: "metrics",
- name: "Metrics Plugin",
+	id: "metrics",
+	name: "Metrics Plugin",
 
- setup: ({ options }) => ({
-  options: {
-   ...options,
-   meta: { startTime: Date.now() },
-  },
- }),
+	setup: ({ options }) => ({
+		options: {
+			...options,
+			meta: { startTime: Date.now() },
+		},
+	}),
 
- hooks: {
-  onSuccess: ({ options }) => {
-   const duration = Date.now() - options.meta.startTime;
+	hooks: {
+		onSuccess: ({ options }) => {
+			const duration = Date.now() - options.meta.startTime;
 
-   console.info(`Request took ${duration}ms`);
-  },
- },
+			console.info(`Request took ${duration}ms`);
+		},
+	},
 
- middlewares: {
-  fetchMiddleware: (ctx) => async (input, init) => {
-   console.info("→", input);
+	middlewares: {
+		fetchMiddleware: (ctx) => async (input, init) => {
+			console.info("→", input);
 
-   const response = await ctx.fetchImpl(input, init);
+			const response = await ctx.fetchImpl(input, init);
 
-   console.info("←", response.status);
-   return response;
-  },
- },
+			console.info("←", response.status);
+			return response;
+		},
+	},
 });
 
 const api = createFetchClient({
- plugins: [metricsPlugin],
+	plugins: [metricsPlugin],
 });
 ```
 
@@ -195,10 +195,10 @@ const { data } = await callApi("/api/users");
 
 // Configured
 const api = createFetchClient({
- baseURL: "https://api.example.com",
- retryAttempts: 2,
- timeout: 10000,
- onError: ({ error }) => trackError(error),
+	baseURL: "https://api.example.com",
+	retryAttempts: 2,
+	timeout: 10000,
+	onError: ({ error }) => trackError(error),
 });
 ```
 
@@ -206,7 +206,7 @@ const api = createFetchClient({
 
 ```html
 <script type="module">
- import { callApi } from "https://esm.run/@zayne-labs/callapi";
+	import { callApi } from "https://esm.run/@zayne-labs/callapi";
 </script>
 ```
 

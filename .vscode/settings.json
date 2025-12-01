@@ -13,6 +13,5 @@
 		"treeshake",
 		"TSUP",
 		"Twoslash"
-	],
-	"arrayIndexInlay.enabled": false
+	]
 }
