@@ -1,5 +1,18 @@
 # @zayne-labs/callapi
 
+## 1.11.31
+
+### Patch Changes
+
+- 8b4fe33: refactor(callapi): improve type naming and validation handling
+   - rename CallApiSuccessOrErrorVariant to CallApiResultSuccessOrErrorVariant for consistency
+   - simplify ResultModeMap type structure and remove redundant types
+   - enhance schema validation with support for per-field disable flags
+   - streamline request options validation and header resolution
+   - update tests to reflect changes in type names and validation behavior
+
+- c3b60d0: refactor: Improve type preview by wrapping withoutResponse with Prettify utility type
+
 ## 1.11.30
 
 ### Patch Changes
