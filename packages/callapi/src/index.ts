@@ -18,8 +18,8 @@ export { type CallApiPlugin, type PluginHooks, type PluginSetupContext } from ".
 
 export {
 	type CallApiResultErrorVariant,
+	type CallApiResultSuccessOrErrorVariant,
 	type CallApiResultSuccessVariant,
-	type CallApiSuccessOrErrorVariant,
 	type PossibleHTTPError,
 	type PossibleJavaScriptError,
 	type PossibleJavaScriptOrValidationError,

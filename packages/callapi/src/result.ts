@@ -134,41 +134,27 @@ export type CallApiResultErrorVariant<TErrorData> =
 			response: Response | null;
 	  };
 
-export type CallApiSuccessOrErrorVariant<TData, TError> =
+export type CallApiResultSuccessOrErrorVariant<TData, TError> =
 	| CallApiResultErrorVariant<TError>
 	| CallApiResultSuccessVariant<TData>;
 
-export type ResultModeMapWithoutException<
-	TData,
-	TErrorData,
-	TComputedResult extends CallApiSuccessOrErrorVariant<TData, TErrorData> = CallApiSuccessOrErrorVariant<
-		TData,
-		TErrorData
-	>,
+export type ResultModeMap<
+	TData = DefaultDataType,
+	TErrorData = DefaultDataType,
+	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
+	TComputedResultWithoutException extends CallApiResultSuccessOrErrorVariant<TData, TErrorData> =
+		CallApiResultSuccessOrErrorVariant<TData, TErrorData>,
+	TComputedResultWithException extends CallApiResultSuccessVariant<TData> =
+		CallApiResultSuccessVariant<TData>,
+	TComputedResult extends TThrowOnError extends true ? TComputedResultWithException
+	:	TComputedResultWithoutException = TThrowOnError extends true ? TComputedResultWithException
+	:	TComputedResultWithoutException,
 > = UnmaskType<{
 	all: TComputedResult;
 	onlyData: TComputedResult["data"];
 	onlyResponse: TComputedResult["response"];
 	withoutResponse: Prettify<DistributiveOmit<TComputedResult, "response">>;
 }>;
-
-type ResultModeMapWithException<
-	TData,
-	TComputedResult extends CallApiResultSuccessVariant<TData> = CallApiResultSuccessVariant<TData>,
-> = {
-	all: TComputedResult;
-	onlyData: TComputedResult["data"];
-	onlyResponse: TComputedResult["response"];
-	withoutResponse: Prettify<DistributiveOmit<TComputedResult, "response">>;
-};
-
-export type ResultModeMap<
-	TData = DefaultDataType,
-	TErrorData = DefaultDataType,
-	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
-> =
-	TThrowOnError extends true ? ResultModeMapWithException<TData>
-	:	ResultModeMapWithoutException<TData, TErrorData>;
 
 type ResultModePlaceholder = null;
 
@@ -184,18 +170,18 @@ export type InferCallApiResult<
 	TErrorData,
 	TResultMode extends ResultModeType,
 	TThrowOnError extends ThrowOnErrorUnion,
-	TComputedResultModeMapWithException extends ResultModeMapWithException<TData> =
-		ResultModeMapWithException<TData>,
-	TComputedResultModeMap extends ResultModeMap<TData, TErrorData, TThrowOnError> = ResultModeMap<
+	TComputedResultModeMapWithException extends ResultModeMap<TData, TErrorData, true> = ResultModeMap<
 		TData,
 		TErrorData,
-		TThrowOnError
+		true
 	>,
+	TComputedResultModeMapWithoutException extends ResultModeMap<TData, TErrorData, TThrowOnError> =
+		ResultModeMap<TData, TErrorData, TThrowOnError>,
 > =
 	TErrorData extends false ? TComputedResultModeMapWithException["onlyData"]
 	: TErrorData extends false | undefined ? TComputedResultModeMapWithException["onlyData"]
-	: ResultModePlaceholder extends TResultMode ? TComputedResultModeMap["all"]
-	: TResultMode extends ResultModeUnion ? TComputedResultModeMap[TResultMode]
+	: ResultModePlaceholder extends TResultMode ? TComputedResultModeMapWithoutException["all"]
+	: TResultMode extends ResultModeUnion ? TComputedResultModeMapWithoutException[TResultMode]
 	: never;
 
 type SuccessInfo = Pick<CallApiExtraOptions, "resultMode"> & {

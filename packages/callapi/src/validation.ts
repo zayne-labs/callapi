@@ -18,7 +18,7 @@ import {
 import type { Params, Query } from "./url";
 import { toArray } from "./utils/common";
 import { ValidationError } from "./utils/external/error";
-import { isFunction } from "./utils/guards";
+import { isFunction, isObject } from "./utils/guards";
 
 type ResultVariant = "infer-input" | "infer-output";
 
@@ -92,6 +92,10 @@ export const standardSchemaParser = async <
 	return result.value as never;
 };
 
+type BooleanObject = {
+	[Key in keyof CallApiSchema]: boolean;
+};
+
 export interface CallApiSchemaConfig {
 	/**
 	 * The base url of the schema. By default it's the baseURL of the callApi instance.
@@ -101,7 +105,7 @@ export interface CallApiSchemaConfig {
 	/**
 	 * Disables runtime validation for the schema.
 	 */
-	disableRuntimeValidation?: boolean;
+	disableRuntimeValidation?: boolean | BooleanObject;
 
 	/**
 	 * If `true`, the original input value will be used instead of the transformed/validated output.
@@ -109,7 +113,7 @@ export interface CallApiSchemaConfig {
 	 * This is useful when you want to validate the input but don't want any transformations
 	 * applied by the validation schema (e.g., type coercion, default values, etc).
 	 */
-	disableValidationOutputApplication?: boolean;
+	disableValidationOutputApplication?: boolean | BooleanObject;
 
 	/**
 	 * Optional url prefix that will be substituted for the `baseURL` of the schemaConfig at runtime.
@@ -217,11 +221,31 @@ export const handleSchemaValidation = async <
 ): Promise<InferSchemaOutput<TSchema>> => {
 	const { inputValue, response, schemaConfig } = validationOptions;
 
-	if (schemaConfig?.disableRuntimeValidation) {
+	const disableRuntimeValidationBooleanObject =
+		isObject(schemaConfig?.disableRuntimeValidation) ? schemaConfig.disableRuntimeValidation : {};
+
+	const shouldDisableRuntimeValidation =
+		schemaConfig?.disableRuntimeValidation === true
+		|| disableRuntimeValidationBooleanObject[schemaName] === true;
+
+	if (shouldDisableRuntimeValidation) {
 		return inputValue as never;
 	}
 
 	const validResult = await standardSchemaParser(fullSchema, schemaName, { inputValue, response });
+
+	const disableResultApplicationBooleanObject =
+		isObject(schemaConfig?.disableValidationOutputApplication) ?
+			schemaConfig.disableValidationOutputApplication
+		:	{};
+
+	const shouldDisableResultApplication =
+		schemaConfig?.disableValidationOutputApplication === true
+		|| disableResultApplicationBooleanObject[schemaName] === true;
+
+	if (shouldDisableResultApplication) {
+		return inputValue as never;
+	}
 
 	return validResult as never;
 };
@@ -285,21 +309,21 @@ const requestOptionsToBeValidated = ["body", "headers", "method"] satisfies Tupl
 >;
 
 type RequestOptionsValidationOptions = {
-	requestOptions: CallApiRequestOptions;
+	request: CallApiRequestOptions;
 	schema: CallApiSchema | undefined;
 	schemaConfig: CallApiSchemaConfig | undefined;
 };
 
 const handleRequestOptionsValidation = async (validationOptions: RequestOptionsValidationOptions) => {
-	const { requestOptions, schema, schemaConfig } = validationOptions;
+	const { request, schema, schemaConfig } = validationOptions;
 
 	const validationResultArray = await Promise.all(
-		requestOptionsToBeValidated.map((schemaName) =>
-			handleSchemaValidation(schema, schemaName, {
-				inputValue: requestOptions[schemaName],
+		requestOptionsToBeValidated.map((schemaName) => {
+			return handleSchemaValidation(schema, schemaName, {
+				inputValue: request[schemaName],
 				schemaConfig,
-			})
-		)
+			});
+		})
 	);
 
 	const validatedResultObject: Prettify<
@@ -321,8 +345,7 @@ export const handleConfigValidation = async (
 	validationOptions: GetResolvedSchemaContext
 		& Omit<ExtraOptionsValidationOptions & RequestOptionsValidationOptions, "schema" | "schemaConfig">
 ) => {
-	const { baseExtraOptions, currentRouteSchemaKey, extraOptions, options, requestOptions } =
-		validationOptions;
+	const { baseExtraOptions, currentRouteSchemaKey, extraOptions, options, request } = validationOptions;
 
 	const { currentRouteSchema, resolvedSchema } = getResolvedSchema({
 		baseExtraOptions,
@@ -340,16 +363,6 @@ export const handleConfigValidation = async (
 		});
 	}
 
-	if (resolvedSchemaConfig?.disableRuntimeValidation) {
-		return {
-			extraOptionsValidationResult: null,
-			requestOptionsValidationResult: null,
-			resolvedSchema,
-			resolvedSchemaConfig,
-			shouldApplySchemaOutput: false,
-		};
-	}
-
 	const [extraOptionsValidationResult, requestOptionsValidationResult] = await Promise.all([
 		handleExtraOptionsValidation({
 			options,
@@ -357,22 +370,17 @@ export const handleConfigValidation = async (
 			schemaConfig: resolvedSchemaConfig,
 		}),
 		handleRequestOptionsValidation({
-			requestOptions,
+			request,
 			schema: resolvedSchema,
 			schemaConfig: resolvedSchemaConfig,
 		}),
 	]);
-
-	const shouldApplySchemaOutput =
-		(Boolean(extraOptionsValidationResult) || Boolean(requestOptionsValidationResult))
-		&& !resolvedSchemaConfig?.disableValidationOutputApplication;
 
 	return {
 		extraOptionsValidationResult,
 		requestOptionsValidationResult,
 		resolvedSchema,
 		resolvedSchemaConfig,
-		shouldApplySchemaOutput,
 	};
 };
 

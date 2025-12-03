@@ -4,8 +4,10 @@ import { extraOptionDefaults, requestOptionDefaults } from "../constants/default
 import type { RequestContext } from "../hooks";
 import type { Middlewares } from "../middlewares";
 import type { BaseCallApiExtraOptions, CallApiExtraOptions, CallApiRequestOptions } from "../types/common";
+import type { InferHeadersOption } from "../types/conditional-types";
 import type { DistributiveOmit } from "../types/type-helpers";
 import { extractMethodFromURL } from "../url";
+import type { CallApiSchema } from "../validation";
 import {
 	isArray,
 	isFunction,
@@ -78,23 +80,35 @@ export const objectifyHeaders = (headers: CallApiRequestOptions["headers"]) => {
 	return Object.fromEntries(headers);
 };
 
-export type GetHeadersOptions = {
+export type GetResolvedHeadersOptions = {
+	baseHeaders: CallApiRequestOptions["headers"];
+	headers: InferHeadersOption<CallApiSchema>["headers"];
+};
+
+const getResolvedHeaders = (options: GetResolvedHeadersOptions) => {
+	const { baseHeaders, headers } = options;
+
+	const resolvedHeaders =
+		isFunction(headers) ? headers({ baseHeaders: baseHeaders ?? {} }) : (headers ?? baseHeaders);
+
+	if (!resolvedHeaders) return;
+
+	return objectifyHeaders(resolvedHeaders);
+};
+
+export type GetHeadersOptions = GetResolvedHeadersOptions & {
 	auth: CallApiExtraOptions["auth"];
 	body: CallApiRequestOptions["body"];
-	headers: CallApiRequestOptions["headers"];
 };
 
 export const getHeaders = async (options: GetHeadersOptions) => {
-	const { auth, body, headers } = options;
+	const { auth, baseHeaders, body, headers } = options;
 
-	// == Return early if any of the following conditions are not met (so that native fetch would auto set the correct headers):
-	const shouldResolveHeaders = Boolean(headers) || Boolean(body) || Boolean(auth);
-
-	if (!shouldResolveHeaders) return;
+	const resolvedHeaders = getResolvedHeaders({ baseHeaders, headers });
 
 	const headersObject: Record<string, string | undefined> = {
 		...(await getAuthHeader(auth)),
-		...objectifyHeaders(headers),
+		...objectifyHeaders(resolvedHeaders),
 	};
 
 	if (isQueryString(body)) {

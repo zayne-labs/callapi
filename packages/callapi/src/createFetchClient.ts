@@ -33,7 +33,6 @@ import type {
 import type {
 	GetCurrentRouteSchema,
 	GetCurrentRouteSchemaKey,
-	InferHeadersOption,
 	InferInitURL,
 	ThrowOnErrorUnion,
 } from "./types/conditional-types";
@@ -187,7 +186,7 @@ export const createFetchClientWithContext = <
 				resolvedInitURL,
 				resolvedMiddlewares,
 				resolvedOptions,
-				resolvedRequestOptions,
+				resolvedRequest,
 			} = await initializePlugins({
 				baseConfig,
 				config,
@@ -219,16 +218,13 @@ export const createFetchClientWithContext = <
 
 			const combinedSignal = createCombinedSignal(
 				timeoutSignal,
-				resolvedRequestOptions.signal,
+				resolvedRequest.signal,
 				newFetchController.signal
 			);
 
-			const initMethod = getMethod({ initURL: resolvedInitURL, method: resolvedRequestOptions.method });
-
 			const request = {
-				...resolvedRequestOptions,
+				...resolvedRequest,
 
-				method: initMethod,
 				signal: combinedSignal,
 			} satisfies CallApiRequestOptionsForHooks;
 
@@ -258,49 +254,35 @@ export const createFetchClientWithContext = <
 					requestOptionsValidationResult,
 					resolvedSchema,
 					resolvedSchemaConfig,
-					shouldApplySchemaOutput,
 				} = await handleConfigValidation({
 					baseExtraOptions,
 					currentRouteSchemaKey: resolvedCurrentRouteSchemaKey,
 					extraOptions,
 					options,
-					requestOptions: request,
+					request,
 				});
 
 				// == Apply Schema Output for Extra Options
-				if (shouldApplySchemaOutput) {
-					Object.assign(options, extraOptionsValidationResult);
-				}
+				Object.assign(options, extraOptionsValidationResult);
 
 				// == Apply Schema Output for Request Options
-				const validMethod = getMethod({
-					initURL: resolvedInitURL,
-					method: shouldApplySchemaOutput ? requestOptionsValidationResult?.method : request.method,
-				});
-
 				const validBody = getBody({
-					body: shouldApplySchemaOutput ? requestOptionsValidationResult?.body : request.body,
+					body: requestOptionsValidationResult.body,
 					bodySerializer: options.bodySerializer,
 				});
 
-				type HeaderFn = Extract<InferHeadersOption<CallApiSchema>["headers"], AnyFunction>;
-
-				const resolvedHeaders =
-					isFunction<HeaderFn>(fetchOptions.headers) ?
-						fetchOptions.headers({ baseHeaders: baseFetchOptions.headers ?? {} })
-					:	(fetchOptions.headers ?? baseFetchOptions.headers);
-
-				const validHeaders = await getHeaders({
-					auth: options.auth,
-					body: validBody,
-					headers:
-						shouldApplySchemaOutput ? requestOptionsValidationResult?.headers : resolvedHeaders,
-				});
-
 				Object.assign(request, {
-					...(validBody && { body: validBody }),
-					...(validHeaders && { headers: validHeaders }),
-					...(validMethod && { method: validMethod }),
+					body: validBody,
+					headers: await getHeaders({
+						auth: options.auth,
+						baseHeaders: baseConfig.headers,
+						body: validBody,
+						headers: requestOptionsValidationResult.headers,
+					}),
+					method: getMethod({
+						initURL: resolvedInitURL,
+						method: requestOptionsValidationResult.method,
+					}),
 				});
 
 				const readyRequestContext = { baseConfig, config, options, request } satisfies RequestContext;

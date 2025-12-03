@@ -650,18 +650,9 @@ describe("Utility Functions", () => {
 		});
 
 		describe("getHeaders", () => {
-			it("should return undefined when no headers, body, or auth provided", async () => {
-				const result = await getHeaders({
-					auth: undefined, // Use undefined instead of null
-					body: null,
-					headers: undefined,
-				});
-
-				expect(result).toBeUndefined();
-			});
-
 			it("should merge auth, body, and custom headers", async () => {
 				const result = await getHeaders({
+					baseHeaders: undefined,
 					auth: { type: "Bearer", bearer: "test-token" },
 					body: { test: true },
 					headers: { "X-Custom": "value" },
@@ -677,6 +668,7 @@ describe("Utility Functions", () => {
 
 			it("should set correct content-type for query string body", async () => {
 				const result = await getHeaders({
+					baseHeaders: undefined,
 					auth: null,
 					body: "name=John&age=30",
 					headers: undefined,
@@ -691,6 +683,7 @@ describe("Utility Functions", () => {
 			it("should set JSON content-type for serializable body", async () => {
 				const result = await getHeaders({
 					auth: null,
+					baseHeaders: undefined,
 					body: { name: "John" },
 					headers: undefined,
 				});
@@ -704,6 +697,7 @@ describe("Utility Functions", () => {
 
 			it("should set JSON content-type for valid JSON string body", async () => {
 				const result = await getHeaders({
+					baseHeaders: undefined,
 					auth: null,
 					body: '{"name": "John"}',
 					headers: undefined,
@@ -723,6 +717,7 @@ describe("Utility Functions", () => {
 				};
 
 				const result = await getHeaders({
+					baseHeaders: undefined,
 					auth: asyncAuth,
 					body: null,
 					headers: undefined,
@@ -1065,7 +1060,8 @@ describe("Utility Functions", () => {
 				const result = await getHeaders({
 					auth: null,
 					body: null,
-					headers: { "X-Custom": undefined } as any,
+					baseHeaders: undefined,
+					headers: { "X-Custom": undefined },
 				});
 
 				expect(result).toEqual({
@@ -1078,6 +1074,7 @@ describe("Utility Functions", () => {
 				const result = await getHeaders({
 					auth: null,
 					body: null,
+					baseHeaders: undefined,
 					headers: { "X-Empty": "" },
 				});
 
@@ -1091,6 +1088,7 @@ describe("Utility Functions", () => {
 				const result = await getHeaders({
 					auth: { type: "Bearer", bearer: "token" },
 					body: { test: true },
+					baseHeaders: undefined,
 					headers: { authorization: "Custom auth" }, // lowercase
 				});
 

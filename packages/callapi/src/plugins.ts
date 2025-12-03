@@ -20,6 +20,7 @@ import type {
 import type { DefaultCallApiContext, DefaultDataType } from "./types/default-types";
 import type { Awaitable } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
+import { getHeaders, getMethod } from "./utils/common";
 import { isArray, isFunction, isPlainObject, isString } from "./utils/guards";
 import { type BaseCallApiSchemaAndConfig, getCurrentRouteSchemaKeyAndMainInitURL } from "./validation";
 
@@ -130,7 +131,7 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 	let resolvedCurrentRouteSchemaKey = currentRouteSchemaKey;
 	let resolvedInitURL = mainInitURL;
 	let resolvedOptions = options;
-	let resolvedRequestOptions = request;
+	let resolvedRequest = request;
 
 	const executePluginSetupFn = async (pluginSetup: CallApiPlugin["setup"]) => {
 		if (!pluginSetup) return;
@@ -153,14 +154,31 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 		}
 
 		if (isPlainObject(initResult.request)) {
-			resolvedRequestOptions = {
-				...resolvedRequestOptions,
+			const initMethod = getMethod({
+				initURL: resolvedInitURL,
+				method: initResult.request.method ?? resolvedRequest.method,
+			});
+
+			const initHeaders = await getHeaders({
+				auth: options.auth,
+				baseHeaders: baseConfig.headers,
+				body: initResult.request.body ?? resolvedRequest.body,
+				headers: initResult.request.headers ?? resolvedRequest.headers,
+			});
+
+			resolvedRequest = {
+				...resolvedRequest,
 				...(initResult.request as CallApiRequestOptionsForHooks),
+				headers: initHeaders,
+				method: initMethod,
 			};
 		}
 
 		if (isPlainObject(initResult.options)) {
-			resolvedOptions = { ...resolvedOptions, ...initResult.options };
+			resolvedOptions = {
+				...resolvedOptions,
+				...initResult.options,
+			};
 		}
 	};
 
@@ -192,7 +210,7 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 		resolvedInitURL,
 		resolvedMiddlewares,
 		resolvedOptions,
-		resolvedRequestOptions,
+		resolvedRequest,
 	};
 };
 
