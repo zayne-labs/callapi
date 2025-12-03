@@ -7,6 +7,7 @@ import type {
 	Awaitable,
 	DistributiveOmit,
 	NoInferUnMasked,
+	Prettify,
 	UnmaskType,
 } from "./types/type-helpers";
 import { omitKeys } from "./utils/common";
@@ -148,7 +149,7 @@ export type ResultModeMapWithoutException<
 	all: TComputedResult;
 	onlyData: TComputedResult["data"];
 	onlyResponse: TComputedResult["response"];
-	withoutResponse: DistributiveOmit<TComputedResult, "response">;
+	withoutResponse: Prettify<DistributiveOmit<TComputedResult, "response">>;
 }>;
 
 type ResultModeMapWithException<
@@ -158,7 +159,7 @@ type ResultModeMapWithException<
 	all: TComputedResult;
 	onlyData: TComputedResult["data"];
 	onlyResponse: TComputedResult["response"];
-	withoutResponse: DistributiveOmit<TComputedResult, "response">;
+	withoutResponse: Prettify<DistributiveOmit<TComputedResult, "response">>;
 };
 
 export type ResultModeMap<
