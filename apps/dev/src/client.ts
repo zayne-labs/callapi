@@ -72,8 +72,8 @@ const pluginTwo = definePlugin({
 			request: {
 				...request,
 				headers: {
-					...request.headers,
-					Authorization: request.headers["X-Environment"],
+					// ...request.headers,
+					// Authorization: request.headers["X-Environment"] ?? "PluginTwoAuth",
 				},
 			},
 		};

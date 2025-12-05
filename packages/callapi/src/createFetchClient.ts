@@ -175,7 +175,6 @@ export const createFetchClientWithContext = <
 
 			// == Merged Request Options
 			const mergedRequestOptions = {
-				headers: {}, // == Making sure headers is always an object
 				...baseFetchOptions,
 				...(!shouldSkipAutoMergeForRequest && fetchOptions),
 			} satisfies CallApiRequestOptions;
@@ -275,9 +274,8 @@ export const createFetchClientWithContext = <
 					body: validBody,
 					headers: await getHeaders({
 						auth: options.auth,
-						baseHeaders: baseConfig.headers,
 						body: validBody,
-						headers: requestOptionsValidationResult.headers,
+						resolvedHeaders: requestOptionsValidationResult.headers,
 					}),
 					method: getMethod({
 						initURL: resolvedInitURL,

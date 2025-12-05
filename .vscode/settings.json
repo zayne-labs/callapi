@@ -13,5 +13,6 @@
 		"treeshake",
 		"TSUP",
 		"Twoslash"
-	]
+	],
+	"disableTsErrors.disableAllErrors": false
 }

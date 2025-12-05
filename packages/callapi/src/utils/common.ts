@@ -73,7 +73,11 @@ export const splitConfig = (config: Record<string, any>) =>
 	] as const;
 
 export const objectifyHeaders = (headers: CallApiRequestOptions["headers"]) => {
-	if (!headers || isPlainObject(headers)) {
+	if (!headers) {
+		return {};
+	}
+
+	if (isPlainObject(headers)) {
 		return headers;
 	}
 
@@ -85,29 +89,30 @@ export type GetResolvedHeadersOptions = {
 	headers: InferHeadersOption<CallApiSchema>["headers"];
 };
 
-const getResolvedHeaders = (options: GetResolvedHeadersOptions) => {
+export const getResolvedHeaders = (options: GetResolvedHeadersOptions) => {
 	const { baseHeaders, headers } = options;
 
 	const resolvedHeaders =
-		isFunction(headers) ? headers({ baseHeaders: baseHeaders ?? {} }) : (headers ?? baseHeaders);
-
-	if (!resolvedHeaders) return;
+		isFunction(headers) ?
+			headers({ baseHeaders: objectifyHeaders(baseHeaders) })
+		:	(headers ?? baseHeaders);
 
 	return objectifyHeaders(resolvedHeaders);
 };
 
-export type GetHeadersOptions = GetResolvedHeadersOptions & {
+export type GetHeadersOptions = {
 	auth: CallApiExtraOptions["auth"];
 	body: CallApiRequestOptions["body"];
+	resolvedHeaders: CallApiRequestOptions["headers"];
 };
 
 export const getHeaders = async (options: GetHeadersOptions) => {
-	const { auth, baseHeaders, body, headers } = options;
+	const { auth, body, resolvedHeaders } = options;
 
-	const resolvedHeaders = getResolvedHeaders({ baseHeaders, headers });
+	const authHeaderObject = await getAuthHeader(auth);
 
 	const headersObject: Record<string, string | undefined> = {
-		...(await getAuthHeader(auth)),
+		...authHeaderObject,
 		...objectifyHeaders(resolvedHeaders),
 	};
 

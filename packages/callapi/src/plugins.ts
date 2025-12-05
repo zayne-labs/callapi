@@ -11,17 +11,12 @@ import {
 	getMiddlewareRegistriesAndKeys,
 	type Middlewares,
 } from "./middlewares";
-import type {
-	CallApiContext,
-	CallApiRequestOptions,
-	CallApiRequestOptionsForHooks,
-	OverrideCallApiContext,
-} from "./types/common";
+import type { CallApiContext, CallApiRequestOptions, OverrideCallApiContext } from "./types/common";
 import type { DefaultCallApiContext, DefaultDataType } from "./types/default-types";
 import type { Awaitable } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
-import { getHeaders, getMethod } from "./utils/common";
-import { isArray, isFunction, isPlainObject, isString } from "./utils/guards";
+import { getMethod, getResolvedHeaders } from "./utils/common";
+import { isArray, isFunction, isString } from "./utils/guards";
 import { type BaseCallApiSchemaAndConfig, getCurrentRouteSchemaKeyAndMainInitURL } from "./validation";
 
 export type PluginSetupContext<TCallApiContext extends CallApiContext = DefaultCallApiContext> =
@@ -110,8 +105,8 @@ export const getResolvedPlugins = (context: Pick<RequestContext, "baseConfig" | 
 	return resolvedPlugins;
 };
 
-export const initializePlugins = async (context: PluginSetupContext) => {
-	const { baseConfig, config, initURL, options, request } = context;
+export const initializePlugins = async (setupContext: PluginSetupContext) => {
+	const { baseConfig, config, initURL, options, request } = setupContext;
 
 	const {
 		addMainHooks,
@@ -130,15 +125,19 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 
 	let resolvedCurrentRouteSchemaKey = currentRouteSchemaKey;
 	let resolvedInitURL = mainInitURL;
-	let resolvedOptions = options;
-	let resolvedRequest = request;
+	const resolvedOptions = options;
+
+	const resolvedRequest = Object.assign(request, {
+		headers: getResolvedHeaders({ baseHeaders: baseConfig.headers, headers: request.headers }),
+		method: getMethod({ initURL: resolvedInitURL, method: request.method }),
+	});
 
 	const executePluginSetupFn = async (pluginSetup: CallApiPlugin["setup"]) => {
 		if (!pluginSetup) return;
 
-		const initResult = await pluginSetup(context);
+		const initResult = await pluginSetup(setupContext);
 
-		if (!isPlainObject(initResult)) return;
+		if (!initResult) return;
 
 		const urlString = initResult.initURL?.toString();
 
@@ -153,32 +152,12 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 			resolvedInitURL = newResult.mainInitURL;
 		}
 
-		if (isPlainObject(initResult.request)) {
-			const initMethod = getMethod({
-				initURL: resolvedInitURL,
-				method: initResult.request.method ?? resolvedRequest.method,
-			});
-
-			const initHeaders = await getHeaders({
-				auth: options.auth,
-				baseHeaders: baseConfig.headers,
-				body: initResult.request.body ?? resolvedRequest.body,
-				headers: initResult.request.headers ?? resolvedRequest.headers,
-			});
-
-			resolvedRequest = {
-				...resolvedRequest,
-				...(initResult.request as CallApiRequestOptionsForHooks),
-				headers: initHeaders,
-				method: initMethod,
-			};
+		if (initResult.request) {
+			Object.assign(resolvedRequest, initResult.request);
 		}
 
-		if (isPlainObject(initResult.options)) {
-			resolvedOptions = {
-				...resolvedOptions,
-				...initResult.options,
-			};
+		if (initResult.options) {
+			Object.assign(resolvedOptions, initResult.options);
 		}
 	};
 
@@ -188,8 +167,8 @@ export const initializePlugins = async (context: PluginSetupContext) => {
 		// eslint-disable-next-line no-await-in-loop -- Await is necessary in this case.
 		const [, pluginHooks, pluginMiddlewares] = await Promise.all([
 			executePluginSetupFn(plugin.setup),
-			isFunction(plugin.hooks) ? plugin.hooks(context) : plugin.hooks,
-			isFunction(plugin.middlewares) ? plugin.middlewares(context) : plugin.middlewares,
+			isFunction(plugin.hooks) ? plugin.hooks(setupContext) : plugin.hooks,
+			isFunction(plugin.middlewares) ? plugin.middlewares(setupContext) : plugin.middlewares,
 		]);
 
 		pluginHooks && addPluginHooks(pluginHooks);

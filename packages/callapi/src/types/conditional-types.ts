@@ -140,6 +140,7 @@ export type InferMethodOption<TSchema extends CallApiSchema, TInitURL> = MakeSch
 >;
 
 export type HeadersOption = UnmaskType<
+	| Headers
 	| Record<"Authorization", CommonAuthorizationHeaders | undefined>
 	| Record<"Content-Type", CommonContentTypes | undefined>
 	| Record<CommonRequestHeaders, string | undefined>
@@ -157,7 +158,7 @@ export type InferHeadersOption<TSchema extends CallApiSchema> = MakeSchemaOption
 		headers?:
 			| InferSchemaOutput<TSchema["headers"], HeadersOption>
 			| ((context: {
-					baseHeaders: NonNullable<HeadersOption>;
+					baseHeaders: Extract<HeadersOption, Record<string, unknown>>;
 			  }) => InferSchemaOutput<TSchema["headers"], HeadersOption>);
 	}
 >;

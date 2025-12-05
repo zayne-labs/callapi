@@ -611,7 +611,7 @@ describe("Utility Functions", () => {
 					Authorization: "Bearer token",
 				});
 
-				const result = objectifyHeaders(headers as any);
+				const result = objectifyHeaders(headers);
 
 				expect(result).toEqual({
 					"content-type": "application/json",
@@ -630,8 +630,8 @@ describe("Utility Functions", () => {
 			});
 
 			it("should handle null/undefined headers", () => {
-				expect(objectifyHeaders(null as any)).toBeNull();
-				expect(objectifyHeaders(undefined)).toBeUndefined();
+				expect(objectifyHeaders(null as any)).toEqual({});
+				expect(objectifyHeaders(undefined)).toEqual({});
 			});
 
 			it("should handle array of header tuples", () => {
@@ -652,10 +652,9 @@ describe("Utility Functions", () => {
 		describe("getHeaders", () => {
 			it("should merge auth, body, and custom headers", async () => {
 				const result = await getHeaders({
-					baseHeaders: undefined,
 					auth: { type: "Bearer", bearer: "test-token" },
 					body: { test: true },
-					headers: { "X-Custom": "value" },
+					resolvedHeaders: { "X-Custom": "value" },
 				});
 
 				expect(result).toEqual({
@@ -668,10 +667,9 @@ describe("Utility Functions", () => {
 
 			it("should set correct content-type for query string body", async () => {
 				const result = await getHeaders({
-					baseHeaders: undefined,
 					auth: null,
 					body: "name=John&age=30",
-					headers: undefined,
+					resolvedHeaders: undefined,
 				});
 
 				expect(result).toEqual({
@@ -683,9 +681,8 @@ describe("Utility Functions", () => {
 			it("should set JSON content-type for serializable body", async () => {
 				const result = await getHeaders({
 					auth: null,
-					baseHeaders: undefined,
 					body: { name: "John" },
-					headers: undefined,
+					resolvedHeaders: undefined,
 				});
 
 				expect(result).toEqual({
@@ -697,10 +694,9 @@ describe("Utility Functions", () => {
 
 			it("should set JSON content-type for valid JSON string body", async () => {
 				const result = await getHeaders({
-					baseHeaders: undefined,
 					auth: null,
 					body: '{"name": "John"}',
-					headers: undefined,
+					resolvedHeaders: undefined,
 				});
 
 				expect(result).toEqual({
@@ -717,10 +713,9 @@ describe("Utility Functions", () => {
 				};
 
 				const result = await getHeaders({
-					baseHeaders: undefined,
 					auth: asyncAuth,
 					body: null,
-					headers: undefined,
+					resolvedHeaders: undefined,
 				});
 
 				expect(result).toEqual({
@@ -1060,8 +1055,7 @@ describe("Utility Functions", () => {
 				const result = await getHeaders({
 					auth: null,
 					body: null,
-					baseHeaders: undefined,
-					headers: { "X-Custom": undefined },
+					resolvedHeaders: { "X-Custom": undefined },
 				});
 
 				expect(result).toEqual({
@@ -1074,8 +1068,7 @@ describe("Utility Functions", () => {
 				const result = await getHeaders({
 					auth: null,
 					body: null,
-					baseHeaders: undefined,
-					headers: { "X-Empty": "" },
+					resolvedHeaders: { "X-Empty": "" },
 				});
 
 				expect(result).toEqual({
@@ -1088,8 +1081,7 @@ describe("Utility Functions", () => {
 				const result = await getHeaders({
 					auth: { type: "Bearer", bearer: "token" },
 					body: { test: true },
-					baseHeaders: undefined,
-					headers: { authorization: "Custom auth" }, // lowercase
+					resolvedHeaders: { authorization: "Custom auth" }, // lowercase
 				});
 
 				// Custom header should override auth header
