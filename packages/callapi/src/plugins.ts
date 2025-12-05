@@ -126,9 +126,8 @@ export const initializePlugins = async (setupContext: PluginSetupContext) => {
 	let resolvedCurrentRouteSchemaKey = initURLResult.currentRouteSchemaKey;
 	let resolvedInitURL = initURLResult.mainInitURL;
 	const resolvedOptions = options;
-
 	const resolvedRequest = Object.assign(request, {
-		headers: getResolvedHeaders({ baseHeaders: baseConfig.headers, headers: request.headers }),
+		headers: getResolvedHeaders({ baseHeaders: baseConfig.headers, headers: config.headers }),
 		method: getMethod({ initURL: resolvedInitURL, method: request.method }),
 	});
 
