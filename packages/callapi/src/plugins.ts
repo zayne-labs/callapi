@@ -117,14 +117,14 @@ export const initializePlugins = async (setupContext: PluginSetupContext) => {
 		getResolvedMiddlewares,
 	} = setupHooksAndMiddlewares({ baseConfig, config, options });
 
-	const { currentRouteSchemaKey, mainInitURL } = getCurrentRouteSchemaKeyAndMainInitURL({
+	const initURLResult = getCurrentRouteSchemaKeyAndMainInitURL({
 		baseExtraOptions: baseConfig,
 		extraOptions: config,
 		initURL,
 	});
 
-	let resolvedCurrentRouteSchemaKey = currentRouteSchemaKey;
-	let resolvedInitURL = mainInitURL;
+	let resolvedCurrentRouteSchemaKey = initURLResult.currentRouteSchemaKey;
+	let resolvedInitURL = initURLResult.mainInitURL;
 	const resolvedOptions = options;
 
 	const resolvedRequest = Object.assign(request, {
@@ -142,14 +142,14 @@ export const initializePlugins = async (setupContext: PluginSetupContext) => {
 		const urlString = initResult.initURL?.toString();
 
 		if (isString(urlString)) {
-			const newResult = getCurrentRouteSchemaKeyAndMainInitURL({
+			const newURLResult = getCurrentRouteSchemaKeyAndMainInitURL({
 				baseExtraOptions: baseConfig,
 				extraOptions: config,
 				initURL: urlString,
 			});
 
-			resolvedCurrentRouteSchemaKey = newResult.currentRouteSchemaKey;
-			resolvedInitURL = newResult.mainInitURL;
+			resolvedCurrentRouteSchemaKey = newURLResult.currentRouteSchemaKey;
+			resolvedInitURL = newURLResult.mainInitURL;
 		}
 
 		if (initResult.request) {
