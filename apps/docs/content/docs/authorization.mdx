@@ -26,7 +26,8 @@ const callBackendApi = createFetchClient({
 // Passing an object
 const result = await callBackendApi("/users/123", {
 	auth: {
-		bearer: "my-token",
+		type: "Bearer"
+		value: "my-token",
 	},
 });
 ```
@@ -50,7 +51,8 @@ const callBackendApi = createFetchClient({
 
 const result = callBackendApi("/users/123", {
 	auth: {
-		bearer: () => authStore.getToken(),
+		type: "Bearer"
+		value: () => authStore.getToken(),
 	},
 });
 ```
@@ -70,7 +72,8 @@ import { createFetchClient } from "@zayne-labs/callapi";
 const callBackendApi = createFetchClient({
 	baseURL: "http://localhost:3000",
 	auth: {
-		token: "my-token",
+		type: "Token"
+		value: "my-token",
 	},
 });
 

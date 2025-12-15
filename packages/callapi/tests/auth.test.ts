@@ -25,8 +25,8 @@ describe("Authentication System", () => {
 		});
 
 		it.each([
-			["auth object", { bearer: mockAuthToken, type: "Bearer" as const }],
-			["function value", { bearer: () => mockAuthToken, type: "Bearer" as const }],
+			["auth object", { value: mockAuthToken, type: "Bearer" as const }],
+			["function value", { value: () => mockAuthToken, type: "Bearer" as const }],
 		])("should handle Bearer token with %s", async (_, auth) => {
 			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
 
@@ -49,7 +49,7 @@ describe("Authentication System", () => {
 			};
 
 			await callApi("https://api.example.com/users/1", {
-				auth: { bearer: getTokenAsync, type: "Bearer" },
+				auth: { value: getTokenAsync, type: "Bearer" },
 			});
 
 			expect(mockFetch).toHaveBeenCalledWith(
@@ -64,7 +64,7 @@ describe("Authentication System", () => {
 			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
 
 			await callApi("https://api.example.com/users/1", {
-				auth: { bearer: undefined, type: "Bearer" },
+				auth: { value: undefined, type: "Bearer" },
 			});
 
 			const callArgs = mockFetch.mock.calls[0]?.[1] as RequestInit;
@@ -183,8 +183,8 @@ describe("Authentication System", () => {
 
 	describe("Token authentication", () => {
 		it.each([
-			["token value", { token: mockAuthToken }],
-			["function value", { token: () => mockAuthToken }],
+			["token value", { type: "Token" as const, value: mockAuthToken }],
+			["function value", { type: "Token" as const, value: () => mockAuthToken }],
 		])("should handle Token auth with %s", async (_, auth) => {
 			mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
 
@@ -208,7 +208,8 @@ describe("Authentication System", () => {
 
 			await callApi("https://api.example.com/users/1", {
 				auth: {
-					token: getTokenAsync,
+					type: "Token",
+					value: getTokenAsync,
 				},
 			});
 
@@ -227,7 +228,8 @@ describe("Authentication System", () => {
 
 			await callApi("https://api.example.com/users/1", {
 				auth: {
-					token: undefined,
+					type: "Token",
+					value: undefined,
 				},
 			});
 
@@ -341,7 +343,7 @@ describe("Authentication System", () => {
 		it("should inherit auth from base config", async () => {
 			const client = createFetchClient({
 				auth: {
-					bearer: mockAuthToken,
+					value: mockAuthToken,
 					type: "Bearer",
 				},
 				baseURL: "https://api.example.com",
@@ -366,7 +368,7 @@ describe("Authentication System", () => {
 		it("should allow instance auth to override base auth", async () => {
 			const client = createFetchClient({
 				auth: {
-					bearer: "base-token",
+					value: "base-token",
 					type: "Bearer",
 				},
 				baseURL: "https://api.example.com",
@@ -376,7 +378,7 @@ describe("Authentication System", () => {
 
 			await client("/users/1", {
 				auth: {
-					bearer: "instance-token",
+					value: "instance-token",
 					type: "Bearer",
 				},
 			});
@@ -394,7 +396,7 @@ describe("Authentication System", () => {
 		it("should handle different auth types between base and instance", async () => {
 			const client = createFetchClient({
 				auth: {
-					bearer: mockAuthToken,
+					value: mockAuthToken,
 					type: "Bearer",
 				},
 				baseURL: "https://api.example.com",
@@ -435,7 +437,7 @@ describe("Authentication System", () => {
 			await expect(
 				callApi("https://api.example.com/users/1", {
 					auth: {
-						bearer: getTokenWithError,
+						value: getTokenWithError,
 						type: "Bearer",
 					},
 					throwOnError: true,

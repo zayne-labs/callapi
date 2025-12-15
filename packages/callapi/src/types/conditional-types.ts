@@ -1,3 +1,4 @@
+import type { AuthOption } from "../auth";
 import type { FallBackRouteSchemaKey } from "../constants/validation";
 import type { ErrorContext } from "../hooks";
 import type { CallApiPlugin } from "../plugins";
@@ -109,7 +110,7 @@ export type Body = UnmaskType<
 	Exclude<RequestInit["body"], undefined> | SerializableArray | SerializableObject
 >;
 
-export type InferBodyOption<TSchema extends CallApiSchema> = MakeSchemaOptionRequiredIfDefined<
+type InferBodyOption<TSchema extends CallApiSchema> = MakeSchemaOptionRequiredIfDefined<
 	TSchema["body"],
 	{
 		/**
@@ -128,7 +129,7 @@ type InferMethodFromURL<TInitURL> =
 	: TInitURL extends `@${infer TMethod extends RouteKeyMethods}/${string}` ? Uppercase<TMethod>
 	: MethodUnion;
 
-export type InferMethodOption<TSchema extends CallApiSchema, TInitURL> = MakeSchemaOptionRequiredIfDefined<
+type InferMethodOption<TSchema extends CallApiSchema, TInitURL> = MakeSchemaOptionRequiredIfDefined<
 	TSchema["method"],
 	{
 		/**
@@ -168,7 +169,7 @@ export type InferRequestOptions<
 	TInitURL extends InferInitURL<BaseCallApiSchemaRoutes, CallApiSchemaConfig>,
 > = InferBodyOption<TSchema> & InferHeadersOption<TSchema> & InferMethodOption<TSchema, TInitURL>;
 
-export type InferMetaOption<
+type InferMetaOption<
 	TSchema extends CallApiSchema,
 	TCallApiContext extends CallApiContext,
 > = MakeSchemaOptionRequiredIfDefined<
@@ -201,7 +202,38 @@ export type InferMetaOption<
 	}
 >;
 
-export type InferQueryOption<TSchema extends CallApiSchema> = MakeSchemaOptionRequiredIfDefined<
+type InferAuthOption<TSchema extends CallApiSchema> = MakeSchemaOptionRequiredIfDefined<
+	TSchema["auth"],
+	{
+		/**
+		 * Automatically add an Authorization header value.
+		 *
+		 * Supports multiple authentication patterns:
+		 * - String: Direct authorization header value
+		 * - Auth object: Structured authentication configuration
+		 *
+		 * @example
+		 * ```ts
+		 * const callMainApi = callApi.create({
+		 * 	baseURL: "https://main-api.com",
+		 * 	onRequest: ({ options }) => {
+		 * 		if (options.auth) {
+		 * 			options.headers.Authorization = options.auth;
+		 * 		}
+		 * 	},
+		 * });
+		 *
+		 * const response = await callMainApi({
+		 * 	url: "https://example.com/api/data",
+		 * 	auth: "Bearer 123456",
+		 * });
+		 * ```
+		 */
+		auth?: InferSchemaOutput<TSchema["auth"], AuthOption>;
+	}
+>;
+
+type InferQueryOption<TSchema extends CallApiSchema> = MakeSchemaOptionRequiredIfDefined<
 	TSchema["query"],
 	{
 		/**
@@ -311,7 +343,7 @@ type MakeParamsOptionRequired<
 	:	TObject
 >;
 
-export type InferParamsOption<
+type InferParamsOption<
 	TSchema extends CallApiSchema,
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
 	TCurrentRouteSchemaKey extends string,
@@ -332,7 +364,8 @@ export type InferExtraOptions<
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
 	TCurrentRouteSchemaKey extends string,
 	TCallApiContext extends CallApiContext,
-> = InferMetaOption<TSchema, TCallApiContext>
+> = InferAuthOption<TSchema>
+	& InferMetaOption<TSchema, TCallApiContext>
 	& InferParamsOption<TSchema, TBaseSchemaRoutes, TCurrentRouteSchemaKey>
 	& InferQueryOption<TSchema>;
 

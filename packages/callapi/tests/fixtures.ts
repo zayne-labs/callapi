@@ -92,7 +92,7 @@ export const mockBaseConfig = {
 export const mockConfigWithAuth = {
 	...mockBaseConfig,
 	auth: {
-		bearer: mockAuthToken,
+		value: mockAuthToken,
 		type: "Bearer",
 	},
 } satisfies BaseCallApiConfig;

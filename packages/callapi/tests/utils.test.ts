@@ -652,7 +652,7 @@ describe("Utility Functions", () => {
 		describe("getHeaders", () => {
 			it("should merge auth, body, and custom headers", async () => {
 				const result = await getHeaders({
-					auth: { type: "Bearer", bearer: "test-token" },
+					auth: { type: "Bearer", value: "test-token" },
 					body: { test: true },
 					resolvedHeaders: { "X-Custom": "value" },
 				});
@@ -709,7 +709,7 @@ describe("Utility Functions", () => {
 			it("should handle async auth resolution", async () => {
 				const asyncAuth = {
 					type: "Bearer" as const,
-					bearer: async () => "async-token",
+					value: async () => "async-token",
 				};
 
 				const result = await getHeaders({
@@ -1079,7 +1079,7 @@ describe("Utility Functions", () => {
 
 			it("should handle case-insensitive header merging", async () => {
 				const result = await getHeaders({
-					auth: { type: "Bearer", bearer: "token" },
+					auth: { type: "Bearer", value: "token" },
 					body: { test: true },
 					resolvedHeaders: { authorization: "Custom auth" }, // lowercase
 				});

@@ -1,4 +1,4 @@
-import type { Auth } from "../auth";
+import type { AuthOption } from "../auth";
 import type { fetchSpecificKeys } from "../constants/common";
 import type { DedupeOptions } from "../dedupe";
 import type { HookConfigOptions, Hooks, HooksOrHooksArray } from "../hooks";
@@ -124,7 +124,7 @@ type SharedExtraOptions<
 		 *
 		 * ```
 		 */
-		auth?: Auth;
+		auth?: AuthOption;
 
 		/**
 		 * Custom function to serialize request body objects into strings.

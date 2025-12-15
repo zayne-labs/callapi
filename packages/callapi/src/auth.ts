@@ -8,17 +8,27 @@ type PossibleAuthValue = Awaitable<string | null | undefined>;
 
 type PossibleAuthValueOrGetter = PossibleAuthValue | (() => PossibleAuthValue);
 
-export type BearerOrTokenAuth =
-	| {
-			type?: "Bearer";
-			bearer?: PossibleAuthValueOrGetter;
-			token?: never;
-	  }
-	| {
-			type?: "Token";
-			bearer?: never;
-			token?: PossibleAuthValueOrGetter;
-	  };
+// export type BearerOrTokenAuth =
+// 	| {
+// 			type?: "Bearer" | undefined;
+// 			bearer?: PossibleAuthValueOrGetter;
+// 			token?: never;
+// 	  }
+// 	| {
+// 			type?: "Token";
+// 			bearer?: never;
+// 			token?: PossibleAuthValueOrGetter;
+// 	  };
+
+export type BearerAuth = {
+	type: "Bearer";
+	value: PossibleAuthValueOrGetter;
+};
+
+export type TokenAuth = {
+	type: "Token";
+	value: PossibleAuthValueOrGetter;
+};
 
 export type BasicAuth = {
 	type: "Basic";
@@ -48,7 +58,7 @@ export type CustomAuth = {
 };
 
 // eslint-disable-next-line perfectionist/sort-union-types -- Let the first one be first
-export type Auth = PossibleAuthValueOrGetter | BearerOrTokenAuth | BasicAuth | CustomAuth;
+export type AuthOption = PossibleAuthValueOrGetter | BearerAuth | TokenAuth | BasicAuth | CustomAuth;
 
 const resolveAuthValue = (value: PossibleAuthValueOrGetter) => (isFunction(value) ? value() : value);
 
@@ -82,7 +92,15 @@ export const getAuthHeader = async (
 				Authorization: `Basic ${globalThis.btoa(`${username}:${password}`)}`,
 			};
 		}
+		case "Bearer": {
+			const value = await resolveAuthValue(auth.value);
 
+			if (value === undefined) return;
+
+			return {
+				Authorization: `Bearer ${value}`,
+			};
+		}
 		case "Custom": {
 			const [prefix, value] = await Promise.all([
 				resolveAuthValue(auth.prefix),
@@ -96,19 +114,34 @@ export const getAuthHeader = async (
 			};
 		}
 
-		default: {
-			const [bearer, token] = await Promise.all([
-				resolveAuthValue(auth.bearer),
-				resolveAuthValue(auth.token),
-			]);
+		case "Token": {
+			const value = await resolveAuthValue(auth.value);
 
-			if (bearer !== undefined) {
-				return { Authorization: `Bearer ${bearer}` };
-			}
+			if (value === undefined) return;
 
-			if (token === undefined) return;
-
-			return { Authorization: `Token ${token}` };
+			return {
+				Authorization: `Token ${value}`,
+			};
 		}
+
+		default: {
+			auth satisfies never;
+			return undefined;
+		}
+
+		// default: {
+		// 	const [bearer, token] = await Promise.all([
+		// 		resolveAuthValue(auth.bearer),
+		// 		resolveAuthValue(auth.token),
+		// 	]);
+
+		// 	if (bearer !== undefined) {
+		// 		return { Authorization: `Bearer ${bearer}` };
+		// 	}
+
+		// 	if (token === undefined) return;
+
+		// 	return { Authorization: `Token ${token}` };
+		// }
 	}
 };

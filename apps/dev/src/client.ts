@@ -89,6 +89,7 @@ const apiSchema = defineSchema(
 
 		"@delete/products/:id": {
 			data: z.object({ id: z.number() }),
+			// auth: z.object({ type: z.literal("Basic"), username: z.string(), password: z.string() }),
 			// headers: z.object({ Authorization: z.string() }).optional(),
 		},
 

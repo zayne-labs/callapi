@@ -1,3 +1,4 @@
+import type { AuthOption } from "./auth";
 import { fallBackRouteSchemaKey, type FallBackRouteSchemaKey } from "./constants/validation";
 import type {
 	BaseCallApiExtraOptions,
@@ -138,6 +139,10 @@ export interface CallApiSchemaConfig {
 }
 
 export interface CallApiSchema {
+	auth?:
+		| StandardSchemaV1<AuthOption | undefined>
+		| ((auth: AuthOption) => Awaitable<AuthOption | undefined>);
+
 	/**
 	 *  The schema to use for validating the request body.
 	 */
@@ -267,7 +272,7 @@ export type Tuple<TTuple, TArray extends TTuple[] = []> =
 	UnionToTuple<TTuple>["length"] extends TArray["length"] ? [...TArray]
 	:	Tuple<TTuple, [TTuple, ...TArray]>;
 
-const extraOptionsToBeValidated = ["meta", "params", "query"] satisfies Tuple<
+const extraOptionsToBeValidated = ["meta", "params", "query", "auth"] satisfies Tuple<
 	Extract<keyof CallApiSchema, keyof CallApiExtraOptions>
 >;
 

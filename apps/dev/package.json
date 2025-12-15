@@ -13,10 +13,10 @@
 	"dependencies": {
 		"@zayne-labs/callapi": "workspace:*",
 		"@zayne-labs/callapi-plugins": "workspace:*",
-		"zod": "^4.1.13"
+		"zod": "^4.2.0"
 	},
 	"devDependencies": {
-		"@types/node": "^24.10.1",
+		"@types/node": "^25.0.2",
 		"@zayne-labs/tsconfig": "0.11.5",
 		"tsx": "^4.21.0",
 		"typescript": "5.9.3",
