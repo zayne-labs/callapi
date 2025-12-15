@@ -265,16 +265,14 @@ export const createFetchClientWithContext = <
 				Object.assign(options, extraOptionsValidationResult);
 
 				// == Apply Schema Output for Request Options
-				const validBody = getBody({
-					body: requestOptionsValidationResult.body,
-					bodySerializer: options.bodySerializer,
-				});
-
 				Object.assign(request, {
-					body: validBody,
+					body: getBody({
+						body: requestOptionsValidationResult.body,
+						bodySerializer: options.bodySerializer,
+					}),
 					headers: await getHeaders({
 						auth: options.auth,
-						body: validBody,
+						body: requestOptionsValidationResult.body,
 						resolvedHeaders: requestOptionsValidationResult.headers,
 					}),
 					method: getMethod({
