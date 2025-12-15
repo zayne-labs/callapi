@@ -1,5 +1,13 @@
 # @zayne-labs/callapi
 
+## 1.11.34
+
+### Patch Changes
+
+- b8147ce: fix(url): handle url normalization differently for protocol URLs
+
+   Modify normalizeURL to preserve protocol URLs by not adding a leading slash when the URL contains "http". Add tests to verify proper handling of both protocol and non-protocol URLs.
+
 ## 1.11.33
 
 ### Patch Changes
