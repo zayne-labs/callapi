@@ -81,24 +81,8 @@ const mergeUrlWithQuery = (url: string, query: CallApiExtraOptions["query"]): st
  *
  * @example
  * ```typescript
- * // Method extraction from prefixed routes
  * extractMethodFromURL("@get/users");        // Returns: "get"
  * extractMethodFromURL("@post/users");       // Returns: "post"
- * extractMethodFromURL("@put/users/:id");    // Returns: "put"
- * extractMethodFromURL("@delete/users/:id"); // Returns: "delete"
- * extractMethodFromURL("@patch/users/:id");  // Returns: "patch"
- *
- * // No method modifier
- * extractMethodFromURL("/users");            // Returns: undefined
- * extractMethodFromURL("users");             // Returns: undefined
- *
- * // Invalid or unsupported methods
- * extractMethodFromURL("@invalid/users");    // Returns: undefined
- * extractMethodFromURL("@/users");           // Returns: undefined
- *
- * // Edge cases
- * extractMethodFromURL(undefined);           // Returns: undefined
- * extractMethodFromURL("");                  // Returns: undefined
  * ```
  */
 export const extractMethodFromURL = (initURL: string | undefined) => {
@@ -118,7 +102,10 @@ const normalizeURL = (initURL: string) => {
 		return initURL;
 	}
 
-	const normalizedURL = initURL.replace(`@${methodFromURL}/`, "/");
+	const normalizedURL =
+		initURL.includes("http") ?
+			initURL.replace(`@${methodFromURL}/`, "")
+		:	initURL.replace(`@${methodFromURL}/`, "/");
 
 	return normalizedURL;
 };

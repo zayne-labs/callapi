@@ -45,6 +45,7 @@ import {
 } from "../src/utils/guards";
 import { mockError } from "./fixtures";
 import { createMockErrorResponse, createMockResponse } from "./helpers";
+
 describe("Utility Functions", () => {
 	describe("Type Guard Functions", () => {
 		describe("isHTTPError", () => {

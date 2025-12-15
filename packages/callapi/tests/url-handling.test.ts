@@ -9,6 +9,7 @@
  * - BaseURL merging for relative and absolute URLs
  */
 
+import { access } from "node:fs";
 import { beforeEach, describe, expect, it } from "vitest";
 import { callApi, createFetchClient } from "../src";
 import { extractMethodFromURL, getFullAndNormalizedURL } from "../src/url";
@@ -366,6 +367,30 @@ describe("URL Processing and Parameter Tests", () => {
 		it("should handle method prefix with complex URLs", () => {
 			const method = extractMethodFromURL("@get/api/v1/users/:id/posts/{postId}");
 			expect(method).toBe("get");
+		});
+
+		it("should handle properly normalize urls without a protocol", () => {
+			const result = getFullAndNormalizedURL({
+				baseURL: undefined,
+				initURL: "@post/users/:id",
+				params: { id: "234" },
+				query: undefined,
+			});
+
+			expect(result.fullURL).toBe("/users/234");
+			expect(result.normalizedInitURL).toBe("/users/:id");
+		});
+
+		it("should handle properly normalize urls with a protocol", () => {
+			const result = getFullAndNormalizedURL({
+				baseURL: undefined,
+				initURL: "@post/https://api.example.com/users/:id",
+				params: { id: "123" },
+				query: { account_id: "456" },
+			});
+
+			expect(result.fullURL).toBe("https://api.example.com/users/123?account_id=456");
+			expect(result.normalizedInitURL).toBe("https://api.example.com/users/:id");
 		});
 	});
 
