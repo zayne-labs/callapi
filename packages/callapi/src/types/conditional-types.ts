@@ -78,16 +78,6 @@ export type GetCurrentRouteSchemaKey<TSchemaConfig extends CallApiSchemaConfig, 
 		:	string
 	:	TPath;
 
-// export type GetCurrentRouteSchema<
-// 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
-// 	TCurrentRouteSchemaKey extends string,
-// > =
-// 	TBaseSchemaRoutes[TCurrentRouteSchemaKey] extends CallApiSchema ?
-// 		NonNullable<Writeable<TBaseSchemaRoutes[TCurrentRouteSchemaKey], "deep">>
-// 	: TBaseSchemaRoutes[FallBackRouteSchemaKey] extends CallApiSchema ?
-// 		NonNullable<Writeable<TBaseSchemaRoutes[FallBackRouteSchemaKey], "deep">>
-// 	:	CallApiSchema;
-
 export type GetCurrentRouteSchema<
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
 	TCurrentRouteSchemaKey extends string,
@@ -214,19 +204,40 @@ type InferAuthOption<TSchema extends CallApiSchema> = MakeSchemaOptionRequiredIf
 		 *
 		 * @example
 		 * ```ts
-		 * const callMainApi = callApi.create({
-		 * 	baseURL: "https://main-api.com",
-		 * 	onRequest: ({ options }) => {
-		 * 		if (options.auth) {
-		 * 			options.headers.Authorization = options.auth;
-		 * 		}
+		 * // Bearer auth
+		 * const response = await callMainApi({
+		 * 	url: "https://example.com/api/data",
+		 * 	auth: "123456",
+		 * });
+		 *
+		 * // Bearer auth
+		 * const response = await callMainApi({
+		 * 	url: "https://example.com/api/data",
+		 * 	auth: {
+		 * 		type: "Bearer",
+		 * 		value: "123456",
+		 * 	},
+		 })
+		 *
+		 * // Token auth
+		 * const response = await callMainApi({
+		 * 	url: "https://example.com/api/data",
+		 * 	auth: {
+		 * 		type: "Token",
+		 * 		value: "123456",
 		 * 	},
 		 * });
 		 *
+		 * // Basic auth
 		 * const response = await callMainApi({
 		 * 	url: "https://example.com/api/data",
-		 * 	auth: "Bearer 123456",
+		 * 	auth: {
+		 * 		type: "Basic",
+		 * 		username: "username",
+		 * 		password: "password",
+		 * 	},
 		 * });
+		 *
 		 * ```
 		 */
 		auth?: InferSchemaOutput<TSchema["auth"], AuthOption>;
