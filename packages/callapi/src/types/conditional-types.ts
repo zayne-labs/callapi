@@ -31,13 +31,20 @@ import type {
 type MakeSchemaOptionRequiredIfDefined<TSchemaOption extends CallApiSchema[keyof CallApiSchema], TObject> =
 	undefined extends InferSchemaOutput<TSchemaOption, undefined> ? TObject : Required<TObject>;
 
+type MergePrefixWithRouteKey<TPrefix extends string, TRouteKey extends string> =
+	TRouteKey extends `@${infer TMethod extends RouteKeyMethods}/${infer TRestOfRoutKey}` ?
+		`@${TMethod}/${TPrefix extends `/${infer TPrefixWithoutSlash}` ? TPrefixWithoutSlash : TPrefix}${TRestOfRoutKey}`
+	:	`${TPrefix}${TRouteKey}`;
+
 export type ApplyURLBasedConfig<
 	TSchemaConfig extends CallApiSchemaConfig,
 	TSchemaRouteKeys extends string,
 > =
-	TSchemaConfig["prefix"] extends string ? `${TSchemaConfig["prefix"]}${TSchemaRouteKeys}`
-	: TSchemaConfig["baseURL"] extends string ? `${TSchemaConfig["baseURL"]}${TSchemaRouteKeys}`
-	: TSchemaRouteKeys;
+	TSchemaConfig["prefix"] extends string ?
+		MergePrefixWithRouteKey<TSchemaConfig["prefix"], TSchemaRouteKeys>
+	: TSchemaConfig["baseURL"] extends string ?
+		MergePrefixWithRouteKey<TSchemaConfig["baseURL"], TSchemaRouteKeys>
+	:	TSchemaRouteKeys;
 
 export type ApplyStrictConfig<TSchemaConfig extends CallApiSchemaConfig, TSchemaRouteKeys extends string> =
 	TSchemaConfig["strict"] extends true ? TSchemaRouteKeys

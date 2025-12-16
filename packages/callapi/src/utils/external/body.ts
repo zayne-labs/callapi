@@ -1,26 +1,31 @@
-import type { CallApiExtraOptions } from "../../types/common";
-import { isArray, isBlob, isObject } from "../guards";
+import type { CallApiRequestOptions } from "../../types/common";
+import { isArray, isBlob, isObject, isString } from "../guards";
 
-type ToQueryStringFn = {
-	(query: CallApiExtraOptions["query"]): string | null;
-	(query: Required<CallApiExtraOptions>["query"]): string;
+const toStringOrStringify = (value: unknown): string => {
+	return isString(value) ? value : JSON.stringify(value);
 };
 
-export const toQueryString: ToQueryStringFn = (query) => {
-	if (!query) {
-		console.error("toQueryString:", "No query params provided!");
+export const toQueryString = (data: NonNullable<CallApiRequestOptions["body"]>) => {
+	const queryString = new URLSearchParams();
 
-		return null as never;
+	for (const [key, value] of Object.entries(data)) {
+		if (value == null) continue;
+
+		if (isArray(value)) {
+			// eslint-disable-next-line max-depth -- Allow
+			for (const innerValue of value) {
+				queryString.append(key, toStringOrStringify(innerValue));
+			}
+			continue;
+		}
+
+		queryString.set(key, toStringOrStringify(value));
 	}
 
-	return new URLSearchParams(query as Record<string, string>).toString();
+	return queryString.toString();
 };
 
-type AllowedPrimitives = boolean | number | string | Blob | null | undefined;
-
-type AllowedValues = AllowedPrimitives | AllowedPrimitives[] | Record<string, AllowedPrimitives>;
-
-const toBlobOrString = (value: AllowedPrimitives): string | Blob => {
+const toBlobOrString = (value: unknown): string | Blob => {
 	return isBlob(value) ? value : String(value);
 };
 
@@ -60,12 +65,15 @@ const toBlobOrString = (value: AllowedPrimitives): string | Blob => {
  *   settings: { theme: "dark" }
  * });
  */
-export const toFormData = (data: Record<string, AllowedValues>) => {
+export const toFormData = (data: NonNullable<CallApiRequestOptions["body"]>) => {
 	const formData = new FormData();
 
 	for (const [key, value] of Object.entries(data)) {
 		if (isArray(value)) {
-			value.forEach((innerValue) => formData.append(key, toBlobOrString(innerValue)));
+			// eslint-disable-next-line max-depth -- Allow for now
+			for (const innerValue of value) {
+				formData.append(key, toBlobOrString(innerValue));
+			}
 			continue;
 		}
 

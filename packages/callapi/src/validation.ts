@@ -101,7 +101,7 @@ export interface CallApiSchemaConfig {
 	/**
 	 * The base url of the schema. By default it's the baseURL of the callApi instance.
 	 */
-	baseURL?: string;
+	baseURL?: "" | AnyString;
 
 	/**
 	 * Disables runtime validation for the schema.
@@ -111,18 +111,19 @@ export interface CallApiSchemaConfig {
 	/**
 	 * If `true`, the original input value will be used instead of the transformed/validated output.
 	 *
-	 * This is useful when you want to validate the input but don't want any transformations
-	 * applied by the validation schema (e.g., type coercion, default values, etc).
+	 * When true, the original input is returned unchanged after validation, ignoring any schema-level
+	 * transformations such as type coercion, default values, or field mapping. Only the validation
+	 * step is executed; the resulting value is discarded in favor of the raw input.
 	 */
-	disableValidationOutputApplication?: boolean | BooleanObject;
+	disableRuntimeValidationTransform?: boolean | BooleanObject;
 
 	/**
 	 * Optional url prefix that will be substituted for the `baseURL` of the schemaConfig at runtime.
 	 *
-	 * This allows you to reuse the same schema against different base URLs (for example,
-	 * swapping between `/api/v1` and `/api/v2`) without redefining the entire schema.
+	 * Enables a short, stable prefix for routes while keeping the full `baseURL` centralized in config.
+	 * Keeps route definitions concise and shields them from changes to the underlying base URL.
 	 */
-	prefix?: string;
+	prefix?: "" | AnyString;
 
 	/**
 	 * Controls the strictness of API route validation.
@@ -240,12 +241,12 @@ export const handleSchemaValidation = async <
 	const validResult = await standardSchemaParser(fullSchema, schemaName, { inputValue, response });
 
 	const disableResultApplicationBooleanObject =
-		isObject(schemaConfig?.disableValidationOutputApplication) ?
-			schemaConfig.disableValidationOutputApplication
+		isObject(schemaConfig?.disableRuntimeValidationTransform) ?
+			schemaConfig.disableRuntimeValidationTransform
 		:	{};
 
 	const shouldDisableResultApplication =
-		schemaConfig?.disableValidationOutputApplication === true
+		schemaConfig?.disableRuntimeValidationTransform === true
 		|| disableResultApplicationBooleanObject[schemaName] === true;
 
 	if (shouldDisableResultApplication) {

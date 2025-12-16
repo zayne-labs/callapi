@@ -59,9 +59,9 @@
 		"@size-limit/esbuild-why": "12.0.0",
 		"@size-limit/preset-small-lib": "12.0.0",
 		"@total-typescript/ts-reset": "0.6.1",
-		"@vitest/browser": "4.0.15",
-		"@vitest/browser-playwright": "4.0.15",
-		"@vitest/coverage-v8": "4.0.15",
+		"@vitest/browser": "4.0.16",
+		"@vitest/browser-playwright": "4.0.16",
+		"@vitest/coverage-v8": "4.0.16",
 		"@zayne-labs/prettier-config": "^0.11.5",
 		"@zayne-labs/tsconfig": "0.11.5",
 		"concurrently": "^9.2.1",
@@ -71,8 +71,8 @@
 		"size-limit": "12.0.0",
 		"tsdown": "0.18.0",
 		"typescript": "5.9.3",
-		"vitest": "^4.0.15",
-		"zod": "^4.2.0"
+		"vitest": "^4.0.16",
+		"zod": "^4.2.1"
 	},
 	"publishConfig": {
 		"access": "public",
@@ -82,7 +82,7 @@
 	"size-limit": [
 		{
 			"path": "./src/index.ts",
-			"limit": "6.5 kb"
+			"limit": "6.6 kb"
 		},
 		{
 			"path": "./src/utils/external/index.ts",

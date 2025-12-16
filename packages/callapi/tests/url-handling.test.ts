@@ -502,7 +502,7 @@ describe("URL Processing and Parameter Tests", () => {
 			expect(result.fullURL).toBe("https://api.example.com/users");
 		});
 
-		it("should handle relative URL without leading slash", () => {
+		it("should handle relative URL with leading slash", () => {
 			const result = getFullAndNormalizedURL({
 				baseURL: "https://api.example.com",
 				initURL: "users",
@@ -510,8 +510,7 @@ describe("URL Processing and Parameter Tests", () => {
 				query: undefined,
 			});
 
-			// The actual behavior is that URLs without leading slash get concatenated directly
-			expect(result.fullURL).toBe("https://api.example.comusers");
+			expect(result.fullURL).toBe("https://api.example.com/users");
 		});
 
 		it("should handle baseURL with path", () => {

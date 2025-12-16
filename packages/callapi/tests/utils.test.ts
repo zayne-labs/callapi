@@ -39,7 +39,7 @@ import {
 	isPlainObject,
 	isQueryString,
 	isReadableStream,
-	isSerializable,
+	isSerializableObject,
 	isString,
 	isValidJsonString,
 } from "../src/utils/guards";
@@ -312,24 +312,24 @@ describe("Utility Functions", () => {
 
 		describe("isSerializable", () => {
 			it("should correctly identify serializable values", () => {
-				expect(isSerializable({})).toBe(true);
-				expect(isSerializable([])).toBe(true);
-				expect(isSerializable({ key: "value" })).toBe(true);
-				expect(isSerializable([1, 2, 3])).toBe(true);
+				expect(isSerializableObject({})).toBe(true);
+				expect(isSerializableObject([])).toBe(true);
+				expect(isSerializableObject({ key: "value" })).toBe(true);
+				expect(isSerializableObject([1, 2, 3])).toBe(true);
 
 				// Objects with toJSON method
 				const objWithToJSON = { toJSON: () => ({ serialized: true }) };
-				expect(isSerializable(objWithToJSON)).toBe(true);
+				expect(isSerializableObject(objWithToJSON)).toBe(true);
 			});
 
 			it("should return false for non-serializable values", () => {
-				expect(isSerializable("string")).toBe(false);
-				expect(isSerializable(123)).toBe(false);
-				expect(isSerializable(true)).toBe(false);
-				expect(isSerializable(null)).toBe(false);
-				expect(isSerializable(undefined)).toBe(false);
+				expect(isSerializableObject("string")).toBe(false);
+				expect(isSerializableObject(123)).toBe(false);
+				expect(isSerializableObject(true)).toBe(false);
+				expect(isSerializableObject(null)).toBe(false);
+				expect(isSerializableObject(undefined)).toBe(false);
 				// Date has toJSON method, so it's serializable
-				expect(isSerializable(new Date())).toBe(true);
+				expect(isSerializableObject(new Date())).toBe(true);
 			});
 		});
 
@@ -574,34 +574,50 @@ describe("Utility Functions", () => {
 
 		describe("toQueryString", () => {
 			it("should convert object to query string", () => {
-				const params = { name: "John", age: "30", active: "true" };
-				const result = toQueryString(params);
+				const query = { name: "John", age: "30", active: "true" };
+				const result = toQueryString(query);
 
 				expect(result).toBe("name=John&age=30&active=true");
 			});
 
 			it("should handle empty object", () => {
-				const result = toQueryString({});
+				const query = {};
+				const result = toQueryString(query);
+
 				expect(result).toBe("");
 			});
 
 			it("should handle special characters", () => {
-				const params = { search: "hello world", "special-key": "special value" };
-				const result = toQueryString(params);
+				const query = { search: "hello world", "special-key": "special value" };
+				const result = toQueryString(query);
 
 				expect(result).toContain("search=hello+world");
 				expect(result).toContain("special-key=special+value");
 			});
 
-			it("should handle null/undefined params", () => {
-				// Mock console.error to avoid noise in tests
-				const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+			it("should expand array values into multiple query parameters", () => {
+				const query = {
+					filter: ["admin", "user"],
+				};
+				const result = toQueryString(query);
 
-				const result = toQueryString(null as any);
-				expect(result).toBeNull();
-				expect(consoleSpy).toHaveBeenCalledWith("toQueryString:", "No query params provided!");
+				expect(result).toBe("filter=admin&filter=user");
+			});
 
-				consoleSpy.mockRestore();
+			it("should serialize objects with JSON.stringify", () => {
+				const query = {
+					options: { page: 1, limit: 10 },
+				};
+				const result = toQueryString(query);
+
+				expect(result).toBe("options=%7B%22page%22%3A1%2C%22limit%22%3A10%7D");
+			});
+
+			it("should leave strings untouched", () => {
+				const query = { foo: "bar" };
+				const result = toQueryString(query);
+
+				expect(result).toBe("foo=bar");
 			});
 		});
 
@@ -750,7 +766,7 @@ describe("Utility Functions", () => {
 		describe("getBody", () => {
 			it("should serialize serializable body using default serializer", () => {
 				const body = { name: "John", age: 30 };
-				const result = getBody({ body, bodySerializer: undefined });
+				const result = getBody({ body, bodySerializer: undefined, resolvedHeaders: {} });
 
 				expect(result).toBe(JSON.stringify(body));
 			});
@@ -759,7 +775,7 @@ describe("Utility Functions", () => {
 				const body = { name: "John", age: 30 };
 				const customSerializer = vi.fn().mockReturnValue("custom-serialized");
 
-				const result = getBody({ body, bodySerializer: customSerializer });
+				const result = getBody({ body, bodySerializer: customSerializer, resolvedHeaders: {} });
 
 				expect(customSerializer).toHaveBeenCalledWith(body);
 				expect(result).toBe("custom-serialized");
@@ -767,16 +783,28 @@ describe("Utility Functions", () => {
 
 			it("should return non-serializable body as-is", () => {
 				const body = "plain string";
-				const result = getBody({ body, bodySerializer: undefined });
+				const result = getBody({ body, bodySerializer: undefined, resolvedHeaders: {} });
 
 				expect(result).toBe(body);
+			});
+
+			it("should convert serializable body object to a queryString if content-type is explicitly set to application/x-www-form-urlencoded", () => {
+				const body = { name: "John", age: 30 };
+
+				const result = getBody({
+					body,
+					bodySerializer: undefined,
+					resolvedHeaders: { "Content-Type": "application/x-www-form-urlencoded" },
+				});
+
+				expect(result).toBe("name=John&age=30");
 			});
 
 			it("should handle FormData body", () => {
 				const formData = new FormData();
 				formData.append("name", "John");
 
-				const result = getBody({ body: formData, bodySerializer: undefined });
+				const result = getBody({ body: formData, bodySerializer: undefined, resolvedHeaders: {} });
 
 				expect(result).toBe(formData);
 			});
@@ -1102,7 +1130,11 @@ describe("Utility Functions", () => {
 					toJSON: () => ({ serialized: true }),
 				};
 
-				const result = getBody({ body: bodyWithToJSON, bodySerializer: undefined });
+				const result = getBody({
+					body: bodyWithToJSON,
+					bodySerializer: undefined,
+					resolvedHeaders: {},
+				});
 				expect(result).toBe('{"serialized":true}');
 			});
 
@@ -1112,21 +1144,21 @@ describe("Utility Functions", () => {
 					throw new Error("Serialization failed");
 				};
 
-				expect(() => getBody({ body, bodySerializer: throwingSerializer })).toThrow(
-					"Serialization failed"
-				);
+				expect(() =>
+					getBody({ body, bodySerializer: throwingSerializer, resolvedHeaders: {} })
+				).toThrow("Serialization failed");
 			});
 
 			it("should handle Blob body", () => {
 				const blob = new Blob(["test data"], { type: "text/plain" });
-				const result = getBody({ body: blob, bodySerializer: undefined });
+				const result = getBody({ body: blob, bodySerializer: undefined, resolvedHeaders: {} });
 
 				expect(result).toBe(blob);
 			});
 
 			it("should handle ArrayBuffer body", () => {
 				const buffer = new ArrayBuffer(8);
-				const result = getBody({ body: buffer, bodySerializer: undefined });
+				const result = getBody({ body: buffer, bodySerializer: undefined, resolvedHeaders: {} });
 
 				expect(result).toBe(buffer);
 			});

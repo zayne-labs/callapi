@@ -8,12 +8,13 @@ import type { InferHeadersOption } from "../types/conditional-types";
 import type { DistributiveOmit } from "../types/type-helpers";
 import { extractMethodFromURL } from "../url";
 import type { CallApiSchema } from "../validation";
+import { toQueryString } from "./external";
 import {
 	isArray,
 	isFunction,
 	isPlainObject,
 	isQueryString,
-	isSerializable,
+	isSerializableObject,
 	isValidJsonString,
 } from "./guards";
 import { createCombinedSignalPolyfill, createTimeoutSignalPolyfill } from "./polyfills";
@@ -78,7 +79,7 @@ export const objectifyHeaders = (headers: CallApiRequestOptions["headers"]) => {
 	}
 
 	if (isPlainObject(headers)) {
-		return headers;
+		return headers as Record<string, string>;
 	}
 
 	return Object.fromEntries(headers);
@@ -100,6 +101,18 @@ export const getResolvedHeaders = (options: GetResolvedHeadersOptions) => {
 	return objectifyHeaders(resolvedHeaders);
 };
 
+const detectContentTypeHeader = (body: CallApiRequestOptions["body"]) => {
+	if (isQueryString(body)) {
+		return { "Content-Type": "application/x-www-form-urlencoded" };
+	}
+
+	if (isSerializableObject(body) || isValidJsonString(body)) {
+		return { Accept: "application/json", "Content-Type": "application/json" };
+	}
+
+	return null;
+};
+
 export type GetHeadersOptions = {
 	auth: CallApiExtraOptions["auth"];
 	body: CallApiRequestOptions["body"];
@@ -111,21 +124,21 @@ export const getHeaders = async (options: GetHeadersOptions) => {
 
 	const authHeaderObject = await getAuthHeader(auth);
 
-	const headersObject: Record<string, string | undefined> = {
+	const resolvedHeadersObject = objectifyHeaders(resolvedHeaders);
+
+	const hasExistingContentType =
+		Object.hasOwn(resolvedHeadersObject, "Content-Type")
+		|| Object.hasOwn(resolvedHeadersObject, "content-type");
+
+	if (!hasExistingContentType) {
+		const contentTypeHeader = detectContentTypeHeader(body);
+		contentTypeHeader && Object.assign(resolvedHeadersObject, contentTypeHeader);
+	}
+
+	const headersObject: Record<string, string> = {
 		...authHeaderObject,
-		...objectifyHeaders(resolvedHeaders),
+		...resolvedHeadersObject,
 	};
-
-	if (isQueryString(body)) {
-		headersObject["Content-Type"] = "application/x-www-form-urlencoded";
-
-		return headersObject;
-	}
-
-	if (isSerializable(body) || isValidJsonString(body)) {
-		headersObject["Content-Type"] = "application/json";
-		headersObject.Accept = "application/json";
-	}
 
 	return headersObject;
 };
@@ -145,18 +158,25 @@ export const getMethod = (ctx: GetMethodContext) => {
 	);
 };
 
-export type GetBodyOptions = {
-	body: CallApiRequestOptions["body"];
+export type GetBodyOptions = Pick<GetHeadersOptions, "body" | "resolvedHeaders"> & {
 	bodySerializer: CallApiExtraOptions["bodySerializer"];
 };
 
 export const getBody = (options: GetBodyOptions) => {
-	const { body, bodySerializer } = options;
+	const { body, bodySerializer, resolvedHeaders } = options;
 
-	if (isSerializable(body)) {
+	const headers = new Headers(resolvedHeaders as Record<string, string>);
+
+	const existingContentType = headers.get("content-type");
+
+	if (!existingContentType && isSerializableObject(body)) {
 		const selectedBodySerializer = bodySerializer ?? extraOptionDefaults.bodySerializer;
 
 		return selectedBodySerializer(body);
+	}
+
+	if (existingContentType === "application/x-www-form-urlencoded" && isSerializableObject(body)) {
+		return toQueryString(body as Record<string, string>);
 	}
 
 	return body;

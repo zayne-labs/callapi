@@ -269,6 +269,7 @@ export const createFetchClientWithContext = <
 					body: getBody({
 						body: requestOptionsValidationResult.body,
 						bodySerializer: options.bodySerializer,
+						resolvedHeaders: requestOptionsValidationResult.headers,
 					}),
 					headers: await getHeaders({
 						auth: options.auth,

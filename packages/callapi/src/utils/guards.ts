@@ -64,7 +64,7 @@ export const isValidJsonString = (value: unknown): value is string => {
 	}
 };
 
-export const isSerializable = (value: unknown) => {
+export const isSerializableObject = (value: unknown) => {
 	return (
 		isPlainObject(value)
 		|| isArray(value)

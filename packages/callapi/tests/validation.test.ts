@@ -750,7 +750,6 @@ describe("Validation System", () => {
 						".": {
 							// Fallback route
 							body: fallbackBodyValidator,
-							headers: headersSchema,
 						},
 						"/users": {
 							body: specificBodyValidator, // Should override fallback
@@ -760,7 +759,7 @@ describe("Validation System", () => {
 			});
 
 			const body = { name: "John", email: "john@example.com" };
-			const headers = { "Content-Type": "application/json" };
+			const headers = { Authorization: "Bearer 22343" };
 
 			await client("/users", { method: "POST", body: body as any, headers });
 
@@ -994,7 +993,7 @@ describe("Validation System", () => {
 			);
 		});
 
-		it("should disable validation output application when configured", async () => {
+		it("should disable runtime validation transform when configured", async () => {
 			const transformingValidator = vi.fn((body: unknown) => ({
 				...(body as object),
 				transformed: true,
@@ -1003,7 +1002,7 @@ describe("Validation System", () => {
 			const client = createFetchClient({
 				baseURL: "https://api.example.com",
 				schema: {
-					config: { disableValidationOutputApplication: true },
+					config: { disableRuntimeValidationTransform: true },
 					routes: {
 						"/users": {
 							body: transformingValidator,

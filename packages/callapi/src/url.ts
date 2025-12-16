@@ -54,7 +54,7 @@ const mergeUrlWithQuery = (url: string, query: CallApiExtraOptions["query"]): st
 
 	const queryString = toQueryString(query);
 
-	if (queryString?.length === 0) {
+	if (queryString.length === 0) {
 		return url;
 	}
 
@@ -121,19 +121,32 @@ type GetFullURLOptions = {
 	query: CallApiExtraOptions["query"];
 };
 
+const getFullURL = (initURL: string, baseURL: string | undefined) => {
+	if (!baseURL || initURL.startsWith("http")) {
+		return initURL;
+	}
+
+	const shouldAddSlash = initURL.length > 0 && !initURL.startsWith(slash) && !baseURL.endsWith(slash);
+
+	return shouldAddSlash ? `${baseURL}${slash}${initURL}` : `${baseURL}${initURL}`;
+};
+
 export const getFullAndNormalizedURL = (options: GetFullURLOptions) => {
 	const { baseURL, initURL, params, query } = options;
 
 	const normalizedInitURL = normalizeURL(initURL);
 
-	const urlWithMergedParams = mergeUrlWithParams(normalizedInitURL, params);
+	const initURLWithParams = mergeUrlWithParams(normalizedInitURL, params);
 
-	const urlWithMergedQueryAndParams = mergeUrlWithQuery(urlWithMergedParams, query);
+	const initURLWithParamsAndQuery = mergeUrlWithQuery(initURLWithParams, query);
 
-	const shouldAddBaseURL = !urlWithMergedQueryAndParams.startsWith("http") && baseURL;
+	const fullURL = getFullURL(initURLWithParamsAndQuery, baseURL);
 
-	const fullURL =
-		shouldAddBaseURL ? `${baseURL}${urlWithMergedQueryAndParams}` : urlWithMergedQueryAndParams;
+	if (!URL.canParse(fullURL)) {
+		console.error(
+			`Invalid URL '${normalizedInitURL}'. Are you passing a relative url to CallApi but not setting the 'baseURL' option?`
+		);
+	}
 
 	return {
 		fullURL,
