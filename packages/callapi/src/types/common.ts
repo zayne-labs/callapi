@@ -3,7 +3,7 @@ import type { fetchSpecificKeys } from "../constants/common";
 import type { DedupeOptions } from "../dedupe";
 import type { HookConfigOptions, Hooks, HooksOrHooksArray } from "../hooks";
 import type { FetchImpl, Middlewares } from "../middlewares";
-import type { CallApiPlugin } from "../plugins";
+import type { CallApiPlugin, InferPluginExtraOptions } from "../plugins";
 import type { InferCallApiResult, ResponseTypeType, ResultModeType } from "../result";
 import type { RetryOptions } from "../retry";
 import type { InitURLOrURLObject, URLOptions } from "../url";
@@ -13,13 +13,13 @@ import type {
 	BaseCallApiSchemaRoutes,
 	CallApiSchema,
 	CallApiSchemaConfig,
+	InferSchemaOutput,
 } from "../validation";
 import type {
 	Body,
 	GetCurrentRouteSchema,
 	HeadersOption,
 	InferExtraOptions,
-	InferPluginExtraOptions,
 	InferRequestOptions,
 	MethodUnion,
 	ResultModeOption,
@@ -53,6 +53,8 @@ export type CallApiContext = {
 };
 
 export type GetCallApiContext<TCallApiContext extends CallApiContext> = TCallApiContext;
+
+export type GetCallApiContextStrict<TCallApiContext extends Required<CallApiContext>> = TCallApiContext;
 
 export type OverrideCallApiContext<
 	TFullCallApiContext extends CallApiContext,
@@ -95,7 +97,11 @@ type SharedExtraOptions<
 	TResponseType extends ResponseTypeType = ResponseTypeType,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TComputedMergedPluginExtraOptions = Partial<
-		InferPluginExtraOptions<TPluginArray> & TCallApiContext["InferredExtraOptions"]
+		InferPluginExtraOptions<TPluginArray>
+			& InferSchemaOutput<
+				TCallApiContext["InferredExtraOptions"],
+				TCallApiContext["InferredExtraOptions"]
+			>
 	>,
 	TComputedCallApiContext extends CallApiContext = OverrideCallApiContext<
 		TCallApiContext,

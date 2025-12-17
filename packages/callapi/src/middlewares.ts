@@ -7,6 +7,11 @@ export type FetchImpl = UnmaskType<
 	(input: string | Request | URL, init?: RequestInit) => Promise<Response>
 >;
 
+export type FetchMiddlewareContext<TCallApiContext extends CallApiContext> =
+	RequestContext<TCallApiContext> & {
+		fetchImpl: FetchImpl;
+	};
+
 export interface Middlewares<TCallApiContext extends NoInfer<CallApiContext> = DefaultCallApiContext> {
 	/**
 	 * Wraps the fetch implementation to intercept requests at the network layer.
@@ -24,23 +29,30 @@ export interface Middlewares<TCallApiContext extends NoInfer<CallApiContext> = D
 	 *
 	 * fetchMiddleware: (ctx) => async (input, init) => {
 	 *   const key = input.toString();
-	 *   if (cache.has(key)) return cache.get(key).clone();
+	 *
+	 *   const cachedResponse = cache.get(key);
+	 *
+	 *   if (cachedResponse) {
+	 *	    return cachedResponse.clone();
+	 *   }
 	 *
 	 *   const response = await ctx.fetchImpl(input, init);
 	 *   cache.set(key, response.clone());
+	 *
 	 *   return response;
 	 * }
 	 *
 	 * // Handle offline
-	 * fetchMiddleware: (ctx) => async (input, init) => {
+	 * fetchMiddleware: (ctx) => async (...parameters) => {
 	 *   if (!navigator.onLine) {
 	 *     return new Response('{"error": "offline"}', { status: 503 });
 	 *   }
-	 *   return ctx.fetchImpl(input, init);
+	 *
+	 *   return ctx.fetchImpl(...parameters);
 	 * }
 	 * ```
 	 */
-	fetchMiddleware?: (context: RequestContext<TCallApiContext> & { fetchImpl: FetchImpl }) => FetchImpl;
+	fetchMiddleware?: (context: FetchMiddlewareContext<TCallApiContext>) => FetchImpl;
 }
 
 type MiddlewareRegistries = Required<{

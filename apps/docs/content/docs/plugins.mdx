@@ -157,58 +157,6 @@ const envPlugin = definePlugin({
 });
 ```
 
-### Defining Extra Options
-
-Plugins can define custom options that users can pass to `callApi`. Use `defineExtraOptions` to return a validation schema (like Zod) that defines these options.
-
-Here's a plugin that adds an `apiVersion` option to automatically set the API version header:
-
-```ts twoslash title="plugins.ts"
-import { createFetchClient, type PluginSetupContext } from "@zayne-labs/callapi";
-import { definePlugin } from "@zayne-labs/callapi/utils";
-import { z } from "zod";
-
-const apiVersionSchema = z.object({
-	apiVersion: z.literal(["v1", "v2", "v3"]).optional(),
-});
-
-const apiVersionPlugin = definePlugin({
-	id: "api-version-plugin",
-	name: "API Version Plugin",
-	description: "Adds API version header to requests",
-	version: "1.0.0",
-
-	defineExtraOptions: () => apiVersionSchema,
-
-	setup: (ctx: PluginSetupContext<{ InferredExtraOptions: z.infer<typeof apiVersionSchema> }>) => {
-		const version = ctx.options.apiVersion ?? "v1";
-
-		return {
-			request: {
-				...ctx.request,
-				headers: { ...ctx.request.headers, "X-API-Version": version },
-			},
-		};
-	},
-});
-
-const callBackendApi = createFetchClient({
-	baseURL: "https://api.example.com",
-	plugins: [apiVersionPlugin],
-	apiVersion: "v2", // Default for all requests
-});
-
-// Use default v2
-const { data: users } = await callBackendApi("/users");
-
-// Override to v3 for this request
-const { data: posts } = await callBackendApi("/posts", {
-	apiVersion: "v3",
-});
-```
-
-The Zod schema validates the `apiVersion` option, making it available in the `setup` function with full type safety.
-
 ### Hooks
 
 Plugins can define hooks that run at different stages of the request lifecycle. Hooks can be an object or a function that returns an object (useful for accessing setup context). See [Hooks](./hooks) for detailed information about available hooks.
@@ -327,6 +275,110 @@ const cachingPlugin = definePlugin({
 		};
 	},
 });
+```
+
+### Defining Extra Options
+
+Plugins can define custom options that users can pass to `callApi`. Use `defineExtraOptions` to return a validation schema (like Zod) that defines these options.
+
+Here's a plugin that adds an `apiVersion` option to automatically set the API version header:
+
+```ts twoslash title="plugins.ts"
+import { createFetchClient, type PluginSetupContext, type PluginHooks } from "@zayne-labs/callapi";
+import { definePlugin } from "@zayne-labs/callapi/utils";
+import { z } from "zod";
+
+const apiVersionSchema = z.object({
+	apiVersion: z.literal(["v1", "v2", "v3"]).optional(),
+});
+
+const apiVersionPlugin = definePlugin({
+	id: "api-version-plugin",
+	name: "API Version Plugin",
+	description: "Adds API version header to requests",
+	version: "1.0.0",
+
+	defineExtraOptions: () => apiVersionSchema,
+
+	hooks: {
+		onRequest: (ctx) => {
+			const version = ctx.options.apiVersion ?? "v1";
+
+			console.log("API Version:", version);
+		},
+	} satisfies PluginHooks<{
+		InferredExtraOptions: typeof apiVersionSchema;
+	}>,
+
+	setup: (ctx: PluginSetupContext<{ InferredExtraOptions: typeof apiVersionSchema }>) => {
+		const version = ctx.options.apiVersion ?? "v1";
+
+		return {
+			request: {
+				...ctx.request,
+				headers: { ...ctx.request.headers, "X-API-Version": version },
+			},
+		};
+	},
+});
+
+const callBackendApi = createFetchClient({
+	baseURL: "https://api.example.com",
+	plugins: [apiVersionPlugin],
+	apiVersion: "v2", // Default for all requests
+});
+
+// Use default v2
+const { data: users } = await callBackendApi("/users");
+
+// Override to v3 for this request
+const { data: posts } = await callBackendApi("/posts", {
+	apiVersion: "v3",
+});
+```
+
+You can use the Zod schema to validates the `apiVersion` option and hence make the type available within at the base or instance level of `callApi`.
+
+To ensure your plugin has proper TypeScript support, you can use generic types like `PluginHook`, `PluginMiddlewares`, or `PluginSetupContext`. Simply pass your extra options schema (or its inferred type) to the `InferredExtraOptions` type parameter, like shown in the example above. This makes your custom options available with full type safety throughout the plugin.
+
+Alternatively, you can apply the `CallApiPlugin` type with the `InferredExtraOptions` to your entire plugin object using the `satisfies` operator. This provides the inferred type across the entire plugin without needing to specify it for each individual section. When using this pattern, the `definePlugin` helper becomes optional since TypeScript will enforce type safety through the `satisfies` operator, as explained in the [Creating a Plugin](#creating-a-plugin) section.
+
+```ts twoslash title="plugins.ts"
+import { createFetchClient, type CallApiPlugin } from "@zayne-labs/callapi";
+import { z } from "zod";
+
+const apiVersionSchema = z.object({
+	apiVersion: z.literal(["v1", "v2", "v3"]).optional(),
+});
+
+const apiVersionPlugin = {
+	id: "api-version-plugin",
+	name: "API Version Plugin",
+	description: "Adds API version header to requests",
+	version: "1.0.0",
+
+	defineExtraOptions: () => apiVersionSchema,
+
+	hooks: {
+		onRequest: (ctx) => {
+			const version = ctx.options.apiVersion ?? "v1";
+
+			console.log("API Version:", version);
+		},
+	},
+
+	// Look ma! No need to type the extra options individually for each section!
+	setup: (ctx) => {
+		const version = ctx.options.apiVersion ?? "v1";
+
+		return {
+			request: {
+				...ctx.request,
+				headers: { ...ctx.request.headers, "X-API-Version": version },
+			},
+		};
+	},
+} satisfies CallApiPlugin<{ InferredExtraOptions: typeof apiVersionSchema }>;
 ```
 
 ## Example: Metrics Plugin

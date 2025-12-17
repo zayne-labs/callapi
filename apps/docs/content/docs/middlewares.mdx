@@ -126,8 +126,6 @@ const CacheOptionsSchema = z.object({
 	cachePolicy: z.literal(["cache-first", "no-cache"]).optional(),
 });
 
-type CacheOptions = z.infer<typeof CacheOptionsSchema>;
-
 export const cachingPlugin = () => {
 	const cache = new Map<string, { data: Response; timestamp: number }>();
 
@@ -137,7 +135,9 @@ export const cachingPlugin = () => {
 
 		defineExtraOptions: () => CacheOptionsSchema,
 
-		middlewares: ({ options }: PluginSetupContext<{ InferredExtraOptions: CacheOptions }>) => {
+		middlewares: ({
+			options,
+		}: PluginSetupContext<{ InferredExtraOptions: typeof CacheOptionsSchema }>) => {
 			const { cacheLifetime = 60_000, cachePolicy = "cache-first" } = options;
 
 			return {

@@ -13,11 +13,15 @@ import {
 } from "./middlewares";
 import type { CallApiContext, CallApiRequestOptions, OverrideCallApiContext } from "./types/common";
 import type { DefaultCallApiContext, DefaultDataType } from "./types/default-types";
-import type { Awaitable } from "./types/type-helpers";
+import type { AnyFunction, Awaitable, UnionToIntersection } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
 import { getMethod, getResolvedHeaders } from "./utils/common";
 import { isArray, isFunction, isString } from "./utils/guards";
-import { type BaseCallApiSchemaAndConfig, getCurrentRouteSchemaKeyAndMainInitURL } from "./validation";
+import {
+	type BaseCallApiSchemaAndConfig,
+	getCurrentRouteSchemaKeyAndMainInitURL,
+	type InferSchemaOutput,
+} from "./validation";
 
 export type PluginSetupContext<TCallApiContext extends CallApiContext = DefaultCallApiContext> =
 	RequestContext<TCallApiContext> & { initURL: string };
@@ -29,14 +33,26 @@ export type PluginInitResult<TCallApiContext extends CallApiContext = DefaultCal
 	}
 >;
 
+type GetDefaultDataTypeForPlugins<TData> = DefaultDataType extends TData ? never : TData;
+
 export type PluginHooks<TCallApiContext extends CallApiContext = DefaultCallApiContext> =
 	HooksOrHooksArray<
 		OverrideCallApiContext<
 			TCallApiContext,
 			{
-				Data: DefaultDataType extends TCallApiContext["Data"] ? never : TCallApiContext["Data"];
-				ErrorData: DefaultDataType extends TCallApiContext["ErrorData"] ? never
-				:	TCallApiContext["ErrorData"];
+				Data: GetDefaultDataTypeForPlugins<TCallApiContext["Data"]>;
+				ErrorData: GetDefaultDataTypeForPlugins<TCallApiContext["ErrorData"]>;
+			}
+		>
+	>;
+
+export type PluginMiddlewares<TCallApiContext extends CallApiContext = DefaultCallApiContext> =
+	Middlewares<
+		OverrideCallApiContext<
+			TCallApiContext,
+			{
+				Data: GetDefaultDataTypeForPlugins<TCallApiContext["Data"]>;
+				ErrorData: GetDefaultDataTypeForPlugins<TCallApiContext["ErrorData"]>;
 			}
 		>
 	>;
@@ -45,7 +61,7 @@ export interface CallApiPlugin<TCallApiContext extends CallApiContext = DefaultC
 	/**
 	 * Defines additional options that can be passed to callApi
 	 */
-	defineExtraOptions?: (...params: never[]) => unknown;
+	defineExtraOptions?: () => TCallApiContext["InferredExtraOptions"];
 
 	/**
 	 * A description for the plugin
@@ -68,8 +84,8 @@ export interface CallApiPlugin<TCallApiContext extends CallApiContext = DefaultC
 	 * Middlewares that for the plugin
 	 */
 	middlewares?:
-		| Middlewares<TCallApiContext>
-		| ((context: PluginSetupContext<TCallApiContext>) => Awaitable<Middlewares<TCallApiContext>>);
+		| PluginMiddlewares<TCallApiContext>
+		| ((context: PluginSetupContext<TCallApiContext>) => Awaitable<PluginMiddlewares<TCallApiContext>>);
 
 	/**
 	 * A name for the plugin
@@ -93,6 +109,16 @@ export interface CallApiPlugin<TCallApiContext extends CallApiContext = DefaultC
 	 */
 	version?: string;
 }
+
+export type InferPluginExtraOptions<TPluginArray extends CallApiPlugin[]> = UnionToIntersection<
+	TPluginArray extends Array<infer TPlugin> ?
+		TPlugin extends CallApiPlugin ?
+			TPlugin["defineExtraOptions"] extends AnyFunction<infer TResult> ?
+				InferSchemaOutput<TResult, TResult>
+			:	never
+		:	never
+	:	never
+>;
 
 export const getResolvedPlugins = (context: Pick<RequestContext, "baseConfig" | "options">) => {
 	const { baseConfig, options } = context;
@@ -235,7 +261,7 @@ const setupHooksAndMiddlewares = (
 		}
 	};
 
-	const addPluginMiddlewares = (pluginMiddlewares: Middlewares) => {
+	const addPluginMiddlewares = (pluginMiddlewares: PluginMiddlewares) => {
 		for (const middlewareName of middlewareRegistryKeys) {
 			const pluginMiddleware = pluginMiddlewares[middlewareName];
 

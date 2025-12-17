@@ -1,7 +1,6 @@
 import type { AuthOption } from "../auth";
 import type { FallBackRouteSchemaKey } from "../constants/validation";
 import type { ErrorContext } from "../hooks";
-import type { CallApiPlugin } from "../plugins";
 import type { ResultModeType } from "../result";
 import type { AllowedQueryParamValues, InitURLOrURLObject, Params, Query } from "../url";
 import type {
@@ -14,13 +13,11 @@ import type {
 } from "../validation";
 import type { CallApiContext } from "./common";
 import type {
-	AnyFunction,
 	AnyString,
 	CommonAuthorizationHeaders,
 	CommonContentTypes,
 	CommonRequestHeaders,
 	Prettify,
-	UnionToIntersection,
 	UnmaskType,
 	Writeable,
 } from "./type-helpers";
@@ -386,16 +383,6 @@ export type InferExtraOptions<
 	& InferMetaOption<TSchema, TCallApiContext>
 	& InferParamsOption<TSchema, TBaseSchemaRoutes, TCurrentRouteSchemaKey>
 	& InferQueryOption<TSchema>;
-
-export type InferPluginExtraOptions<TPluginArray extends CallApiPlugin[]> = UnionToIntersection<
-	TPluginArray extends Array<infer TPlugin> ?
-		TPlugin extends CallApiPlugin ?
-			TPlugin["defineExtraOptions"] extends AnyFunction<infer TReturnedSchema> ?
-				InferSchemaOutput<TReturnedSchema>
-			:	never
-		:	never
-	:	never
->;
 
 export type ResultModeOption<TErrorData, TResultMode extends ResultModeType> =
 	TErrorData extends false ? { resultMode: "onlyData" }

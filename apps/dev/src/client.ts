@@ -1,5 +1,6 @@
 import {
 	type CallApiParameters,
+	type CallApiPlugin,
 	createFetchClient,
 	type PluginHooks,
 	type PluginSetupContext,
@@ -31,7 +32,14 @@ const pluginOne = definePlugin({
 	id: "1",
 
 	name: "plugin",
-});
+
+	setup: ({ options }) => {
+		options.onUpload?.({
+			loaded: 0,
+			total: 0,
+		});
+	},
+} satisfies CallApiPlugin<{ InferredExtraOptions: typeof newOptionSchema1 }>);
 
 const newOptionSchema2 = z.object({
 	onUploadSuccess: z.function({
@@ -44,8 +52,6 @@ const newOptionSchema2 = z.object({
 	}),
 });
 
-type Plugin2Options = z.infer<typeof newOptionSchema2>;
-
 const pluginTwo = definePlugin({
 	defineExtraOptions: () => newOptionSchema2,
 
@@ -55,14 +61,17 @@ const pluginTwo = definePlugin({
 		onSuccess: (_ctx: SuccessContext<{ Data: { foo: string } }>) => console.info("OnSuccess - PLUGIN2"),
 	} satisfies PluginHooks<{
 		ErrorData: { trash: string };
-		InferredExtraOptions: Plugin2Options;
+		InferredExtraOptions: typeof newOptionSchema2;
 	}>,
 
 	id: "2",
 
 	name: "plugin",
 
-	setup: ({ options, request }: PluginSetupContext<{ InferredExtraOptions: Plugin2Options }>) => {
+	setup: ({
+		options,
+		request,
+	}: PluginSetupContext<{ InferredExtraOptions: typeof newOptionSchema2 }>) => {
 		options.onUploadSuccess?.({
 			load: 0,
 			tots: 0,

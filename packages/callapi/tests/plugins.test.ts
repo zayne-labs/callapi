@@ -2,7 +2,7 @@
  * Plugin system tests
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 import { createFetchClient } from "../src/createFetchClient";
 import type { CallApiPlugin } from "../src/plugins";
 import { mockUser } from "./fixtures";
@@ -482,28 +482,28 @@ describe("plugins", () => {
 
 	describe("custom plugin option definition", () => {
 		it("should support plugins with defineExtraOptions", async () => {
-			interface CustomPluginOptions {
+			type CustomPluginOptions = {
 				customOption: string;
 				customNumber: number;
-			}
+			};
 
-			const customOptionsPlugin: CallApiPlugin = {
+			const customOptionsPlugin = {
 				id: "custom-options-plugin",
 				name: "Custom Options Plugin",
-				defineExtraOptions: () =>
-					({
-						customOption: "default",
-						customNumber: 42,
-					}) as CustomPluginOptions,
+				defineExtraOptions: () => ({}) as CustomPluginOptions,
 				hooks: {
 					onRequest: (context) => {
-						// Plugin should be able to access its custom options
-						const options = context.options as any;
-						expect(options.customOption).toBeDefined();
-						expect(options.customNumber).toBeDefined();
+						const options = context.options;
+
+						expectTypeOf(options.customOption).toEqualTypeOf<
+							CustomPluginOptions["customOption"] | undefined
+						>();
+						expectTypeOf(options.customNumber).toEqualTypeOf<
+							CustomPluginOptions["customNumber"] | undefined
+						>();
 					},
 				},
-			};
+			} satisfies CallApiPlugin<{ InferredExtraOptions: CustomPluginOptions }>;
 
 			const client = createFetchClient({
 				baseURL: "https://api.example.com",

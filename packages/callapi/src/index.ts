@@ -14,18 +14,20 @@ export type {
 	SuccessContext,
 } from "./hooks";
 
-export { type CallApiPlugin, type PluginHooks, type PluginSetupContext } from "./plugins";
+export type { FetchImpl, FetchMiddlewareContext, Middlewares } from "./middlewares";
 
-export {
-	type CallApiResultErrorVariant,
-	type CallApiResultSuccessOrErrorVariant,
-	type CallApiResultSuccessVariant,
-	type PossibleHTTPError,
-	type PossibleJavaScriptError,
-	type PossibleJavaScriptOrValidationError,
-	type PossibleValidationError,
-	type ResponseTypeType,
-	type ResultModeType,
+export type { CallApiPlugin, PluginHooks, PluginMiddlewares, PluginSetupContext } from "./plugins";
+
+export type {
+	CallApiResultErrorVariant,
+	CallApiResultSuccessOrErrorVariant,
+	CallApiResultSuccessVariant,
+	PossibleHTTPError,
+	PossibleJavaScriptError,
+	PossibleJavaScriptOrValidationError,
+	PossibleValidationError,
+	ResponseTypeType,
+	ResultModeType,
 } from "./result";
 
 export type { RetryOptions } from "./retry";

@@ -143,9 +143,12 @@ export const getFullAndNormalizedURL = (options: GetFullURLOptions) => {
 	const fullURL = getFullURL(initURLWithParamsAndQuery, baseURL);
 
 	if (!URL.canParse(fullURL)) {
-		console.error(
-			`Invalid URL '${normalizedInitURL}'. Are you passing a relative url to CallApi but not setting the 'baseURL' option?`
-		);
+		const errorMessage =
+			!baseURL ?
+				`Invalid URL '${fullURL}'. Are you passing a relative url to CallApi but not setting the 'baseURL' option?`
+			:	`Invalid URL '${fullURL}'. Please validate that you are passing the correct url.`;
+
+		console.error(errorMessage);
 	}
 
 	return {
