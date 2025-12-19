@@ -2,7 +2,7 @@ import type { AuthOption } from "../auth";
 import type { FallBackRouteSchemaKey } from "../constants/validation";
 import type { ErrorContext } from "../hooks";
 import type { ResultModeType } from "../result";
-import type { AllowedQueryParamValues, InitURLOrURLObject, Params, Query } from "../url";
+import type { AllowedQueryParamValues, AtSymbol, InitURLOrURLObject, Params, Query } from "../url";
 import type {
 	BaseCallApiSchemaRoutes,
 	CallApiSchema,
@@ -18,6 +18,8 @@ import type {
 	CommonContentTypes,
 	CommonRequestHeaders,
 	Prettify,
+	RemoveLeadingSlash,
+	RemoveTrailingSlash,
 	UnmaskType,
 	Writeable,
 } from "./type-helpers";
@@ -28,19 +30,21 @@ import type {
 type MakeSchemaOptionRequiredIfDefined<TSchemaOption extends CallApiSchema[keyof CallApiSchema], TObject> =
 	undefined extends InferSchemaOutput<TSchemaOption, undefined> ? TObject : Required<TObject>;
 
-type MergePrefixWithRouteKey<TPrefix extends string, TRouteKey extends string> =
-	TRouteKey extends `@${infer TMethod extends RouteKeyMethods}/${infer TRestOfRoutKey}` ?
-		`@${TMethod}/${TPrefix extends `/${infer TPrefixWithoutSlash}` ? TPrefixWithoutSlash : TPrefix}${TRestOfRoutKey}`
-	:	`${TPrefix}${TRouteKey}`;
+type MergeBaseWithRouteKey<TBaseURLOrPrefix extends string | undefined, TRouteKey extends string> =
+	TBaseURLOrPrefix extends string ?
+		TRouteKey extends `${AtSymbol}${infer TMethod extends RouteKeyMethods}/${infer TRestOfRoutKey}` ?
+			`${AtSymbol}${TMethod}/${RemoveLeadingSlash<RemoveTrailingSlash<TBaseURLOrPrefix>>}/${RemoveLeadingSlash<TRestOfRoutKey>}`
+		:	`${TBaseURLOrPrefix}${TRouteKey}`
+	:	TRouteKey;
 
 export type ApplyURLBasedConfig<
 	TSchemaConfig extends CallApiSchemaConfig,
 	TSchemaRouteKeys extends string,
 > =
 	TSchemaConfig["prefix"] extends string ?
-		MergePrefixWithRouteKey<TSchemaConfig["prefix"], TSchemaRouteKeys>
+		MergeBaseWithRouteKey<TSchemaConfig["prefix"], TSchemaRouteKeys>
 	: TSchemaConfig["baseURL"] extends string ?
-		MergePrefixWithRouteKey<TSchemaConfig["baseURL"], TSchemaRouteKeys>
+		MergeBaseWithRouteKey<TSchemaConfig["baseURL"], TSchemaRouteKeys>
 	:	TSchemaRouteKeys;
 
 export type ApplyStrictConfig<TSchemaConfig extends CallApiSchemaConfig, TSchemaRouteKeys extends string> =
@@ -70,16 +74,20 @@ export type InferInitURL<
 
 export type GetCurrentRouteSchemaKey<TSchemaConfig extends CallApiSchemaConfig, TPath> =
 	TPath extends URL ? string
+	: TSchemaConfig["prefix"] extends string ?
+		TPath extends (
+			`${AtSymbol}${infer TMethod extends RouteKeyMethods}/${RemoveLeadingSlash<TSchemaConfig["prefix"]>}${infer TCurrentRoute}`
+		) ?
+			`${AtSymbol}${TMethod}/${RemoveLeadingSlash<TCurrentRoute>}`
+		: TPath extends `${TSchemaConfig["prefix"]}${infer TCurrentRoute}` ? TCurrentRoute
+		: string
 	: TSchemaConfig["baseURL"] extends string ?
-		TPath extends `${TSchemaConfig["baseURL"]}${infer TCurrentRoute}` ?
-			TCurrentRoute extends string ?
-				TCurrentRoute
-			:	string
-		: TPath extends `${TSchemaConfig["prefix"]}${infer TCurrentRoute}` ?
-			TCurrentRoute extends string ?
-				TCurrentRoute
-			:	string
-		:	string
+		TPath extends (
+			`${AtSymbol}${infer TMethod extends RouteKeyMethods}/${TSchemaConfig["baseURL"]}${infer TCurrentRoute}`
+		) ?
+			`${AtSymbol}${TMethod}/${RemoveLeadingSlash<TCurrentRoute>}`
+		: TPath extends `${TSchemaConfig["baseURL"]}${infer TCurrentRoute}` ? TCurrentRoute
+		: string
 	:	TPath;
 
 export type GetCurrentRouteSchema<
@@ -120,7 +128,7 @@ export type MethodUnion = UnmaskType<
 
 type InferMethodFromURL<TInitURL> =
 	string extends TInitURL ? MethodUnion
-	: TInitURL extends `@${infer TMethod extends RouteKeyMethods}/${string}` ? Uppercase<TMethod>
+	: TInitURL extends `${AtSymbol}${infer TMethod extends RouteKeyMethods}/${string}` ? Uppercase<TMethod>
 	: MethodUnion;
 
 type InferMethodOption<TSchema extends CallApiSchema, TInitURL> = MakeSchemaOptionRequiredIfDefined<

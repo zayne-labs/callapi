@@ -9,14 +9,21 @@ import type {
 import type { Body, HeadersOption, MethodUnion } from "./types/conditional-types";
 import type { StandardSchemaV1 } from "./types/standard-schema";
 import {
+	defineEnum,
 	type AnyFunction,
 	type AnyString,
 	type Awaitable,
-	defineEnum,
 	type Prettify,
 	type UnionToIntersection,
 } from "./types/type-helpers";
-import type { Params, Query } from "./url";
+import {
+	atSymbol,
+	extractMethodFromURL,
+	normalizeURL,
+	type AtSymbol,
+	type Params,
+	type Query,
+} from "./url";
 import { toArray } from "./utils/common";
 import { ValidationError } from "./utils/external/error";
 import { isFunction, isObject } from "./utils/guards";
@@ -195,7 +202,7 @@ export const routeKeyMethods = defineEnum(["delete", "get", "patch", "post", "pu
 
 export type RouteKeyMethods = (typeof routeKeyMethods)[number];
 
-export type RouteKeyMethodsURLUnion = `@${RouteKeyMethods}/`;
+export type RouteKeyMethodsURLUnion = `${AtSymbol}${RouteKeyMethods}/`;
 
 export type BaseSchemaRouteKeyPrefixes = FallBackRouteSchemaKey | RouteKeyMethodsURLUnion;
 
@@ -413,6 +420,7 @@ export const getResolvedSchema = (context: GetResolvedSchemaContext) => {
 			extraOptions.schema({
 				baseSchemaRoutes: baseExtraOptions.schema?.routes ?? {},
 				currentRouteSchema: resolvedRouteSchema ?? {},
+				currentRouteSchemaKey,
 			})
 		:	(extraOptions.schema ?? resolvedRouteSchema);
 
@@ -432,6 +440,8 @@ export const getResolvedSchemaConfig = (
 	return resolvedSchemaConfig;
 };
 
+const removeLeadingSlash = (value: string) => (value.startsWith("/") ? value.slice(1) : value);
+
 export const getCurrentRouteSchemaKeyAndMainInitURL = (
 	context: Pick<GetResolvedSchemaContext, "baseExtraOptions" | "extraOptions"> & { initURL: string }
 ) => {
@@ -442,14 +452,42 @@ export const getCurrentRouteSchemaKeyAndMainInitURL = (
 	let currentRouteSchemaKey = initURL;
 	let mainInitURL = initURL;
 
-	if (schemaConfig?.prefix && currentRouteSchemaKey.startsWith(schemaConfig.prefix)) {
-		currentRouteSchemaKey = currentRouteSchemaKey.replace(schemaConfig.prefix, "");
+	const methodFromURL = extractMethodFromURL(initURL);
 
-		mainInitURL = mainInitURL.replace(schemaConfig.prefix, schemaConfig.baseURL ?? "");
+	const pathWithoutMethod = normalizeURL(initURL, { retainLeadingSlashForRelativeURLs: false });
+
+	const prefixWithoutLeadingSlash = schemaConfig?.prefix && removeLeadingSlash(schemaConfig.prefix);
+
+	if (
+		schemaConfig?.prefix
+		&& prefixWithoutLeadingSlash
+		&& pathWithoutMethod.startsWith(prefixWithoutLeadingSlash)
+	) {
+		const restOfPathWithoutPrefix = pathWithoutMethod.slice(prefixWithoutLeadingSlash.length);
+
+		currentRouteSchemaKey =
+			methodFromURL ?
+				`${atSymbol}${methodFromURL}/${removeLeadingSlash(restOfPathWithoutPrefix)}`
+			:	restOfPathWithoutPrefix;
+
+		const pathWithReplacedPrefix = pathWithoutMethod.replace(
+			prefixWithoutLeadingSlash,
+			schemaConfig.baseURL ?? ""
+		);
+
+		mainInitURL =
+			methodFromURL ?
+				`${atSymbol}${methodFromURL}/${removeLeadingSlash(pathWithReplacedPrefix)}`
+			:	pathWithReplacedPrefix;
 	}
 
-	if (schemaConfig?.baseURL && currentRouteSchemaKey.startsWith(schemaConfig.baseURL)) {
-		currentRouteSchemaKey = currentRouteSchemaKey.replace(schemaConfig.baseURL, "");
+	if (schemaConfig?.baseURL && pathWithoutMethod.startsWith(schemaConfig.baseURL)) {
+		const restOfPathWithoutBaseURL = pathWithoutMethod.slice(schemaConfig.baseURL.length);
+
+		currentRouteSchemaKey =
+			methodFromURL ?
+				`${atSymbol}${methodFromURL}/${removeLeadingSlash(restOfPathWithoutBaseURL)}`
+			:	restOfPathWithoutBaseURL;
 	}
 
 	return { currentRouteSchemaKey, mainInitURL };

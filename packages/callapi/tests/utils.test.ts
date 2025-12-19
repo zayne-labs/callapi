@@ -6,6 +6,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 import type { CallApiResultErrorVariant } from "../src/result";
+import { extractMethodFromURL, getFullAndNormalizedURL, normalizeURL } from "../src/url";
 import {
 	createCombinedSignal,
 	createTimeoutSignal,
@@ -807,6 +808,141 @@ describe("Utility Functions", () => {
 				const result = getBody({ body: formData, bodySerializer: undefined, resolvedHeaders: {} });
 
 				expect(result).toBe(formData);
+			});
+		});
+
+		describe("URL Utilities", () => {
+			describe("extractMethodFromURL", () => {
+				it("should extract lowercase method from @method/ prefix", () => {
+					expect(extractMethodFromURL("@get/users")).toBe("get");
+					expect(extractMethodFromURL("@post/data")).toBe("post");
+					expect(extractMethodFromURL("@put/123")).toBe("put");
+					expect(extractMethodFromURL("@delete/456")).toBe("delete");
+					expect(extractMethodFromURL("@patch/789")).toBe("patch");
+				});
+
+				it("should return undefined for invalid or missing prefixes", () => {
+					expect(extractMethodFromURL("/users")).toBeUndefined();
+					expect(extractMethodFromURL("@invalid/users")).toBeUndefined();
+					expect(extractMethodFromURL("@get")).toBeUndefined(); // Missing slash
+					expect(extractMethodFromURL("")).toBeUndefined();
+					expect(extractMethodFromURL(undefined)).toBeUndefined();
+				});
+			});
+
+			describe("normalizeURL", () => {
+				it("should remove method prefix and retain leading slash for relative URLs by default", () => {
+					expect(normalizeURL("@get/users")).toBe("/users");
+					expect(normalizeURL("@post/api/data")).toBe("/api/data");
+				});
+
+				it("should remove method prefix and leading slash when retainLeadingSlashForRelativeURLs is false", () => {
+					expect(normalizeURL("@get/users", { retainLeadingSlashForRelativeURLs: false })).toBe(
+						"users"
+					);
+					expect(normalizeURL("@post/api/data", { retainLeadingSlashForRelativeURLs: false })).toBe(
+						"api/data"
+					);
+				});
+
+				it("should remove method prefix and leading slash for absolute URLs regardless of option", () => {
+					const absoluteURL = "@get/https://api.example.com/users";
+					expect(normalizeURL(absoluteURL)).toBe("https://api.example.com/users");
+					expect(normalizeURL(absoluteURL, { retainLeadingSlashForRelativeURLs: true })).toBe(
+						"https://api.example.com/users"
+					);
+				});
+
+				it("should handle URLs without method prefix", () => {
+					expect(normalizeURL("/users")).toBe("/users");
+					expect(normalizeURL("https://google.com")).toBe("https://google.com");
+				});
+
+				it("should handle extensive slash normalization cases", () => {
+					// Cases where input might have multiple slashes or unusual combinations
+					expect(normalizeURL("@get//users")).toBe("//users");
+					expect(normalizeURL("@get/")).toBe("/");
+					expect(normalizeURL("@post/a/b/c")).toBe("/a/b/c");
+				});
+			});
+
+			describe("getFullAndNormalizedURL", () => {
+				it("should substitute patterns and merge baseURL correctly", () => {
+					const result = getFullAndNormalizedURL({
+						baseURL: "https://api.example.com/v1",
+						initURL: "@get/users/:id",
+						params: { id: "123" },
+						query: { active: true },
+					});
+
+					expect(result.fullURL).toBe("https://api.example.com/v1/users/123?active=true");
+					expect(result.normalizedInitURL).toBe("/users/:id");
+				});
+
+				it("should handle array-style positional parameters", () => {
+					const result = getFullAndNormalizedURL({
+						baseURL: undefined,
+						initURL: "/users/:id/posts/:postId",
+						params: ["123", "456"],
+						query: undefined,
+					});
+
+					expect(result.fullURL).toBe("/users/123/posts/456");
+				});
+
+				it("should handle slash normalization permutations between baseURL and initURL", () => {
+					// BaseURL with slash, initURL with slash
+					expect(
+						getFullAndNormalizedURL({
+							baseURL: "https://api.com/",
+							initURL: "/users",
+							params: undefined,
+							query: undefined,
+						}).fullURL
+					).toBe("https://api.com//users");
+
+					// BaseURL without slash, initURL without slash
+					expect(
+						getFullAndNormalizedURL({
+							baseURL: "https://api.com",
+							initURL: "users",
+							params: undefined,
+							query: undefined,
+						}).fullURL
+					).toBe("https://api.com/users");
+
+					// BaseURL without slash, initURL with slash
+					expect(
+						getFullAndNormalizedURL({
+							baseURL: "https://api.com",
+							initURL: "/users",
+							params: undefined,
+							query: undefined,
+						}).fullURL
+					).toBe("https://api.com/users");
+				});
+
+				it("should handle edge cases like fragments and special characters", () => {
+					// Fragments
+					expect(
+						getFullAndNormalizedURL({
+							baseURL: undefined,
+							initURL: "/users/:id#profile",
+							params: { id: "123" },
+							query: { tab: "settings" },
+						}).fullURL
+					).toBe("/users/123#profile?tab=settings");
+
+					// Special characters in params
+					expect(
+						getFullAndNormalizedURL({
+							baseURL: undefined,
+							initURL: "/users/:id",
+							params: { id: "user@example.com" },
+							query: undefined,
+						}).fullURL
+					).toBe("/users/user@example.com");
+				});
 			});
 		});
 

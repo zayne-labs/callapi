@@ -827,6 +827,7 @@ describe("Validation System", () => {
 			});
 
 			expect(dynamicSchemaResolver).toHaveBeenCalledWith({
+				currentRouteSchemaKey: "/users",
 				baseSchemaRoutes: { "/users": { headers: headersSchema } },
 				currentRouteSchema: { headers: headersSchema },
 			});
@@ -1026,29 +1027,163 @@ describe("Validation System", () => {
 			);
 		});
 
-		it("should handle schema config prefix and baseURL", async () => {
+		it("should resolve correctly when prefix has leading slash and schema has method-scoped key", async () => {
 			const client = createFetchClient({
 				baseURL: "https://api.example.com",
 				schema: {
 					config: {
-						prefix: "/api/v1",
-						baseURL: "https://api.example.com/api/v1",
+						prefix: "/api",
+						baseURL: "https://api.com",
+						strict: true,
 					},
 					routes: {
-						"/users": {
-							body: userSchema,
-						},
+						"@get/users": { data: userSchema },
 					},
 				},
 			});
 
-			const body = { name: "John", email: "john@example.com" };
-			await client("/api/v1/users", { method: "POST", body });
+			// initURL: "@get/api/users"
+			// pathWithoutMethod (normalized): "api/users"
+			// prefixWithoutLeadingSlash: "api"
+			// Matches!
+			// restOfPathWithoutPrefix: "/users" (or "users" depending on slash)
+			// Key becomes "@get/users"
+			await client("@get/api/users");
 
 			expect(mockFetch).toHaveBeenCalledWith(
-				"https://api.example.com/api/v1/users",
-				expect.any(Object)
+				"https://api.com/users",
+				expect.objectContaining({ method: "GET" })
 			);
+		});
+
+		it("should resolve correctly when prefix has trailing slash", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				schema: {
+					config: {
+						prefix: "api/",
+						baseURL: "https://api.com/",
+						strict: true,
+					},
+					routes: {
+						"@get/users": { data: userSchema },
+					},
+				},
+			});
+
+			await client("@get/api/users");
+
+			expect(mockFetch).toHaveBeenCalledWith(
+				"https://api.com/users",
+				expect.objectContaining({ method: "GET" })
+			);
+		});
+
+		it("should resolve correctly when prefix has both leading and trailing slashes", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				schema: {
+					config: {
+						prefix: "/api/",
+						baseURL: "https://api.com/",
+						strict: true,
+					},
+					routes: {
+						"@get/users": { data: userSchema },
+					},
+				},
+			});
+
+			await client("@get/api/users");
+
+			expect(mockFetch).toHaveBeenCalledWith(
+				"https://api.com/users",
+				expect.objectContaining({ method: "GET" })
+			);
+		});
+
+		it("should handle baseURL match with method-scoped schema key", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				schema: {
+					config: {
+						baseURL: "https://api.com",
+						strict: true,
+					},
+					routes: {
+						"@post/users": { body: userSchema },
+					},
+				},
+			});
+
+			await client("@post/https://api.com/users", {
+				body: { name: "John", email: "john@example.com" },
+			});
+
+			expect(mockFetch).toHaveBeenCalledWith(
+				"https://api.com/users",
+				expect.objectContaining({ method: "POST" })
+			);
+		});
+
+		it("should prioritize prefix over baseURL match even if both match", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				schema: {
+					config: {
+						prefix: "external",
+						baseURL: "https://external-api.com",
+					},
+					routes: {
+						"/users": { data: userSchema },
+					},
+				},
+			});
+
+			// If both matched, prefix should win. In this case, "external" matches prefix.
+			await client("external/users");
+
+			expect(mockFetch).toHaveBeenCalledWith("https://external-api.com/users", expect.any(Object));
+		});
+
+		it("should correctly strip prefix when it is a full URL segment", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				schema: {
+					config: {
+						prefix: "v1",
+						baseURL: "https://api.com/v1",
+						strict: true,
+					},
+					routes: {
+						"/users": { data: userSchema },
+					},
+				},
+			});
+
+			await client("v1/users");
+
+			expect(mockFetch).toHaveBeenCalledWith("https://api.com/v1/users", expect.any(Object));
+		});
+
+		it("should correctly resolve currentRouteSchemaKey when using prefix without method", async () => {
+			const client = createFetchClient({
+				baseURL: "https://api.example.com",
+				schema: {
+					config: {
+						prefix: "api",
+						baseURL: "https://internal.com",
+						strict: true,
+					},
+					routes: {
+						"/users": { data: userSchema },
+					},
+				},
+			});
+
+			await client("api/users");
+
+			expect(mockFetch).toHaveBeenCalledWith("https://internal.com/users", expect.any(Object));
 		});
 	});
 

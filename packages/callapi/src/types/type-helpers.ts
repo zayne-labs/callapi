@@ -54,8 +54,22 @@ export type UnmaskType<TValue> = { value: TValue }["value"];
  */
 export type NoInferUnMasked<TGeneric> = [TGeneric][TGeneric extends unknown ? 0 : never];
 
-export type RemovePrefix<TPrefix extends "dedupe" | "retry", TKey extends string> =
-	TKey extends `${TPrefix}${infer TRest}` ? Uncapitalize<TRest> : TKey;
+export type RemoveDedupeOrRetryPrefix<TPrefixToRemove extends "dedupe" | "retry", TKey extends string> =
+	TKey extends `${TPrefixToRemove}${infer TRest}` ? Uncapitalize<TRest> : TKey;
+
+type RemoveSlashImpl<TUrl extends string, TDirection extends "leading" | "trailing"> =
+	TDirection extends "leading" ?
+		TUrl extends `/${infer TWithoutLeadingSlash}` ?
+			TWithoutLeadingSlash
+		:	TUrl
+	: TDirection extends "trailing" ?
+		TUrl extends `${infer TWithoutTailingSlash}/` ?
+			TWithoutTailingSlash
+		:	TUrl
+	:	never;
+
+export type RemoveTrailingSlash<TUrl extends string> = RemoveSlashImpl<TUrl, "trailing">;
+export type RemoveLeadingSlash<TUrl extends string> = RemoveSlashImpl<TUrl, "leading">;
 
 export type Awaitable<TValue> = Promise<TValue> | TValue;
 

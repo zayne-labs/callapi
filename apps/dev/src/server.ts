@@ -1,68 +1,71 @@
-import { callApi, createFetchClient } from "@zayne-labs/callapi";
-import { definePlugin, defineSchema } from "@zayne-labs/callapi/utils";
-
+import { createFetchClient } from "@zayne-labs/callapi";
+import { defineSchema } from "@zayne-labs/callapi/utils";
 import * as z from "zod";
 
-const { data } = await callApi("https://dummyjson.com/products/:id", {
-	method: "GET",
-	params: { id: 3 },
-});
+// void await callApi("https://dummyjson.com/products/:id", {
+// 	method: "GET",
+// 	params: { id: 3 },
+// });
 
-console.info(data);
-
-const foo = definePlugin({
-	id: "ds",
-	name: "asa",
-	schema: defineSchema({
-		"/school": {
+export const zoomOauthApiSchema = defineSchema(
+	{
+		"@post/access": {
+			auth: z.object({
+				password: z.string(),
+				type: z.literal("Basic"),
+				username: z.string(),
+			}),
 			data: z.object({
-				id: z.number(),
-				name: z.string(),
+				access_token: z.jwt(),
+				api_url: z.url(),
+				expires_in: z.number(),
+				scope: z.string(),
+				token_type: z.string(),
+			}),
+			query: z.object({
+				account_id: z.string(),
+				grant_type: z.literal(["account_credentials"]),
 			}),
 		},
-	}),
-});
-
-const foo2 = definePlugin({
-	id: "ds",
-	name: "asa",
-	schema: defineSchema({
-		"/class": {
+		/**
+		 * @description Gets a zoom access token.
+		 * @see https://developers.zoom.us/docs/integrations/oauth/#request-an-access-token
+		 */
+		token: {
+			auth: z.object({
+				password: z.string(),
+				type: z.literal("Basic"),
+				username: z.string(),
+			}),
 			data: z.object({
-				id: z.number(),
-				student: z.string(),
+				access_token: z.jwt(),
+				api_url: z.url(),
+				expires_in: z.number(),
+				scope: z.string(),
+				token_type: z.string(),
+			}),
+			query: z.object({
+				account_id: z.string(),
+				grant_type: z.literal(["account_credentials"]),
 			}),
 		},
-	}),
+	},
+	{ prefix: "api.main/", strict: true }
+);
+
+const callZoomApi = createFetchClient({
+	schema: zoomOauthApiSchema,
 });
 
-const callBackendApi = createFetchClient({
-	baseURL: "https://api.example.com",
-
-	plugins: [foo, foo2],
-
-	schema: defineSchema({
-		"/products/:id": {
-			data: z.object({
-				category: z.string(),
-				id: z.number(),
-			}),
-			params: z.object({ id: z.number() }).optional(),
-		},
-	}),
+// eslint-disable-next-line ts-eslint/no-unused-vars -- Ignore
+const resultFromZoomApi = await callZoomApi("api.main/token", {
+	auth: {
+		password: "123456",
+		type: "Basic",
+		username: "zoom@example.com",
+	},
+	query: {
+		account_id: "123456",
+		grant_type: "account_credentials",
+	},
 });
-
-// Using object syntax for params validator
-const result = await callBackendApi("/products/:id", {
-	// params: {
-	// 	id: 123,
-	// },
-	// params: ["electronics", "123"],
-	// params: {
-	// 	category: "electronics",
-	// 	id: "123",
-	// 	name: "product",
-	// },
-});
-
-console.info(result);

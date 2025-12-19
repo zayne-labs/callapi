@@ -13,7 +13,7 @@ import {
 	defineEnum,
 	type AnyNumber,
 	type Awaitable,
-	type RemovePrefix,
+	type RemoveDedupeOrRetryPrefix,
 	type UnmaskType,
 } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
@@ -40,7 +40,10 @@ type RetryCondition<TErrorData> = (context: ErrorContext<{ ErrorData: TErrorData
 type RetryOptionKeys<TErrorData> = Exclude<keyof RetryOptions<TErrorData>, "~retryAttemptCount" | "retry">;
 
 type InnerRetryOptions<TErrorData> = {
-	[Key in RetryOptionKeys<TErrorData> as RemovePrefix<"retry", Key>]?: RetryOptions<TErrorData>[Key];
+	[Key in RetryOptionKeys<TErrorData> as RemoveDedupeOrRetryPrefix<
+		"retry",
+		Key
+	>]?: RetryOptions<TErrorData>[Key];
 };
 
 export interface RetryOptions<TErrorData> {

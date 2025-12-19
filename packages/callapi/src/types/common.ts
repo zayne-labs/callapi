@@ -641,6 +641,7 @@ export type InferExtendSchemaContext<
 > = {
 	baseSchemaRoutes: TBaseSchemaRoutes;
 	currentRouteSchema: GetCurrentRouteSchema<TBaseSchemaRoutes, TCurrentRouteSchemaKey>;
+	currentRouteSchemaKey: TCurrentRouteSchemaKey;
 };
 
 export type GetExtendSchemaConfigContext<TBaseSchemaConfig extends CallApiSchemaConfig> = {
@@ -664,9 +665,6 @@ export type CallApiExtraOptions<
 	TBaseSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
 	TSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
 	TCurrentRouteSchemaKey extends string = string,
-	TComputedPluginContext = InferExtendPluginContext<TBasePluginArray>,
-	TComputedSchemaContext = InferExtendSchemaContext<TBaseSchemaRoutes, TCurrentRouteSchemaKey>,
-	TComputedSchemaConfigContext = GetExtendSchemaConfigContext<TBaseSchemaConfig>,
 > = SharedExtraOptions<
 	TCallApiContext,
 	TData,
@@ -684,7 +682,7 @@ export type CallApiExtraOptions<
 	 * that receives base plugins and returns the instance plugins.
 	 *
 	 */
-	plugins?: TPluginArray | ((context: TComputedPluginContext) => TPluginArray);
+	plugins?: TPluginArray | ((context: InferExtendPluginContext<TBasePluginArray>) => TPluginArray);
 
 	/**
 	 * For instance-specific validation schemas
@@ -694,7 +692,9 @@ export type CallApiExtraOptions<
 	 * Can be a static schema object or a function that receives base schema context and returns instance schemas.
 	 *
 	 */
-	schema?: TSchema | ((context: TComputedSchemaContext) => TSchema);
+	schema?:
+		| TSchema
+		| ((context: InferExtendSchemaContext<TBaseSchemaRoutes, TCurrentRouteSchemaKey>) => TSchema);
 
 	/**
 	 * Instance-specific schema configuration or a function to configure schema behavior.
@@ -703,7 +703,9 @@ export type CallApiExtraOptions<
 	 * Can override base schema configuration or extend it with instance-specific validation rules.
 	 *
 	 */
-	schemaConfig?: TSchemaConfig | ((context: TComputedSchemaConfigContext) => TSchemaConfig);
+	schemaConfig?:
+		| TSchemaConfig
+		| ((context: GetExtendSchemaConfigContext<TBaseSchemaConfig>) => TSchemaConfig);
 };
 
 export type CallApiExtraOptionsForHooks<TCallApiContext extends CallApiContext = DefaultCallApiContext> =

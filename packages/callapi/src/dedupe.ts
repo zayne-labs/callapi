@@ -1,7 +1,7 @@
 import { extraOptionDefaults } from "./constants/defaults";
 import type { RequestContext } from "./hooks";
 import { toStreamableRequest, toStreamableResponse } from "./stream";
-import type { AnyString, RemovePrefix, UnmaskType } from "./types/type-helpers";
+import type { AnyString, RemoveDedupeOrRetryPrefix, UnmaskType } from "./types/type-helpers";
 import { deterministicHashFn, waitFor } from "./utils/common";
 import { isFunction } from "./utils/guards";
 
@@ -238,7 +238,7 @@ type DedupeStrategyUnion = UnmaskType<"cancel" | "defer" | "none">;
 type DedupeOptionKeys = Exclude<keyof DedupeOptions, "dedupe">;
 
 type InnerDedupeOptions = {
-	[Key in DedupeOptionKeys as RemovePrefix<"dedupe", Key>]?: DedupeOptions[Key];
+	[Key in DedupeOptionKeys as RemoveDedupeOrRetryPrefix<"dedupe", Key>]?: DedupeOptions[Key];
 };
 
 export type DedupeOptions = {

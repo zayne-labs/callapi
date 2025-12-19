@@ -69,7 +69,7 @@
 		"playwright": "^1.57.0",
 		"publint": "^0.3.16",
 		"size-limit": "12.0.0",
-		"tsdown": "0.18.0",
+		"tsdown": "0.18.1",
 		"typescript": "5.9.3",
 		"vitest": "^4.0.16",
 		"zod": "^4.2.1"
@@ -82,7 +82,7 @@
 	"size-limit": [
 		{
 			"path": "./src/index.ts",
-			"limit": "6.6 kb"
+			"limit": "6.8 kb"
 		},
 		{
 			"path": "./src/utils/external/index.ts",

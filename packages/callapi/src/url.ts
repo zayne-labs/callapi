@@ -4,7 +4,7 @@ import { toQueryString } from "./utils/external/body";
 import { isArray } from "./utils/guards";
 import { type RouteKeyMethodsURLUnion, routeKeyMethods } from "./validation";
 
-const slash = "/";
+export const slash = "/";
 const colon = ":";
 const openBrace = "{";
 const closeBrace = "}";
@@ -88,14 +88,25 @@ const mergeUrlWithQuery = (url: string, query: CallApiExtraOptions["query"]): st
 export const extractMethodFromURL = (initURL: string | undefined) => {
 	if (!initURL?.startsWith("@")) return;
 
-	const method = initURL.split("@")[1]?.split("/")[0];
+	const methodFromURL = routeKeyMethods.find((method) =>
+		initURL.startsWith(`${atSymbol}${method}${slash}`)
+	);
 
-	if (!method || !routeKeyMethods.includes(method as (typeof routeKeyMethods)[number])) return;
+	if (!methodFromURL) return;
 
-	return method;
+	return methodFromURL;
 };
 
-const normalizeURL = (initURL: string) => {
+type NormalizeURLOptions = {
+	retainLeadingSlashForRelativeURLs?: boolean;
+};
+
+export const atSymbol = "@";
+export type AtSymbol = typeof atSymbol;
+
+export const normalizeURL = (initURL: string, options: NormalizeURLOptions = {}) => {
+	const { retainLeadingSlashForRelativeURLs = true } = options;
+
 	const methodFromURL = extractMethodFromURL(initURL);
 
 	if (!methodFromURL) {
@@ -103,9 +114,9 @@ const normalizeURL = (initURL: string) => {
 	}
 
 	const normalizedURL =
-		initURL.includes("http") ?
-			initURL.replace(`@${methodFromURL}/`, "")
-		:	initURL.replace(`@${methodFromURL}/`, "/");
+		retainLeadingSlashForRelativeURLs && !initURL.includes("http") ?
+			initURL.replace(`${atSymbol}${methodFromURL}`, "")
+		:	initURL.replace(`${atSymbol}${methodFromURL}${slash}`, "");
 
 	return normalizedURL;
 };
@@ -145,7 +156,7 @@ export const getFullAndNormalizedURL = (options: GetFullURLOptions) => {
 	if (!URL.canParse(fullURL)) {
 		const errorMessage =
 			!baseURL ?
-				`Invalid URL '${fullURL}'. Are you passing a relative url to CallApi but not setting the 'baseURL' option?`
+				`Invalid URL '${initURL}'. Are you passing a relative url to CallApi without setting the 'baseURL' option?`
 			:	`Invalid URL '${fullURL}'. Please validate that you are passing the correct url.`;
 
 		console.error(errorMessage);
