@@ -15,10 +15,8 @@ const isDevMode = process.env.NODE_ENV !== "production";
 
 const config: NextConfig = {
 	devIndicators: {
-		position: "bottom-right",
+		position: "bottom-left",
 	},
-
-	experimental: { turbopackFileSystemCacheForDev: true },
 
 	logging: {
 		fetches: {
@@ -38,7 +36,7 @@ const config: NextConfig = {
 		];
 	},
 
-	serverExternalPackages: ["typescript", "twoslash", "shiki","@takumi-rs/image-response"],
+	serverExternalPackages: ["typescript", "twoslash", "shiki", "@takumi-rs/image-response"],
 
 	...(isDevMode && {
 		outputFileTracingRoot: getRoot(),
