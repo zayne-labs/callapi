@@ -87,9 +87,9 @@ await callApi("/api/data", {
 TypeScript-first types with runtime validation.
 
 ```ts
-import { z } from "zod";
 import { createFetchClient } from "@zayne-labs/callapi";
 import { defineSchema } from "@zayne-labs/callapi/utils";
+import { z } from "zod";
 
 const callMainApi = createFetchClient({
 	schema: defineSchema({

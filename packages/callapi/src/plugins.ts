@@ -18,8 +18,8 @@ import type { InitURLOrURLObject } from "./url";
 import { getMethod, getResolvedHeaders } from "./utils/common";
 import { isArray, isFunction, isString } from "./utils/guards";
 import {
-	type BaseCallApiSchemaAndConfig,
 	getCurrentRouteSchemaKeyAndMainInitURL,
+	type BaseCallApiSchemaAndConfig,
 	type InferSchemaOutput,
 } from "./validation";
 

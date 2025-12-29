@@ -5,12 +5,12 @@ import type { ElementContent, Root, RootContent } from "hast";
 import { toJsxRuntime } from "hast-util-to-jsx-runtime";
 import {
 	Children,
-	type ComponentProps,
-	type ReactElement,
-	type ReactNode,
 	Suspense,
 	use,
 	useDeferredValue,
+	type ComponentProps,
+	type ReactElement,
+	type ReactNode,
 } from "react";
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 import { remark } from "remark";

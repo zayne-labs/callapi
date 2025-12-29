@@ -1,4 +1,5 @@
 import {
+	resolveErrorResult,
 	type CallApiResultErrorVariant,
 	type CallApiResultSuccessVariant,
 	type ErrorInfo,
@@ -6,7 +7,6 @@ import {
 	type PossibleJavaScriptError,
 	type PossibleJavaScriptOrValidationError,
 	type PossibleValidationError,
-	resolveErrorResult,
 } from "./result";
 import type { StreamProgressEvent } from "./stream";
 import type {

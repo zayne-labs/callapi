@@ -109,7 +109,7 @@ const { data } = await callBackendApi("/users", {
 
 ```ts title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
-import { metricsPlugin, envPlugin, loggingPlugin } from "./plugins";
+import { envPlugin, loggingPlugin, metricsPlugin } from "./plugins";
 
 const callBackendApi = createFetchClient({
 	plugins: [envPlugin, loggingPlugin],
@@ -284,7 +284,7 @@ Plugins can define custom options that users can pass to `callApi`. Use `defineE
 Here's a plugin that adds an `apiVersion` option to automatically set the API version header:
 
 ```ts twoslash title="plugins.ts"
-import { createFetchClient, type PluginSetupContext, type PluginHooks } from "@zayne-labs/callapi";
+import { createFetchClient, type PluginHooks, type PluginSetupContext } from "@zayne-labs/callapi";
 import { definePlugin } from "@zayne-labs/callapi/utils";
 import { z } from "zod";
 

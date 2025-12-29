@@ -1,6 +1,6 @@
-import { docs } from "@/.source/server";
-import { type InferMetaType, type InferPageType, loader, type LoaderPlugin } from "fumadocs-core/source";
+import { loader, type InferMetaType, type InferPageType, type LoaderPlugin } from "fumadocs-core/source";
 import { lucideIconsPlugin } from "fumadocs-core/source/lucide-icons";
+import { docs } from "@/.source/server";
 
 const pageTreeCodeTitles = () => {
 	return {

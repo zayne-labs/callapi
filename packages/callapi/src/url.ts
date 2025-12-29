@@ -2,7 +2,7 @@ import type { CallApiExtraOptions } from "./types/common";
 import type { AnyString, UnmaskType } from "./types/type-helpers";
 import { toQueryString } from "./utils/external/body";
 import { isArray } from "./utils/guards";
-import { type RouteKeyMethodsURLUnion, routeKeyMethods } from "./validation";
+import { routeKeyMethods, type RouteKeyMethodsURLUnion } from "./validation";
 
 export const slash = "/";
 const colon = ":";

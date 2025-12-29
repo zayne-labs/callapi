@@ -37,6 +37,8 @@ export type {
 	BaseCallApiExtraOptions,
 	CallApiConfig,
 	CallApiExtraOptions,
+	GetCallApiContext,
+	GetCallApiContextStrict,
 	CallApiExtraOptionsForHooks,
 	CallApiParameters,
 	CallApiRequestOptions,

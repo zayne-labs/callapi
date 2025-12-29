@@ -1,8 +1,8 @@
+import { DocsLayout } from "fumadocs-ui/layouts/notebook";
 import { AISearchPanel, AISearchRoot, AISearchTrigger } from "@/components/ai/search";
 import { BgPattern } from "@/components/icons";
-import "fumadocs-twoslash/twoslash.css";
-import { DocsLayout } from "fumadocs-ui/layouts/notebook";
 import { docsOptions } from "../../lib/layout.shared";
+import "fumadocs-twoslash/twoslash.css";
 
 function Layout(props: LayoutProps<"/docs">) {
 	const { children } = props;

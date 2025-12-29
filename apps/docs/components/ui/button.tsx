@@ -1,10 +1,10 @@
 "use client";
 
-import { Slot } from "@/components/common";
-import { cnMerge } from "@/lib/utils/cn";
 import type { InferProps } from "@zayne-labs/toolkit-react/utils";
 import type { Prettify } from "@zayne-labs/toolkit-type-helpers";
 import { tv, type VariantProps } from "tailwind-variants";
+import { Slot } from "@/components/common";
+import { cnMerge } from "@/lib/utils/cn";
 
 // eslint-disable-next-line react-refresh/only-export-components -- It's fine
 export const buttonVariants = tv({

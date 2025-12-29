@@ -69,7 +69,7 @@ The `defer` strategy shares the same response promise between duplicate requests
 Example: Multiple components requesting user data simultaneously
 
 ```tsx title="api.ts"
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 function ProfileHeader() {
 	const [userData, setUserData] = useState(null);

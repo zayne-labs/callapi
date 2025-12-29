@@ -1,11 +1,6 @@
-import createBundleAnalyzer from "@next/bundle-analyzer";
+import { fileURLToPath } from "node:url";
 import { createMDX } from "fumadocs-mdx/next";
 import type { NextConfig } from "next";
-import { fileURLToPath } from "node:url";
-
-const withAnalyzer = createBundleAnalyzer({
-	enabled: process.env.ANALYZE === "true",
-});
 
 const withMDX = createMDX();
 
@@ -47,4 +42,4 @@ const config: NextConfig = {
 	},
 };
 
-export default withAnalyzer(withMDX(config));
+export default withMDX(config);

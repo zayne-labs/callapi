@@ -1,7 +1,7 @@
-import { source } from "@/lib/source";
-import { ImageResponse } from "next/og";
 import { notFound } from "next/navigation";
-import { generate as MetadataImage, getImageResponseOptions } from "./generate";
+import { ImageResponse } from "next/og";
+import { source } from "@/lib/source";
+import { getImageResponseOptions, generate as MetadataImage } from "./generate";
 
 export const revalidate = false;
 

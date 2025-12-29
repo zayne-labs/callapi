@@ -12,8 +12,8 @@ By default, CallApi returns errors as values in the result object instead of thr
 You configure callApi to align with that expectation:
 
 ```ts title="api/todos.ts"
-import { callApi } from "@zayne-labs/callapi";
 import { useQuery } from "@tanstack/react-query";
+import { callApi } from "@zayne-labs/callapi";
 
 type Todo = {
 	id: number;
@@ -74,8 +74,8 @@ export const useTodos = () => {
 Using validation libraries like Zod provides both runtime safety and automatic type inference:
 
 ```ts title="hooks/useTodos.ts"
-import { callApi } from "@zayne-labs/callapi";
 import { useQuery } from "@tanstack/react-query";
+import { callApi } from "@zayne-labs/callapi";
 import { z } from "zod";
 
 const todosSchema = z.array(
@@ -103,8 +103,8 @@ export const useTodos = () => {
 ### Option 2: Manual Type Specification
 
 ```ts title="hooks/useTodos.ts"
-import { callApi } from "@zayne-labs/callapi";
 import { useQuery } from "@tanstack/react-query";
+import { callApi } from "@zayne-labs/callapi";
 
 type Todo = {
 	id: number;

@@ -1,20 +1,20 @@
 import { createDedupeStrategy, type GlobalRequestInfoCache, type RequestInfoCache } from "./dedupe";
 import {
-	type ErrorContext,
-	type ExecuteHookInfo,
 	executeHooks,
 	executeHooksInCatchBlock,
+	type ErrorContext,
+	type ExecuteHookInfo,
 	type RequestContext,
 	type SuccessContext,
 } from "./hooks";
-import { type CallApiPlugin, initializePlugins } from "./plugins";
+import { initializePlugins, type CallApiPlugin } from "./plugins";
 import {
-	type ErrorInfo,
 	getCustomizedErrorResult,
-	type GetResponseType,
 	resolveErrorResult,
 	resolveResponseData,
 	resolveSuccessResult,
+	type ErrorInfo,
+	type GetResponseType,
 	type ResponseTypeType,
 	type ResultModeType,
 } from "./result";
@@ -57,12 +57,12 @@ import { HTTPError } from "./utils/external/error";
 import { isHTTPErrorInstance, isValidationErrorInstance } from "./utils/external/guards";
 import { isFunction } from "./utils/guards";
 import {
+	handleConfigValidation,
+	handleSchemaValidation,
 	type BaseCallApiSchemaAndConfig,
 	type BaseCallApiSchemaRoutes,
 	type CallApiSchema,
 	type CallApiSchemaConfig,
-	handleConfigValidation,
-	handleSchemaValidation,
 	type InferSchemaOutput,
 } from "./validation";
 
@@ -85,8 +85,6 @@ export const createFetchClientWithContext = <
 		TComputedBaseSchemaConfig extends CallApiSchemaConfig = GetBaseSchemaConfig<TBaseSchemaAndConfig>,
 		TComputedBaseSchemaRoutes extends BaseCallApiSchemaRoutes =
 			GetBaseSchemaRoutes<TBaseSchemaAndConfig>,
-		// TComputedBaseData = GetResponseType<TBaseData, TBaseResponseType>,
-		// TComputedBaseErrorData = GetResponseType<TBaseErrorData, TBaseResponseType>,
 	>(
 		initBaseConfig: BaseCallApiConfig<
 			TBaseCallApiContext,

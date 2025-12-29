@@ -1,7 +1,3 @@
-import { baseConfig } from "@zayne-labs/prettier-config";
+import { zayne } from "@zayne-labs/prettier-config";
 
-const config = {
-	...baseConfig,
-};
-
-export default config;
+export default zayne({});

@@ -1,8 +1,3 @@
-import { LLMCopyButton, ViewOptions } from "@/components/ai/page-actions";
-import { getMDXComponents } from "@/components/common";
-import { owner, repo } from "@/lib/github";
-import { createMetadata } from "@/lib/metadata";
-import { source } from "@/lib/source";
 import {
 	DocsBody,
 	DocsDescription,
@@ -14,6 +9,11 @@ import { createRelativeLink } from "fumadocs-ui/mdx";
 import { LucideEdit } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { LLMCopyButton, ViewOptions } from "@/components/ai/page-actions";
+import { getMDXComponents } from "@/components/common";
+import { owner, repo } from "@/lib/github";
+import { createMetadata } from "@/lib/metadata";
+import { source } from "@/lib/source";
 
 export const revalidate = 86400;
 

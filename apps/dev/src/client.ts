@@ -1,7 +1,7 @@
 import {
+	createFetchClient,
 	type CallApiParameters,
 	type CallApiPlugin,
-	createFetchClient,
 	type PluginHooks,
 	type PluginSetupContext,
 	type ResultModeType,

@@ -1,5 +1,5 @@
 import { definePlugin } from "@zayne-labs/callapi/utils";
-import { type AnyFunction, isBoolean } from "@zayne-labs/toolkit-type-helpers";
+import { isBoolean, type AnyFunction } from "@zayne-labs/toolkit-type-helpers";
 import { createConsola } from "consola";
 import { getStatusText } from "./utils";
 

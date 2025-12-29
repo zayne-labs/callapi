@@ -1,9 +1,9 @@
-import { baseURL, createMetadata } from "@/lib/metadata";
-import { cnJoin } from "@/lib/utils/cn";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "../tailwind.css";
+import { baseURL, createMetadata } from "@/lib/metadata";
+import { cnJoin } from "@/lib/utils/cn";
 import { Providers } from "./Providers";
+import "../tailwind.css";
 
 const geistSans = Geist({
 	subsets: ["latin"],

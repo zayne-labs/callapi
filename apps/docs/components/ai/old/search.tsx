@@ -1,6 +1,6 @@
 "use client";
 
-import { type UIMessage, type UseChatHelpers, useChat } from "@ai-sdk/react";
+import { useChat, type UIMessage, type UseChatHelpers } from "@ai-sdk/react";
 import type { InferProps } from "@zayne-labs/toolkit-react/utils";
 import { DefaultChatTransport } from "ai";
 import Link from "fumadocs-core/link";

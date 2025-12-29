@@ -1,5 +1,5 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { convertToModelMessages, type ModelMessage, streamText } from "ai";
+import { convertToModelMessages, streamText, type ModelMessage } from "ai";
 import { ProvideLinksToolSchema } from "@/lib/chat/ai-tools-schema";
 import { getDocumentationContext, getSystemPromptContext } from "@/lib/chat/context-builder";
 
@@ -17,9 +17,7 @@ export async function POST(req: Request) {
 		getDocumentationContext(),
 	]);
 
-	const { messages: userMessages } = reqJson;
-
-	const initMessages = convertToModelMessages(userMessages as never, {
+	const initMessages = await convertToModelMessages(reqJson.messages as never, {
 		ignoreIncompleteToolCalls: true,
 	});
 

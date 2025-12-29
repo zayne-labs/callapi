@@ -1,9 +1,9 @@
 "use client";
 
-import { SonnerToaster } from "@/components/common/Toaster";
-import { useIsDarkMode } from "@/lib/hooks/useIsDarkMode";
 import { ProgressProvider } from "@bprogress/next/app";
 import { RootProvider as FumaThemeProvider } from "fumadocs-ui/provider/next";
+import { SonnerToaster } from "@/components/common/Toaster";
+import { useIsDarkMode } from "@/lib/hooks/useIsDarkMode";
 
 function Providers(props: { children: React.ReactNode }) {
 	const { children } = props;
