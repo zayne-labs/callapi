@@ -1,13 +1,10 @@
 import type { PluginSetupContext } from "@zayne-labs/callapi";
 import { definePlugin } from "@zayne-labs/callapi/utils";
-import { z } from "zod";
 
-const CacheConfigSchema = z.object({
-	cacheLifetime: z.int().positive().optional(),
-	cachePolicy: z.literal(["cache-first", "no-cache"]).optional(),
-});
-
-type CacheConfig = z.infer<typeof CacheConfigSchema>;
+type CacheConfig = {
+	cacheLifetime?: number;
+	cachePolicy?: "cache-first" | "no-cache";
+};
 
 /**
  * Response caching plugin that intercepts fetch requests at the network layer.
@@ -64,7 +61,7 @@ export const cachingPlugin = (cacheConfig: CacheConfig) => {
 		name: "Caching Plugin",
 
 		// eslint-disable-next-line perfectionist/sort-objects -- Ignore
-		defineExtraOptions: () => CacheConfigSchema,
+		defineExtraOptions: () => ({}) as CacheConfig,
 
 		middlewares: ({ options }: PluginSetupContext<{ InferredExtraOptions: CacheConfig }>) => {
 			const { cacheLifetime = initCacheLifeTime, cachePolicy = initCachePolicy } = options;

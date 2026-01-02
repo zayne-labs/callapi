@@ -1,7 +1,11 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { convertToModelMessages, streamText, type ModelMessage } from "ai";
 import { ProvideLinksToolSchema } from "@/lib/chat/ai-tools-schema";
-import { getDocumentationContext, getSystemPromptContext } from "@/lib/chat/context-builder";
+import {
+	getDocumentationContext,
+	getSourceCodeContext,
+	getSystemPromptContext,
+} from "@/lib/chat/context-builder";
 
 const google = createGoogleGenerativeAI({
 	apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
@@ -9,13 +13,13 @@ const google = createGoogleGenerativeAI({
 
 export const maxDuration = 30;
 
+const documentationContext = getDocumentationContext();
+const sourceCodeContext = getSourceCodeContext();
+
 export async function POST(req: Request) {
 	const systemPromptContext = getSystemPromptContext();
 
-	const [reqJson, documentationContext] = await Promise.all([
-		req.json() as unknown as Promise<Record<string, unknown>>,
-		getDocumentationContext(),
-	]);
+	const reqJson = (await req.json()) as unknown as Record<string, unknown>;
 
 	const initMessages = await convertToModelMessages(reqJson.messages as never, {
 		ignoreIncompleteToolCalls: true,
@@ -27,7 +31,11 @@ export async function POST(req: Request) {
 			role: "system",
 		},
 		{
-			content: documentationContext,
+			content: await documentationContext,
+			role: "system",
+		},
+		{
+			content: await sourceCodeContext,
 			role: "system",
 		},
 		...initMessages,
@@ -35,7 +43,7 @@ export async function POST(req: Request) {
 
 	const result = streamText({
 		messages,
-		model: google("gemini-2.5-flash"),
+		model: google("gemini-3-flash-preview"),
 		toolChoice: "auto",
 		tools: {
 			provideLinks: {

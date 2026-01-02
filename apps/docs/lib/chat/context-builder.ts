@@ -1,4 +1,5 @@
-// import { callApi } from "@zayne-labs/callapi";
+import { createFetchClient } from "@zayne-labs/callapi";
+import { z } from "zod";
 import { getLLMText } from "../get-llm-text";
 import { source } from "../source";
 
@@ -21,6 +22,87 @@ export const getDocumentationContext = async () => {
 	];
 
 	return contextParts.join("\n\n");
+};
+
+const GitHubContentItemSchema = z.object({
+	download_url: z.string().nullable(),
+	git_url: z.string(),
+	name: z.string(),
+	path: z.string(),
+	sha: z.string(),
+	size: z.number().optional(),
+	type: z.string(),
+});
+
+const GitHubContentResponseSchema = GitHubContentItemSchema.array();
+
+const GitHubTreeItemSchema = z.object({
+	mode: z.string(),
+	path: z.string(),
+	sha: z.string(),
+	size: z.number().optional(),
+	type: z.enum(["blob", "tree"]),
+	url: z.string(),
+});
+
+const GitHubTreeResponseSchema = z.object({
+	sha: z.string(),
+	tree: GitHubTreeItemSchema.array(),
+	truncated: z.boolean(),
+	url: z.string(),
+});
+
+const callGithubApi = createFetchClient({
+	resultMode: "onlyData",
+	throwOnError: true,
+});
+
+export const getSourceCodeContext = async () => {
+	try {
+		const srcDirGitURL = await callGithubApi(
+			"https://api.github.com/repos/zayne-labs/callapi/contents/packages/callapi",
+			{ schema: { data: GitHubContentResponseSchema } }
+		).then((contents) => contents.find((item) => item.name === "src" && item.type === "dir")?.git_url);
+
+		if (!srcDirGitURL) {
+			throw new Error("Source directory not found");
+		}
+
+		const treeData = await callGithubApi(srcDirGitURL, {
+			query: { recursive: true },
+			schema: { data: GitHubTreeResponseSchema },
+		});
+
+		const filePaths = treeData.tree
+			.filter((item) => item.type === "blob" && item.path.endsWith(".ts"))
+			.map((item) => item.path);
+
+		const fileContents = await Promise.all(
+			filePaths.map(async (filePath) => {
+				const content = await callGithubApi(
+					"https://raw.githubusercontent.com/zayne-labs/callapi/main/packages/callapi/src/:filePath",
+					{
+						params: { filePath },
+						responseType: "text",
+					}
+				);
+
+				return `// File: packages/callapi/src/${filePath}\n${content}`;
+			})
+		);
+
+		return `
+		=== CALLAPI SOURCE CODE CONTEXT ===
+		${fileContents.join("\n\n")}
+	`;
+	} catch (error) {
+		console.error("Failed to fetch source code context:", error);
+
+		return `
+		=== CALLAPI SOURCE CODE CONTEXT ===
+		Failed to fetch source code context.
+	`;
+	}
 };
 
 export const getSystemPromptContext = () => {
