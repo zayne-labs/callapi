@@ -19,8 +19,8 @@
 </p>
 
 <p align="center">
-  <a href="https://zayne-labs-callapi.netlify.app"><b>Documentation</b></a> ·
-  <a href="https://zayne-labs-callapi.netlify.app/docs/getting-started"><b>Getting Started</b></a> ·
+  <a href="https://zayne-labs-callapi.vercel.app"><b>Documentation</b></a> ·
+  <a href="https://zayne-labs-callapi.vercel.app/docs/getting-started"><b>Getting Started</b></a> ·
   <a href="https://github.com/zayne-labs/callapi/tree/main/packages/callapi-plugins"><b>Plugins</b></a>
 </p>
 
@@ -179,7 +179,7 @@ await callApi("@delete/users/123");
 
 And so many more
 
-See the [full documentation](https://zayne-labs-callapi.netlify.app/docs) for the full list of features.
+See the [full documentation](https://zayne-labs-callapi.vercel.app/docs) for the full list of features.
 
 ## Installation
 

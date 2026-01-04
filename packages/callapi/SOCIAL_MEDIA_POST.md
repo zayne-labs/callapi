@@ -284,7 +284,7 @@ That's it. You're done.
 
 ## Links
 
-- **Docs**: <https://zayne-labs-callapi.netlify.app>
+- **Docs**: <https://zayne-labs-callapi.vercel.app>
 - **GitHub**: <https://github.com/zayne-labs/callapi>
 - **NPM**: <https://www.npmjs.com/package/@zayne-labs/callapi>
 
@@ -519,7 +519,7 @@ Data fetching is at the core of most web applications. A robust, well-designed H
 
 CallApi aims to be the most comprehensive yet intuitive fetching library available - handling the boring stuff so you can focus on building features.
 
-📚 Documentation: <https://zayne-labs-callapi.netlify.app>
+📚 Documentation: <https://zayne-labs-callapi.vercel.app>
 💻 GitHub: <https://github.com/zayne-labs/callapi>
 📦 NPM: <https://www.npmjs.com/package/@zayne-labs/callapi>
 

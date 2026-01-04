@@ -19,19 +19,19 @@ export default function HomePage() {
 				</p>
 
 				<div className="flex w-full items-center justify-center gap-4 py-4">
-					<Link href="/docs">
-						<Button className="flex gap-2" size="home-default">
+					<Button className="flex gap-2" size="home-default" asChild={true}>
+						<Link href="/docs">
 							<DocsIcon />
 							Docs
-						</Button>
-					</Link>
+						</Link>
+					</Button>
 
-					<Link href="https://github.com/zayne-labs/callapi">
-						<Button className="flex gap-2" theme="secondary" size="home-default">
+					<Button className="flex gap-2" theme="secondary" size="home-default" asChild={true}>
+						<Link href="https://github.com/zayne-labs/callapi">
 							<GitHubIcon />
 							Github
-						</Button>
-					</Link>
+						</Link>
+					</Button>
 				</div>
 			</div>
 		</main>

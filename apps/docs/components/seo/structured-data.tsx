@@ -1,24 +1,40 @@
+import type { Organization, WebSite, WithContext } from "schema-dts";
 import { baseURL } from "@/lib/metadata";
 
 type StructuredDataProps = {
 	description?: string;
 	title?: string;
-	type?: "documentation" | "organization" | "software";
 	url?: string;
+	variant: "organization" | "website";
 };
 
-const getStructuredData = (options: StructuredDataProps) => {
-	const { description, title, type, url } = options;
+const getStructuredData = (options: StructuredDataProps): WithContext<Organization | WebSite> => {
+	const { description, title, url, variant } = options;
 
 	const baseData = {
 		"@context": "https://schema.org",
-	};
+	} as const;
 
-	switch (type) {
-		case "documentation": {
+	switch (variant) {
+		case "organization": {
 			return {
 				...baseData,
-				"@type": "TechArticle",
+				"@type": "Organization",
+				description: "A lightweight, type-safe Fetch API wrapper with dozens of convenience features.",
+				logo: `${baseURL}/logo.png`,
+				name: "CallApi",
+				sameAs: [
+					"https://github.com/zayne-labs/callapi",
+					"https://www.npmjs.com/package/@zayne-labs/callapi",
+				],
+				url: baseURL,
+			};
+		}
+
+		case "website": {
+			return {
+				...baseData,
+				"@type": "WebSite",
 				author: {
 					"@type": "Organization",
 					name: "Zayne Labs",
@@ -40,42 +56,10 @@ const getStructuredData = (options: StructuredDataProps) => {
 			};
 		}
 
-		case "organization": {
-			return {
-				...baseData,
-				"@type": "Organization",
-				description: "A lightweight, type-safe Fetch API wrapper with dozens of convenience features.",
-				logo: `${baseURL}/logo.png`,
-				name: "CallApi",
-				sameAs: [
-					"https://github.com/zayne-labs/callapi",
-					"https://www.npmjs.com/package/@zayne-labs/callapi",
-				],
-				url: baseURL,
-			};
-		}
-
-		case "software": {
-			return {
-				...baseData,
-				"@type": "SoftwareApplication",
-				applicationCategory: "DeveloperApplication",
-				author: {
-					"@type": "Organization",
-					name: "Zayne Labs",
-					url: "https://github.com/zayne-labs",
-				},
-				description: "A lightweight, type-safe Fetch API wrapper with dozens of convenience features.",
-				downloadUrl: "https://www.npmjs.com/package/@zayne-labs/callapi",
-				name: "CallApi",
-				operatingSystem: "Any",
-				programmingLanguage: "TypeScript",
-				url: baseURL,
-			};
-		}
-
 		default: {
-			return baseData;
+			variant satisfies never;
+			// eslint-disable-next-line ts-eslint/restrict-template-expressions
+			throw new Error(`Invalid variant: ${variant}`);
 		}
 	}
 };

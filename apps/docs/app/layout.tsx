@@ -24,11 +24,9 @@ function RootLayout({ children }: { children: React.ReactNode }) {
 			suppressHydrationWarning={true}
 		>
 			<head>
-				<link rel="icon" href="/favicon/favicon.ico" sizes="any" />
-				<link rel="apple-touch-icon" href="/favicon/apple-touch-icon.png" />
 				<meta name="google-site-verification" content="LH-8qDRpnWdy6YKOKmi18ZQ4gW9EgoeDkarkyQc8Tl8" />
-				<StructuredData type="organization" />
-				<StructuredData type="software" />
+				<StructuredData variant="website" />
+				<StructuredData variant="organization" />
 			</head>
 			<body>
 				<Providers>{children}</Providers>

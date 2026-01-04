@@ -94,7 +94,7 @@ const { data } = await api("/users", {
 
 ## Plugin Development
 
-Want to create your own plugin? Check out the [plugin development guide](https://zayne-labs-callapi.netlify.app/docs/plugins) in the main CallApi documentation.
+Want to create your own plugin? Check out the [plugin development guide](https://zayne-labs-callapi.vercel.app/docs/plugins) in the main CallApi documentation.
 
 Basic plugin structure:
 
@@ -126,9 +126,9 @@ const myPlugin = definePlugin({
 
 For detailed documentation and examples, visit:
 
-- [CallApi Documentation](https://zayne-labs-callapi.netlify.app)
-- [Plugin Guide](https://zayne-labs-callapi.netlify.app/docs/plugins)
-- [Logger Plugin Docs](https://zayne-labs-callapi.netlify.app/docs/plugins/utility/logger)
+- [CallApi Documentation](https://zayne-labs-callapi.vercel.app)
+- [Plugin Guide](https://zayne-labs-callapi.vercel.app/docs/plugins)
+- [Logger Plugin Docs](https://zayne-labs-callapi.vercel.app/docs/plugins/utility/logger)
 
 ## Contributing
 
