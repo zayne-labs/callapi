@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 
 const VERCEL_PROD_URL =
-	process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : process.env.VERCEL_URL;
+	process.env.VERCEL_PROJECT_PRODUCTION_URL ?
+		`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+	:	process.env.VERCEL_PROJECT_PRODUCTION_URL;
 
 const NETLIFY_PROD_URL = process.env.URL;
 
