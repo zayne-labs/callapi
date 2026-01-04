@@ -9,6 +9,11 @@ export function createMetadata(overrides?: Metadata): Metadata {
 	return {
 		...overrides,
 
+		alternates: {
+			canonical: overrides?.alternates?.canonical ?? baseURL,
+			...overrides?.alternates,
+		},
+
 		openGraph: {
 			description: overrides?.description ?? undefined,
 			images: banner,
