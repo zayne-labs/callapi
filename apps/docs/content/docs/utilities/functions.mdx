@@ -1,0 +1,209 @@
+---
+title: Utility Functions
+description: Helper functions and utilities for working with CallApi
+---
+
+CallApi provides utility functions for schemas, plugins, error handling, and data processing.
+
+## Schema & Plugin Utilities
+
+### defineSchema
+
+Creates type-safe schema configurations:
+
+```ts title="api-schema.ts"
+import { defineSchema, fallBackRouteSchemaKey } from "@zayne-labs/callapi/utils";
+import { z } from "zod";
+
+export const apiSchema = defineSchema({
+	[fallBackRouteSchemaKey]: {
+		headers: z.object({
+			"x-api-key": z.string(),
+		}),
+	},
+	"/users/:id": {
+		data: z.object({
+			id: z.number(),
+			name: z.string(),
+			email: z.string().email(),
+		}),
+		params: z.object({
+			id: z.number(),
+		}),
+	},
+});
+```
+
+### definePlugin
+
+Creates type-safe plugins:
+
+```ts title="auth-plugin.ts"
+import { definePlugin } from "@zayne-labs/callapi/utils";
+import { z } from "zod";
+
+export const authPlugin = definePlugin({
+	id: "auth-plugin",
+	name: "Authentication Plugin",
+	defineExtraOptions: () =>
+		z.object({
+			apiKey: z.string(),
+			refreshToken: z.string().optional(),
+		}),
+	setup: ({ options, request }) => ({
+		request: {
+			...request,
+			headers: {
+				...request.headers,
+				Authorization: `Bearer ${options.apiKey}`,
+			},
+		},
+	}),
+});
+```
+
+## Data Processing Utilities
+
+### toFormData
+
+Converts objects to FormData with intelligent type handling:
+
+```ts title="form-data.ts"
+import { toFormData } from "@zayne-labs/callapi/utils";
+
+const formData = toFormData({
+	name: "John",
+	age: 30,
+	tags: ["javascript", "typescript"], // Arrays become multiple entries
+	avatar: fileBlob, // Files and blobs handled correctly
+	settings: { theme: "dark" }, // Objects are JSON stringified
+});
+```
+
+### toQueryString
+
+Converts objects to URL query strings:
+
+```ts title="query-string.ts"
+import { toQueryString } from "@zayne-labs/callapi/utils";
+
+const query = toQueryString({
+	page: 1,
+	tags: ["js", "ts"], // Arrays become multiple params
+	search: "javascript",
+	active: null, // Null/undefined values are skipped
+});
+// Result: "page=1&tags=js&tags=ts&search=javascript"
+```
+
+## Error Handling Utilities
+
+### Error Type Guards
+
+Check error types in result objects:
+
+```ts title="error-guards.ts"
+import { isHTTPError, isJavascriptError, isValidationError } from "@zayne-labs/callapi/utils";
+
+function handleError(error: unknown) {
+	if (isHTTPError(error)) {
+		return `HTTP ${error.originalError.response.status}: ${error.message}`;
+	}
+
+	if (isValidationError(error)) {
+		return `Validation failed: ${error.message}`;
+	}
+
+	// Any error that basically isn't the above two
+	if (isJavascriptError(error)) {
+		return `JavaScript error: ${error.message}`;
+	}
+}
+```
+
+### Error Instance Guards
+
+Check CallApi-specific error instances when using `throwOnError: true`:
+
+```ts title="error-instances.ts"
+import { isHTTPErrorInstance, isValidationErrorInstance } from "@zayne-labs/callapi/utils";
+
+try {
+	const { data } = await apiClient("/users", { throwOnError: true });
+} catch (error) {
+	if (isHTTPErrorInstance(error)) {
+		console.error(`HTTP ${error.response.status}: ${error.message}`);
+	} else if (isValidationErrorInstance(error)) {
+		console.error(`Validation failed: ${error.message}`);
+	}
+}
+```
+
+## Constants
+
+### fallBackRouteSchemaKey
+
+Constant for defining fallback schemas:
+
+```ts title="fallback-schema.ts"
+import { defineSchema, fallBackRouteSchemaKey } from "@zayne-labs/callapi/utils";
+import { z } from "zod";
+
+const schema = defineSchema({
+	[fallBackRouteSchemaKey]: {
+		headers: z.object({
+			"x-api-key": z.string(),
+		}),
+	},
+});
+```
+
+## Complete Example
+
+```ts title="api-setup.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+import {
+	definePlugin,
+	defineSchema,
+	fallBackRouteSchemaKey,
+	isHTTPError,
+	toFormData,
+} from "@zayne-labs/callapi/utils";
+import { z } from "zod";
+
+const apiSchema = defineSchema({
+	[fallBackRouteSchemaKey]: {
+		headers: z.object({ authorization: z.string() }),
+	},
+	"/upload": {
+		data: z.object({ fileId: z.string(), url: z.string() }),
+	},
+});
+
+const loggingPlugin = definePlugin({
+	id: "logging",
+	name: "Request Logger",
+	hooks: {
+		onRequest: ({ options }) => console.log(`Request: ${options.initURL}`),
+	},
+});
+
+const apiClient = createFetchClient({
+	baseURL: "https://api.example.com",
+	schema: apiSchema,
+	plugins: [loggingPlugin],
+});
+
+export async function uploadFile(file: File, metadata: Record<string, any>) {
+	const { data, error } = await apiClient("/upload", {
+		method: "POST",
+		body: toFormData({ file, ...metadata }),
+	});
+
+	if (isHTTPError(error)) {
+		throw new Error(`Upload failed: ${error.message}`);
+	}
+
+	return data;
+}
+```

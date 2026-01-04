@@ -118,10 +118,6 @@ export type PossibleValidationError = UnmaskType<{
 	originalError: ValidationError;
 }>;
 
-export type PossibleJavaScriptOrValidationError = UnmaskType<
-	PossibleJavaScriptError | PossibleValidationError
->;
-
 export type CallApiResultErrorVariant<TErrorData> =
 	| {
 			data: null;
@@ -130,7 +126,12 @@ export type CallApiResultErrorVariant<TErrorData> =
 	  }
 	| {
 			data: null;
-			error: PossibleJavaScriptOrValidationError;
+			error: PossibleJavaScriptError;
+			response: Response | null;
+	  }
+	| {
+			data: null;
+			error: PossibleValidationError;
 			response: Response | null;
 	  };
 

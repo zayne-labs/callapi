@@ -5,7 +5,6 @@ import {
 	type ErrorInfo,
 	type PossibleHTTPError,
 	type PossibleJavaScriptError,
-	type PossibleJavaScriptOrValidationError,
 	type PossibleValidationError,
 } from "./result";
 import type { StreamProgressEvent } from "./stream";
@@ -17,7 +16,7 @@ import type {
 	CallApiRequestOptionsForHooks,
 } from "./types/common";
 import type { DefaultCallApiContext } from "./types/default-types";
-import type { AnyFunction, Awaitable, Prettify } from "./types/type-helpers";
+import type { AnyFunction, Awaitable, DistributiveOmit, Prettify } from "./types/type-helpers";
 
 export interface Hooks<TCallApiContext extends CallApiContext = DefaultCallApiContext> {
 	/**
@@ -215,18 +214,17 @@ export type RequestContext<
 
 export type ValidationErrorContext<
 	TCallApiContext extends Pick<CallApiContext, "InferredExtraOptions" | "Meta"> = DefaultCallApiContext,
-> = RequestContext<TCallApiContext> & {
-	error: PossibleValidationError;
-	response: Response | null;
-};
+> = DistributiveOmit<
+	Extract<CallApiResultErrorVariant<unknown>, { error: PossibleValidationError }>,
+	"data"
+>
+	& RequestContext<TCallApiContext>;
 
 export type SuccessContext<
 	TCallApiContext extends Pick<CallApiContext, "Data" | "InferredExtraOptions" | "Meta"> =
 		DefaultCallApiContext,
-> = RequestContext<TCallApiContext> & {
-	data: TCallApiContext["Data"];
-	response: Response;
-};
+> = DistributiveOmit<CallApiResultSuccessVariant<TCallApiContext["Data"]>, "error">
+	& RequestContext<TCallApiContext>;
 
 export type ResponseContext<
 	TCallApiContext extends Pick<CallApiContext, "Data" | "ErrorData" | "InferredExtraOptions" | "Meta"> =
@@ -244,25 +242,17 @@ export type ResponseContext<
 
 export type RequestErrorContext<
 	TCallApiContext extends Pick<CallApiContext, "InferredExtraOptions" | "Meta"> = DefaultCallApiContext,
-> = RequestContext<TCallApiContext> & {
-	error: PossibleJavaScriptError;
-	response: null;
-};
+> = DistributiveOmit<
+	Extract<CallApiResultErrorVariant<unknown>, { error: PossibleJavaScriptError }>,
+	"data"
+>
+	& RequestContext<TCallApiContext>;
 
 export type ErrorContext<
 	TCallApiContext extends Pick<CallApiContext, "ErrorData" | "InferredExtraOptions" | "Meta"> =
 		DefaultCallApiContext,
-> = RequestContext<TCallApiContext>
-	& (
-		| {
-				error: PossibleHTTPError<TCallApiContext["ErrorData"]>;
-				response: Response;
-		  }
-		| {
-				error: PossibleJavaScriptOrValidationError;
-				response: Response | null;
-		  }
-	);
+> = DistributiveOmit<CallApiResultErrorVariant<TCallApiContext["ErrorData"]>, "data">
+	& RequestContext<TCallApiContext>;
 
 export type ResponseErrorContext<
 	TCallApiContext extends Pick<CallApiContext, "ErrorData" | "InferredExtraOptions" | "Meta"> =

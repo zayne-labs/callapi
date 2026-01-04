@@ -22,27 +22,17 @@ const result = await callBackendApi("/api/users", {
 
 ## Auto Retry
 
-You can set the retry attempts and interval in milliseconds.
+For most use cases, you only need to specify the number of retry attempts:
 
 ```ts title="api.ts"
 const result = await callApi("/api/users", {
-	// Retry up to 3 times
 	retryAttempts: 3,
 });
 ```
 
 ## Advanced Retry Options
 
-CallApi provides flexible retry mechanisms with both linear and exponential backoff strategies. You can customize the retry behavior to suit your specific needs.
-
-### Basic Retry with only number of attempts
-
-```ts title="api.ts"
-const result = await callApi("/api/users", {
-	// Retry up to 3 times
-	retryAttempts: 3,
-});
-```
+CallApi provides flexible retry mechanisms with both linear and exponential backoff strategies.
 
 ### Linear Retry Strategy
 

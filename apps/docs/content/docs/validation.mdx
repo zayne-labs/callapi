@@ -532,7 +532,7 @@ import { z } from "zod";
 const callApi = createFetchClient({
 	schema: defineSchema({
 		// Fallback schema for all routes
-		".": {
+		"@default": {
 			headers: z.object({
 				"x-api-key": z.string(),
 			}),

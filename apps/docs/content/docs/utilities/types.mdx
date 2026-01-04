@@ -1,0 +1,159 @@
+---
+title: Type Utilities
+description: Advanced TypeScript utilities and type helpers for CallApi
+---
+
+CallApi provides advanced TypeScript utilities for complex type scenarios and better type safety.
+
+## Client Context Types
+
+### GetCallApiContext
+
+A utility type that provides type safety and IntelliSense support when defining context types. It ensures your context object conforms to the `CallApiContext` interface:
+
+```ts title="custom-context.ts"
+import type { GetCallApiContext } from "@zayne-labs/callapi";
+
+// GetCallApiContext validates your context structure at compile time
+type MyAppContext = GetCallApiContext<{
+	Data: {
+		id: number;
+		name: string;
+		email: string;
+	};
+	ErrorData: {
+		message: string;
+		code: string;
+		details?: Record<string, any>;
+	};
+	Meta: {
+		userId: string;
+		requestId: string;
+		feature?: string;
+	};
+	ResultMode: "all"; // TypeScript will catch invalid values here
+}>;
+
+// Without GetCallApiContext, you might accidentally define invalid properties
+// This would compile but cause runtime issues:
+// type BadContext = {
+//   data: string; // Wrong! Should be "Data"
+//   invalidProp: boolean; // This shouldn't exist
+// };
+
+// Use with createFetchClientWithContext
+const createAppClient = createFetchClientWithContext<MyAppContext>();
+```
+
+**Why use `GetCallApiContext`?**
+
+- **Type validation**: Ensures your context conforms to the expected structure
+- **IntelliSense support**: Provides autocomplete for valid context properties
+- **Compile-time safety**: Catches typos and invalid properties before runtime
+- **Documentation**: Makes it clear this is a CallApi context type
+
+### createFetchClientWithContext
+
+Create clients with custom context types scoped to specific instances:
+
+```ts title="typed-client.ts"
+import { createFetchClientWithContext, GetCallApiContext } from "@zayne-labs/callapi";
+
+// GetCallApiContext provides type safety at the type level only
+type AppContext = GetCallApiContext<{
+	Data: { id: number; name: string };
+	ErrorData: { message: string; code: string };
+	Meta: { userId: string; requestId: string };
+}>;
+
+const callBackendApi = createFetchClientWithContext<AppContext>()({
+	baseURL: "https://api.example.com",
+	meta: {
+		userId: "123", // Fully typed based on AppContext.Meta
+		requestId: "req-456",
+	},
+});
+
+const { data } = await callBackendApi("/users/1");
+// data is typed as AppContext.Data: { id: number; name: string }
+```
+
+### Global Meta Registration
+
+Register global meta types using module augmentation:
+
+```ts title="types/callapi.d.ts"
+declare module "@zayne-labs/callapi" {
+	interface Register {
+		meta: {
+			userId?: string;
+			requestId?: string;
+			feature?: string;
+			source?: "user-action" | "background" | "system";
+			priority?: "low" | "normal" | "high";
+		};
+	}
+}
+```
+
+## Hook Context Types
+
+Every hook basically has a corresponding context type:
+
+```ts title="hook-types.ts"
+import type { ErrorContext, RequestContext, SuccessContext } from "@zayne-labs/callapi";
+
+function createLoggingHooks<TData, TErrorData>() {
+	return {
+		onRequest: (ctx: RequestContext) => {
+			console.log(`Request: ${ctx.options.initURL}`);
+		},
+
+		onSuccess: (ctx: SuccessContext<{ Data: TData }>) => {
+			console.log(`Success: ${ctx.data}`);
+		},
+
+		onError: (ctx: ErrorContext<{ ErrorData: TErrorData }>) => {
+			console.log(`Error: ${ctx.error.message}`);
+		},
+	};
+}
+```
+
+## Plugin Types
+
+### CallApiPlugin
+
+Type for defining plugins:
+
+```ts title="plugin-types.ts"
+import type { CallApiPlugin } from "@zayne-labs/callapi";
+import { z } from "zod";
+
+const myOptionsSchema = z.object({
+	apiKey: z.string(),
+	debug: z.boolean().default(false),
+});
+
+type MyPluginContext = GetCallApiContext<{
+	InferredExtraOptions: typeof myOptionsSchema;
+}>;
+
+const myPlugin = {
+	id: "my-plugin",
+	name: "My Plugin",
+	setup: ({ options }) => {
+		console.log(`API Key: ${options.apiKey}, Debug: ${options.debug}`);
+		return {};
+	},
+	hooks: {
+		onRequest: ({ options }) => {
+			if (options.debug) {
+				console.log("Debug mode enabled");
+			}
+		},
+	},
+} satisfies CallApiPlugin<MyPluginContext>;
+```
+
+These type utilities provide advanced TypeScript support for complex scenarios while maintaining type safety throughout your application.

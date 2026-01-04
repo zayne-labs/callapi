@@ -44,17 +44,17 @@ export interface Register {
 export type GlobalMeta =
 	Register extends { meta?: infer TMeta extends DefaultMetaObject } ? TMeta : DefaultMetaObject;
 
-export type CallApiContext = {
+export interface CallApiContext {
 	Data?: DefaultDataType;
 	ErrorData?: DefaultDataType;
 	InferredExtraOptions?: unknown;
 	Meta?: DefaultMetaObject;
 	ResultMode?: ResultModeType;
-};
+}
 
 export type GetCallApiContext<TCallApiContext extends CallApiContext> = TCallApiContext;
 
-export type GetCallApiContextStrict<TCallApiContext extends Required<CallApiContext>> = TCallApiContext;
+export type GetCallApiContextRequired<TCallApiContext extends Required<CallApiContext>> = TCallApiContext;
 
 export type OverrideCallApiContext<
 	TFullCallApiContext extends CallApiContext,

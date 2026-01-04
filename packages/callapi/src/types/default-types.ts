@@ -1,5 +1,5 @@
 import type { CallApiPlugin } from "../plugins";
-import type { CallApiContext, GlobalMeta } from "./common";
+import type { CallApiContext, GlobalMeta, OverrideCallApiContext } from "./common";
 import type { Prettify } from "./type-helpers";
 
 export type DefaultDataType = unknown;
@@ -11,7 +11,5 @@ export type DefaultThrowOnError = boolean;
 export type DefaultMetaObject = Record<string, unknown>;
 
 export type DefaultCallApiContext = Prettify<
-	Required<Omit<CallApiContext, "Meta">> & {
-		Meta: GlobalMeta;
-	}
+	OverrideCallApiContext<Required<CallApiContext>, { Meta: GlobalMeta }>
 >;

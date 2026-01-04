@@ -10,7 +10,7 @@ icon: GitCompareArrows
 
 **Simple:** Based on the Fetch API and mirrors its interface 1-to-1. Only adds useful extra features with sensible defaults.
 
-**Type-safe:** Built with TypeScript. Full type support for responses and errors via schemas, validators and manual generics. Even non-TypeScript users will still get proper type information and intellisense. (Automatic type generation via OpenAPI schemas will be available soon.)
+**Type-safe:** Built with TypeScript. Full type support for responses and errors via schemas, validators and manual generics. Even non-TypeScript users will still get proper type information and intellisense.
 
 **Extensible:** Plugins and hooks let you add or modify features without changing the core code.
 
@@ -26,7 +26,13 @@ But major issues with axios in this day and age involve the facts that:
 - Lacks / doesn't really care about type safety, which is a real DX problem.
 - It's quite on the heavier side, meaning it might not be suitable for smaller projects under a bundle size constraint.
 
-CallApi solves all these problems out of the box, and provides an even larger feature set
+CallApi solves all these problems out of the box, and provides an even larger feature set including and not limited to:
+
+- **Request deduplication** - Prevents duplicate requests and race conditions
+- **Streaming support** - Built-in progress tracking for uploads/downloads
+- **Schema validation** - Runtime validation with TypeScript inference
+- **Advanced retries** - Exponential backoff and custom retry conditions
+- **Plugin system** - Extensible architecture for custom functionality
 
 ## vs Ofetch
 

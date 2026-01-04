@@ -36,11 +36,13 @@ The above is equivalent to writing the following with Fetch:
 
 ```ts
 fetch("http://localhost:3000/users/123", {
-	headers: { Authorization: `Bearer my-token` },
+	headers: {
+		Authorization: `Bearer my-token`,
+	},
 });
 ```
 
-You can also pass a function that returns a string.
+You can also pass a function that returns a string or a promise that resolves to a string. This is useful when you need to retrieve the token dynamically
 
 ```ts title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -84,7 +86,9 @@ The above is equivalent to writing the following with Fetch:
 
 ```ts
 fetch("http://localhost:3000/users/123", {
-	headers: { Authorization: `Token my-token` },
+	headers: {
+		Authorization: `Token my-token`,
+	},
 });
 ```
 

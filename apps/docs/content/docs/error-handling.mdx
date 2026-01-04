@@ -142,9 +142,7 @@ As seen in the case above, if the data received from the API does not match the 
 ## Handling Thrown Errors
 
 Sometimes you might prefer that errors are thrown instead of returned in the result object. Set `throwOnError` to `true` to enable this behavior.
-This is useful when integrating with libraries that expect promises to reject on failure (like React Query, SWR, or TanStack Query).
-
-You can use the `isHTTPErrorInstance` and `isValidationErrorInstance` utilities to check if the error is an instance of `HTTPError` or `ValidationError` respectively.
+This is useful when integrating with libraries that expect promises to reject on failure (like TanStack Query).
 
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
@@ -185,17 +183,50 @@ try {
 
 **Conditional throwing:**
 
-You can also pass a function to `throwOnError` for conditional throwing based on the error context.
-This function will be called with the error context object, and you can throw an error based on the context.
-
-For example, you can throw an error only if the response status is 401 (Unauthorized):
+You can also pass a function to `throwOnError` for conditional throwing based on the error context:
 
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
+import { isHTTPError, isValidationError } from "@zayne-labs/callapi/utils";
 
-// Only throw for specific status codes
-const { data } = await callApi("https://my-api.com/api/v1/session", {
+// Only throw for authentication errors
+const resultOne = await callApi("https://my-api.com/api/v1/session", {
 	throwOnError: ({ response }) => response?.status === 401,
+});
+
+// Throw for client errors (user mistakes) but not server errors (temporary issues)
+const resultTwo = await callApi("https://my-api.com/api/users", {
+	throwOnError: ({ response }) => {
+		if (!response) {
+			return false;
+		}
+
+		return response.status >= 400 && response.status < 500;
+	},
+});
+
+// Complex conditional logic based on error type and context
+const resultThree = await callApi("https://my-api.com/api/sensitive", {
+	throwOnError: ({ error, response, options }) => {
+		// Always throw validation errors - data integrity is critical
+		if (isValidationError(error)) {
+			return true;
+		}
+
+		// Throw HTTP errors for sensitive endpoints
+		if (isHTTPError(error) && response?.status === 403 && options.initURL?.includes("/sensitive")) {
+			return true;
+		}
+
+		// Throw rate limiting errors during business hours (handle differently off-hours)
+		if (response?.status === 429) {
+			const hour = new Date().getHours();
+			return hour >= 9 && hour <= 17;
+		}
+
+		// Return other errors in result object
+		return false;
+	},
 });
 ```
 

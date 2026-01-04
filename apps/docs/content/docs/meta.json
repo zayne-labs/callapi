@@ -22,8 +22,10 @@
 		"plugins",
 		"advanced-options",
 
-		"---Plugins---",
-		"plugins/utility",
+		"---Utilities---",
+		"utilities/plugins",
+		"utilities/functions",
+		"utilities/types",
 
 		"---API Reference---",
 		"extra-options",

@@ -3,96 +3,59 @@ title: Request & Response Helpers
 description: Content type handling, response conversion, and request body processing
 ---
 
-## Automatic Content-Type Detection
+CallApi automatically handles content types and response parsing, with utilities for common data formats.
 
-The `Content-Type` header is automatically set based on the request body.
+## Automatic Content-Type Detection and Assignment
 
-Data types eligible for this automatic setting include:
+Request bodies are automatically assigned the correct `Content-Type` header:
 
-- Object literals → `application/json`
-- Query Strings → `application/x-www-form-urlencoded`
-- FormData → `multipart/form-data` (handled by the browser)
+- **Objects** → `application/json`
+- **Query strings** → `application/x-www-form-urlencoded`
+- **FormData** → `multipart/form-data` (browser handled)
 
-```ts title="api.ts"
+```ts title="content-types.ts"
 import { callApi } from "@zayne-labs/callapi";
 
-// application/json
-await callApi("https://api.example.com/data", {
+// Automatically sets Content-Type: application/json
+await callApi("/api/users", {
 	method: "POST",
 	body: { name: "John", age: 30 },
 });
 
-// application/x-www-form-urlencoded
-await callApi("https://api.example.com/form", {
+// Automatically sets Content-Type: application/x-www-form-urlencoded
+await callApi("/api/form", {
 	method: "POST",
 	body: "name=John&age=30",
 });
 
-// The browser will handle the Content-Type automatically (multipart/form-data)
-await callApi("https://api.example.com/upload", {
-	method: "POST",
-	body: formData,
-});
-```
-
-Override the default content type if the need arises:
-
-```ts title="api.ts"
-import { callApi } from "@zayne-labs/callapi";
-
-await callApi("https://api.example.com/custom", {
+// Override when needed
+await callApi("/api/custom", {
 	method: "POST",
 	body: data,
-	headers: {
-		"Content-Type": "application/custom+json",
-	},
+	headers: { "Content-Type": "application/custom+json" },
 });
 ```
 
-## Smart Response Parser
+## Smart Response Parsing
 
-CallApi features a smart response parser that automatically detects the appropriate response type based on the `Content-Type` header, eliminating the need to manually specify `responseType` in most cases.
+Responses are automatically parsed based on their `Content-Type` header:
 
-<Callout type="info">
-	The automatic detection only occurs when you don't explicitly set a `responseType`. If you provide a
-	`responseType`, it will always be used regardless of the `Content-Type` header.
-</Callout>
+- **JSON types** (`application/json`, `application/vnd.api+json`) → Parsed as JSON
+- **Text types** (`text/*`, `application/xml`) → Parsed as text
+- **Everything else** → Parsed as blob
 
-### Automatic Response Type Detection
-
-When no `responseType` is specified, CallApi automatically determines how to parse the response by examining the `Content-Type` header:
-
-**JSON Detection:**
-
-- Matches `application/json` and JSON variants like `application/vnd.api+json`, `application/ld+json`
-- Uses regex pattern: `/^application\/(?:[\w!#$%&*.^`~-]\*\+)?json(;.+)?$/i`
-
-**Text Detection:**
-
-- Any content type starting with `text/` (e.g., `text/plain`, `text/html`, `text/css`)
-- Specific types: `image/svg+xml`, `application/xml`, `application/xhtml+xml`, `application/html`
-
-**Binary Detection (Blob):**
-
-- Everything else (images, PDFs, videos, unknown types)
-- Fallback when no `Content-Type` header is present
-
-```ts title="api.ts"
+```ts title="response-parsing.ts"
 import { callApi } from "@zayne-labs/callapi";
 
-// Automatically parsed as JSON (Content-Type: application/json)
-const { data: user } = await callApi("https://api.example.com/user");
-
-// Automatically parsed as text (Content-Type: text/html)
-const { data: html } = await callApi("https://api.example.com/page");
-
-// Automatically parsed as blob (Content-Type: image/png)
-const { data: image } = await callApi("https://api.example.com/avatar.png");
+// Automatically parsed based on Content-Type response header
+const { data: user } = await callApi("/api/user"); // JSON
+const { data: html } = await callApi("/page.html"); // Text
+const { data: image } = await callApi("/avatar.png"); // Blob
 ```
 
 ### Manual Response Type Override
 
-You can still manually specify the response type when needed:
+You can still manually specify the response type if needed:
 
 Available response types include:
 
@@ -107,133 +70,110 @@ Available response types include:
 ```ts title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
 
-// Force specific response types when needed
-const { data: imageBlob } = await callApi("https://api.example.com/image", {
-	responseType: "blob", // Override automatic detection
+const { data: imageBlob } = await callApi("/image", {
+	responseType: "blob",
 });
 
-const { data: rawText } = await callApi("https://api.example.com/data.json", {
-	responseType: "text", // Get JSON as raw text instead of parsed object
+const { data: rawText } = await callApi("/data.json", {
+	responseType: "text", // Get JSON as raw text
 });
 
-const { data: buffer } = await callApi("https://api.example.com/binary", {
-	responseType: "arrayBuffer", // Get as ArrayBuffer for binary processing
+const { data: buffer } = await callApi("/binary", {
+	responseType: "arrayBuffer",
 });
 
-// Stream large responses
-const { data: stream } = await callApi("https://api.example.com/large-file", {
-	responseType: "stream", // Get ReadableStream for progressive processing
+const { data: stream } = await callApi("/large-file", {
+	responseType: "stream", // ReadableStream for progressive processing
 });
 ```
 
-**Benefits over Fetch:**
+### Custom Response Parser
 
-```ts
-// With CallApi - automatic detection
-const { data } = await callApi("https://api.example.com/user");
+Use a custom parser function:
 
-// With Fetch - manual parsing required
-const response = await fetch("https://api.example.com/user");
-const data = await response.json(); // You must know/guess the response type
-```
-
-Suppose you want to parse a response with a custom function other than the default `JSON.parse`. In that case, you can pass a custom parser function to the `responseParser` option:
-
-```ts title="api.ts"
+```ts title="custom-parser.ts"
 import { callApi } from "@zayne-labs/callapi";
 
-const { data, error } = await callApi("https://api.example.com/data", {
+const { data } = await callApi("/api/data", {
 	responseParser: (responseString) => customParser(responseString),
 });
 ```
 
-## Custom Request Bodies
+## Request Body Utilities
 
-CallApi naturally supports all request body types that Fetch does, with a few additional conveniences:
+### Object Bodies
 
-### Object literals
+Objects are automatically JSON stringified:
 
-```ts title="api.ts"
+```ts title="object-bodies.ts"
 import { callApi } from "@zayne-labs/callapi";
 
-const result = await callApi("https://api.example.com/user", {
+// CallApi handles this automatically
+await callApi("/api/user", {
 	method: "POST",
 	body: { name: "John", age: 30 },
 });
 
-// Doing this in Fetch would imply:
-const response = await fetch("https://api.example.com/user", {
-	method: "POST",
-	headers: { "Content-Type": "application/json" },
-	body: JSON.stringify({ name: "John", age: 30 }),
-});
+// Equivalent to manual fetch:
+// fetch("/api/user", {
+//   method: "POST",
+//   headers: { "Content-Type": "application/json" },
+//   body: JSON.stringify({ name: "John", age: 30 }),
+// });
 ```
 
-You could also provide a custom serializer/stringifier, other than the default `JSON.stringify`, for objects passed to the request body via the `bodySerializer` option.
+### Custom Body Serializer
 
-```ts title="api.ts"
+Override the default JSON serialization:
+
+```ts title="custom-serializer.ts"
 import { callApi } from "@zayne-labs/callapi";
 
-const result = await callApi("https://api.example.com/data", {
+await callApi("/api/data", {
 	method: "POST",
 	body: { name: "John", age: 30 },
-	bodySerializer: (body) => serialize(body),
+	bodySerializer: (body) => customSerialize(body),
 });
 ```
 
-### Query Strings
+### Query String Bodies
 
-Fetch supports [query strings](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) as a request body out of the box. However this usually requires manual setting with `new URLSearchParams()` and `set()` or `append()`.
+Convert objects to URL-encoded strings:
 
-CallApi provides the `toQueryString` utility that converts objects to URL-encoded strings:
-
-```ts title="api.ts"
+```ts title="query-string-bodies.ts"
 import { callApi } from "@zayne-labs/callapi";
 import { toQueryString } from "@zayne-labs/callapi/utils";
 
-const result = await callApi("https://api.example.com/search", {
+await callApi("/api/search", {
 	method: "POST",
 	body: toQueryString({ name: "John", age: 30 }),
 });
-
-// The above request is equivalent to this
-fetch("https://api.example.com/search", {
-	method: "POST",
-	headers: { "Content-Type": "application/x-www-form-urlencoded" },
-	body: "name=John&age=30",
-});
+// Body: "name=John&age=30"
+// Content-Type: application/x-www-form-urlencoded
 ```
 
-### FormData
+### FormData Bodies
 
-CallApi provides the `toFormData` utility that converts objects to FormData.
+Convert objects to FormData with intelligent type handling:
 
-```ts title="api.ts"
+```ts title="formdata-bodies.ts"
 import { callApi } from "@zayne-labs/callapi";
 import { toFormData } from "@zayne-labs/callapi/utils";
 
-const result = await callApi("https://api.example.com/upload", {
-	method: "POST",
-	body: toFormData({ name: "John", age: 30, active: true }),
-});
-```
-
-The utility handles various data types:
-
-- **Primitives/Files/Blobs**: Added directly to FormData
-- **Arrays**: Each item is appended to the same key (allows multiple values)
-- **Objects**: JSON stringified before adding to FormData
-
-```ts title="api.ts"
-import { callApi } from "@zayne-labs/callapi";
-import { toFormData } from "@zayne-labs/callapi/utils";
-
-const result = await callApi("https://api.example.com/upload", {
+await callApi("/api/upload", {
 	method: "POST",
 	body: toFormData({
-		avatar: fileBlob,
-		tags: ["developer", "designer"],
-		metadata: { role: "admin", level: 5 },
+		avatar: imageFile, // Files/blobs added directly
+		tags: ["dev", "designer"], // Arrays become multiple entries
+		metadata: { role: "admin" }, // Objects are JSON stringified
+		name: "John", // Primitives added as-is
 	}),
 });
 ```
+
+**How toFormData handles different types:**
+
+- **Files/Blobs** → Added directly
+- **Arrays** → Multiple entries with same key
+- **Objects** → JSON stringified
+- **Primitives** → Added as-is
