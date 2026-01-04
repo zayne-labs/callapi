@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 
 export const baseURL =
-	process.env.NODE_ENV === "development" || !process.env.URL ?
-		new URL("http://localhost:3000")
-	:	new URL(process.env.URL);
+	process.env.NODE_ENV === "development" || !process.env.URL ? "http://localhost:3000" : process.env.URL;
 
 const banner = "/banner.png";
 

@@ -13,7 +13,7 @@ import { LLMCopyButton, ViewOptions } from "@/components/ai/page-actions";
 import { getMDXComponents } from "@/components/common";
 import { owner, repo } from "@/lib/github";
 import { createMetadata } from "@/lib/metadata";
-import { source } from "@/lib/source";
+import { getPageImage, source } from "@/lib/source";
 
 export const revalidate = 86400;
 
@@ -86,9 +86,9 @@ export async function generateMetadata({ params }: PageProps<"/docs/[[...slug]]"
 
 	const image = {
 		height: 630,
-		url: ["/og", ...slug, "image.webp"].join("/"),
+		url: getPageImage(page).url,
 		width: 1200,
-	};
+	} satisfies NonNullable<Metadata["openGraph"]>["images"];
 
 	return createMetadata({
 		description,

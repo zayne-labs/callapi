@@ -1,5 +1,6 @@
 import { loader, type InferMetaType, type InferPageType, type LoaderPlugin } from "fumadocs-core/source";
 import { lucideIconsPlugin } from "fumadocs-core/source/lucide-icons";
+import { createElement } from "react";
 import { docs } from "@/.source/server";
 
 const pageTreeCodeTitles = () => {
@@ -12,7 +13,7 @@ const pageTreeCodeTitles = () => {
 				) {
 					return {
 						...node,
-						name: <code className="text-[0.8125rem]">{node.name}</code>,
+						name: createElement("code", { children: node.name, className: "text-[0.8125rem]" }),
 					};
 				}
 
@@ -26,14 +27,16 @@ export const source = loader({
 	baseUrl: "/docs",
 	plugins: [pageTreeCodeTitles(), lucideIconsPlugin()],
 	source: docs.toFumadocsSource(),
-	// icon: (iconName) => {
-	// 	if (!iconName) return;
-
-	// 	if (!(iconName in lucideIcons)) return;
-
-	// 	return createElement(lucideIcons[iconName as keyof typeof lucideIcons]);
-	// },
 });
 
 export type Page = InferPageType<typeof source>;
 export type Meta = InferMetaType<typeof source>;
+
+export function getPageImage(page: InferPageType<typeof source>) {
+	const segments = [...page.slugs, "image.png"];
+
+	return {
+		segments,
+		url: `/og/docs/${segments.join("/")}`,
+	};
+}

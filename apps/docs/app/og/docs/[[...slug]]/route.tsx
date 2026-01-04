@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import { ImageResponse } from "next/og";
-import { source } from "@/lib/source";
+import { getPageImage, source } from "@/lib/source";
 import { getImageResponseOptions, generate as MetadataImage } from "./generate";
 
 export const revalidate = false;
 
-export async function GET(_req: Request, { params }: RouteContext<"/og/[[...slug]]">) {
+export async function GET(_req: Request, { params }: RouteContext<"/og/docs/[[...slug]]">) {
 	const { slug = [] } = await params;
 
 	const page = source.getPage(slug.slice(0, -1));
@@ -18,11 +18,9 @@ export async function GET(_req: Request, { params }: RouteContext<"/og/[[...slug
 	);
 }
 
-export function generateStaticParams(): Array<{
-	slug: string[];
-}> {
-	return source.generateParams().map((page) => ({
-		...page,
-		slug: [...page.slug, "image.png"],
+export function generateStaticParams() {
+	return source.getPages().map((page) => ({
+		lang: page.locale,
+		slug: getPageImage(page).segments,
 	}));
 }

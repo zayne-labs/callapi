@@ -8,25 +8,29 @@ export type GenerateProps = {
 	title: ReactNode;
 };
 
-const font = fs.readFile("./lib/og/JetBrainsMono-Regular.ttf");
-const fontBold = fs.readFile("./lib/og/JetBrainsMono-Bold.ttf");
+// eslint-disable-next-line unicorn/prefer-top-level-await
+const font = fs.readFile("./lib/og/JetBrainsMono-Regular.ttf").then(
+	(data) =>
+		({
+			data,
+			name: "Mono",
+			weight: 400,
+		}) as const
+);
+
+// eslint-disable-next-line unicorn/prefer-top-level-await
+const fontBold = fs.readFile("./lib/og/JetBrainsMono-Bold.ttf").then(
+	(data) =>
+		({
+			data,
+			name: "Mono",
+			weight: 600,
+		}) as const
+);
 
 export const getImageResponseOptions = async (): Promise<ImageResponseOptions> => {
-	const [fontResult, fontBoldResult] = await Promise.all([font, fontBold]);
-
 	return {
-		fonts: [
-			{
-				data: fontResult,
-				name: "Mono",
-				weight: 400,
-			},
-			{
-				data: fontBoldResult,
-				name: "Mono",
-				weight: 600,
-			},
-		],
+		fonts: await Promise.all([font, fontBold]),
 		// format: "webp",
 		height: 630,
 		width: 1200,
@@ -88,7 +92,6 @@ export const generate = (props: GenerateProps) => {
 				>
 					{description}
 				</p>
-
 				<div
 					style={{
 						alignItems: "center",
@@ -100,14 +103,14 @@ export const generate = (props: GenerateProps) => {
 					}}
 				>
 					{logo}
-					<p
+					<span
 						style={{
 							fontSize: "46px",
 							fontWeight: 600,
 						}}
 					>
 						{siteName}
-					</p>
+					</span>
 				</div>
 			</div>
 		</div>
