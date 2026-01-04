@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 
 export const baseURL =
-	process.env.NODE_ENV === "development" || !process.env.URL ? "http://localhost:3000" : process.env.URL;
+	(
+		process.env.NODE_ENV === "development"
+		|| !process.env.VERCEL_PROJECT_PRODUCTION_URL
+		|| !process.env.URL
+	) ?
+		"http://localhost:3000"
+	:	process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.URL;
 
 const banner = "/banner.png";
 
