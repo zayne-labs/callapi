@@ -3,12 +3,12 @@ import { baseURL } from "@/lib/metadata";
 
 const robots = (): MetadataRoute.Robots => {
 	return {
-		host: baseURL.toString(),
+		host: baseURL,
 		rules: {
 			allow: "/",
 			userAgent: "*",
 		},
-		sitemap: `${baseURL}sitemap.xml`,
+		sitemap: new URL("/sitemap.xml", baseURL).toString(),
 	};
 };
 

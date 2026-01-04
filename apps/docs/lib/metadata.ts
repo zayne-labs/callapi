@@ -1,20 +1,11 @@
 import type { Metadata } from "next";
 
-const VERCEL_PROD_URL =
-	process.env.VERCEL_PROJECT_PRODUCTION_URL ?
-		`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-	:	process.env.VERCEL_PROJECT_PRODUCTION_URL;
-
-const NETLIFY_PROD_URL = process.env.URL;
-
-const PRODUCTION_URL = VERCEL_PROD_URL ?? NETLIFY_PROD_URL;
-
 export const baseURL =
-	process.env.NODE_ENV === "development" || !PRODUCTION_URL ?
-		new URL("http://localhost:3000")
-	:	new URL(PRODUCTION_URL);
+	process.env.NODE_ENV === "development" || !process.env.VERCEL_PROJECT_PRODUCTION_URL ?
+		"http://localhost:3000"
+	:	`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
 
-const banner = "/banner.png";
+const bannerImage = "/banner.png";
 
 export function createMetadata(overrides?: Metadata): Metadata {
 	return {
@@ -27,7 +18,7 @@ export function createMetadata(overrides?: Metadata): Metadata {
 
 		openGraph: {
 			description: overrides?.description ?? undefined,
-			images: banner,
+			images: bannerImage,
 			siteName: "CallApi",
 			title: overrides?.title ?? undefined,
 			type: "website",
@@ -39,7 +30,7 @@ export function createMetadata(overrides?: Metadata): Metadata {
 			card: "summary_large_image",
 			creator: "@zayne_el_kaiser",
 			description: overrides?.description ?? undefined,
-			images: banner,
+			images: bannerImage,
 			title: overrides?.title ?? undefined,
 
 			...overrides?.twitter,

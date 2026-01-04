@@ -47,7 +47,7 @@ export const generate = (props: GenerateProps) => {
 		// eslint-disable-next-line nextjs/no-img-element
 		<img
 			alt="CallApi"
-			src={`${baseURL}/logo.png`}
+			src={new URL("/logo.png", baseURL).toString()}
 			width={60}
 			height={60}
 			style={{
