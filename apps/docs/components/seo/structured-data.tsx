@@ -21,13 +21,13 @@ const getStructuredData = (options: StructuredDataProps): WithContext<Organizati
 				...baseData,
 				"@type": "Organization",
 				description: "A lightweight, type-safe Fetch API wrapper with dozens of convenience features.",
-				logo: `${baseURL}/logo.png`,
+				logo: `${baseURL}logo.png`,
 				name: "CallApi",
 				sameAs: [
 					"https://github.com/zayne-labs/callapi",
 					"https://www.npmjs.com/package/@zayne-labs/callapi",
 				],
-				url: baseURL,
+				url: baseURL.toJSON(),
 			};
 		}
 
@@ -44,7 +44,7 @@ const getStructuredData = (options: StructuredDataProps): WithContext<Organizati
 					description ?? "Documentation for CallApi - A lightweight, type-safe Fetch API wrapper",
 				headline: title ?? "CallApi Documentation",
 				mainEntityOfPage: {
-					"@id": url ?? baseURL,
+					"@id": url ?? baseURL.toString(),
 					"@type": "WebPage",
 				},
 				publisher: {
@@ -52,7 +52,7 @@ const getStructuredData = (options: StructuredDataProps): WithContext<Organizati
 					name: "Zayne Labs",
 					url: "https://github.com/zayne-labs",
 				},
-				url: url ?? baseURL,
+				url: url ?? baseURL.toString(),
 			};
 		}
 
