@@ -13,30 +13,30 @@ import { Button } from "../ui/button";
 const cache = new Map<string, string>();
 
 type CopyBtnProps = {
-	markdownUrl: string;
+	markdownURL: string;
 };
 
 export function LLMCopyButton(props: CopyBtnProps) {
-	const { markdownUrl } = props;
+	const { markdownURL } = props;
 
 	const [isLoading, setLoading] = useState(false);
 
 	const [checked, onClick] = useCopyButton(async () => {
-		const cached = cache.get(markdownUrl);
+		const cached = cache.get(markdownURL);
 
 		if (cached) {
 			await navigator.clipboard.writeText(cached);
 			return;
 		}
 
-		const markDownPromise = callApi(markdownUrl, {
+		const markDownPromise = callApi(markdownURL, {
 			responseType: "text",
 		}).then((result) => {
 			if (result.error || !result.data) {
 				return "";
 			}
 
-			cache.set(markdownUrl, result.data);
+			cache.set(markdownURL, result.data);
 
 			return result.data;
 		});
@@ -76,17 +76,17 @@ type ViewOptionsProps = {
 	/**
 	 * Source file URL on GitHub
 	 */
-	githubUrl: string;
+	githubURL: string;
 	/**
 	 * A URL to the raw Markdown/MDX content of page
 	 */
-	markdownUrl: string;
+	markdownURL: string;
 };
 
 export function ViewOptions(props: ViewOptionsProps) {
-	const { githubUrl, markdownUrl } = props;
+	const { githubURL, markdownURL } = props;
 
-	const items = useMemo(() => getLinkViewItems(markdownUrl, githubUrl), [githubUrl, markdownUrl]);
+	const items = useMemo(() => getLinkViewItems(markdownURL, githubURL), [githubURL, markdownURL]);
 
 	return (
 		<Popover>
