@@ -201,10 +201,13 @@ import { createFetchClient } from "@zayne-labs/callapi";
 const client = createFetchClient({
 	fetchMiddleware: (ctx) => async (input, init) => {
 		if (!navigator.onLine) {
-			return Response.json({ error: "No internet connection" }, {
-				status: 503,
-				headers: { "Content-Type": "application/json" },
-			});
+			return Response.json(
+				{ error: "No internet connection" },
+				{
+					status: 503,
+					headers: { "Content-Type": "application/json" },
+				}
+			);
 		}
 
 		return ctx.fetchImpl(input, init);
@@ -248,19 +251,25 @@ const client = createFetchClient({
 			const response = await ctx.fetchImpl(input, init);
 
 			if (response.status === 503) {
-				return Response.json({ cached: true }, {
-					status: 200,
-					headers: { "Content-Type": "application/json" },
-				});
+				return Response.json(
+					{ cached: true },
+					{
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					}
+				);
 			}
 
 			return response;
 		} catch (error) {
 			if (error instanceof TypeError && error.message.includes("fetch")) {
-				return Response.json({ error: "Network error" }, {
-					status: 0,
-					headers: { "Content-Type": "application/json" },
-				});
+				return Response.json(
+					{ error: "Network error" },
+					{
+						status: 0,
+						headers: { "Content-Type": "application/json" },
+					}
+				);
 			}
 
 			throw error;

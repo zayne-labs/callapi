@@ -32,10 +32,13 @@ import { createFetchClient } from "@zayne-labs/callapi";
 
 // Mock fetch for testing
 const mockFetch = async (url: string | Request | URL, init?: RequestInit) => {
-	return Response.json({ mocked: true }, {
-		status: 200,
-		headers: { "Content-Type": "application/json" },
-	});
+	return Response.json(
+		{ mocked: true },
+		{
+			status: 200,
+			headers: { "Content-Type": "application/json" },
+		}
+	);
 };
 
 const callApi = createFetchClient({
