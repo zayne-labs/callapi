@@ -1,9 +1,26 @@
 import type { Metadata } from "next";
 
+const VERCEL_PROJECT_PRODUCTION_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+const NETLIFY_PRODUCTION_URL = process.env.URL;
+
+const withHttps = (url: string | undefined) => {
+	if (!url) {
+		return;
+	}
+
+	if (!url.startsWith("https")) {
+		return `https://${url}`;
+	}
+
+	return url;
+};
+
+const SELECTED_PRODUCTION_URL = withHttps(VERCEL_PROJECT_PRODUCTION_URL ?? NETLIFY_PRODUCTION_URL);
+
 export const baseURL =
-	process.env.NODE_ENV === "development" || !process.env.VERCEL_PROJECT_PRODUCTION_URL ?
+	process.env.NODE_ENV === "development" || !SELECTED_PRODUCTION_URL ?
 		"http://localhost:3000"
-	:	`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+	:	SELECTED_PRODUCTION_URL;
 
 const bannerImage = "/banner.png";
 
