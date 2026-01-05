@@ -71,7 +71,7 @@ Example: Multiple components requesting user data simultaneously
 ```tsx title="api.ts"
 import { useEffect, useState } from "react";
 
-function ProfileHeader() {
+export default function ProfileHeader() {
 	const [userData, setUserData] = useState(null);
 
 	useEffect(() => {

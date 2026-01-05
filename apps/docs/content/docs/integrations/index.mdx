@@ -20,7 +20,7 @@ Most integrations follow a similar pattern:
 
 Here's a comprehensive example showing the common integration pattern:
 
-```ts title="example.ts"
+```tsx title="example.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
 import { isHTTPErrorInstance } from "@zayne-labs/callapi/utils";
 
@@ -30,12 +30,21 @@ const callMainApi = createFetchClient({
 	throwOnError: true, // Libraries like React Query expect thrown errors
 });
 
-// React Query
-const queryResult = useQuery({
-	queryKey: ["user", userId],
-	queryFn: () => callMainApi(`/users/${userId}`),
-});
+export default function App() {
+	// React Query
+	const queryResult = useQuery({
+		queryKey: ["user", userId],
+		queryFn: () => callMainApi(`/users/${userId}`),
+	});
 
-// SWR
-const swrResult = useSWR(`/users/${userId}`, () => callMainApi(`/users/${userId}`));
+	// SWR
+	const swrResult = useSWR(`/users/${userId}`, () => callMainApi(`/users/${userId}`));
+
+	return (
+		<div>
+			<p>{queryResult.data.name}</p>
+			<p>{swrResult.data.name}</p>
+		</div>
+	);
+}
 ```

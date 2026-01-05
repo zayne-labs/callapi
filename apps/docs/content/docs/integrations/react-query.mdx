@@ -16,9 +16,9 @@ import { useQuery } from "@tanstack/react-query";
 import { callApi } from "@zayne-labs/callapi";
 
 type Todo = {
+	completed: boolean;
 	id: number;
 	title: string;
-	completed: boolean;
 };
 
 export const useTodos = () => {
@@ -107,9 +107,9 @@ import { useQuery } from "@tanstack/react-query";
 import { callApi } from "@zayne-labs/callapi";
 
 type Todo = {
+	completed: boolean;
 	id: number;
 	title: string;
-	completed: boolean;
 };
 
 export const useTodos = () => {

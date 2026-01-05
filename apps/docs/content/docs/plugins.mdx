@@ -137,7 +137,7 @@ const envPlugin = definePlugin({
 
 	setup: ({ request }) => {
 		const env = process.env.NODE_ENV ?? "development";
-		const platform = typeof window !== "undefined" ? "browser" : "node";
+		const platform = globalThis.window !== undefined ? "browser" : "node";
 		const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 		const updatedRequest = {

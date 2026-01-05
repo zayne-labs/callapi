@@ -118,8 +118,6 @@ function SearchAIInput(props: InferProps<"form">) {
 function Input(props: InferProps<"textarea">) {
 	const { className, value, ...restOfProps } = props;
 
-	const ref = useRef<HTMLDivElement>(null);
-
 	const shared = cn("col-start-1 row-start-1", className);
 
 	return (
@@ -133,9 +131,7 @@ function Input(props: InferProps<"textarea">) {
 					shared
 				)}
 			/>
-			<div ref={ref} className={cn(shared, "invisible break-all")}>
-				{`${value?.toString() ?? ""}\n`}
-			</div>
+			<div className={cn(shared, "invisible break-all")}>{`${value?.toString() ?? ""}\n`}</div>
 		</div>
 	);
 }

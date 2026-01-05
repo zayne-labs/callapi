@@ -46,7 +46,7 @@ Toggle logging on/off. Can be a boolean to enable/disable all logging, or an obj
 
 ```ts
 // Simple boolean toggle
-export const client = createFetchClient({
+export const client1 = createFetchClient({
 	plugins: [
 		loggerPlugin({
 			enabled: process.env.NODE_ENV === "development",
@@ -55,7 +55,7 @@ export const client = createFetchClient({
 });
 
 // Granular control
-export const client = createFetchClient({
+export const client2 = createFetchClient({
 	plugins: [
 		loggerPlugin({
 			enabled: {
@@ -69,7 +69,7 @@ export const client = createFetchClient({
 });
 
 // Alternative: Enable only specific error types
-export const client2 = createFetchClient({
+export const client3 = createFetchClient({
 	plugins: [
 		loggerPlugin({
 			enabled: {

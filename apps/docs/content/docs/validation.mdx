@@ -376,9 +376,10 @@ import { createFetchClient } from "@zayne-labs/callapi";
 import { defineSchema } from "@zayne-labs/callapi/utils";
 
 // Simulation: Get allowed domains from config/API
+const waitUntil = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
 const getAllowedDomains = async () => {
-	const wait = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
-	await wait(1000);
+	await waitUntil(1000);
 
 	return ["example.com", "company.com"];
 };

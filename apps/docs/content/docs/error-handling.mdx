@@ -65,8 +65,8 @@ You can customize the error response data type by providing a second generic typ
 import { callApi } from "@zayne-labs/callapi";
 
 type ErrorData = {
-	message: string;
 	errors: Array<string | string[]>;
+	message: string;
 };
 
 const { error } = await callApi<unknown, ErrorData>("/api/endpoint");
@@ -83,15 +83,15 @@ import { callApi } from "@zayne-labs/callapi";
 import { isHTTPError } from "@zayne-labs/callapi/utils";
 
 type UserData = {
-	id: number;
-	userId: string;
-	title: string;
 	completed: boolean;
+	id: number;
+	title: string;
+	userId: string;
 };
 
 type ErrorResponseData = {
-	message?: string;
 	errors?: Array<string | string[]>;
+	message?: string;
 };
 
 const { data, error } = await callApi<UserData, ErrorResponseData>("https://my-api.com/api/v1/session");
@@ -149,15 +149,15 @@ import { callApi } from "@zayne-labs/callapi";
 import { isHTTPErrorInstance, isValidationErrorInstance } from "@zayne-labs/callapi/utils";
 
 type UserData = {
-	id: number;
-	userId: string;
-	title: string;
 	completed: boolean;
+	id: number;
+	title: string;
+	userId: string;
 };
 
 type ErrorResponseData = {
-	message?: string;
 	errors?: Array<string | string[]>;
+	message?: string;
 };
 
 try {
@@ -246,15 +246,15 @@ import { callApi } from "@zayne-labs/callapi";
 import { isHTTPError } from "@zayne-labs/callapi/utils";
 
 type UserData = {
-	id: number;
-	userId: string;
-	title: string;
 	completed: boolean;
+	id: number;
+	title: string;
+	userId: string;
 };
 
 type ErrorResponseData = {
-	message?: string;
 	errors?: Array<string | string[]>;
+	message?: string;
 };
 
 const { data, error } = await callApi<UserData, ErrorResponseData>("https://my-api.com/api/v1/session");

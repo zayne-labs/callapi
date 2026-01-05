@@ -1,4 +1,4 @@
-import { zayne } from "@zayne-labs/eslint-config";
+import { GLOB_MARKDOWN_CODE, zayne } from "@zayne-labs/eslint-config";
 
 export default zayne(
 	{
@@ -28,6 +28,12 @@ export default zayne(
 		files: ["apps/docs/**/*.{ts,tsx}"],
 		rules: {
 			"eslint-comments/require-description": "off",
+		},
+	},
+	{
+		files: [`apps/docs/content/docs/${GLOB_MARKDOWN_CODE}`],
+		rules: {
+			"no-param-reassign": "off",
 		},
 	},
 	{

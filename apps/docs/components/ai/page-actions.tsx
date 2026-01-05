@@ -43,12 +43,8 @@ export function LLMCopyButton(props: CopyBtnProps) {
 
 		const clipboardItem = new ClipboardItem({ "text/plain": markDownPromise });
 
-		try {
-			setLoading(true);
-			await navigator.clipboard.write([clipboardItem]);
-		} finally {
-			setLoading(false);
-		}
+		setLoading(true);
+		await navigator.clipboard.write([clipboardItem]).finally(() => setLoading(false));
 	});
 
 	return (

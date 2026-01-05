@@ -1,6 +1,6 @@
----
 title: Hooks
 description: Learn how to use hooks in CallApi
+
 ---
 
 Hooks are callback functions that let you observe and react to events during the request lifecycle. Think of them like event listeners for your API requests.
@@ -210,9 +210,9 @@ This hook is called only for successful responses. You can use it to handle succ
 import { createFetchClient } from "@zayne-labs/callapi";
 
 type User = {
+	email: string;
 	id: string;
 	name: string;
-	email: string;
 };
 
 const userCache = new Map<string, User>();
@@ -235,21 +235,30 @@ import { createFetchClient } from "@zayne-labs/callapi";
 const client = createFetchClient({
 	onResponseError: ({ error, response, options }) => {
 		switch (response.status) {
-			case 401:
-				//Handle Token expired
+			case 401: {
+				// Handle Token expired
 				break;
+			}
 
-			case 403:
+			case 403: {
 				// Handle User not authorized
 				break;
+			}
 
-			case 404:
+			case 404: {
 				// Handle Resource not found
 				break;
+			}
 
-			case 429:
+			case 429: {
 				// Handle Rate limited
 				break;
+			}
+
+			default: {
+				// Handle other errors
+				break;
+			}
 		}
 	},
 });
@@ -500,7 +509,7 @@ All hooks can be async or return a Promise. When this is the case, the hook will
 onRequest: async ({ request }) => {
 	const token = await getAuthToken();
 	request.headers.set("Authorization", `Bearer ${token}`);
-},
+};
 ```
 
 ## Type Safety

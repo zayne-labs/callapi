@@ -17,19 +17,19 @@ import type { GetCallApiContext } from "@zayne-labs/callapi";
 // GetCallApiContext validates your context structure at compile time
 type MyAppContext = GetCallApiContext<{
 	Data: {
+		email: string;
 		id: number;
 		name: string;
-		email: string;
 	};
 	ErrorData: {
-		message: string;
 		code: string;
 		details?: Record<string, any>;
+		message: string;
 	};
 	Meta: {
-		userId: string;
-		requestId: string;
 		feature?: string;
+		requestId: string;
+		userId: string;
 	};
 	ResultMode: "all"; // TypeScript will catch invalid values here
 }>;
@@ -62,8 +62,8 @@ import { createFetchClientWithContext, GetCallApiContext } from "@zayne-labs/cal
 // GetCallApiContext provides type safety at the type level only
 type AppContext = GetCallApiContext<{
 	Data: { id: number; name: string };
-	ErrorData: { message: string; code: string };
-	Meta: { userId: string; requestId: string };
+	ErrorData: { code: string; message: string };
+	Meta: { requestId: string; userId: string };
 }>;
 
 const callBackendApi = createFetchClientWithContext<AppContext>()({
@@ -86,11 +86,11 @@ Register global meta types using module augmentation:
 declare module "@zayne-labs/callapi" {
 	interface Register {
 		meta: {
-			userId?: string;
-			requestId?: string;
 			feature?: string;
-			source?: "user-action" | "background" | "system";
-			priority?: "low" | "normal" | "high";
+			priority?: "high" | "low" | "normal";
+			requestId?: string;
+			source?: "background" | "system" | "user-action";
+			userId?: string;
 		};
 	}
 }

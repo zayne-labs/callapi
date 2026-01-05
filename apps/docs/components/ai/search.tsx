@@ -173,8 +173,6 @@ function SearchAIInput(props: InferProps<"form">) {
 function Input(props: InferProps<"textarea">) {
 	const { className, value, ...restOfProps } = props;
 
-	const ref = useRef<HTMLDivElement>(null);
-
 	const shared = cnMerge("col-start-1 row-start-1", className);
 
 	return (
@@ -189,9 +187,7 @@ function Input(props: InferProps<"textarea">) {
 				)}
 			/>
 
-			<div ref={ref} className={cnMerge(shared, "invisible break-all")}>
-				{`${value?.toString() ?? ""}\n`}
-			</div>
+			<div className={cnMerge(shared, "invisible break-all")}>{`${value?.toString() ?? ""}\n`}</div>
 		</div>
 	);
 }

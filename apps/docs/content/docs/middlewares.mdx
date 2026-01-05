@@ -201,7 +201,7 @@ import { createFetchClient } from "@zayne-labs/callapi";
 const client = createFetchClient({
 	fetchMiddleware: (ctx) => async (input, init) => {
 		if (!navigator.onLine) {
-			return new Response(JSON.stringify({ error: "No internet connection" }), {
+			return Response.json({ error: "No internet connection" }, {
 				status: 503,
 				headers: { "Content-Type": "application/json" },
 			});
@@ -248,7 +248,7 @@ const client = createFetchClient({
 			const response = await ctx.fetchImpl(input, init);
 
 			if (response.status === 503) {
-				return new Response(JSON.stringify({ cached: true }), {
+				return Response.json({ cached: true }, {
 					status: 200,
 					headers: { "Content-Type": "application/json" },
 				});
@@ -257,7 +257,7 @@ const client = createFetchClient({
 			return response;
 		} catch (error) {
 			if (error instanceof TypeError && error.message.includes("fetch")) {
-				return new Response(JSON.stringify({ error: "Network error" }), {
+				return Response.json({ error: "Network error" }, {
 					status: 0,
 					headers: { "Content-Type": "application/json" },
 				});
@@ -285,7 +285,7 @@ const client = createFetchClient({
 
 		// Return mock data without calling fetch
 		if (url in mockData) {
-			return new Response(JSON.stringify(mockData[url as keyof typeof mockData]), {
+			return Response.json(mockData[url as keyof typeof mockData], {
 				status: 200,
 				headers: { "Content-Type": "application/json" },
 			});

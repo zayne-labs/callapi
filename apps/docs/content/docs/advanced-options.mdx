@@ -31,8 +31,8 @@ Replace the default fetch function for testing or using alternative HTTP clients
 import { createFetchClient } from "@zayne-labs/callapi";
 
 // Mock fetch for testing
-const mockFetch = async (url: string | URL | Request, init?: RequestInit) => {
-	return new Response(JSON.stringify({ mocked: true }), {
+const mockFetch = async (url: string | Request | URL, init?: RequestInit) => {
+	return Response.json({ mocked: true }, {
 		status: 200,
 		headers: { "Content-Type": "application/json" },
 	});
@@ -163,14 +163,18 @@ import { createFetchClient } from "@zayne-labs/callapi";
 const client = createFetchClient({
 	defaultHTTPErrorMessage: ({ response }) => {
 		switch (response.status) {
-			case 401:
+			case 401: {
 				return "Authentication required";
-			case 403:
+			}
+			case 403: {
 				return "Access denied";
-			case 404:
+			}
+			case 404: {
 				return "Resource not found";
-			default:
+			}
+			default: {
 				return `Request failed with status ${response.status}`;
+			}
 		}
 	},
 });

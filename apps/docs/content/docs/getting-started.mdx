@@ -40,10 +40,10 @@ To get started with callApi, simply import the function and make your first requ
 import { callApi } from "@zayne-labs/callapi";
 
 type Todo = {
-	userId: string;
+	completed: boolean;
 	id: number;
 	title: string;
-	completed: boolean;
+	userId: string;
 };
 
 // @annotate: Hover over the data or error object to see the type
@@ -63,10 +63,10 @@ import { callApi } from "@zayne-labs/callapi";
 import { z } from "zod";
 
 type Todo = {
-	userId: string;
+	completed: boolean;
 	id: number;
 	title: string;
-	completed: boolean;
+	userId: string;
 };
 
 // Via TypeScript generics
@@ -95,10 +95,10 @@ The result object format can be also be customized using the `resultMode` option
 import { callApi } from "@zayne-labs/callapi";
 
 type Todo = {
-	userId: string;
+	completed: boolean;
 	id: number;
 	title: string;
-	completed: boolean;
+	userId: string;
 };
 
 // @annotate: Hover over the data to see the type
@@ -126,10 +126,10 @@ export const callBackendApi = createFetchClient({
 });
 
 type Todo = {
-	userId: string;
+	completed: boolean;
 	id: number;
 	title: string;
-	completed: boolean;
+	userId: string;
 };
 
 const { data, error } = await callBackendApi<Todo>("/todos/10");
