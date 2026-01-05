@@ -24,7 +24,7 @@ function RootLayout({ children }: { children: React.ReactNode }) {
 			suppressHydrationWarning={true}
 		>
 			<head>
-				<meta name="google-site-verification" content="LH-8qDRpnWdy6YKOKmi18ZQ4gW9EgoeDkarkyQc8Tl8" />
+				<meta name="google-site-verification" content="rmU6PC2zhbh7_EYy2zvXm9NMmsxfpQvCcdzEKlryYKs" />
 				<StructuredData variant="website" />
 				<StructuredData variant="organization" />
 			</head>
