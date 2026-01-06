@@ -15,7 +15,7 @@
 	},
 	"dependencies": {
 		"@ai-sdk/google": "^3.0.3",
-		"@ai-sdk/react": "^3.0.9",
+		"@ai-sdk/react": "^3.0.11",
 		"@bprogress/next": "^3.2.12",
 		"@iconify/react": "^6.0.2",
 		"@shikijs/twoslash": "3.20.0",
@@ -25,7 +25,7 @@
 		"@zayne-labs/toolkit-react": "^0.12.20",
 		"@zayne-labs/toolkit-type-helpers": "^0.12.20",
 		"@zayne-labs/ui-react": "^0.10.45",
-		"ai": "^6.0.9",
+		"ai": "^6.0.11",
 		"clsx": "^2.1.1",
 		"fumadocs-core": "16.4.3",
 		"fumadocs-docgen": "3.0.5",

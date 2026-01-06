@@ -4,7 +4,7 @@ const isDevMode = process.env.NODE_ENV === "development";
 
 const commonOptions = {
 	clean: true,
-	dts: { newContext: true },
+	dts: true,
 	entry: ["src/index.ts", "src/utils/external/index.ts", "src/constants/index.ts"],
 	ignoreWatch: [".turbo"],
 	platform: "neutral",
