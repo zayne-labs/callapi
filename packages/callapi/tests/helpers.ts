@@ -150,32 +150,3 @@ export function createCallTracker() {
 
 	return { getCallCount, getCalls, getLastCall, reset, track };
 }
-
-// Helper to create mock stream
-export function createMockStream(chunks: Uint8Array[]): ReadableStream<Uint8Array> {
-	let index = 0;
-
-	return new ReadableStream({
-		start(controller) {
-			function pump() {
-				if (index < chunks.length) {
-					controller.enqueue(chunks[index++]);
-					setTimeout(pump, 10); // Simulate async chunks
-				} else {
-					controller.close();
-				}
-			}
-			pump();
-		},
-	});
-}
-
-// Helper to convert string to Uint8Array
-export function stringToUint8Array(str: string): Uint8Array {
-	return new TextEncoder().encode(str);
-}
-
-// Helper to convert Uint8Array to string
-export function uint8ArrayToString(arr: Uint8Array): string {
-	return new TextDecoder().decode(arr);
-}

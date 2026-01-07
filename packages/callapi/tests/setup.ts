@@ -20,11 +20,3 @@ beforeEach(() => {
 
 // Export the mock fetch for use in tests
 export { mockFetch };
-
-// Global test configuration
-export const TEST_CONFIG = {
-	baseURL: "https://api.example.com",
-	mockDelay: 100,
-	retryAttempts: 3,
-	timeout: 5000,
-} as const;

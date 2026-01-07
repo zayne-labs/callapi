@@ -56,24 +56,12 @@ export const mockServerError = {
 	timestamp: "2024-01-01T00:00:00Z",
 } as const;
 
-// Mock request/response data
-export const mockCreateUserRequest = {
-	email: "newuser@example.com",
-	name: "New User",
-} as const;
-
-export const mockUpdateUserRequest = {
-	active: false,
-	name: "Updated User",
-} as const;
-
 // Mock authentication data
 export const mockAuthToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.token";
 export const mockBasicAuth = {
 	password: "testpass123",
 	username: "testuser",
 } as const;
-
 export const mockCustomAuth = {
 	prefix: "Custom",
 	value: "custom-auth-value",
@@ -95,15 +83,6 @@ export const mockConfigWithAuth = {
 		value: mockAuthToken,
 		type: "Bearer",
 	},
-} satisfies BaseCallApiConfig;
-
-export const mockConfigWithRetry = {
-	...mockBaseConfig,
-	retryAttempts: 3,
-	retryDelay: 1000,
-	retryMaxDelay: 5000,
-	retryStrategy: "exponential",
-	retryCondition: () => true,
 } satisfies BaseCallApiConfig;
 
 // Mock plugin for testing
@@ -139,89 +118,6 @@ export const mockPluginWithSetup: CallApiPlugin = {
 			},
 		};
 	},
-} as const;
-
-// Mock validation schemas (using simple object structure)
-export const mockUserSchema = {
-	properties: {
-		active: { type: "boolean" },
-		email: { format: "email", type: "string" },
-		id: { type: "number" },
-		name: { minLength: 1, type: "string" },
-	},
-	required: ["id", "name", "email"],
-	type: "object",
-} as const;
-
-export const mockCreateUserSchema = {
-	properties: {
-		email: { format: "email", type: "string" },
-		name: { minLength: 1, type: "string" },
-	},
-	required: ["name", "email"],
-	type: "object",
-} as const;
-
-// Mock URL patterns
-export const mockURLPatterns = {
-	complexPattern: "/api/v1/users/{userId}/posts/{postId}/comments",
-	methodPrefixed: "@get/users/:id",
-	userById: "/users/:id",
-	userByIdWithQuery: "/users/:id?include=profile",
-	users: "/users",
-	userWithMultipleParams: "/users/:userId/posts/:postId",
-} as const;
-
-// Mock query parameters
-export const mockQueryParams = {
-	complex: {
-		filter: ["active", "verified"],
-		include: "profile,posts",
-		limit: 10,
-		page: 1,
-		sort: "name",
-	},
-	simple: { limit: 10, page: 1 },
-	withSpecialChars: {
-		search: "hello world",
-		"special-key": "special value",
-		tags: "tag1,tag2",
-	},
-} as const;
-
-// Mock stream data
-export const mockStreamChunks = [
-	new Uint8Array([1, 2, 3, 4]),
-	new Uint8Array([5, 6, 7, 8]),
-	new Uint8Array([9, 10, 11, 12]),
-] as const;
-
-export const mockStreamData = "This is test stream data that will be chunked";
-
-// Mock progress events
-export const mockProgressEvent = {
-	lengthComputable: true,
-	loaded: 1024,
-	total: 2048,
-} as const;
-
-// Mock deduplication keys
-export const mockDedupeKeys = {
-	custom: "custom-dedupe-key",
-	simple: "GET:/users",
-	withParams: "GET:/users/123",
-	withQuery: "GET:/users?page=1&limit=10",
-} as const;
-
-// Mock retry scenarios
-export const mockRetryScenarios = {
-	networkError: new Error("Network error"),
-	serverError: new Error("Server error"),
-	timeoutError: (() => {
-		const error = new Error("Request timeout");
-		error.name = "AbortError";
-		return error;
-	})(),
 } as const;
 
 // Mock hook execution tracking

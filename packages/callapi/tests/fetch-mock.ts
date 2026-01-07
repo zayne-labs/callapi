@@ -42,27 +42,6 @@ export function mockFetchNetworkError(message = "Network error") {
 	return error;
 }
 
-// Mock fetch to reject with a timeout error
-export function mockFetchTimeout() {
-	const error = new Error("The operation was aborted");
-	error.name = "AbortError";
-	mockFetch.mockRejectedValueOnce(error);
-	return error;
-}
-
-// Mock fetch with a custom implementation
-export function mockFetchCustom(implementation: (...args: unknown[]) => unknown) {
-	mockFetch.mockImplementationOnce(implementation);
-}
-
-// Mock fetch to resolve after a delay
-export function mockFetchWithDelay(data: unknown, delay = 100, status = 200) {
-	mockFetch.mockImplementationOnce(async () => {
-		await new Promise((resolve) => setTimeout(resolve, delay));
-		return new Response(JSON.stringify(data), { status });
-	});
-}
-
 // Mock multiple fetch calls in sequence
 export function mockFetchSequence(
 	responses: Array<{
@@ -88,16 +67,6 @@ export function mockFetchSequence(
 	});
 }
 
-// Get information about fetch calls
-export function getFetchCalls() {
-	return mockFetch.mock.calls;
-}
-
-export function getLastFetchCall() {
-	const calls = mockFetch.mock.calls;
-	return calls.at(-1);
-}
-
 export function getFetchCallCount() {
 	return mockFetch.mock.calls.length;
 }
@@ -105,15 +74,6 @@ export function getFetchCallCount() {
 // Reset fetch mock
 export function resetFetchMock() {
 	mockFetch.mockReset();
-}
-
-// Verify fetch was called with specific arguments
-export function expectFetchCalledWith(url: string, options?: RequestInit) {
-	if (options) {
-		expect(mockFetch).toHaveBeenCalledWith(url, expect.objectContaining(options));
-	} else {
-		expect(mockFetch).toHaveBeenCalledWith(url);
-	}
 }
 
 // Verify fetch was called a specific number of times
