@@ -74,11 +74,7 @@ callApi("/api/data", {
 
 #### onRequest
 
-This hook is called before a request is sent and before any internal processing of the request object begins. You can use this to modify request configuration, add headers, or handle authentication.
-
-#### onRequestReady
-
-This hook is called just before the HTTP request is sent and after the request has been processed internally. Use this when you need to inspect or log the final request state.
+This hook is called before the final request processing (body serialization, authentication, etc.) but after URL resolution. You can use this to add headers, handle authentication, or modify request configuration.
 
 ```ts twoslash title="example.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -95,6 +91,22 @@ const client = createFetchClient({
 		if (options.fullURL?.includes("api.dev")) {
 			request.headers && (request.headers["X-Environment"] = "development");
 		}
+	},
+});
+```
+
+#### onRequestReady
+
+This hook is called just before the HTTP request is sent and after the request has been fully processed internally (including auth headers and body serialization). Use this when you need to inspect or log the final request state.
+
+```ts twoslash title="example.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+const client = createFetchClient({
+	onRequestReady: ({ request }) => {
+		// Final check of the request object
+		console.log("Final Headers:", request.headers);
+		console.log("Final Body:", request.body);
 	},
 });
 ```
@@ -508,7 +520,7 @@ All hooks can be async or return a Promise. When this is the case, the hook will
 ```ts
 onRequest: async ({ request }) => {
 	const token = await getAuthToken();
-	request.headers.set("Authorization", `Bearer ${token}`);
+	request.headers.Authorization = `Bearer ${token}`;
 };
 ```
 
