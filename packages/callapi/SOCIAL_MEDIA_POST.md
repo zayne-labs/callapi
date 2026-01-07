@@ -53,7 +53,7 @@ Fetch's error handling is rough. CallApi gives you structured errors:
 const { data, error } = await callApi("/api/users");
 
 if (error) {
-	console.log(error.name); // "HTTPError", "ValidationError", "TimeoutError"
+	console.log(error.name); // "HTTPError", "ValidationError", "TimeoutError", "AbortError" etc
 	console.log(error.errorData); // The actual error response from your API
 	console.log(error.response); // Full response object if you need it
 }
@@ -136,7 +136,7 @@ Hooks run in parallel (fast) or sequential (when order matters). Define them at 
 
 ### Plugin System
 
-Want caching? Upload progress with XHR? Offline detection? Build a plugin:
+Want caching? Upload progress with XHR? Offline detection? Write a plugin:
 
 ```ts
 import { definePlugin } from "@zayne-labs/callapi/utils";
