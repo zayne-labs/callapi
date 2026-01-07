@@ -5,6 +5,7 @@ import {
 	type ErrorContext,
 	type ExecuteHookInfo,
 	type RequestContext,
+	type ResponseContext,
 	type SuccessContext,
 } from "./hooks";
 import { initializePlugins, type CallApiPlugin } from "./plugins";
@@ -371,6 +372,13 @@ export const createFetchClientWithContext = <
 					response: errorDetails.response as never,
 				} satisfies ErrorContext<{ ErrorData: unknown }>;
 
+				const hasResponse = Boolean(errorContext.response);
+
+				const responseContext =
+					hasResponse ?
+						({ ...errorContext, data: null } satisfies ResponseContext<{ ErrorData: unknown }>)
+					:	null;
+
 				const shouldThrowOnError = Boolean(
 					isFunction(options.throwOnError) ? options.throwOnError(errorContext) : options.throwOnError
 				);
@@ -403,7 +411,11 @@ export const createFetchClientWithContext = <
 
 				if (isValidationErrorInstance(error)) {
 					const hookError = await executeHooksInCatchBlock(
-						[options.onValidationError?.(errorContext), options.onError?.(errorContext)],
+						[
+							responseContext ? options.onResponse?.(responseContext) : null,
+							options.onValidationError?.(errorContext),
+							options.onError?.(errorContext),
+						],
 						hookInfo
 					);
 
@@ -413,9 +425,9 @@ export const createFetchClientWithContext = <
 				if (isHTTPErrorInstance<TErrorData>(error)) {
 					const hookError = await executeHooksInCatchBlock(
 						[
+							responseContext ? options.onResponse?.(responseContext) : null,
 							options.onResponseError?.(errorContext),
 							options.onError?.(errorContext),
-							options.onResponse?.({ ...errorContext, data: null }),
 						],
 						hookInfo
 					);
@@ -438,7 +450,11 @@ export const createFetchClientWithContext = <
 				}
 
 				const hookError = await executeHooksInCatchBlock(
-					[options.onRequestError?.(errorContext), options.onError?.(errorContext)],
+					[
+						responseContext ? options.onResponse?.(responseContext) : null,
+						options.onRequestError?.(errorContext),
+						options.onError?.(errorContext),
+					],
 					hookInfo
 				);
 

@@ -184,12 +184,12 @@ export const createRetryManager = (ctx: ErrorContext<{ ErrorData: unknown }> & R
 
 		await waitFor(getDelay());
 
-		const updatedOptions = {
+		const updatedConfig = {
 			...callApiArgs.config,
 			"~retryAttemptCount": currentAttemptCount + 1,
 		} satisfies CallApiConfig;
 
-		return callApi(callApiArgs.initURL as never, updatedOptions);
+		return callApi(callApiArgs.initURL as never, updatedConfig);
 	};
 
 	return {
