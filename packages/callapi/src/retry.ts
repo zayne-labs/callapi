@@ -105,7 +105,7 @@ export const createRetryManager = <TCallApi extends CallApiImpl>(ctx: {
 	callApi: TCallApi;
 	callApiArgs: { config: CallApiConfig; initURL: InitURLOrURLObject };
 	error: unknown;
-	errorContext: ErrorContext<{ ErrorData: unknown }>;
+	errorContext: ErrorContext;
 	errorResult: CallApiResultErrorVariant<unknown> | null;
 	hookInfo: ExecuteHookInfo;
 }) => {

@@ -371,7 +371,7 @@ export const createFetchClientWithContext = <
 					options,
 					request,
 					response: errorDetails.response as never,
-				} satisfies ErrorContext<{ ErrorData: unknown }>;
+				} satisfies ErrorContext;
 
 				const shouldThrowOnError = Boolean(
 					isFunction(options.throwOnError) ? options.throwOnError(errorContext) : options.throwOnError
@@ -391,7 +391,7 @@ export const createFetchClientWithContext = <
 					hookInfo,
 				});
 
-				const responseContext: ResponseContext<{ ErrorData: unknown }> | null =
+				const responseContext: ResponseContext | null =
 					(errorContext.response as typeof errorDetails.response) ?
 						{ ...errorContext, data: null }
 					:	null;
