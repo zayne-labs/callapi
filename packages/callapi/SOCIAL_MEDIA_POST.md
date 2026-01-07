@@ -204,16 +204,32 @@ Little things that add up.
 
 Stop manually building Authorization headers:
 
-```
+```ts
 // Bearer (most common)
-auth: "my-token"
-auth: { bearer: () => authStore.getToken() } // Dynamic
+auth: "my-token";
+
+// Dynamic
+auth: () => authStore.getToken();
+
+// Token auth
+auth: {
+	type: "Token";
+	value: "my-token";
+}
 
 // Basic auth
-auth: { type: "Basic", username: "user", password: "pass" }
+auth: {
+	type: "Basic";
+	username: "user";
+	password: "pass";
+}
 
 // Custom
-auth: { type: "Custom", prefix: "ApiKey", value: "secret" }
+auth: {
+	type: "Custom";
+	prefix: "ApiKey";
+	value: "secret";
+}
 ```
 
 ### Auto Content-Type
