@@ -181,7 +181,8 @@ describe("Hook System", () => {
 
 			await callApi("/test", {
 				onRetry: (context) => tracker.track("onRetry", context.retryAttemptCount),
-				retry: { attempts: 2, delay: 10 },
+				retryAttempts: 2,
+				retryDelay: 10,
 			});
 
 			expect(tracker.getCallCount()).toBeGreaterThanOrEqual(0);

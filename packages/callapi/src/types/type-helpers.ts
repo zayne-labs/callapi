@@ -54,9 +54,6 @@ export type UnmaskType<TValue> = { value: TValue }["value"];
  */
 export type NoInferUnMasked<TGeneric> = [TGeneric][TGeneric extends unknown ? 0 : never];
 
-export type RemoveDedupeOrRetryPrefix<TPrefixToRemove extends "dedupe" | "retry", TKey extends string> =
-	TKey extends `${TPrefixToRemove}${infer TRest}` ? Uncapitalize<TRest> : TKey;
-
 type RemoveSlashImpl<TUrl extends string, TDirection extends "leading" | "trailing"> =
 	TDirection extends "leading" ?
 		TUrl extends `/${infer TWithoutLeadingSlash}` ?

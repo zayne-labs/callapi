@@ -1,7 +1,7 @@
 import { extraOptionDefaults } from "./constants/defaults";
 import type { RequestContext } from "./hooks";
 import { toStreamableRequest, toStreamableResponse } from "./stream";
-import type { AnyString, RemoveDedupeOrRetryPrefix, UnmaskType } from "./types/type-helpers";
+import type { AnyString, UnmaskType } from "./types/type-helpers";
 import { deterministicHashFn, waitFor } from "./utils/common";
 import { isFunction } from "./utils/guards";
 
@@ -76,8 +76,7 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 		request: globalRequest,
 	} = context;
 
-	const dedupeStrategy =
-		globalOptions.dedupeStrategy ?? globalOptions.dedupe?.strategy ?? extraOptionDefaults.dedupeStrategy;
+	const dedupeStrategy = globalOptions.dedupeStrategy ?? extraOptionDefaults.dedupeStrategy;
 
 	const resolvedDedupeStrategy = isFunction(dedupeStrategy) ? dedupeStrategy(context) : dedupeStrategy;
 
@@ -89,7 +88,7 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 			return null;
 		}
 
-		const dedupeKey = globalOptions.dedupeKey ?? globalOptions.dedupe?.key;
+		const dedupeKey = globalOptions.dedupeKey;
 
 		const resolvedDedupeKey = isFunction(dedupeKey) ? dedupeKey(context) : dedupeKey;
 
@@ -103,7 +102,7 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 	};
 
 	const getDedupeCacheScopeKey = () => {
-		const dedupeCacheScopeKey = globalOptions.dedupeCacheScopeKey ?? globalOptions.dedupe?.cacheScopeKey;
+		const dedupeCacheScopeKey = globalOptions.dedupeCacheScopeKey;
 
 		const resolvedDedupeCacheScopeKey =
 			isFunction(dedupeCacheScopeKey) ? dedupeCacheScopeKey(context) : dedupeCacheScopeKey;
@@ -117,10 +116,7 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 	const dedupeKey = getDedupeKey();
 
-	const dedupeCacheScope =
-		globalOptions.dedupeCacheScope
-		?? globalOptions.dedupe?.cacheScope
-		?? extraOptionDefaults.dedupeCacheScope;
+	const dedupeCacheScope = globalOptions.dedupeCacheScope ?? extraOptionDefaults.dedupeCacheScope;
 
 	const dedupeCacheScopeKey = getDedupeCacheScopeKey();
 
@@ -235,18 +231,7 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 type DedupeStrategyUnion = UnmaskType<"cancel" | "defer" | "none">;
 
-type DedupeOptionKeys = Exclude<keyof DedupeOptions, "dedupe">;
-
-type InnerDedupeOptions = {
-	[Key in DedupeOptionKeys as RemoveDedupeOrRetryPrefix<"dedupe", Key>]?: DedupeOptions[Key];
-};
-
 export type DedupeOptions = {
-	/**
-	 * All dedupe options in a single object instead of separate properties
-	 */
-	dedupe?: InnerDedupeOptions;
-
 	/**
 	 * Controls the scope of request deduplication caching.
 	 *

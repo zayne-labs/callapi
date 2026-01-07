@@ -9,13 +9,7 @@ import {
 import type { CallApiResultErrorVariant } from "./result";
 import type { CallApiConfig } from "./types/common";
 import type { MethodUnion } from "./types/conditional-types";
-import {
-	defineEnum,
-	type AnyNumber,
-	type Awaitable,
-	type RemoveDedupeOrRetryPrefix,
-	type UnmaskType,
-} from "./types/type-helpers";
+import { defineEnum, type AnyNumber, type Awaitable, type UnmaskType } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
 import { waitFor } from "./utils/common";
 import { isBoolean, isFunction, isString } from "./utils/guards";
@@ -37,15 +31,6 @@ type RetryStatusCodes = UnmaskType<AnyNumber | keyof ReturnType<typeof defaultRe
 
 type RetryCondition<TErrorData> = (context: ErrorContext<{ ErrorData: TErrorData }>) => Awaitable<boolean>;
 
-type RetryOptionKeys<TErrorData> = Exclude<keyof RetryOptions<TErrorData>, "~retryAttemptCount" | "retry">;
-
-type InnerRetryOptions<TErrorData> = {
-	[Key in RetryOptionKeys<TErrorData> as RemoveDedupeOrRetryPrefix<
-		"retry",
-		Key
-	>]?: RetryOptions<TErrorData>[Key];
-};
-
 export interface RetryOptions<TErrorData> {
 	/**
 	 * Keeps track of the number of times the request has already been retried
@@ -53,11 +38,6 @@ export interface RetryOptions<TErrorData> {
 	 * @deprecated **NOTE**: This property is used internally to track retries. Please abstain from modifying it.
 	 */
 	readonly ["~retryAttemptCount"]?: number;
-
-	/**
-	 * All retry options in a single object instead of separate properties
-	 */
-	retry?: InnerRetryOptions<TErrorData>;
 
 	/**
 	 * Number of allowed retry attempts on HTTP errors
@@ -101,21 +81,19 @@ export interface RetryOptions<TErrorData> {
 }
 
 const getLinearDelay = (currentAttemptCount: number, options: RetryOptions<unknown>) => {
-	const retryDelay = options.retryDelay ?? options.retry?.delay;
+	const retryDelay = options.retryDelay ?? extraOptionDefaults.retryDelay;
 
-	const resolveRetryDelay =
-		(isFunction(retryDelay) ? retryDelay(currentAttemptCount) : retryDelay)
-		?? extraOptionDefaults.retryDelay;
+	const resolveRetryDelay = isFunction(retryDelay) ? retryDelay(currentAttemptCount) : retryDelay;
 
 	return resolveRetryDelay;
 };
 
 const getExponentialDelay = (currentAttemptCount: number, options: RetryOptions<unknown>) => {
-	const retryDelay = options.retryDelay ?? options.retry?.delay ?? extraOptionDefaults.retryDelay;
+	const retryDelay = options.retryDelay ?? extraOptionDefaults.retryDelay;
 
 	const resolvedRetryDelay = isFunction(retryDelay) ? retryDelay(currentAttemptCount) : retryDelay;
 
-	const maxDelay = options.retryMaxDelay ?? options.retry?.maxDelay ?? extraOptionDefaults.retryMaxDelay;
+	const maxDelay = options.retryMaxDelay ?? extraOptionDefaults.retryMaxDelay;
 
 	const exponentialDelay = resolvedRetryDelay * 2 ** currentAttemptCount;
 
@@ -128,8 +106,7 @@ export const createRetryManager = (ctx: ErrorContext<{ ErrorData: unknown }> & R
 	// eslint-disable-next-line ts-eslint/no-deprecated -- Allowed for internal use
 	const currentAttemptCount = options["~retryAttemptCount"] ?? 1;
 
-	const retryStrategy =
-		options.retryStrategy ?? options.retry?.strategy ?? extraOptionDefaults.retryStrategy;
+	const retryStrategy = options.retryStrategy ?? extraOptionDefaults.retryStrategy;
 
 	const getDelay = () => {
 		switch (retryStrategy) {
@@ -150,11 +127,9 @@ export const createRetryManager = (ctx: ErrorContext<{ ErrorData: unknown }> & R
 			return false;
 		}
 
-		const retryCondition =
-			options.retryCondition ?? options.retry?.condition ?? extraOptionDefaults.retryCondition;
+		const retryCondition = options.retryCondition ?? extraOptionDefaults.retryCondition;
 
-		const maximumRetryAttempts =
-			options.retryAttempts ?? options.retry?.attempts ?? extraOptionDefaults.retryAttempts;
+		const maximumRetryAttempts = options.retryAttempts ?? extraOptionDefaults.retryAttempts;
 
 		const customRetryCondition = await retryCondition(ctx);
 
@@ -164,18 +139,14 @@ export const createRetryManager = (ctx: ErrorContext<{ ErrorData: unknown }> & R
 			return false;
 		}
 
-		const retryMethods = new Set(
-			options.retryMethods ?? options.retry?.methods ?? extraOptionDefaults.retryMethods
-		);
+		const retryMethods = new Set(options.retryMethods ?? extraOptionDefaults.retryMethods);
 
 		const includesMethod =
 			isString(ctx.request.method) && retryMethods.size > 0 ?
 				retryMethods.has(ctx.request.method)
 			:	true;
 
-		const retryStatusCodes = new Set(
-			options.retryStatusCodes ?? options.retry?.statusCodes ?? extraOptionDefaults.retryStatusCodes
-		);
+		const retryStatusCodes = new Set(options.retryStatusCodes ?? extraOptionDefaults.retryStatusCodes);
 
 		const includesStatusCodes =
 			ctx.response != null && retryStatusCodes.size > 0 ?

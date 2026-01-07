@@ -422,60 +422,6 @@ describe("Retry Logic", () => {
 		});
 	});
 
-	describe("Retry with Object Configuration", () => {
-		it("should work with retry object configuration", async () => {
-			const client = createFetchClient({
-				retry: {
-					attempts: 2,
-					condition: () => true,
-					delay: 500,
-					maxDelay: 2000,
-					methods: ["GET", "POST"],
-					statusCodes: [500, 502],
-					strategy: "exponential",
-				},
-			});
-
-			mockFetchSequence([
-				{ data: { error: "Server error" }, status: 500 },
-				{ data: { error: "Server error" }, status: 500 },
-				{ data: { success: true }, status: 200 },
-			]);
-
-			const promise = client("/test");
-			await vi.runAllTimersAsync();
-			const result = await promise;
-
-			expect(result.data).toEqual({ success: true });
-			expectFetchCallCount(3);
-		});
-
-		it("should prioritize individual retry options over object configuration", async () => {
-			const client = createFetchClient({
-				retry: {
-					attempts: 1,
-					statusCodes: [500],
-				},
-				retryAttempts: 2, // Should override retry.attempts
-				retryStatusCodes: [502], // Should override retry.statusCodes
-			});
-
-			// Test that individual options take precedence
-			mockFetchSequence([
-				{ data: { error: "Bad gateway" }, status: 502 },
-				{ data: { error: "Bad gateway" }, status: 502 },
-				{ data: { success: true }, status: 200 },
-			]);
-
-			const promise = client("/test");
-			await vi.runAllTimersAsync();
-			const result = await promise;
-
-			expect(result.data).toEqual({ success: true });
-			expectFetchCallCount(3); // Should use retryAttempts: 2
-		});
-	});
-
 	describe("Error Handling and Edge Cases", () => {
 		it("should handle retry with custom delay function returning zero", async () => {
 			const delayFn = vi.fn().mockReturnValue(0); // Zero delay

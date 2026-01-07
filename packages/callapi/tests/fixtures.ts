@@ -99,12 +99,11 @@ export const mockConfigWithAuth = {
 
 export const mockConfigWithRetry = {
 	...mockBaseConfig,
-	retry: {
-		attempts: 3,
-		delay: 1000,
-		maxDelay: 5000,
-		strategy: "exponential",
-	},
+	retryAttempts: 3,
+	retryDelay: 1000,
+	retryMaxDelay: 5000,
+	retryStrategy: "exponential",
+	retryCondition: () => true,
 } satisfies BaseCallApiConfig;
 
 // Mock plugin for testing

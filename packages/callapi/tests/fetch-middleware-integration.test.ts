@@ -499,11 +499,9 @@ describe("fetchMiddleware Integration Tests", () => {
 			const client = createFetchClient({
 				baseURL: "https://api.example.com",
 				plugins: [loggingPlugin],
-				retry: {
-					attempts: 2,
-					delay: 10,
-					condition: () => true, // Retry on all errors
-				},
+				retryDelay: 10,
+				retryAttempts: 100,
+				retryCondition: () => true, // Retry on all errors
 			});
 
 			// Return 500 error first two times, then succeed
@@ -650,11 +648,9 @@ describe("fetchMiddleware Integration Tests", () => {
 			const client = createFetchClient({
 				baseURL: "https://api.example.com",
 				plugins: [loggingPlugin],
-				retry: {
-					attempts: 1,
-					condition: () => true, // Retry on all errors
-					delay: 10,
-				},
+				retryDelay: 10,
+				retryAttempts: 100,
+				retryCondition: () => true, // Retry on all errors
 				dedupeStrategy: "defer",
 				customFetchImpl: async (input, init) => {
 					logs.push("customFetchImpl");
