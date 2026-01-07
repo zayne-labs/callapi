@@ -327,29 +327,6 @@ export type InferParamsFromRoute<TCurrentRoute> =
 			| ConvertParamNamesToTuple<ExtractRouteParamNames<TCurrentRoute>>
 	:	Params;
 
-// export type InferParamsFromRoute<TCurrentRoute> =
-// 	TCurrentRoute extends `${infer IgnoredPrefix}:${infer TCurrentParam}/${infer TRemainingPath}` ?
-// 		TCurrentParam extends EmptyString ?
-// 			InferParamsFromRoute<TRemainingPath>
-// 		:	| Prettify<
-// 					Record<
-// 						| TCurrentParam
-// 						| (Params extends InferParamsFromRoute<TRemainingPath> ? never
-// 						  :	keyof Extract<InferParamsFromRoute<TRemainingPath>, Record<string, unknown>>),
-// 						AllowedQueryParamValues
-// 					>
-// 			  >
-// 			| [
-// 					AllowedQueryParamValues,
-// 					...(Params extends InferParamsFromRoute<TRemainingPath> ? []
-// 					:	Extract<InferParamsFromRoute<TRemainingPath>, unknown[]>),
-// 			  ]
-// 	: TCurrentRoute extends `${infer IgnoredPrefix}:${infer TCurrentParam}` ?
-// 		TCurrentParam extends EmptyString ?
-// 			Params
-// 		:	Prettify<Record<TCurrentParam, AllowedQueryParamValues>> | [AllowedQueryParamValues]
-// 	:	Params;
-
 type MakeParamsOptionRequired<
 	TParamsSchemaOption extends CallApiSchema["params"],
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,

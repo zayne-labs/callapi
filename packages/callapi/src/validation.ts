@@ -442,6 +442,19 @@ export const getResolvedSchemaConfig = (
 
 const removeLeadingSlash = (value: string) => (value.startsWith("/") ? value.slice(1) : value);
 
+const extractURLParts = (initURL: string) => {
+	return {
+		methodFromURL: extractMethodFromURL(initURL),
+		pathWithoutMethod: normalizeURL(initURL, { retainLeadingSlashForRelativeURLs: false }),
+	};
+};
+
+const mergeURLParts = (options: { method: string | undefined; path: string }): string => {
+	const { method, path } = options;
+
+	return method ? `${atSymbol}${method}/${removeLeadingSlash(path)}` : path;
+};
+
 export const getCurrentRouteSchemaKeyAndMainInitURL = (
 	context: Pick<GetResolvedSchemaContext, "baseExtraOptions" | "extraOptions"> & { initURL: string }
 ) => {
@@ -452,42 +465,27 @@ export const getCurrentRouteSchemaKeyAndMainInitURL = (
 	let currentRouteSchemaKey = initURL;
 	let mainInitURL = initURL;
 
-	const methodFromURL = extractMethodFromURL(initURL);
-
-	const pathWithoutMethod = normalizeURL(initURL, { retainLeadingSlashForRelativeURLs: false });
+	const { methodFromURL, pathWithoutMethod } = extractURLParts(initURL);
 
 	const prefixWithoutLeadingSlash = schemaConfig?.prefix && removeLeadingSlash(schemaConfig.prefix);
 
-	if (
-		schemaConfig?.prefix
-		&& prefixWithoutLeadingSlash
-		&& pathWithoutMethod.startsWith(prefixWithoutLeadingSlash)
-	) {
+	if (prefixWithoutLeadingSlash && pathWithoutMethod.startsWith(prefixWithoutLeadingSlash)) {
 		const restOfPathWithoutPrefix = pathWithoutMethod.slice(prefixWithoutLeadingSlash.length);
 
-		currentRouteSchemaKey =
-			methodFromURL ?
-				`${atSymbol}${methodFromURL}/${removeLeadingSlash(restOfPathWithoutPrefix)}`
-			:	restOfPathWithoutPrefix;
+		currentRouteSchemaKey = mergeURLParts({ method: methodFromURL, path: restOfPathWithoutPrefix });
 
 		const pathWithReplacedPrefix = pathWithoutMethod.replace(
 			prefixWithoutLeadingSlash,
 			schemaConfig.baseURL ?? ""
 		);
 
-		mainInitURL =
-			methodFromURL ?
-				`${atSymbol}${methodFromURL}/${removeLeadingSlash(pathWithReplacedPrefix)}`
-			:	pathWithReplacedPrefix;
+		mainInitURL = mergeURLParts({ method: methodFromURL, path: pathWithReplacedPrefix });
 	}
 
 	if (schemaConfig?.baseURL && pathWithoutMethod.startsWith(schemaConfig.baseURL)) {
 		const restOfPathWithoutBaseURL = pathWithoutMethod.slice(schemaConfig.baseURL.length);
 
-		currentRouteSchemaKey =
-			methodFromURL ?
-				`${atSymbol}${methodFromURL}/${removeLeadingSlash(restOfPathWithoutBaseURL)}`
-			:	restOfPathWithoutBaseURL;
+		currentRouteSchemaKey = mergeURLParts({ method: methodFromURL, path: restOfPathWithoutBaseURL });
 	}
 
 	return { currentRouteSchemaKey, mainInitURL };
