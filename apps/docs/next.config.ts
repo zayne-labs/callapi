@@ -31,7 +31,7 @@ const config: NextConfig = {
 		];
 	},
 
-	serverExternalPackages: ["typescript", "twoslash", "shiki", "@takumi-rs/image-response"],
+	serverExternalPackages: ["typescript", "twoslash", "shiki"],
 
 	...(isDevMode && {
 		outputFileTracingRoot: getRoot(),

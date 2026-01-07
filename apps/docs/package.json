@@ -19,7 +19,6 @@
 		"@bprogress/next": "^3.2.12",
 		"@iconify/react": "^6.0.2",
 		"@shikijs/twoslash": "3.20.0",
-		"@takumi-rs/image-response": "^0.62.6",
 		"@zayne-labs/callapi": "workspace:*",
 		"@zayne-labs/toolkit-core": "^0.12.22",
 		"@zayne-labs/toolkit-react": "^0.12.22",
