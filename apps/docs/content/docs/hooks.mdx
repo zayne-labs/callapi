@@ -87,7 +87,7 @@ const client = createFetchClient({
 		// Add custom headers
 		request.headers && (request.headers["X-Custom-ID"] = "123");
 
-		// Modify URL or query params
+		// Add environment header based on baseURL
 		if (options.fullURL?.includes("api.dev")) {
 			request.headers && (request.headers["X-Environment"] = "development");
 		}
