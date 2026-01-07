@@ -1,5 +1,15 @@
 # @zayne-labs/callapi
 
+## 1.11.40
+
+### Patch Changes
+
+- 87156c1: refactor(callapi)!: replace forcefullyCalculateStreamSize with request-only option 💥
+  refactor(callapi): consolidate option validation logic ♻️
+  refactor(callapi): rename updatedOptions to updatedConfig in retry/dedupe ♻️
+  test(callapi): suppress invalid URL console errors in setup 🧪
+  chore(callapi): update types and remove unused exports 🧹
+
 ## 1.11.39
 
 ### Patch Changes
