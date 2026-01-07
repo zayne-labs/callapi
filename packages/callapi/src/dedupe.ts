@@ -2,7 +2,7 @@ import { extraOptionDefaults } from "./constants/defaults";
 import type { RequestContext } from "./hooks";
 import { toStreamableRequest, toStreamableResponse } from "./stream";
 import type { AnyString, UnmaskType } from "./types/type-helpers";
-import { deterministicHashFn, waitFor } from "./utils/common";
+import { waitFor } from "./utils/common";
 import { isFunction } from "./utils/guards";
 
 type RequestInfo = {
@@ -73,7 +73,6 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 		config,
 		newFetchController,
 		options: globalOptions,
-		request: globalRequest,
 	} = context;
 
 	const dedupeStrategy = globalOptions.dedupeStrategy ?? extraOptionDefaults.dedupeStrategy;
@@ -88,49 +87,49 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 			return null;
 		}
 
-		const dedupeKey = globalOptions.dedupeKey;
+		const dedupeKey = globalOptions.dedupeKey ?? extraOptionDefaults.dedupeKey;
 
 		const resolvedDedupeKey = isFunction(dedupeKey) ? dedupeKey(context) : dedupeKey;
-
-		if (resolvedDedupeKey === undefined) {
-			const defaultDedupeKey = `${globalOptions.fullURL}-${deterministicHashFn({ options: globalOptions, request: globalRequest })}`;
-
-			return defaultDedupeKey;
-		}
 
 		return resolvedDedupeKey;
 	};
 
 	const getDedupeCacheScopeKey = () => {
-		const dedupeCacheScopeKey = globalOptions.dedupeCacheScopeKey;
+		const dedupeCacheScopeKey =
+			globalOptions.dedupeCacheScopeKey ?? extraOptionDefaults.dedupeCacheScopeKey;
 
 		const resolvedDedupeCacheScopeKey =
 			isFunction(dedupeCacheScopeKey) ? dedupeCacheScopeKey(context) : dedupeCacheScopeKey;
-
-		if (resolvedDedupeCacheScopeKey === undefined) {
-			return extraOptionDefaults.dedupeCacheScopeKey;
-		}
 
 		return resolvedDedupeCacheScopeKey;
 	};
 
 	const dedupeKey = getDedupeKey();
 
-	const dedupeCacheScope = globalOptions.dedupeCacheScope ?? extraOptionDefaults.dedupeCacheScope;
+	const getRequestInfoCache = () => {
+		if (!dedupeKey) return;
 
-	const dedupeCacheScopeKey = getDedupeCacheScopeKey();
+		const dedupeCacheScope = globalOptions.dedupeCacheScope ?? extraOptionDefaults.dedupeCacheScope;
 
-	if (dedupeCacheScope === "global" && !$GlobalRequestInfoCache.has(dedupeCacheScopeKey)) {
-		$GlobalRequestInfoCache.set(dedupeCacheScopeKey, new Map());
-	}
+		const dedupeCacheScopeKey = getDedupeCacheScopeKey();
 
-	const $RequestInfoCache =
-		dedupeCacheScope === "global" ?
-			$GlobalRequestInfoCache.get(dedupeCacheScopeKey)
-		:	$LocalRequestInfoCache;
+		if (dedupeCacheScope === "global" && !$GlobalRequestInfoCache.has(dedupeCacheScopeKey)) {
+			$GlobalRequestInfoCache.set(dedupeCacheScopeKey, new Map());
+		}
 
-	// == This is to ensure cache operations only occur when key is available
-	const $RequestInfoCacheOrNull = dedupeKey !== null ? $RequestInfoCache : null;
+		const $RequestInfoCache =
+			dedupeCacheScope === "global" ?
+				$GlobalRequestInfoCache.get(dedupeCacheScopeKey)
+			:	$LocalRequestInfoCache;
+
+		return {
+			delete: () => $RequestInfoCache?.delete(dedupeKey),
+			get: () => $RequestInfoCache?.get(dedupeKey),
+			set: (value: RequestInfo) => $RequestInfoCache?.set(dedupeKey, value),
+		};
+	};
+
+	const $RequestInfoCache = getRequestInfoCache();
 
 	/**
 	 * Force sequential execution of parallel requests to enable proper cache-based deduplication.
@@ -160,7 +159,7 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 		await waitFor(0.001);
 	}
 
-	const prevRequestInfo = $RequestInfoCacheOrNull?.get(dedupeKey);
+	const prevRequestInfo = $RequestInfoCache?.get();
 
 	const getAbortErrorMessage = () => {
 		if (globalOptions.dedupeKey) {
@@ -180,9 +179,6 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 		const reason = new DOMException(message, "AbortError");
 
 		prevRequestInfo.controller.abort(reason);
-
-		// == Adding this just so that eslint forces me put await when calling the function (it looks better that way tbh)
-		return Promise.resolve();
 	};
 
 	const handleRequestDeferStrategy = async (deferContext: {
@@ -209,15 +205,13 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 				prevRequestInfo.responsePromise
 			:	fetchApi(localOptions.fullURL as NonNullable<typeof localOptions.fullURL>, streamableRequest);
 
-		$RequestInfoCacheOrNull?.set(dedupeKey, { controller: newFetchController, responsePromise });
+		$RequestInfoCache?.set({ controller: newFetchController, responsePromise });
 
-		const response = await responsePromise;
-
-		return toStreamableResponse({ ...streamableContext, response });
+		return toStreamableResponse({ ...streamableContext, response: await responsePromise });
 	};
 
 	const removeDedupeKeyFromCache = () => {
-		$RequestInfoCacheOrNull?.delete(dedupeKey);
+		$RequestInfoCache?.delete();
 	};
 
 	return {

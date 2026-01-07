@@ -34,7 +34,7 @@ import type {
 	DefaultPluginArray,
 	DefaultThrowOnError,
 } from "./default-types";
-import type { Awaitable, NoInferUnMasked, Prettify, Writeable } from "./type-helpers";
+import type { Awaitable, NoInferUnMasked, Writeable } from "./type-helpers";
 
 // eslint-disable-next-line ts-eslint/no-empty-object-type -- This needs to be empty to allow users to register their own meta
 export interface Register {
@@ -65,24 +65,22 @@ type FetchSpecificKeysUnion = Exclude<(typeof fetchSpecificKeys)[number], "body"
 
 export type ModifiedRequestInit = RequestInit & { duplex?: "half" };
 
-export type CallApiRequestOptions = Prettify<
-	{
-		/**
-		 * Body of the request, can be a object or any other supported body type.
-		 */
-		body?: Body;
-		/**
-		 * Headers to be used in the request.
-		 */
-		headers?: HeadersOption;
-		/**
-		 * HTTP method for the request.
-		 * @default "GET"
-		 */
-		method?: MethodUnion;
-		// eslint-disable-next-line perfectionist/sort-intersection-types -- Allow
-	} & Pick<ModifiedRequestInit, FetchSpecificKeysUnion>
->;
+export type CallApiRequestOptions = {
+	/**
+	 * Body of the request, can be a object or any other supported body type.
+	 */
+	body?: Body;
+	/**
+	 * Headers to be used in the request.
+	 */
+	headers?: HeadersOption;
+	/**
+	 * HTTP method for the request.
+	 * @default "GET"
+	 */
+	method?: MethodUnion;
+	// eslint-disable-next-line perfectionist/sort-intersection-types -- Allow
+} & Pick<ModifiedRequestInit, FetchSpecificKeysUnion>;
 
 export type CallApiRequestOptionsForHooks = Omit<CallApiRequestOptions, "headers"> & {
 	headers: Record<string, string | undefined>;
@@ -251,15 +249,15 @@ type SharedExtraOptions<
 			| ((context: Pick<HTTPError<TErrorData>, "errorData" | "response">) => string);
 
 		/**
-		 * Forces calculation of total byte size from request/response body streams.
+		 * Forces calculation of total byte size from request body streams.
 		 *
 		 * Useful when the Content-Length header is missing or incorrect, and you need
-		 * accurate size information for progress tracking or bandwidth monitoring.
+		 * accurate size information for progress tracking.
 		 *
 		 * @default false
 		 *
 		 */
-		forcefullyCalculateStreamSize?: boolean | { request?: boolean; response?: boolean };
+		forcefullyCalculateRequestStreamSize?: boolean;
 
 		/**
 		 * Optional metadata field for associating additional information with requests.

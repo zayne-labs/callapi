@@ -4,7 +4,7 @@ import {
 	type RequestStreamContext,
 	type ResponseStreamContext,
 } from "./hooks";
-import { isObject, isReadableStream } from "./utils/guards";
+import { isReadableStream } from "./utils/guards";
 
 export type StreamProgressEvent = {
 	/**
@@ -77,13 +77,8 @@ export const toStreamableRequest = async (
 
 	let totalBytes = Number(contentLength ?? 0);
 
-	const shouldForcefullyCalcStreamSize =
-		isObject(options.forcefullyCalculateStreamSize) ?
-			options.forcefullyCalculateStreamSize.request
-		:	options.forcefullyCalculateStreamSize;
-
 	// == If no content length is present, we read the total bytes from the body
-	if (!contentLength && shouldForcefullyCalcStreamSize) {
+	if (!contentLength && options.forcefullyCalculateRequestStreamSize) {
 		totalBytes = await calculateTotalBytesFromBody(requestInstance.clone().body, totalBytes);
 	}
 
@@ -130,7 +125,7 @@ export const toStreamableRequest = async (
 
 type StreamableResponseContext = RequestContext & { response: Response };
 
-export const toStreamableResponse = async (context: StreamableResponseContext): Promise<Response> => {
+export const toStreamableResponse = (context: StreamableResponseContext): Response => {
 	const { baseConfig, config, options, request, response } = context;
 
 	if (!options.onResponseStream || !response.body) {
@@ -140,16 +135,6 @@ export const toStreamableResponse = async (context: StreamableResponseContext): 
 	const contentLength = response.headers.get("content-length");
 
 	let totalBytes = Number(contentLength ?? 0);
-
-	const shouldForceContentLengthCalc =
-		isObject(options.forcefullyCalculateStreamSize) ?
-			options.forcefullyCalculateStreamSize.response
-		:	options.forcefullyCalculateStreamSize;
-
-	// == If no content length is present and `forceContentLengthCalculation` is enabled, we read the total bytes from the body
-	if (!contentLength && shouldForceContentLengthCalc) {
-		totalBytes = await calculateTotalBytesFromBody(response.clone().body, totalBytes);
-	}
 
 	let transferredBytes = 0;
 

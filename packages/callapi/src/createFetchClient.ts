@@ -243,7 +243,7 @@ export const createFetchClientWithContext = <
 			});
 
 			try {
-				await handleRequestCancelStrategy();
+				handleRequestCancelStrategy();
 
 				await executeHooks(options.onRequest?.({ baseConfig, config, options, request }));
 
@@ -261,6 +261,7 @@ export const createFetchClientWithContext = <
 				});
 
 				// == Apply Schema Output for Extra Options
+
 				Object.assign(options, extraOptionsValidationResult);
 
 				// == Apply Schema Output for Request Options
@@ -372,13 +373,6 @@ export const createFetchClientWithContext = <
 					response: errorDetails.response as never,
 				} satisfies ErrorContext<{ ErrorData: unknown }>;
 
-				const hasResponse = Boolean(errorContext.response);
-
-				const responseContext =
-					hasResponse ?
-						({ ...errorContext, data: null } satisfies ResponseContext<{ ErrorData: unknown }>)
-					:	null;
-
 				const shouldThrowOnError = Boolean(
 					isFunction(options.throwOnError) ? options.throwOnError(errorContext) : options.throwOnError
 				);
@@ -388,31 +382,24 @@ export const createFetchClientWithContext = <
 					shouldThrowOnError,
 				} satisfies ExecuteHookInfo;
 
-				const { handleRetry, shouldAttemptRetry } = createRetryManager(errorContext);
+				const { handleRetryOrGetErrorResult } = createRetryManager({
+					callApi,
+					callApiArgs: { config, initURL },
+					error,
+					errorContext,
+					errorResult,
+					hookInfo,
+				});
 
-				const handleRetryOrGetErrorResult = async () => {
-					const shouldRetry = await shouldAttemptRetry();
-
-					if (shouldRetry) {
-						return handleRetry({
-							callApi,
-							callApiArgs: { config, initURL },
-							errorContext,
-							hookInfo,
-						});
-					}
-
-					if (shouldThrowOnError) {
-						throw error;
-					}
-
-					return errorResult;
-				};
+				const responseContext: ResponseContext<{ ErrorData: unknown }> | null =
+					(errorContext.response as typeof errorDetails.response) ?
+						{ ...errorContext, data: null }
+					:	null;
 
 				if (isValidationErrorInstance(error)) {
 					const hookError = await executeHooksInCatchBlock(
 						[
-							responseContext ? options.onResponse?.(responseContext) : null,
+							responseContext && options.onResponse?.(responseContext),
 							options.onValidationError?.(errorContext),
 							options.onError?.(errorContext),
 						],
@@ -425,7 +412,7 @@ export const createFetchClientWithContext = <
 				if (isHTTPErrorInstance<TErrorData>(error)) {
 					const hookError = await executeHooksInCatchBlock(
 						[
-							responseContext ? options.onResponse?.(responseContext) : null,
+							responseContext && options.onResponse?.(responseContext),
 							options.onResponseError?.(errorContext),
 							options.onError?.(errorContext),
 						],
@@ -451,7 +438,7 @@ export const createFetchClientWithContext = <
 
 				const hookError = await executeHooksInCatchBlock(
 					[
-						responseContext ? options.onResponse?.(responseContext) : null,
+						responseContext && options.onResponse?.(responseContext),
 						options.onRequestError?.(errorContext),
 						options.onError?.(errorContext),
 					],

@@ -13,7 +13,7 @@ import {
 	type AnyFunction,
 	type AnyString,
 	type Awaitable,
-	type Prettify,
+	type UnionDiscriminator,
 	type UnionToIntersection,
 } from "./types/type-helpers";
 import {
@@ -280,83 +280,68 @@ export type Tuple<TTuple, TArray extends TTuple[] = []> =
 	UnionToTuple<TTuple>["length"] extends TArray["length"] ? [...TArray]
 	:	Tuple<TTuple, [TTuple, ...TArray]>;
 
+type ExtraOptionsValidationOptions = {
+	options: CallApiExtraOptions;
+};
+
 const extraOptionsToBeValidated = ["meta", "params", "query", "auth"] satisfies Tuple<
 	Extract<keyof CallApiSchema, keyof CallApiExtraOptions>
 >;
 
-type ExtraOptionsValidationOptions = {
-	options: CallApiExtraOptions;
-	schema: CallApiSchema | undefined;
-	schemaConfig: CallApiSchemaConfig | undefined;
-};
-
-const handleExtraOptionsValidation = async (validationOptions: ExtraOptionsValidationOptions) => {
-	const { options, schema, schemaConfig } = validationOptions;
-
-	const validationResultArray = await Promise.all(
-		extraOptionsToBeValidated.map((schemaName) =>
-			handleSchemaValidation(schema, schemaName, {
-				inputValue: options[schemaName],
-				schemaConfig,
-			})
-		)
-	);
-
-	const validatedResultObject: Prettify<
-		Pick<CallApiExtraOptions, (typeof extraOptionsToBeValidated)[number]>
-	> = {};
-
-	for (const [index, schemaName] of extraOptionsToBeValidated.entries()) {
-		const validationResult = validationResultArray[index];
-
-		if (validationResult === undefined) continue;
-
-		validatedResultObject[schemaName] = validationResult as never;
-	}
-
-	return validatedResultObject;
+type RequestOptionsValidationOptions = {
+	request: CallApiRequestOptions;
 };
 
 const requestOptionsToBeValidated = ["body", "headers", "method"] satisfies Tuple<
 	Extract<keyof CallApiSchema, keyof CallApiRequestOptions>
 >;
 
-type RequestOptionsValidationOptions = {
-	request: CallApiRequestOptions;
+type OptionValidationOptions = UnionDiscriminator<
+	[ExtraOptionsValidationOptions, RequestOptionsValidationOptions]
+> & {
 	schema: CallApiSchema | undefined;
 	schemaConfig: CallApiSchemaConfig | undefined;
 };
 
-const handleRequestOptionsValidation = async (validationOptions: RequestOptionsValidationOptions) => {
-	const { request, schema, schemaConfig } = validationOptions;
+const handleOptionsValidation = async <TValidationOptions extends OptionValidationOptions>(
+	validationOptions: TValidationOptions
+): Promise<
+	undefined extends TValidationOptions["options"] ?
+		Pick<CallApiRequestOptions, (typeof requestOptionsToBeValidated)[number]>
+	:	Pick<CallApiExtraOptions, (typeof extraOptionsToBeValidated)[number]>
+> => {
+	const { options, request, schema, schemaConfig } = validationOptions;
+
+	const resolvedOptionsToBeValidated = options ? extraOptionsToBeValidated : requestOptionsToBeValidated;
+
+	const resolvedOptions = options ?? request;
 
 	const validationResultArray = await Promise.all(
-		requestOptionsToBeValidated.map((schemaName) => {
-			return handleSchemaValidation(schema, schemaName, {
-				inputValue: request[schemaName],
+		resolvedOptionsToBeValidated.map((schemaName) =>
+			handleSchemaValidation(schema, schemaName, {
+				inputValue: resolvedOptions[schemaName as keyof typeof resolvedOptions],
 				schemaConfig,
-			});
-		})
+			})
+		)
 	);
 
-	const validatedResultObject: Prettify<
-		Pick<CallApiRequestOptions, (typeof requestOptionsToBeValidated)[number]>
-	> = {};
+	const validatedResultObject: Record<string, unknown> = {};
 
-	for (const [index, propertyKey] of requestOptionsToBeValidated.entries()) {
+	for (const [index, schemaName] of resolvedOptionsToBeValidated.entries()) {
 		const validationResult = validationResultArray[index];
 
 		if (validationResult === undefined) continue;
 
-		validatedResultObject[propertyKey] = validationResult as never;
+		validatedResultObject[schemaName] = validationResult;
 	}
 
 	return validatedResultObject;
 };
 
 export const handleConfigValidation = async (
-	validationOptions: GetResolvedSchemaContext
-		& Omit<ExtraOptionsValidationOptions & RequestOptionsValidationOptions, "schema" | "schemaConfig">
+	validationOptions: ExtraOptionsValidationOptions
+		& GetResolvedSchemaContext
+		& RequestOptionsValidationOptions
 ) => {
 	const { baseExtraOptions, currentRouteSchemaKey, extraOptions, options, request } = validationOptions;
 
@@ -377,12 +362,12 @@ export const handleConfigValidation = async (
 	}
 
 	const [extraOptionsValidationResult, requestOptionsValidationResult] = await Promise.all([
-		handleExtraOptionsValidation({
+		handleOptionsValidation({
 			options,
 			schema: resolvedSchema,
 			schemaConfig: resolvedSchemaConfig,
 		}),
-		handleRequestOptionsValidation({
+		handleOptionsValidation({
 			request,
 			schema: resolvedSchema,
 			schemaConfig: resolvedSchemaConfig,

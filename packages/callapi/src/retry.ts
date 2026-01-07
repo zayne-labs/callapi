@@ -3,7 +3,6 @@ import {
 	executeHooksInCatchBlock,
 	type ErrorContext,
 	type ExecuteHookInfo,
-	type RequestContext,
 	type RetryContext,
 } from "./hooks";
 import type { CallApiResultErrorVariant } from "./result";
@@ -100,8 +99,19 @@ const getExponentialDelay = (currentAttemptCount: number, options: RetryOptions<
 	return Math.min(exponentialDelay, maxDelay);
 };
 
-export const createRetryManager = (ctx: ErrorContext<{ ErrorData: unknown }> & RequestContext) => {
-	const { options, request } = ctx;
+type CallApiImpl = (initURL: never, init?: CallApiConfig) => Promise<CallApiResultErrorVariant<unknown>>;
+
+export const createRetryManager = <TCallApi extends CallApiImpl>(ctx: {
+	callApi: TCallApi;
+	callApiArgs: { config: CallApiConfig; initURL: InitURLOrURLObject };
+	error: unknown;
+	errorContext: ErrorContext<{ ErrorData: unknown }>;
+	errorResult: CallApiResultErrorVariant<unknown> | null;
+	hookInfo: ExecuteHookInfo;
+}) => {
+	const { callApi, callApiArgs, error, errorContext, errorResult, hookInfo } = ctx;
+
+	const { options, request } = errorContext;
 
 	// eslint-disable-next-line ts-eslint/no-deprecated -- Allowed for internal use
 	const currentAttemptCount = options["~retryAttemptCount"] ?? 1;
@@ -131,7 +141,7 @@ export const createRetryManager = (ctx: ErrorContext<{ ErrorData: unknown }> & R
 
 		const maximumRetryAttempts = options.retryAttempts ?? extraOptionDefaults.retryAttempts;
 
-		const customRetryCondition = await retryCondition(ctx);
+		const customRetryCondition = await retryCondition(errorContext);
 
 		const baseShouldRetry = currentAttemptCount <= maximumRetryAttempts && customRetryCondition;
 
@@ -142,15 +152,13 @@ export const createRetryManager = (ctx: ErrorContext<{ ErrorData: unknown }> & R
 		const retryMethods = new Set(options.retryMethods ?? extraOptionDefaults.retryMethods);
 
 		const includesMethod =
-			isString(ctx.request.method) && retryMethods.size > 0 ?
-				retryMethods.has(ctx.request.method)
-			:	true;
+			isString(request.method) && retryMethods.size > 0 ? retryMethods.has(request.method) : true;
 
 		const retryStatusCodes = new Set(options.retryStatusCodes ?? extraOptionDefaults.retryStatusCodes);
 
 		const includesStatusCodes =
-			ctx.response != null && retryStatusCodes.size > 0 ?
-				retryStatusCodes.has(ctx.response.status)
+			errorContext.response != null && retryStatusCodes.size > 0 ?
+				retryStatusCodes.has(errorContext.response.status)
 			:	true;
 
 		const shouldRetry = includesMethod && includesStatusCodes;
@@ -158,19 +166,7 @@ export const createRetryManager = (ctx: ErrorContext<{ ErrorData: unknown }> & R
 		return shouldRetry;
 	};
 
-	type CallApiImpl = (
-		initURL: never,
-		init?: CallApiConfig
-	) => Promise<CallApiResultErrorVariant<unknown>>;
-
-	const handleRetry = async <TCallapi extends CallApiImpl>(context: {
-		callApi: TCallapi;
-		callApiArgs: { config: CallApiConfig; initURL: InitURLOrURLObject };
-		errorContext: ErrorContext<{ ErrorData: unknown }>;
-		hookInfo: ExecuteHookInfo;
-	}) => {
-		const { callApi, callApiArgs, errorContext, hookInfo } = context;
-
+	const handleRetry = async () => {
 		const retryContext = {
 			...errorContext,
 			retryAttemptCount: currentAttemptCount,
@@ -192,8 +188,23 @@ export const createRetryManager = (ctx: ErrorContext<{ ErrorData: unknown }> & R
 		return callApi(callApiArgs.initURL as never, updatedConfig);
 	};
 
+	const handleRetryOrGetErrorResult = async () => {
+		const shouldRetry = await shouldAttemptRetry();
+
+		if (shouldRetry) {
+			const callApiRetryResult = handleRetry();
+
+			return callApiRetryResult;
+		}
+
+		if (hookInfo.shouldThrowOnError) {
+			throw error;
+		}
+
+		return errorResult;
+	};
+
 	return {
-		handleRetry,
-		shouldAttemptRetry,
+		handleRetryOrGetErrorResult,
 	};
 };

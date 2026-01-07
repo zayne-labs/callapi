@@ -1,5 +1,6 @@
 import type { CallApiConfig, CallApiExtraOptions } from "../types/common";
 import { defineEnum } from "../types/type-helpers";
+import { deterministicHashFn } from "../utils/common";
 
 export const extraOptionDefaults = Object.freeze(
 	defineEnum({
@@ -10,6 +11,8 @@ export const extraOptionDefaults = Object.freeze(
 		// Dedupe defaults
 		/* eslint-disable perfectionist/sort-objects -- Allow */
 		dedupeCacheScope: "local",
+		dedupeKey: (ctx) =>
+			`${ctx.options.fullURL}-${deterministicHashFn({ options: ctx.options, request: ctx.request })}`,
 		dedupeCacheScopeKey: "default",
 		dedupeStrategy: "cancel",
 		/* eslint-enable perfectionist/sort-objects -- Allow */

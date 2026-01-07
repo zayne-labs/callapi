@@ -86,7 +86,7 @@
 		},
 		{
 			"path": "./src/utils/external/index.ts",
-			"limit": "1 kb"
+			"limit": "1.5 kb"
 		},
 		{
 			"path": "./src/constants/index.ts",
