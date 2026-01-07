@@ -414,7 +414,7 @@ CallApi is a drop-in replacement for fetch with the features you need:
 
 **Technical Highlights:**
 
-- Under 6.8KB with zero dependencies
+- Under 6KB with zero dependencies
 - Full TypeScript support with complete type inference
 - Works everywhere: browsers, Node.js 18+, Deno, Bun, Cloudflare Workers
 - Tree-shakeable and optimized for modern bundlers
