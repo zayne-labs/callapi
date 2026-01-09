@@ -8,7 +8,6 @@ import type { InferHeadersOption } from "../types/conditional-types";
 import type { DistributiveOmit } from "../types/type-helpers";
 import { extractMethodFromURL } from "../url";
 import type { CallApiSchema } from "../validation";
-import { toQueryString } from "./external";
 import {
 	isArray,
 	isFunction,
@@ -17,7 +16,6 @@ import {
 	isSerializableObject,
 	isValidJsonString,
 } from "./guards";
-import { createCombinedSignalPolyfill, createTimeoutSignalPolyfill } from "./polyfills";
 
 export const omitKeys = <
 	TObject extends Record<string, unknown>,
@@ -176,7 +174,7 @@ export const getBody = (options: GetBodyOptions) => {
 	}
 
 	if (existingContentType === "application/x-www-form-urlencoded" && isSerializableObject(body)) {
-		return toQueryString(body as Record<string, string>);
+		return new URLSearchParams(body as Record<string, string>).toString();
 	}
 
 	return body;
@@ -218,13 +216,7 @@ export const waitFor = (delay: number) => {
 };
 
 export const createCombinedSignal = (...signals: Array<AbortSignal | null | undefined>) => {
-	const cleanedSignals = signals.filter((signal) => signal != null);
-
-	if (!("any" in AbortSignal)) {
-		return createCombinedSignalPolyfill(cleanedSignals);
-	}
-
-	const combinedSignal = AbortSignal.any(cleanedSignals);
+	const combinedSignal = AbortSignal.any(signals.filter((signal) => signal != null));
 
 	return combinedSignal;
 };
@@ -232,10 +224,6 @@ export const createCombinedSignal = (...signals: Array<AbortSignal | null | unde
 export const createTimeoutSignal = (milliseconds: number | null | undefined) => {
 	if (milliseconds == null) {
 		return null;
-	}
-
-	if (!("timeout" in AbortSignal)) {
-		return createTimeoutSignalPolyfill(milliseconds);
 	}
 
 	return AbortSignal.timeout(milliseconds);
@@ -247,7 +235,8 @@ export const deterministicHashFn = (value: unknown): string => {
 			return val;
 		}
 
-		const sortedKeys = Object.keys(val).toSorted();
+		// eslint-disable-next-line unicorn/no-array-sort -- Not necessary here
+		const sortedKeys = Object.keys(val).sort();
 
 		const result: Record<string, unknown> = {};
 

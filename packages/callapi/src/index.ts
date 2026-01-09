@@ -47,7 +47,12 @@ export type {
 	Register,
 } from "./types/common";
 
-export type { InferParamsFromRoute } from "./types/conditional-types";
+export type {
+	InferParamsFromRoute,
+	InferInitURL,
+	GetCurrentRouteSchemaKey,
+	InferAllMainRouteKeys,
+} from "./types/conditional-types";
 
 export type { DefaultCallApiContext } from "./types/default-types";
 

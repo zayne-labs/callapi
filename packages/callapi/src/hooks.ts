@@ -307,12 +307,12 @@ export const getHookRegistriesAndKeys = () => {
 
 export const composeHooksFromArray = (
 	hooksArray: Array<Hooks[keyof Hooks] | undefined>,
-	hooksExecutionMode: CallApiExtraOptionsForHooks["hooksExecutionMode"]
+	hooksExecutionMode: NonNullable<CallApiExtraOptionsForHooks["hooksExecutionMode"]>
 ) => {
 	const composedHook = async (ctx: unknown) => {
 		switch (hooksExecutionMode) {
 			case "parallel": {
-				await Promise.all(hooksArray.map((uniqueHook) => uniqueHook?.(ctx as never)));
+				await Promise.all(hooksArray.map((hook) => hook?.(ctx as never)));
 				break;
 			}
 
@@ -325,7 +325,7 @@ export const composeHooksFromArray = (
 			}
 
 			default: {
-				hooksExecutionMode satisfies undefined;
+				hooksExecutionMode satisfies never;
 			}
 		}
 	};

@@ -16,21 +16,21 @@ import { isHTTPErrorInstance, isValidationErrorInstance } from "./utils/external
 
 export type ResponseType = "blob" | "json" | "text";
 
-type Parser<TData> = (responseString: string) => Awaitable<TData>;
+export type ResponseParser<TData> = (text: string) => Awaitable<TData>;
 
-export const getResponseType = <TResponse>(response: Response, parser: Parser<TResponse>) => ({
+export const getResponseType = <TData>(response: Response, responseParser: ResponseParser<TData>) => ({
 	arrayBuffer: () => response.arrayBuffer(),
 	blob: () => response.blob(),
 	formData: () => response.formData(),
-	json: async (): Promise<TResponse> => {
+	json: async (): Promise<TData> => {
 		const text = await response.text();
-		return parser(text);
+		return responseParser(text);
 	},
 	stream: () => response.body,
 	text: () => response.text(),
 });
 
-type InitResponseTypeMap<TResponse = unknown> = ReturnType<typeof getResponseType<TResponse>>;
+type InitResponseTypeMap<TData = unknown> = ReturnType<typeof getResponseType<TData>>;
 
 type ResponseTypeUnion = keyof InitResponseTypeMap;
 
@@ -38,14 +38,14 @@ type ResponseTypePlaceholder = null;
 
 export type ResponseTypeType = ResponseTypePlaceholder | ResponseTypeUnion;
 
-export type ResponseTypeMap<TResponse> = {
-	[Key in keyof InitResponseTypeMap<TResponse>]: Awaited<ReturnType<InitResponseTypeMap<TResponse>[Key]>>;
+export type ResponseTypeMap<TData> = {
+	[Key in keyof InitResponseTypeMap<TData>]: Awaited<ReturnType<InitResponseTypeMap<TData>[Key]>>;
 };
 
 export type GetResponseType<
-	TResponse,
+	TData,
 	TResponseType extends ResponseTypeType,
-	TComputedResponseTypeMap extends ResponseTypeMap<TResponse> = ResponseTypeMap<TResponse>,
+	TComputedResponseTypeMap extends ResponseTypeMap<TData> = ResponseTypeMap<TData>,
 > =
 	null extends TResponseType ? TComputedResponseTypeMap["json"]
 	: TResponseType extends NonNullable<ResponseTypeType> ? TComputedResponseTypeMap[TResponseType]
@@ -74,18 +74,18 @@ const detectResponseType = (response: Response): Extract<ResponseTypeType, "blob
 	return "blob";
 };
 
-export const resolveResponseData = <TResponse>(
-	response: Response,
-	responseType: ResponseTypeType | undefined,
-	parser: Parser<TResponse> | undefined
+export const resolveResponseData = async (
+	options: Pick<CallApiExtraOptions, "responseParser" | "responseType"> & { response: Response }
 ) => {
-	const selectedParser = parser ?? extraOptionDefaults.responseParser;
+	const { response, responseParser, responseType } = options;
+
+	const selectedParser = responseParser ?? extraOptionDefaults.responseParser;
 	const selectedResponseType = responseType ?? detectResponseType(response);
 
-	const RESPONSE_TYPE_LOOKUP = getResponseType<TResponse>(response, selectedParser);
+	const RESPONSE_TYPE_LOOKUP = getResponseType(response, selectedParser);
 
 	if (!Object.hasOwn(RESPONSE_TYPE_LOOKUP, selectedResponseType)) {
-		throw new Error(`Invalid response type: ${responseType}`);
+		throw new Error(`Invalid response type: ${selectedResponseType}`);
 	}
 
 	return RESPONSE_TYPE_LOOKUP[selectedResponseType]();

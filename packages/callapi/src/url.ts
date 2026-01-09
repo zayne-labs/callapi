@@ -1,6 +1,5 @@
 import type { CallApiExtraOptions } from "./types/common";
 import type { AnyString, UnmaskType } from "./types/type-helpers";
-import { toQueryString } from "./utils/external/body";
 import { isArray } from "./utils/guards";
 import { routeKeyMethods, type RouteKeyMethodsURLUnion } from "./validation";
 
@@ -9,38 +8,56 @@ const colon = ":";
 const openBrace = "{";
 const closeBrace = "}";
 
-const mergeUrlWithParams = (url: string, params: CallApiExtraOptions["params"]) => {
-	if (!params) {
-		return url;
-	}
-
+const handleArrayParams = (url: string, params: Extract<CallApiExtraOptions["params"], unknown[]>) => {
 	let newUrl = url;
 
-	if (isArray(params)) {
-		const urlParts = newUrl.split(slash);
+	const urlParts = newUrl.split(slash);
 
-		// == Find all parameters in order (both :param and {param} patterns)
-		const matchedParamsArray = urlParts.filter(
-			(part) => part.startsWith(colon) || (part.startsWith(openBrace) && part.endsWith(closeBrace))
-		);
+	// == Find all parameters in order (both :param and {param} patterns)
+	const matchedParamsArray: string[] = [];
 
-		for (const [paramIndex, matchedParam] of matchedParamsArray.entries()) {
-			const stringParamValue = String(params[paramIndex]);
-			newUrl = newUrl.replace(matchedParam, stringParamValue);
-		}
+	for (const part of urlParts) {
+		const isMatch = part.startsWith(colon) || (part.startsWith(openBrace) && part.endsWith(closeBrace));
 
-		return newUrl;
+		if (!isMatch) continue;
+
+		matchedParamsArray.push(part);
 	}
 
-	// == Handle object params - replace both :param and {param} patterns
+	for (const [paramIndex, matchedParam] of matchedParamsArray.entries()) {
+		const stringParamValue = String(params[paramIndex]);
+		newUrl = newUrl.replace(matchedParam, stringParamValue);
+	}
+
+	return newUrl;
+};
+
+const handleObjectParams = (
+	url: string,
+	params: Extract<CallApiExtraOptions["params"], Record<string, unknown>>
+) => {
+	let newUrl = url;
+
 	for (const [paramKey, paramValue] of Object.entries(params)) {
+		// == Replace both :param and {param} patterns
 		const colonPattern = `${colon}${paramKey}` as const;
 		const bracePattern = `${openBrace}${paramKey}${closeBrace}` as const;
+
 		const stringValue = String(paramValue);
 
 		newUrl = newUrl.replace(colonPattern, stringValue);
 		newUrl = newUrl.replace(bracePattern, stringValue);
 	}
+
+	return newUrl;
+};
+
+const mergeUrlWithParams = (url: string, params: CallApiExtraOptions["params"]) => {
+	if (!params) {
+		return url;
+	}
+
+	const newUrl = isArray(params) ? handleArrayParams(url, params) : handleObjectParams(url, params);
 
 	return newUrl;
 };
@@ -52,7 +69,7 @@ const mergeUrlWithQuery = (url: string, query: CallApiExtraOptions["query"]): st
 		return url;
 	}
 
-	const queryString = toQueryString(query);
+	const queryString = new URLSearchParams(query as Record<string, string> | URLSearchParams).toString();
 
 	if (queryString.length === 0) {
 		return url;
@@ -176,7 +193,7 @@ export type TupleStyleParams = UnmaskType<AllowedQueryParamValues[]>;
 
 export type Params = UnmaskType<RecordStyleParams | TupleStyleParams>;
 
-export type Query = UnmaskType<Record<string, AllowedQueryParamValues>>;
+export type Query = UnmaskType<Record<string, AllowedQueryParamValues> | URLSearchParams>;
 
 export type InitURLOrURLObject = AnyString | RouteKeyMethodsURLUnion | URL;
 

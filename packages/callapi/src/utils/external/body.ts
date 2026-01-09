@@ -1,28 +1,53 @@
 import type { CallApiRequestOptions } from "../../types/common";
+import { getValidatedValue, type CallApiSchemaType, type InferSchemaOutput } from "../../validation";
 import { isArray, isBlob, isObject, isString } from "../guards";
+import { ValidationError } from "./error";
 
 const toStringOrStringify = (value: unknown): string => {
 	return isString(value) ? value : JSON.stringify(value);
 };
 
-export const toQueryString = (data: NonNullable<CallApiRequestOptions["body"]>) => {
-	const queryString = new URLSearchParams();
+type BodyType = NonNullable<CallApiRequestOptions["body"]>;
 
-	for (const [key, value] of Object.entries(data)) {
+export const toSearchParams = <TSchema extends CallApiSchemaType<BodyType>>(
+	data: InferSchemaOutput<TSchema>,
+	schema?: TSchema
+) => {
+	const result = getValidatedValue(data, schema, { variant: "sync" });
+
+	if (result.issues) {
+		throw new ValidationError({
+			issueCause: "toQueryString",
+			issues: result.issues,
+			response: null,
+		});
+	}
+
+	const searchParams = new URLSearchParams();
+
+	for (const [key, value] of Object.entries(result.value as Record<string, unknown>)) {
 		if (value == null) continue;
 
 		if (isArray(value)) {
 			// eslint-disable-next-line max-depth -- Allow
 			for (const innerValue of value) {
-				queryString.append(key, toStringOrStringify(innerValue));
+				searchParams.append(key, toStringOrStringify(innerValue));
 			}
 			continue;
 		}
 
-		queryString.set(key, toStringOrStringify(value));
+		searchParams.set(key, toStringOrStringify(value));
 	}
 
-	return queryString.toString();
+	return searchParams;
+};
+
+export const toQueryString = <TSchema extends CallApiSchemaType<BodyType>>(
+	...parameters: Parameters<typeof toSearchParams<TSchema>>
+) => {
+	const searchParams = toSearchParams(...parameters);
+
+	return searchParams.toString();
 };
 
 const toBlobOrString = (value: unknown): string | Blob => {
@@ -65,10 +90,23 @@ const toBlobOrString = (value: unknown): string | Blob => {
  *   settings: { theme: "dark" }
  * });
  */
-export const toFormData = (data: NonNullable<CallApiRequestOptions["body"]>) => {
+export const toFormData = <TSchema extends CallApiSchemaType<BodyType>>(
+	data: InferSchemaOutput<TSchema>,
+	schema?: TSchema
+) => {
 	const formData = new FormData();
 
-	for (const [key, value] of Object.entries(data)) {
+	const result = getValidatedValue(data, schema, { variant: "sync" });
+
+	if (result.issues) {
+		throw new ValidationError({
+			issueCause: "toFormData",
+			issues: result.issues,
+			response: null,
+		});
+	}
+
+	for (const [key, value] of Object.entries(result.value as Record<string, unknown>)) {
 		if (isArray(value)) {
 			// eslint-disable-next-line max-depth -- Allow for now
 			for (const innerValue of value) {

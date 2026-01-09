@@ -90,6 +90,8 @@ type ValidationErrorDetails = {
 	 * It's either the name the schema for which validation failed, or the name of the schema config option that led to the validation error.
 	 */
 	issueCause:
+		| "toFormData"
+		| "toQueryString"
 		| "unknown"
 		| `schemaConfig-(${SafeExtract<keyof CallApiSchemaConfig, "strict">})`
 		| keyof CallApiSchema;

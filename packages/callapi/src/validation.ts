@@ -52,20 +52,39 @@ export type InferSchemaInput<TSchema, TFallbackResult = unknown> = InferSchemaRe
 	"infer-input"
 >;
 
-const handleValidatorFunction = async <TInput>(
-	validator: Extract<CallApiSchema[keyof CallApiSchema], AnyFunction>,
+const handleValidatorFunction = <TInput>(
+	validator: AnyFunction,
 	inputData: TInput
 ): Promise<StandardSchemaV1.Result<TInput>> => {
-	try {
-		const result = await validator(inputData as never);
+	const result = new Promise((resolve) => resolve(validator(inputData as never)))
+		.then((value) => ({ issues: undefined, value: value as never }))
+		.catch((error) => ({ issues: toArray(error) as never, value: undefined }));
 
-		return { issues: undefined, value: result as never };
-	} catch (error) {
-		return { issues: toArray(error) as never, value: undefined };
-	}
+	return result;
 };
 
-export const standardSchemaParser = async <
+export const getValidatedValue = <
+	TSchema extends AnyFunction | StandardSchemaV1,
+	TVariant extends "async" | "sync",
+>(
+	inputValue: InferSchemaOutput<TSchema>,
+	schema?: TSchema,
+	_ignoredOptions?: { variant: TVariant }
+): TVariant extends "async" ? Promise<StandardSchemaV1.Result<typeof inputValue>>
+:	StandardSchemaV1.Result<typeof inputValue> => {
+	if (!schema) {
+		return { issues: undefined, value: inputValue } as never;
+	}
+
+	const result =
+		isFunction(schema) ?
+			handleValidatorFunction(schema, inputValue)
+		:	schema["~standard"].validate(inputValue);
+
+	return result as never;
+};
+
+const callApiSchemaParser = async <
 	TFullSchema extends CallApiSchema,
 	TSchemaName extends keyof CallApiSchema,
 	TSchema extends NonNullable<TFullSchema[TSchemaName]>,
@@ -78,16 +97,7 @@ export const standardSchemaParser = async <
 
 	const schema = fullSchema?.[schemaName];
 
-	if (!schema) {
-		return inputValue as never;
-	}
-
-	const result =
-		isFunction(schema) ?
-			await handleValidatorFunction(schema, inputValue)
-		:	await schema["~standard"].validate(inputValue);
-
-	// == If the `issues` field exists, it means the validation failed
+	const result = await getValidatedValue(inputValue, schema);
 
 	if (result.issues) {
 		throw new ValidationError({
@@ -146,56 +156,52 @@ export interface CallApiSchemaConfig {
 	strict?: boolean;
 }
 
+export type CallApiSchemaType<TInput> =
+	| StandardSchemaV1<TInput | undefined>
+	| ((value: TInput) => Awaitable<TInput | undefined>);
+
 export interface CallApiSchema {
-	auth?:
-		| StandardSchemaV1<AuthOption | undefined>
-		| ((auth: AuthOption) => Awaitable<AuthOption | undefined>);
+	auth?: CallApiSchemaType<AuthOption>;
 
 	/**
 	 *  The schema to use for validating the request body.
 	 */
-	body?: StandardSchemaV1<Body | undefined> | ((body: Body) => Awaitable<Body | undefined>);
+	body?: CallApiSchemaType<Body>;
 
 	/**
 	 *  The schema to use for validating the response data.
 	 */
-	data?: StandardSchemaV1 | ((data: unknown) => unknown);
+	data?: CallApiSchemaType<unknown>;
 
 	/**
 	 *  The schema to use for validating the response error data.
 	 */
-	errorData?: StandardSchemaV1 | ((errorData: unknown) => unknown);
+	errorData?: CallApiSchemaType<unknown>;
 
 	/**
 	 *  The schema to use for validating the request headers.
 	 */
-	headers?:
-		| StandardSchemaV1<HeadersOption | undefined>
-		| ((headers: HeadersOption) => Awaitable<HeadersOption | undefined>);
+	headers?: CallApiSchemaType<HeadersOption>;
 
 	/**
 	 *  The schema to use for validating the meta option.
 	 */
-	meta?:
-		| StandardSchemaV1<GlobalMeta | undefined>
-		| ((meta: GlobalMeta) => Awaitable<GlobalMeta | undefined>);
+	meta?: CallApiSchemaType<GlobalMeta>;
 
 	/**
 	 *  The schema to use for validating the request method.
 	 */
-	method?:
-		| StandardSchemaV1<MethodUnion | undefined>
-		| ((method: MethodUnion) => Awaitable<MethodUnion | undefined>);
+	method?: CallApiSchemaType<MethodUnion>;
 
 	/**
 	 *  The schema to use for validating the request url parameters.
 	 */
-	params?: StandardSchemaV1<Params | undefined> | ((params: Params) => Awaitable<Params | undefined>);
+	params?: CallApiSchemaType<Params>;
 
 	/**
 	 *  The schema to use for validating the request url queries.
 	 */
-	query?: StandardSchemaV1<Query | undefined> | ((query: Query) => Awaitable<Query | undefined>);
+	query?: CallApiSchemaType<Query>;
 }
 
 export const routeKeyMethods = defineEnum(["delete", "get", "patch", "post", "put"]);
@@ -245,7 +251,7 @@ export const handleSchemaValidation = async <
 		return inputValue as never;
 	}
 
-	const validResult = await standardSchemaParser(fullSchema, schemaName, { inputValue, response });
+	const validResult = await callApiSchemaParser(fullSchema, schemaName, { inputValue, response });
 
 	const disableResultApplicationBooleanObject =
 		isObject(schemaConfig?.disableRuntimeValidationTransform) ?

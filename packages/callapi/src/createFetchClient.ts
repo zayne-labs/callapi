@@ -295,17 +295,19 @@ export const createFetchClientWithContext = <
 				const response = await handleRequestDeferStrategy({ fetchApi, options, request });
 
 				// == Also clone response when dedupeStrategy is set to "defer" to avoid error thrown from reading response.(whatever) more than once
-				const shouldCloneResponse = resolvedDedupeStrategy === "defer" || options.cloneResponse;
+				const shouldCloneResponse = Boolean(
+					resolvedDedupeStrategy === "defer" || options.cloneResponse
+				);
+
+				const responseData = await resolveResponseData({
+					response: shouldCloneResponse ? response.clone() : response,
+					responseParser: options.responseParser,
+					responseType: options.responseType,
+				});
 
 				if (!response.ok) {
-					const errorData = await resolveResponseData(
-						shouldCloneResponse ? response.clone() : response,
-						options.responseType,
-						options.responseParser
-					);
-
 					const validErrorData = await handleSchemaValidation(resolvedSchema, "errorData", {
-						inputValue: errorData,
+						inputValue: responseData,
 						response,
 						schemaConfig: resolvedSchemaConfig,
 					});
@@ -321,14 +323,8 @@ export const createFetchClientWithContext = <
 					);
 				}
 
-				const successData = await resolveResponseData(
-					shouldCloneResponse ? response.clone() : response,
-					options.responseType,
-					options.responseParser
-				);
-
 				const validSuccessData = await handleSchemaValidation(resolvedSchema, "data", {
-					inputValue: successData,
+					inputValue: responseData,
 					response,
 					schemaConfig: resolvedSchemaConfig,
 				});

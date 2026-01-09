@@ -73,7 +73,9 @@ export interface CallApiPlugin<TCallApiContext extends CallApiContext = DefaultC
 	 */
 	hooks?:
 		| PluginHooks<TCallApiContext>
-		| ((context: PluginSetupContext<TCallApiContext>) => Awaitable<PluginHooks<TCallApiContext>>);
+		| ((
+				context: PluginSetupContext<TCallApiContext>
+		  ) => Awaitable<PluginHooks<TCallApiContext>> | Awaitable<void>);
 
 	/**
 	 *  A unique id for the plugin
@@ -85,7 +87,9 @@ export interface CallApiPlugin<TCallApiContext extends CallApiContext = DefaultC
 	 */
 	middlewares?:
 		| PluginMiddlewares<TCallApiContext>
-		| ((context: PluginSetupContext<TCallApiContext>) => Awaitable<PluginMiddlewares<TCallApiContext>>);
+		| ((
+				context: PluginSetupContext<TCallApiContext>
+		  ) => Awaitable<PluginMiddlewares<TCallApiContext>> | Awaitable<void>);
 
 	/**
 	 * A name for the plugin

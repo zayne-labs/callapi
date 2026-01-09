@@ -166,7 +166,7 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 			return `Duplicate request detected - Aborted previous request with key '${dedupeKey}'`;
 		}
 
-		return `Duplicate request aborted - Aborted previous request to '${globalOptions.fullURL}'`;
+		return `Duplicate request detected - Aborted previous request to '${globalOptions.fullURL}'`;
 	};
 
 	const handleRequestCancelStrategy = () => {

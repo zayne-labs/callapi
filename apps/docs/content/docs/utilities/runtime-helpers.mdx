@@ -1,5 +1,5 @@
 ---
-title: Utility Functions
+title: Runtime Helpers
 description: Helper functions and utilities for working with CallApi
 ---
 
@@ -133,7 +133,9 @@ try {
 } catch (error) {
 	if (isHTTPErrorInstance(error)) {
 		console.error(`HTTP ${error.response.status}: ${error.message}`);
-	} else if (isValidationErrorInstance(error)) {
+	}
+
+	if (isValidationErrorInstance(error)) {
 		console.error(`Validation failed: ${error.message}`);
 	}
 }

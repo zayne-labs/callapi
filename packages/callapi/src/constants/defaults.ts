@@ -36,6 +36,8 @@ export const extraOptionDefaults = Object.freeze(
 	} satisfies CallApiExtraOptions)
 );
 
-export const requestOptionDefaults = defineEnum({
-	method: "GET",
-} satisfies CallApiConfig);
+export const requestOptionDefaults = Object.freeze(
+	defineEnum({
+		method: "GET",
+	} satisfies CallApiConfig)
+);

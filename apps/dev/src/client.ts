@@ -124,7 +124,7 @@ const callMainApi = createFetchClient({
 	onRequest: [() => console.info("OnRequest1 - BASE"), () => console.info("OnRequest2 - BASE")],
 	onUpload: (_progress) => {},
 	onUploadSuccess: (_progress) => {},
-	plugins: [pluginOne, pluginTwo, loggerPlugin({})],
+	plugins: [pluginOne, pluginTwo, loggerPlugin({}) as never],
 	schema: apiSchema,
 });
 
@@ -146,7 +146,7 @@ const stream = new ReadableStream({
 	},
 }).pipeThrough(new TextEncoderStream());
 
-const [result1, result2, result3, result4, result5, result6, result7, result8] = await Promise.all([
+const [result1, result2, result3, result4, result5, result6, result7] = await Promise.all([
 	callMainApi<{ price: number }>("/products/:id", {
 		onRequest: () => console.info("OnRequest - INSTANCE"),
 		params: { id: 1 },
@@ -161,7 +161,7 @@ const [result1, result2, result3, result4, result5, result6, result7, result8] =
 	}),
 
 	callMainApi("/products/{id}", {
-		params: [1],
+		params: { id: 2 },
 	}),
 
 	callMainApi("@delete/products/:id", {
@@ -170,13 +170,8 @@ const [result1, result2, result3, result4, result5, result6, result7, result8] =
 		},
 	}),
 
-	callMainApi("/products/{id}", {
-		params: [1],
-	}),
-
 	callMainApi("/products/:id", {
 		body: stream,
-		method: "POST",
 		onRequestStream: (ctx) => console.info("OnRequestStream", { event: ctx.event }),
 		params: [1],
 	}),
@@ -188,7 +183,7 @@ const [result1, result2, result3, result4, result5, result6, result7, result8] =
 	}),
 ]);
 
-console.info(result1, result2, result3, result4, result5, result6, result7, result8);
+console.info(result1, result2, result3, result4, result5, result6, result7);
 
 export type ApiSuccessResponse<TData> = {
 	data?: TData;

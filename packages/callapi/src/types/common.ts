@@ -4,7 +4,7 @@ import type { DedupeOptions } from "../dedupe";
 import type { HookConfigOptions, Hooks, HooksOrHooksArray } from "../hooks";
 import type { FetchImpl, Middlewares } from "../middlewares";
 import type { CallApiPlugin, InferPluginExtraOptions } from "../plugins";
-import type { InferCallApiResult, ResponseTypeType, ResultModeType } from "../result";
+import type { InferCallApiResult, ResponseParser, ResponseTypeType, ResultModeType } from "../result";
 import type { RetryOptions } from "../retry";
 import type { InitURLOrURLObject, URLOptions } from "../url";
 import type { HTTPError } from "../utils/external/error";
@@ -34,7 +34,7 @@ import type {
 	DefaultPluginArray,
 	DefaultThrowOnError,
 } from "./default-types";
-import type { Awaitable, NoInferUnMasked, Writeable } from "./type-helpers";
+import type { NoInferUnMasked, Writeable } from "./type-helpers";
 
 // eslint-disable-next-line ts-eslint/no-empty-object-type -- This needs to be empty to allow users to register their own meta
 export interface Register {
@@ -140,7 +140,7 @@ type SharedExtraOptions<
 		 * ```ts
 		 * // Custom form data serialization
 		 * bodySerializer: (data) => {
-		 *   const formData = new URLSearchParams();
+		 *   const formData = new FormData();
 		 *   Object.entries(data).forEach(([key, value]) => {
 		 *     formData.append(key, String(value));
 		 *   });
@@ -311,20 +311,20 @@ type SharedExtraOptions<
 		 *
 		 * @example
 		 * ```ts
-		 * responseParser: (responseString) => {
-		 *   return JSON.parse(responseString);
+		 * responseParser: (text) => {
+		 *   return JSON.parse(text);
 		 * }
 		 *
 		 * // Parse XML responses
-		 * responseParser: (responseString) => {
+		 * responseParser: (text) => {
 		 *   const parser = new DOMParser();
-		 *   const doc = parser.parseFromString(responseString, "text/xml");
+		 *   const doc = parser.parseFromString(text, "text/xml");
 		 *   return xmlToObject(doc);
 		 * }
 		 *
 		 * // Parse CSV responses
-		 * responseParser: (responseString) => {
-		 *   const lines = responseString.split('\n');
+		 * responseParser: (text) => {
+		 *   const lines = text.split('\n');
 		 *   const headers = lines[0].split(',');
 		 *   const data = lines.slice(1).map(line => {
 		 *     const values = line.split(',');
@@ -338,7 +338,7 @@ type SharedExtraOptions<
 		 *
 		 * ```
 		 */
-		responseParser?: (responseString: string) => Awaitable<TData>;
+		responseParser?: ResponseParser<TData>;
 
 		/**
 		 * Expected response type, determines how the response body is parsed.

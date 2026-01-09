@@ -57,7 +57,7 @@ export type ApplySchemaConfiguration<
 	TSchemaRouteKeys extends string,
 > = ApplyStrictConfig<TSchemaConfig, ApplyURLBasedConfig<TSchemaConfig, TSchemaRouteKeys>>;
 
-export type InferAllRouteKeys<
+export type InferAllMainRouteKeys<
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
 	TSchemaConfig extends CallApiSchemaConfig,
 > = ApplySchemaConfiguration<
@@ -70,7 +70,7 @@ export type InferInitURL<
 	TSchemaConfig extends CallApiSchemaConfig,
 > =
 	keyof TBaseSchemaRoutes extends never ? InitURLOrURLObject
-	:	InferAllRouteKeys<TBaseSchemaRoutes, TSchemaConfig>;
+	:	InferAllMainRouteKeys<TBaseSchemaRoutes, TSchemaConfig>;
 
 export type GetCurrentRouteSchemaKey<TSchemaConfig extends CallApiSchemaConfig, TPath> =
 	TPath extends URL ? string
