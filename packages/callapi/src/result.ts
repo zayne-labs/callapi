@@ -1,6 +1,6 @@
 import { extraOptionDefaults } from "./constants/defaults";
 import type { CallApiExtraOptions } from "./types/common";
-import type { ThrowOnErrorUnion } from "./types/conditional-types";
+import type { ThrowOnErrorBoolean } from "./types/conditional-types";
 import type { DefaultDataType, DefaultThrowOnError } from "./types/default-types";
 import type {
 	AnyString,
@@ -74,10 +74,18 @@ const detectResponseType = (response: Response): Extract<ResponseTypeType, "blob
 	return "blob";
 };
 
-export const resolveResponseData = async (
-	options: Pick<CallApiExtraOptions, "responseParser" | "responseType"> & { response: Response }
-) => {
-	const { response, responseParser, responseType } = options;
+export const resolveResponseData = async (options: {
+	response: Response;
+	responseParser: CallApiExtraOptions["responseParser"];
+	responseType: CallApiExtraOptions["responseType"];
+	resultMode: CallApiExtraOptions["resultMode"];
+}) => {
+	const { response, responseParser, responseType, resultMode } = options;
+
+	// == If the result mode is set to `fetchApi`, then don't try to resolve the responseData and just return null
+	if (resultMode === "fetchApi") {
+		return null;
+	}
 
 	const selectedParser = responseParser ?? extraOptionDefaults.responseParser;
 	const selectedResponseType = responseType ?? detectResponseType(response);
@@ -139,19 +147,28 @@ export type CallApiResultSuccessOrErrorVariant<TData, TError> =
 	| CallApiResultErrorVariant<TError>
 	| CallApiResultSuccessVariant<TData>;
 
+type GetCallApiResult<
+	TThrowOnError extends ThrowOnErrorBoolean,
+	TResultWithException extends CallApiResultSuccessVariant<unknown>,
+	TResultWithoutException extends CallApiResultSuccessOrErrorVariant<unknown, unknown>,
+> = TThrowOnError extends true ? TResultWithException : TResultWithoutException;
+
 export type ResultModeMap<
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,
-	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
-	TComputedResultWithoutException extends CallApiResultSuccessOrErrorVariant<TData, TErrorData> =
-		CallApiResultSuccessOrErrorVariant<TData, TErrorData>,
-	TComputedResultWithException extends CallApiResultSuccessVariant<TData> =
+	TThrowOnError extends ThrowOnErrorBoolean = DefaultThrowOnError,
+	TComputedResult extends GetCallApiResult<
+		TThrowOnError,
 		CallApiResultSuccessVariant<TData>,
-	TComputedResult extends TThrowOnError extends true ? TComputedResultWithException
-	:	TComputedResultWithoutException = TThrowOnError extends true ? TComputedResultWithException
-	:	TComputedResultWithoutException,
+		CallApiResultSuccessOrErrorVariant<TData, TErrorData>
+	> = GetCallApiResult<
+		TThrowOnError,
+		CallApiResultSuccessVariant<TData>,
+		CallApiResultSuccessOrErrorVariant<TData, TErrorData>
+	>,
 > = UnmaskType<{
 	all: TComputedResult;
+	fetchApi: TComputedResult["response"];
 	onlyData: TComputedResult["data"];
 	onlyResponse: TComputedResult["response"];
 	withoutResponse: Prettify<DistributiveOmit<TComputedResult, "response">>;
@@ -170,7 +187,7 @@ export type InferCallApiResult<
 	TData,
 	TErrorData,
 	TResultMode extends ResultModeType,
-	TThrowOnError extends ThrowOnErrorUnion,
+	TThrowOnError extends ThrowOnErrorBoolean,
 	TComputedResultModeMapWithException extends ResultModeMap<TData, TErrorData, true> = ResultModeMap<
 		TData,
 		TErrorData,
@@ -196,6 +213,7 @@ type LazyResultModeMap = {
 const getResultModeMap = (details: ResultModeMap["all"]): LazyResultModeMap => {
 	return {
 		all: () => details,
+		fetchApi: () => details.response,
 		onlyData: () => details.data,
 		onlyResponse: () => details.response,
 		withoutResponse: () => omitKeys(details, ["response"]),
@@ -204,7 +222,7 @@ const getResultModeMap = (details: ResultModeMap["all"]): LazyResultModeMap => {
 
 type SuccessResult = CallApiResultSuccessVariant<unknown> | null;
 
-// The CallApiResult type is used to cast all return statements due to a design limitation in ts.
+// The return statement is casted due to a design limitation in ts.
 // LINK - See https://www.zhenghao.io/posts/type-functions for more info
 export const resolveSuccessResult = (data: unknown, info: SuccessInfo): SuccessResult => {
 	const { response, resultMode } = info;
@@ -227,7 +245,7 @@ export type ErrorInfo = Omit<SuccessInfo, "response">
 		message?: string;
 	};
 
-type ErrorResult = {
+export type ErrorResult = {
 	errorDetails: CallApiResultErrorVariant<unknown>;
 	errorResult: CallApiResultErrorVariant<unknown> | null;
 };

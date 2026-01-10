@@ -11,7 +11,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext<"/llms.mdx
 	const page = source.getPage(slug);
 
 	if (!page) {
-		notFound();
+		return notFound();
 	}
 
 	return new NextResponse(await getLLMText(page), {

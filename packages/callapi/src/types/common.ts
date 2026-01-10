@@ -23,9 +23,9 @@ import type {
 	InferRequestOptions,
 	MethodUnion,
 	ResultModeOption,
+	ThrowOnErrorBoolean,
 	ThrowOnErrorOption,
 	ThrowOnErrorType,
-	ThrowOnErrorUnion,
 } from "./conditional-types";
 import type {
 	DefaultCallApiContext,
@@ -34,7 +34,7 @@ import type {
 	DefaultPluginArray,
 	DefaultThrowOnError,
 } from "./default-types";
-import type { NoInferUnMasked, Writeable } from "./type-helpers";
+import type { CommonRequestHeaders, NoInferUnMasked, Writeable } from "./type-helpers";
 
 // eslint-disable-next-line ts-eslint/no-empty-object-type -- This needs to be empty to allow users to register their own meta
 export interface Register {
@@ -83,7 +83,7 @@ export type CallApiRequestOptions = {
 } & Pick<ModifiedRequestInit, FetchSpecificKeysUnion>;
 
 export type CallApiRequestOptionsForHooks = Omit<CallApiRequestOptions, "headers"> & {
-	headers: Record<string, string | undefined>;
+	headers: Record<"Authorization" | "Content-Type" | CommonRequestHeaders, string | undefined>;
 };
 
 type SharedExtraOptions<
@@ -91,7 +91,7 @@ type SharedExtraOptions<
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,
 	TResultMode extends ResultModeType = ResultModeType,
-	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
+	TThrowOnError extends ThrowOnErrorBoolean = DefaultThrowOnError,
 	TResponseType extends ResponseTypeType = ResponseTypeType,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TComputedMergedPluginExtraOptions = Partial<
@@ -377,58 +377,23 @@ type SharedExtraOptions<
 		responseType?: TResponseType;
 
 		/**
-		 * Controls what data is included in the returned result object.
+		 * Dictates how CallApi processes and returns the final result
 		 *
-		 * Different modes return different combinations of data, error, and response:
-		 * - **"all"**: Returns { data, error, response } - complete result information
-		 * - **"onlyData"**: Returns only data (null for errors)
+		- **"all"** (default): Returns `{ data, error, response }`. Standard lifecycle.
+		- **"onlyData"**: Returns only the data from the response.
+		- **"onlyResponse"**: Returns only the `Response` object.
+		- **"fetchApi"**: Also returns only the `Response` object, but also skips parsing of the response body internally and data/errorData schema validation.
+		- **"withoutResponse"**: Returns `{ data, error }`. Standard lifecycle, but omits the `response` property.
 		 *
-		 * When combined with throwOnError: true, null/error variants are automatically removed:
-		 * - **"all" + throwOnError: true**: Returns { data, error: null, response } (error property is null, throws instead)
-		 * - **"onlyData" + throwOnError: true**: Returns data (never null, throws on error)
+		 *
+		 * **Note:**
+		 * By default, simplified modes (`"onlyData"`, `"onlyResponse"`, `"fetchApi"`) do not throw errors.
+		 *	Success/failure should be handled via hooks or by checking the return value (e.g., `if (data)` or `if (response?.ok)`).
+		 * To force an exception instead, set `throwOnError: true`.
+		 *
 		 *
 		 * @default "all"
 		 *
-		 * @example
-		 * ```ts
-		 * // Complete result with all information (default)
-		 * const { data, error, response } = await callApi("/users", { resultMode: "all" });
-		 * if (error) {
-		 *   console.error("Request failed:", error);
-		 * } else {
-		 *   console.log("Users:", data);
-		 * }
-		 *
-		 * // Complete result but throws on errors (throwOnError removes error from type)
-		 * try {
-		 *   const { data, response } = await callApi("/users", {
-		 *     resultMode: "all",
-		 *     throwOnError: true
-		 *   });
-		 *   console.log("Users:", data); // data is never null here
-		 * } catch (error) {
-		 *   console.error("Request failed:", error);
-		 * }
-		 *
-		 * // Only data, returns null on errors
-		 * const users = await callApi("/users", { resultMode: "onlyData" });
-		 * if (users) {
-		 *   console.log("Users:", users);
-		 * } else {
-		 *   console.log("Request failed");
-		 * }
-		 *
-		 * // Only data, throws on errors (throwOnError removes null from type)
-		 * try {
-		 *   const users = await callApi("/users", {
-		 *     resultMode: "onlyData",
-		 *     throwOnError: true
-		 *   });
-		 *   console.log("Users:", users); // users is never null here
-		 * } catch (error) {
-		 *   console.error("Request failed:", error);
-		 * }
-		 * ```
 		 */
 		resultMode?: TResultMode;
 
@@ -509,7 +474,7 @@ export type BaseCallApiExtraOptions<
 	TBaseData = DefaultDataType,
 	TBaseErrorData = DefaultDataType,
 	TBaseResultMode extends ResultModeType = ResultModeType,
-	TBaseThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
+	TBaseThrowOnError extends ThrowOnErrorBoolean = DefaultThrowOnError,
 	TBaseResponseType extends ResponseTypeType = ResponseTypeType,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
@@ -654,7 +619,7 @@ export type CallApiExtraOptions<
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,
 	TResultMode extends ResultModeType = ResultModeType,
-	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
+	TThrowOnError extends ThrowOnErrorBoolean = DefaultThrowOnError,
 	TResponseType extends ResponseTypeType = ResponseTypeType,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
@@ -720,7 +685,7 @@ export type BaseCallApiConfig<
 	TBaseData = DefaultDataType,
 	TBaseErrorData = DefaultDataType,
 	TBaseResultMode extends ResultModeType = ResultModeType,
-	TBaseThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
+	TBaseThrowOnError extends ThrowOnErrorBoolean = DefaultThrowOnError,
 	TBaseResponseType extends ResponseTypeType = ResponseTypeType,
 	TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
@@ -743,7 +708,7 @@ export type CallApiConfig<
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,
 	TResultMode extends ResultModeType = ResultModeType,
-	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
+	TThrowOnError extends ThrowOnErrorBoolean = DefaultThrowOnError,
 	TResponseType extends ResponseTypeType = ResponseTypeType,
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes = BaseCallApiSchemaRoutes,
 	TSchema extends CallApiSchema = CallApiSchema,
@@ -780,7 +745,7 @@ export type CallApiParameters<
 	TErrorData = DefaultDataType,
 	TResultMode extends ResultModeType = ResultModeType,
 	TCallApiContext extends CallApiContext = DefaultCallApiContext,
-	TThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
+	TThrowOnError extends ThrowOnErrorBoolean = DefaultThrowOnError,
 	TResponseType extends ResponseTypeType = ResponseTypeType,
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes = BaseCallApiSchemaRoutes,
 	TSchema extends CallApiSchema = CallApiSchema,
@@ -814,12 +779,12 @@ export type CallApiResult<
 	TData,
 	TErrorData,
 	TResultMode extends ResultModeType,
-	TThrowOnError extends ThrowOnErrorUnion,
+	TThrowOnError extends ThrowOnErrorBoolean,
 > = InferCallApiResult<TData, TErrorData, TResultMode, TThrowOnError>;
 
 export type CallApiResultLoose<
 	TData,
 	TErrorData,
 	TResultMode extends ResultModeType = ResultModeType,
-	TThrowOnError extends ThrowOnErrorUnion = ThrowOnErrorUnion,
+	TThrowOnError extends ThrowOnErrorBoolean = ThrowOnErrorBoolean,
 > = InferCallApiResult<TData, TErrorData, TResultMode, TThrowOnError>;

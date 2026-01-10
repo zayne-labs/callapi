@@ -374,13 +374,13 @@ export type ResultModeOption<TErrorData, TResultMode extends ResultModeType> =
 	: TErrorData extends false | undefined ? { resultMode?: "onlyData" }
 	: { resultMode?: TResultMode };
 
-export type ThrowOnErrorUnion = boolean;
+export type ThrowOnErrorBoolean = boolean;
 
-export type ThrowOnErrorType<TErrorData, TThrowOnError extends ThrowOnErrorUnion> =
+export type ThrowOnErrorType<TErrorData, TThrowOnError extends ThrowOnErrorBoolean> =
 	| TThrowOnError
 	| ((context: ErrorContext<{ ErrorData: TErrorData }>) => TThrowOnError);
 
-export type ThrowOnErrorOption<TErrorData, TThrowOnError extends ThrowOnErrorUnion> =
+export type ThrowOnErrorOption<TErrorData, TThrowOnError extends ThrowOnErrorBoolean> =
 	TErrorData extends false ? { throwOnError: true }
 	: TErrorData extends false | undefined ? { throwOnError?: true }
 	: { throwOnError?: ThrowOnErrorType<TErrorData, TThrowOnError> };

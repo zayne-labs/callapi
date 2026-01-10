@@ -10,7 +10,9 @@ export async function GET(_req: Request, { params }: RouteContext<"/og/docs/[[..
 
 	const page = source.getPage(slug.slice(0, -1));
 
-	if (!page) notFound();
+	if (!page) {
+		return notFound();
+	}
 
 	return new ImageResponse(
 		<MetadataImage title={page.data.title} description={page.data.description} />,

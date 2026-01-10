@@ -35,7 +35,7 @@ import type {
 	GetCurrentRouteSchema,
 	GetCurrentRouteSchemaKey,
 	InferInitURL,
-	ThrowOnErrorUnion,
+	ThrowOnErrorBoolean,
 } from "./types/conditional-types";
 import type {
 	DefaultCallApiContext,
@@ -79,7 +79,7 @@ export const createFetchClientWithContext = <
 		TBaseResultMode extends ResultModeType = TBaseCallApiContext["ResultMode"] extends ResultModeType ?
 			TBaseCallApiContext["ResultMode"]
 		:	DefaultCallApiContext["ResultMode"],
-		TBaseThrowOnError extends ThrowOnErrorUnion = DefaultThrowOnError,
+		TBaseThrowOnError extends ThrowOnErrorBoolean = DefaultThrowOnError,
 		TBaseResponseType extends ResponseTypeType = ResponseTypeType,
 		const TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
 		const TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
@@ -105,7 +105,7 @@ export const createFetchClientWithContext = <
 			TErrorData = TBaseErrorData,
 			TResultMode extends ResultModeType = TBaseResultMode,
 			TCallApiContext extends CallApiContext = TBaseCallApiContext,
-			TThrowOnError extends ThrowOnErrorUnion = TBaseThrowOnError,
+			TThrowOnError extends ThrowOnErrorBoolean = TBaseThrowOnError,
 			TResponseType extends ResponseTypeType = TBaseResponseType,
 			const TSchemaConfig extends CallApiSchemaConfig = TComputedBaseSchemaConfig,
 			TInitURL extends InferInitURL<TComputedBaseSchemaRoutes, TSchemaConfig> = InferInitURL<
@@ -303,12 +303,14 @@ export const createFetchClientWithContext = <
 					response: shouldCloneResponse ? response.clone() : response,
 					responseParser: options.responseParser,
 					responseType: options.responseType,
+					resultMode: options.resultMode,
 				});
 
 				if (!response.ok) {
 					const validErrorData = await handleSchemaValidation(resolvedSchema, "errorData", {
 						inputValue: responseData,
 						response,
+						resultMode: options.resultMode,
 						schemaConfig: resolvedSchemaConfig,
 					});
 
@@ -326,6 +328,7 @@ export const createFetchClientWithContext = <
 				const validSuccessData = await handleSchemaValidation(resolvedSchema, "data", {
 					inputValue: responseData,
 					response,
+					resultMode: options.resultMode,
 					schemaConfig: resolvedSchemaConfig,
 				});
 
@@ -340,7 +343,6 @@ export const createFetchClientWithContext = <
 
 				await executeHooks(
 					options.onSuccess?.(successContext),
-
 					options.onResponse?.({ ...successContext, error: null })
 				);
 

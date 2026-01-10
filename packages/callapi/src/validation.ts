@@ -226,6 +226,7 @@ type ValidationOptions<
 > = {
 	inputValue: InferSchemaInput<TSchema>;
 	response?: Response | null;
+	resultMode: CallApiExtraOptions["resultMode"];
 	schemaConfig: CallApiSchemaConfig | undefined;
 };
 
@@ -238,7 +239,12 @@ export const handleSchemaValidation = async <
 	schemaName: TSchemaName,
 	validationOptions: ValidationOptions<TSchema>
 ): Promise<InferSchemaOutput<TSchema>> => {
-	const { inputValue, response, schemaConfig } = validationOptions;
+	const { inputValue, response, resultMode, schemaConfig } = validationOptions;
+
+	// == If resultMode is set to `fetchApi`, return the input value as is (which is going to be `null` in this)
+	if (resultMode === "fetchApi" && (schemaName === "data" || schemaName === "errorData")) {
+		return inputValue as never;
+	}
 
 	const disableRuntimeValidationBooleanObject =
 		isObject(schemaConfig?.disableRuntimeValidation) ? schemaConfig.disableRuntimeValidation : {};
@@ -326,6 +332,7 @@ const handleOptionsValidation = async <TValidationOptions extends OptionValidati
 		resolvedOptionsToBeValidated.map((schemaName) =>
 			handleSchemaValidation(schema, schemaName, {
 				inputValue: resolvedOptions[schemaName as keyof typeof resolvedOptions],
+				resultMode: options?.resultMode,
 				schemaConfig,
 			})
 		)

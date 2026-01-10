@@ -23,7 +23,7 @@ async function Page({ params }: PageProps<"/docs/[[...slug]]">) {
 	const page = source.getPage(slug);
 
 	if (!page) {
-		notFound();
+		return notFound();
 	}
 
 	const MDX = page.data.body;
@@ -66,7 +66,7 @@ export async function generateMetadata({ params }: PageProps<"/docs/[[...slug]]"
 	const page = source.getPage(slug);
 
 	if (!page) {
-		notFound();
+		return notFound();
 	}
 
 	const description =
