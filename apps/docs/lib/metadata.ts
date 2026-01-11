@@ -24,6 +24,60 @@ export const baseURL =
 
 const bannerImage = "/banner.png";
 
+const defaultKeywords = [
+	"fetch",
+	"type-safe",
+	"interceptors",
+	"callapi",
+	"dedupe",
+	"hooks",
+	"zayne callapi",
+	"typescript fetch",
+	"fetch wrapper",
+	"http client",
+	"api client",
+	"fetch alternative",
+	"typescript http",
+	"request library",
+	"fetch api wrapper",
+	"type safe fetch",
+	"javascript fetch",
+	"typescript api client",
+	"http request library",
+	"fetch interceptors",
+	"request deduplication",
+	"fetch hooks",
+	"api wrapper",
+	"fetch utility",
+	"typescript request",
+	"fetch helper",
+	"http wrapper",
+	"fetch library",
+	"request client",
+	"fetch typescript",
+	"api request",
+	"fetch plugin",
+	"request hooks",
+	"fetch middleware",
+	"http api client",
+	"fetch validation",
+	"request retry",
+	"fetch timeout",
+	"api fetch",
+	"fetch error handling",
+	"request response",
+	"fetch schema",
+	"typescript fetch client",
+	"fetch request library",
+	"http fetch wrapper",
+	"fetch api client",
+	"request fetch library",
+	"fetch response handling",
+];
+
+export const defaultDescription =
+	"A lightweight, type-safe Fetch API wrapper with dozens of convenience features.";
+
 export function createMetadata(overrides?: Metadata): Metadata {
 	return {
 		...overrides,
@@ -33,8 +87,12 @@ export function createMetadata(overrides?: Metadata): Metadata {
 			...overrides?.alternates,
 		},
 
+		description: overrides?.description ?? defaultDescription,
+
+		keywords: overrides?.keywords ?? defaultKeywords,
+
 		openGraph: {
-			description: overrides?.description ?? undefined,
+			description: overrides?.description ?? defaultDescription,
 			images: bannerImage,
 			siteName: "CallApi",
 			title: overrides?.title ?? undefined,
@@ -46,7 +104,7 @@ export function createMetadata(overrides?: Metadata): Metadata {
 		twitter: {
 			card: "summary_large_image",
 			creator: "@zayne_el_kaiser",
-			description: overrides?.description ?? undefined,
+			description: overrides?.description ?? defaultDescription,
 			images: bannerImage,
 			title: overrides?.title ?? undefined,
 

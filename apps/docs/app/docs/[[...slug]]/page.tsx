@@ -12,7 +12,7 @@ import { LLMCopyButton, ViewOptions } from "@/components/ai/page-actions";
 import { getMDXComponents } from "@/components/common";
 import { EditOnGithub } from "@/components/common/EditOnGithub";
 import { owner, repo } from "@/lib/github";
-import { createMetadata } from "@/lib/metadata";
+import { createMetadata, defaultDescription } from "@/lib/metadata";
 import { getPageImage, source } from "@/lib/source";
 
 export const revalidate = 86400;
@@ -69,9 +69,7 @@ export async function generateMetadata({ params }: PageProps<"/docs/[[...slug]]"
 		return notFound();
 	}
 
-	const description =
-		page.data.description
-		?? "A lightweight, type-safe Fetch API wrapper with dozens of convenience features.";
+	const description = page.data.description ?? defaultDescription;
 
 	const image = {
 		height: 630,
@@ -81,7 +79,6 @@ export async function generateMetadata({ params }: PageProps<"/docs/[[...slug]]"
 
 	return createMetadata({
 		description,
-		keywords: ["fetch", "api", "wrapper", "request", "cancel", "retry", "interceptor", "callapi"],
 		openGraph: {
 			images: [image],
 			url: `/docs/${page.slugs.join("/")}`,

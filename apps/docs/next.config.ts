@@ -21,8 +21,7 @@ const config: NextConfig = {
 
 	reactStrictMode: true,
 
-	// eslint-disable-next-line ts-eslint/require-await
-	async rewrites() {
+	rewrites: () => {
 		return [
 			{
 				destination: "/llms.mdx/:path*",
