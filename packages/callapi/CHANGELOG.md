@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.11.43
+
+### Patch Changes
+
+- 8aaff38: feat: add defineInstanceConfig helper
+
 ## 1.11.42
 
 ### Patch Changes
