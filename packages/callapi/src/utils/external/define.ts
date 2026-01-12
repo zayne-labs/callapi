@@ -1,5 +1,5 @@
 import type { CallApiPlugin } from "../../plugins";
-import type { BaseCallApiConfig } from "../../types/common";
+import type { BaseCallApiConfig, CallApiConfig } from "../../types/common";
 import type { AnyFunction, Satisfies, Writeable } from "../../types/type-helpers";
 import type {
 	BaseCallApiSchemaAndConfig,
@@ -58,4 +58,10 @@ export const defineBaseConfig: DefineBaseConfig = <const TBaseConfig extends Bas
 	baseConfig: TBaseConfig
 ) => {
 	return baseConfig;
+};
+
+export const defineInstanceConfig = <const TInstanceConfig extends CallApiConfig>(
+	config: TInstanceConfig
+) => {
+	return config as Writeable<typeof config, "deep">;
 };
