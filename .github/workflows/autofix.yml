@@ -21,7 +21,7 @@ jobs:
          - name: Setup pnpm
            uses: pnpm/action-setup@v4
            with:
-              version: 10.27.0
+              version: 10.28.0
 
          - name: Setup Node.js
            uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4
@@ -32,6 +32,6 @@ jobs:
          - name: Format files
            run: |
               pnpm install --frozen-lockfile
-              pnpm lint:format
+              pnpm lint:format:root
 
          - uses: autofix-ci/action@ff86a557419858bb967097bfc916833f5647fa8c
