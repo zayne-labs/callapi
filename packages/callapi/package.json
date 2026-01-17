@@ -5,10 +5,11 @@
 	"description": "A lightweight wrapper over fetch with quality of life improvements like built-in request cancellation, retries, interceptors and more",
 	"author": "Ryan Zayne",
 	"license": "MIT",
-	"homepage": "https://github.com/zayne-labs/callapi#readme",
+	"homepage": "https://zayne-labs-callapi.vercel.app",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/zayne-labs/callapi.git"
+		"url": "git+https://github.com/zayne-labs/callapi.git",
+		"directory": "packages/callapi"
 	},
 	"bugs": {
 		"url": "https://github.com/zayne-labs/callapi/issues"
@@ -62,8 +63,8 @@
 		"@vitest/browser": "4.0.17",
 		"@vitest/browser-playwright": "4.0.17",
 		"@vitest/coverage-v8": "4.0.17",
-		"@zayne-labs/prettier-config": "^0.11.18",
-		"@zayne-labs/tsconfig": "0.11.18",
+		"@zayne-labs/prettier-config": "^0.11.19",
+		"@zayne-labs/tsconfig": "0.11.19",
 		"concurrently": "^9.2.1",
 		"cross-env": "^10.1.0",
 		"playwright": "^1.57.0",

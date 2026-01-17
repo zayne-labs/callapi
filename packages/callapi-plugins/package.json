@@ -5,10 +5,11 @@
 	"description": "A collection of plugins for callapi",
 	"author": "Ryan Zayne",
 	"license": "MIT",
-	"homepage": "https://github.com/zayne-labs/callapi#readme",
+	"homepage": "https://github.com/zayne-labs/callapi/tree/main/packages/callapi-plugins#readme",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/zayne-labs/callapi.git"
+		"url": "git+https://github.com/zayne-labs/callapi.git",
+		"directory": "packages/callapi-plugins"
 	},
 	"sideEffects": false,
 	"exports": {
@@ -48,8 +49,8 @@
 		"@size-limit/preset-small-lib": "12.0.0",
 		"@total-typescript/ts-reset": "0.6.1",
 		"@zayne-labs/callapi": "workspace:*",
-		"@zayne-labs/toolkit-type-helpers": "^0.12.25",
-		"@zayne-labs/tsconfig": "0.11.18",
+		"@zayne-labs/toolkit-type-helpers": "^0.12.26",
+		"@zayne-labs/tsconfig": "0.11.19",
 		"concurrently": "^9.2.1",
 		"consola": "3.4.2",
 		"cross-env": "^10.1.0",
