@@ -58,7 +58,6 @@ const getStructuredData = (options: StructuredDataProps): WithContext<Organizati
 
 		default: {
 			variant satisfies never;
-			// eslint-disable-next-line ts-eslint/restrict-template-expressions
 			throw new Error(`Invalid variant: ${variant}`);
 		}
 	}
