@@ -1,5 +1,4 @@
 // == These two types allows for adding arbitrary literal types, while still provided autocomplete for defaults.
-
 // == Usually intersection with "{}" or "NonNullable<unknown>" would make it work fine, but the placeholder with never type is added to make the AnyWhatever type appear last in a given union.
 export type AnyString = string & NonNullable<unknown>;
 export type AnyNumber = number & NonNullable<unknown>;
