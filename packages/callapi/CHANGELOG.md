@@ -1,5 +1,13 @@
 # @zayne-labs/callapi
 
+## 1.11.44
+
+### Patch Changes
+
+- be2f46d: refactor(types): improve type inference for defineBaseConfig
+
+   Update defineBaseConfig to properly infer return type when using function configuration, ensuring deep writeable properties are correctly applied to the function's return value.
+
 ## 1.11.43
 
 ### Patch Changes
