@@ -24,7 +24,7 @@ CallApi aims to make dealing with these failures much more predictable and conve
 
 ## Structure of the `error` property
 
-As introduced in the [Getting Started](./getting-started.mdx) guide, CallApi wraps responses in a result object with three key properties: `data`, `error`, and `response`.
+As introduced in the [Getting Started](/docs/getting-started) guide, CallApi wraps responses in a result object with three key properties: `data`, `error`, and `response`.
 
 When something goes wrong while making a request, the `error` property will contain a structured object detailing the problem.
 
@@ -106,7 +106,7 @@ if (isHTTPError(error)) {
 
 ## Handling Validation Errors (ValidationError)
 
-While covered in more detail in the [Validation](./validation.mdx) section, CallApi also has built-in support for schema validation.
+While covered in more detail in the [Validation](/docs/validation) section, CallApi also has built-in support for schema validation.
 If you configure a schema (whether for any request option or for the response data) and the received data does not match that schema, CallApi will wrap this failure in a `ValidationError`.
 
 You can use the `isValidationError` utility to check specifically for this error type:

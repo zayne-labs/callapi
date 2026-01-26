@@ -49,16 +49,16 @@
 		"@size-limit/preset-small-lib": "12.0.0",
 		"@total-typescript/ts-reset": "0.6.1",
 		"@zayne-labs/callapi": "workspace:*",
-		"@zayne-labs/toolkit-type-helpers": "^0.12.27",
+		"@zayne-labs/toolkit-type-helpers": "^0.12.30",
 		"@zayne-labs/tsconfig": "0.11.21",
 		"concurrently": "^9.2.1",
 		"consola": "3.4.2",
 		"cross-env": "^10.1.0",
 		"publint": "^0.3.17",
 		"size-limit": "12.0.0",
-		"tsdown": "0.20.0-beta.4",
+		"tsdown": "0.20.1",
 		"typescript": "5.9.3",
-		"vitest": "^4.0.17"
+		"vitest": "^4.0.18"
 	},
 	"publishConfig": {
 		"access": "public",

@@ -159,7 +159,7 @@ const envPlugin = definePlugin({
 
 ### Hooks
 
-Plugins can define hooks that run at different stages of the request lifecycle. Hooks can be an object or a function that returns an object (useful for accessing setup context). See [Hooks](./hooks) for detailed information about available hooks.
+Plugins can define hooks that run at different stages of the request lifecycle. Hooks can be an object or a function that returns an object (useful for accessing setup context). See [Hooks](/docs/hooks) for detailed information about available hooks.
 
 ```ts twoslash title="plugins.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -219,7 +219,7 @@ const dynamicPlugin = definePlugin({
 
 ### Middleware
 
-Plugins can define middleware to wrap internal operations. Currently, CallApi supports fetch middleware for intercepting requests at the network layer. See [Middleware](./middlewares) for detailed information.
+Plugins can define middleware to wrap internal operations. Currently, CallApi supports fetch middleware for intercepting requests at the network layer. See [Middleware](/docs/middlewares) for detailed information.
 
 Define middleware using the `middlewares` property. Like hooks, middlewares can be an object or a function that receives the setup context.
 

@@ -10,7 +10,7 @@ CallApi runs these functions (sync or async) automatically at specific points â€
 <Callout type="info">
 	**Hooks vs Middleware:** Hooks observe and react to events, but their return values are ignored. If you
 	need explicit control over execution flow (return a custom response, short-circuit operations etc.), use
-	[Middleware](./middlewares) instead.
+	[Middleware](/docs/middlewares) instead.
 </Callout>
 
 You can configure how hooks execute using `hooksExecutionMode` (parallel vs sequential). Plugin hooks always execute before main hooks. See the [Hook Configuration Options](#hook-configuration-options) section for details.
@@ -348,7 +348,7 @@ const client = createFetchClient({
 
 Hooks can be provided at three levels:
 
-1. **The Plugin Level**: (covered in [`plugins`](./plugins.mdx))
+1. **The Plugin Level**: (covered in [`plugins`](/docs/plugins))
 2. **The Base Client Level**: (`createFetchClient`)
 3. **The Instance Level**: (`callApi`)
 
@@ -466,7 +466,7 @@ const dependentClient = createFetchClient({
 <Callout type="info">
 	This merging behavior for array-type base client hooks is mostly just a convenience. If you need more
 	sophisticated control or guaranteed execution, defining your logic within a dedicated
-	[plugin](./plugins) is often the better approach.
+	[plugin](/docs/plugins) is often the better approach.
 </Callout>
 
 ```ts title="Hook Order and Merging Example"

@@ -1,5 +1,5 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { convertToModelMessages, streamText, type ModelMessage } from "ai";
+import { convertToModelMessages, streamText } from "ai";
 import { ProvideLinksToolSchema } from "@/lib/chat/ai-tools-schema";
 import {
 	getDocumentationContext,
@@ -13,37 +13,38 @@ const google = createGoogleGenerativeAI({
 
 export const maxDuration = 30;
 
-const documentationContext = getDocumentationContext();
-const sourceCodeContext = getSourceCodeContext();
+const systemPromptContext = getSystemPromptContext();
+const documentationContextPromise = getDocumentationContext();
+const sourceCodeContextPromise = getSourceCodeContext();
 
-export async function POST(req: Request) {
-	const systemPromptContext = getSystemPromptContext();
-
-	const reqJson = (await req.json()) as unknown as Record<string, unknown>;
-
-	const initMessages = await convertToModelMessages(reqJson.messages as never, {
-		ignoreIncompleteToolCalls: true,
-	});
-
-	const messages = [
-		{
-			content: systemPromptContext,
-			role: "system",
-		},
-		{
-			content: await documentationContext,
-			role: "system",
-		},
-		{
-			content: await sourceCodeContext,
-			role: "system",
-		},
-		...initMessages,
-	] as const satisfies ModelMessage[];
+export async function POST(request: Request) {
+	const [documentationContext, sourceCodeContext, userMessages] = await Promise.all([
+		documentationContextPromise,
+		sourceCodeContextPromise,
+		request.json().then((json: Record<string, unknown>) =>
+			convertToModelMessages(json.messages as never, {
+				ignoreIncompleteToolCalls: true,
+			})
+		),
+	]);
 
 	const result = streamText({
-		messages,
-		model: google("gemini-3-flash-preview"),
+		messages: [
+			{
+				content: systemPromptContext,
+				role: "system",
+			},
+			{
+				content: documentationContext,
+				role: "system",
+			},
+			{
+				content: sourceCodeContext,
+				role: "system",
+			},
+			...userMessages,
+		],
+		model: google("gemini-2.5-flash"),
 		toolChoice: "auto",
 		tools: {
 			provideLinks: {

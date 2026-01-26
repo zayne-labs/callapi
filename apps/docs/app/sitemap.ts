@@ -6,18 +6,19 @@ export const revalidate = false;
 
 const url = (path: string): string => new URL(path, baseURL).toString();
 
-const sitemap = (): MetadataRoute.Sitemap => {
-	const docsSiteMap = source.getPages().map((page) => {
-		const lastModified =
-			page.data.lastModified ? new Date(page.data.lastModified).toISOString() : undefined;
+const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
+	const docsSiteMap = await Promise.all(
+		source.getPages().map(async (page) => {
+			const { lastModified } = await page.data.load();
 
-		return {
-			changeFrequency: "weekly",
-			lastModified,
-			priority: 0.5,
-			url: url(page.url),
-		} satisfies MetadataRoute.Sitemap[number];
-	});
+			return {
+				changeFrequency: "weekly",
+				lastModified: lastModified ? new Date(lastModified).toISOString() : undefined,
+				priority: 0.5,
+				url: url(page.url),
+			} satisfies MetadataRoute.Sitemap[number];
+		})
+	);
 
 	return [
 		{

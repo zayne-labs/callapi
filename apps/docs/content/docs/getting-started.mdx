@@ -56,7 +56,7 @@ As shown in the example, callApi returns a result object containing:
 - `error`: An error object containing info about any error that occurred during the lifecycle of the request
 - `response`: The Response object from the underlying fetch API
 
-You can specify the data type and error type via TypeScript generics, or using a [Validation Schema](./getting-started#request-and-response-validation) to validate and infer the types automatically.
+You can specify the data type and error type via TypeScript generics, or using a [Validation Schema](/docs/getting-started#request-and-response-validation) to validate and infer the types automatically.
 
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
@@ -89,7 +89,7 @@ const { data: validatedData } = await callApi("https://jsonplaceholder.typicode.
 // @annotate: Hover over any of the properties to see the type
 ```
 
-The result object format can also be customized using the [`resultMode`](./request-and-response-helpers#result-management) option.
+The result object format can also be customized using the [`resultMode`](/docs/request-and-response-helpers#result-management) option.
 
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
@@ -111,9 +111,9 @@ const data = await callApi<Todo>("https://jsonplaceholder.typicode.com/todos/1",
 
 `CreateFetchClient` allows you to create a callApi instance with custom base configurations.
 
-You can pass any of the [fetch API options](https://developer.mozilla.org/en-US/docs/Web/API/fetch#parameters) to the `createFetchClient` function along with any of the [CallApi options](./extra-options).
+The `createFetchClient` function accepts all standard [Fetch API options](https://developer.mozilla.org/en-US/docs/Web/API/fetch#parameters) alongside [CallApi's extended options](/docs/extra-options).
 
-Any similar options passed to the `callApi` instance created will override the options passed to the `createFetchClient` function, since they both take in the same options.
+Options provided to `createFetchClient` act as base defaults. You can override these defaults at any time by passing the corresponding options directly to the `callApi` instance.
 
 ```ts twoslash title="callBackendApi.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -132,7 +132,13 @@ type Todo = {
 	userId: string;
 };
 
-const { data, error } = await callBackendApi<Todo>("/todos/10");
+const resultOne = await callBackendApi<Todo>("/todos/10");
+
+const resultTwo = await callBackendApi<Todo>("/todos/5", {
+	// Override timeout and retry attempts
+	retryAttempts: 2,
+	timeout: 5000,
+});
 ```
 
 ## Request and Response Validation
@@ -174,7 +180,7 @@ const { data, error } = await callApi("/todos/1", {
 });
 ```
 
-For a comprehensive deep-dive into validation strategies, including global validation, request-options (body, headers, params, query) validation, custom validators, and best practices, check out our [Validation Guide](./validation).
+For a comprehensive deep-dive into validation strategies, including global validation, request-options (body, headers, params, query) validation, custom validators, and best practices, check out our [Validation Guide](/docs/validation).
 
 ## Throwing Errors
 
@@ -196,4 +202,4 @@ export const callBackendApi = createFetchClient({
 const { data } = await callBackendApi<{ userId: number }>("https://jsonplaceholder.typicode.com/todos/1");
 ```
 
-Learn more about handling errors in the [Error Handling](./error-handling) section.
+Learn more about handling errors in the [Error Handling](/docs/error-handling) section.

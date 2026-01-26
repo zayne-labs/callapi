@@ -4,13 +4,11 @@ import { NextRequest, NextResponse } from "next/server";
 const llmMethods = rewritePath("/docs/*path", "/llms.mdx/*path");
 
 export function proxy(request: NextRequest) {
-	if (!isMarkdownPreferred(request)) {
-		return NextResponse.next();
+	if (isMarkdownPreferred(request)) {
+		const result = llmMethods.rewrite(request.nextUrl.pathname);
+
+		return result ? NextResponse.rewrite(new URL(result, request.nextUrl)) : NextResponse.next();
 	}
 
-	const result = llmMethods.rewrite(request.nextUrl.pathname);
-
-	if (!result) return;
-
-	return NextResponse.rewrite(new URL(result, request.nextUrl));
+	return NextResponse.next();
 }
