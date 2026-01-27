@@ -51,9 +51,9 @@ type DefineBaseConfig = {
 	<const TBaseConfig extends BaseConfigObject>(
 		baseConfig: Satisfies<TBaseConfig, BaseConfigObject>
 	): Writeable<typeof baseConfig, "deep">;
-	<TBaseConfigFn extends BaseConfigFn>(
-		baseConfig: TBaseConfigFn
-	): (...parameters: Parameters<TBaseConfigFn>) => Writeable<ReturnType<TBaseConfigFn>, "deep">;
+	<const TBaseConfig extends BaseConfigObject>(
+		baseConfig: (...parameters: Parameters<BaseConfigFn>) => Writeable<TBaseConfig, "deep">
+	): typeof baseConfig;
 };
 
 export const defineBaseConfig: DefineBaseConfig = <const TBaseConfig extends BaseCallApiConfig>(
