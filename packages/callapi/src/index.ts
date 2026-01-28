@@ -52,6 +52,7 @@ export type {
 	InferInitURL,
 	GetCurrentRouteSchemaKey,
 	InferAllMainRouteKeys,
+	InferAllMainRoutes,
 } from "./types/conditional-types";
 
 export type { DefaultCallApiContext } from "./types/default-types";
