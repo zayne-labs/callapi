@@ -111,20 +111,19 @@ The `resultMode` option dictates how CallApi processes and returns the final res
 
 ### The `fetchApi` Mode
 
-The `fetchApi` mode is designed for scenarios where you want most of the library's benefits (URL resolution, plugins, hooks) don't want any internal parsing of data to occur, just like the `Fetch Api`.
+The `fetchApi` mode is designed for scenarios where you want most of the library's benefits (URL resolution, plugins, hooks) don't want any internal parsing of the response body to occur, just like the `Fetch Api`.
 
 When set to `fetchApi`:
 
 1. **No Parsing**: The library will not attempt to read or parse the response body.
-2. **No Validation**: Both request-option validation and response/error-data validation are skipped.
-3. **Internal Optimization**: Minimal overhead as it simply returns the response object immediately after the fetch/middleware phase.
+2. **No Validation**: Both data error-data validation are skipped.
 
 <Callout type="warn">
 	By default, simplified modes (`"onlyData"`, `"onlyResponse"`, `"fetchApi"`) do not throw errors.
 	Success/failure should be handled via hooks or by checking the return value (e.g., `if (data)` or `if
 	(response?.ok)`).
 
-    To force an exception instead, set `throwOnError: true`.
+    To force an exception, set `throwOnError: true`.
 
 </Callout>
 

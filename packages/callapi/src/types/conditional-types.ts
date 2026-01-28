@@ -57,13 +57,15 @@ export type ApplySchemaConfiguration<
 	TSchemaRouteKeys extends string,
 > = ApplyStrictConfig<TSchemaConfig, ApplyURLBasedConfig<TSchemaConfig, TSchemaRouteKeys>>;
 
+export type InferAllMainRoutes<TBaseSchemaRoutes extends BaseCallApiSchemaRoutes> = Omit<
+	TBaseSchemaRoutes,
+	FallBackRouteSchemaKey
+>;
+
 export type InferAllMainRouteKeys<
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
 	TSchemaConfig extends CallApiSchemaConfig,
-> = ApplySchemaConfiguration<
-	TSchemaConfig,
-	Exclude<Extract<keyof TBaseSchemaRoutes, string>, FallBackRouteSchemaKey>
->;
+> = ApplySchemaConfiguration<TSchemaConfig, Extract<keyof InferAllMainRoutes<TBaseSchemaRoutes>, string>>;
 
 export type InferInitURL<
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
@@ -126,19 +128,22 @@ export type MethodUnion = UnmaskType<
 	"CONNECT" | "DELETE" | "GET" | "HEAD" | "OPTIONS" | "PATCH" | "POST" | "PUT" | "TRACE" | AnyString
 >;
 
-type InferMethodFromURL<TInitURL> =
+type ExtractMethodFromURL<TInitURL> =
 	string extends TInitURL ? MethodUnion
 	: TInitURL extends `${AtSymbol}${infer TMethod extends RouteKeyMethods}/${string}` ? Uppercase<TMethod>
 	: MethodUnion;
 
-type InferMethodOption<TSchema extends CallApiSchema, TInitURL> = MakeSchemaOptionRequiredIfDefined<
+type InferMethodOption<
+	TSchema extends CallApiSchema,
+	TInitURL extends InitURLOrURLObject,
+> = MakeSchemaOptionRequiredIfDefined<
 	TSchema["method"],
 	{
 		/**
 		 * HTTP method for the request.
 		 * @default "GET"
 		 */
-		method?: InferSchemaOutput<TSchema["method"], InferMethodFromURL<TInitURL>>;
+		method?: InferSchemaOutput<TSchema["method"], ExtractMethodFromURL<TInitURL>>;
 	}
 >;
 
