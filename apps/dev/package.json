@@ -18,8 +18,8 @@
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
-		"@types/node": "^25.0.10",
-		"@zayne-labs/tsconfig": "0.11.21",
+		"@types/node": "^25.2.0",
+		"@zayne-labs/tsconfig": "0.11.23",
 		"tsx": "^4.21.0",
 		"typescript": "5.9.3",
 		"vite": "8.0.0-beta.8"

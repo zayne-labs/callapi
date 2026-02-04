@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 @import "fumadocs-ui/css/preset.css";
 @import "fumadocs-ui/css/neutral.css";
