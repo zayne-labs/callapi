@@ -18,7 +18,7 @@ export default defineConfig({
 
 		environment: "node",
 		globals: true,
-		setupFiles: ["./tests/setup.ts"],
+		setupFiles: ["./tests/test-setup/setup.ts"],
 		// typecheck: { enabled: true },
 	},
 });

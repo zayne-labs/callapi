@@ -2,9 +2,8 @@
  * Test fixtures with common mock data
  */
 
-import type { HooksOrHooksArray } from "../src";
-import type { CallApiPlugin } from "../src/plugins";
-import type { BaseCallApiConfig, CallApiConfig } from "../src/types/common";
+import type { HooksOrHooksArray } from "../../src";
+import { defineBaseConfig, definePlugin } from "../../src/utils/external";
 
 // Mock user data
 export const mockUser = {
@@ -58,35 +57,29 @@ export const mockServerError = {
 
 // Mock authentication data
 export const mockAuthToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.token";
+
 export const mockBasicAuth = {
 	password: "testpass123",
 	username: "testuser",
 } as const;
+
 export const mockCustomAuth = {
 	prefix: "Custom",
 	value: "custom-auth-value",
 } as const;
 
 // Mock configuration objects
-export const mockBaseConfig = {
+export const mockBaseConfig = defineBaseConfig({
 	baseURL: "https://api.example.com",
 	headers: {
 		Accept: "application/json",
 		"Content-Type": "application/json",
 	},
 	timeout: 5000,
-} satisfies BaseCallApiConfig;
-
-export const mockConfigWithAuth = {
-	...mockBaseConfig,
-	auth: {
-		value: mockAuthToken,
-		type: "Bearer",
-	},
-} satisfies BaseCallApiConfig;
+});
 
 // Mock plugin for testing
-export const mockPlugin: CallApiPlugin = {
+export const mockPlugin = definePlugin({
 	hooks: {
 		onRequest: (context) => {
 			context.request.headers["X-Test-Plugin"] = "true";
@@ -98,27 +91,7 @@ export const mockPlugin: CallApiPlugin = {
 	},
 	id: "test-plugin",
 	name: "Test Plugin",
-} as const;
-
-// Mock plugin with setup function
-export const mockPluginWithSetup: CallApiPlugin = {
-	hooks: {
-		onRequest: (context) => {
-			context.request.headers["X-Setup-Plugin"] = "true";
-		},
-	},
-	id: "test-plugin-with-setup",
-	name: "Test Plugin With Setup",
-	setup: (context) => {
-		// Return modified options to test setup functionality
-		return {
-			options: {
-				...context.options,
-				meta: { ...context.options.meta, pluginSetup: true },
-			},
-		};
-	},
-} as const;
+});
 
 // Mock hook execution tracking
 export const mockHookTracker = {
