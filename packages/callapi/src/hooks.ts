@@ -124,7 +124,7 @@ export interface Hooks<TCallApiContext extends CallApiContext = DefaultCallApiCo
 	 * @returns Promise or void - Hook can be async or sync
 	 *
 	 */
-	onRetry?: (response: RetryContext<TCallApiContext>) => Awaitable<unknown>;
+	onRetry?: (context: RetryContext<TCallApiContext>) => Awaitable<unknown>;
 
 	/**
 	 * Hook called when a successful response (2xx status) is received from the API.

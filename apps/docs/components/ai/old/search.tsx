@@ -284,7 +284,7 @@ export default function AISearch(props: InferProps<typeof Dialog.Root>) {
 
 						<Dialog.Close aria-label="Close" tabIndex={-1} asChild={true}>
 							<Button
-								className="absolute end-1 top-1 text-fd-muted-foreground"
+								className="absolute inset-e-1 top-1 text-fd-muted-foreground"
 								size="icon"
 								theme="ghost"
 							>

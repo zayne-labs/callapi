@@ -320,7 +320,7 @@ export function AISearchTrigger() {
 		<Button
 			theme="secondary"
 			className={cnMerge(
-				`fixed end-[calc(--spacing(4)+var(--removed-body-scroll-bar-size,0px))] bottom-4 z-20 w-24
+				`fixed inset-e-[calc(--spacing(4)+var(--removed-body-scroll-bar-size,0px))] bottom-4 z-20 w-24
 				gap-3 rounded-2xl text-fd-muted-foreground shadow-lg transition-[translate,opacity]`,
 				open && "translate-y-10 opacity-0"
 			)}

@@ -68,14 +68,7 @@ export const docs = defineDocs({
 					},
 				},
 
-				remarkPlugins: [
-					[
-						remarkAutoTypeTable,
-						{
-							generator,
-						},
-					],
-				],
+				remarkPlugins: [[remarkAutoTypeTable, { generator }]],
 
 				remarkStructureOptions: {
 					types: [...remarkStructureDefaultOptions.types, "code"],

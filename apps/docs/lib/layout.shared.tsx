@@ -4,8 +4,11 @@ import type { DocsLayoutProps } from "fumadocs-ui/layouts/docs";
 import type { BaseLayoutProps, LinkItemType } from "fumadocs-ui/layouts/shared";
 import { TagIcon } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import logoImage from "public/logo.png";
 import { z } from "zod";
+import { IconBox } from "@/components/common";
+import { Button } from "@/components/ui/button";
 import { source } from "@/lib/source";
 
 /**
@@ -50,6 +53,19 @@ export const docsOptions = () =>
 		...baseOptions(),
 
 		links: [
+			{
+				children: (
+					<Button theme="link" asChild={true}>
+						<Link href="/llms-full.txt" className="text-xs">
+							<span className="size-4.5">
+								<IconBox icon="material-symbols:robot-2-outline-rounded" className="size-full" />
+							</span>
+							LLMs.txt
+						</Link>
+					</Button>
+				),
+				type: "custom",
+			},
 			{
 				children: <GithubInfo owner="zayne-labs" repo="callapi" className="lg:-mx-2" />,
 				type: "custom",
@@ -117,5 +133,6 @@ export const docsOptions = () =>
 				},
 			],
 		},
-		tree: source.pageTree,
+
+		tree: source.getPageTree(),
 	}) satisfies DocsLayoutProps;
