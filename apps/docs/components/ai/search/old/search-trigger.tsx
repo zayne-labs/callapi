@@ -3,7 +3,7 @@
 import type { InferProps } from "@zayne-labs/toolkit-react/utils";
 import dynamic from "next/dynamic";
 import { useState } from "react";
-import { Button } from "../../ui/button";
+import { Button } from "../../../ui/button";
 
 // lazy load the dialog
 const SearchAI = dynamic(() => import("./search"), { ssr: false });

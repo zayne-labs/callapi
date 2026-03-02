@@ -4,11 +4,9 @@ import { callApi } from "@zayne-labs/callapi";
 import { isBrowser } from "@zayne-labs/toolkit-core";
 import { Popover, PopoverContent, PopoverTrigger } from "fumadocs-ui/components/ui/popover";
 import { useCopyButton } from "fumadocs-ui/utils/use-copy-button";
-import { Check, ChevronDown, Copy, ExternalLinkIcon, MessageCircleIcon } from "lucide-react";
+import { Check, ChevronDown, Copy, ExternalLinkIcon, MessageCircleIcon, TextIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-import { tv } from "tailwind-variants";
-import { cnMerge } from "@/lib/utils/cn";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 
 const cache = new Map<string, string>();
 
@@ -63,11 +61,6 @@ export function LLMCopyButton(props: CopyBtnProps) {
 	);
 }
 
-const optionVariants = tv({
-	base: `inline-flex items-center gap-2 rounded-lg p-2 text-sm hover:bg-fd-accent
-	hover:text-fd-accent-foreground [&_svg]:size-4`,
-});
-
 type ViewOptionsProps = {
 	/**
 	 * Source file URL on GitHub
@@ -100,7 +93,8 @@ export function ViewOptions(props: ViewOptionsProps) {
 						href={item.href}
 						rel="noreferrer noopener"
 						target="_blank"
-						className={cnMerge(optionVariants())}
+						className="inline-flex items-center gap-2 rounded-lg p-2 text-sm hover:bg-fd-accent
+							hover:text-fd-accent-foreground [&_svg]:size-4"
 					>
 						{item.icon}
 						{item.title}
@@ -113,9 +107,9 @@ export function ViewOptions(props: ViewOptionsProps) {
 }
 
 const getLinkViewItems = (markdownUrl: string, githubUrl: string) => {
-	const fullMarkdownUrl = isBrowser() ? new URL(markdownUrl, globalThis.location.origin) : "loading";
+	const pageUrl = isBrowser() ? globalThis.location.href : "loading";
 
-	const q = `Read ${fullMarkdownUrl}, I want to ask questions about it.`;
+	const q = `Read ${pageUrl}, I want to ask questions about it.`;
 
 	return [
 		{
@@ -127,6 +121,12 @@ const getLinkViewItems = (markdownUrl: string, githubUrl: string) => {
 				</svg>
 			),
 			title: "Open in GitHub",
+		},
+
+		{
+			href: markdownUrl,
+			icon: <TextIcon />,
+			title: "View as Markdown",
 		},
 
 		{
@@ -212,7 +212,18 @@ const getLinkViewItems = (markdownUrl: string, githubUrl: string) => {
 			),
 			title: "Open in Claude",
 		},
-
+		{
+			href: `https://cursor.com/link/prompt?${new URLSearchParams({
+				text: q,
+			})}`,
+			icon: (
+				<svg fill="currentColor" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+					<title>Cursor</title>
+					<path d="M11.503.131 1.891 5.678a.84.84 0 0 0-.42.726v11.188c0 .3.162.575.42.724l9.609 5.55a1 1 0 0 0 .998 0l9.61-5.55a.84.84 0 0 0 .42-.724V6.404a.84.84 0 0 0-.42-.726L12.497.131a1.01 1.01 0 0 0-.996 0M2.657 6.338h18.55c.263 0 .43.287.297.515L12.23 22.918c-.062.107-.229.064-.229-.06V12.335a.59.59 0 0 0-.295-.51l-9.11-5.257c-.109-.063-.064-.23.061-.23" />
+				</svg>
+			),
+			title: "Open in Cursor",
+		},
 		{
 			href: `https://t3.chat/new?${new URLSearchParams({ q })}`,
 			icon: <MessageCircleIcon />,

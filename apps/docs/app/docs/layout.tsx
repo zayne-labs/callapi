@@ -1,9 +1,10 @@
 import { DocsLayout } from "fumadocs-ui/layouts/notebook";
+import { MessageCircleIcon } from "lucide-react";
 import { AISearchPanel, AISearchRoot, AISearchTrigger } from "@/components/ai/search";
 import { BgPattern } from "@/components/icons";
 import { BreadcrumbStructuredData } from "@/components/seo/breadcrumb-structured-data";
+import { Button } from "@/components/ui/button";
 import { docsOptions } from "../../lib/layout.shared";
-import "fumadocs-twoslash/twoslash.css";
 
 function Layout(props: LayoutProps<"/docs">) {
 	const { children } = props;
@@ -27,7 +28,12 @@ function Layout(props: LayoutProps<"/docs">) {
 
 			<AISearchRoot>
 				<AISearchPanel />
-				<AISearchTrigger />
+				<AISearchTrigger position="float" asChild={true}>
+					<Button className="rounded-2xl text-fd-muted-foreground" theme="secondary">
+						<MessageCircleIcon className="size-4.5" />
+						Ask AI
+					</Button>
+				</AISearchTrigger>
 			</AISearchRoot>
 		</DocsLayout>
 	);

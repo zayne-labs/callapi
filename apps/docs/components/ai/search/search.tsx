@@ -2,45 +2,64 @@
 
 import { useChat, type UIMessage, type UseChatHelpers } from "@ai-sdk/react";
 import { css, on } from "@zayne-labs/toolkit-core";
-import { createCustomContext, useCallbackRef } from "@zayne-labs/toolkit-react";
+import { createCustomContext } from "@zayne-labs/toolkit-react";
 import type { InferProps } from "@zayne-labs/toolkit-react/utils";
 import { Presence } from "@zayne-labs/ui-react/common/presence";
 import { DefaultChatTransport } from "ai";
 import Link from "fumadocs-core/link";
 import { Loader2, MessageCircleIcon, RefreshCw, Send, X } from "lucide-react";
-import { useEffect, useInsertionEffect, useMemo, useRef, useState } from "react";
+import {
+	useEffect,
+	useEffectEvent,
+	useInsertionEffect,
+	useMemo,
+	useRef,
+	useState,
+	type ComponentProps,
+} from "react";
 import { toast } from "sonner";
+import { cn } from "tailwind-variants";
 import { z } from "zod";
+import { Slot } from "@/components/common";
 import type { ProvideLinksToolSchema } from "@/lib/chat/ai-tools-schema";
 import { cnMerge } from "@/lib/utils/cn";
-import { Button } from "../ui/button";
+import { buttonVariants } from "../../ui/button";
 import { Markdown } from "./markdown";
 
-type GeneralContextType = {
+type AISearchContextType = {
 	chat: UseChatHelpers<UIMessage>;
 	open: boolean;
 	setOpen: (open: boolean) => void;
 };
 
-const [GeneralContextProvider, useGeneralContext] = createCustomContext<GeneralContextType>({
-	hookName: "useGeneralContext",
-	name: "GeneralContext",
-	providerName: "GeneralContextProvider",
+const [AISearchContextProvider, useAISearchContext] = createCustomContext<AISearchContextType>({
+	hookName: "useAISearchContext",
+	name: "AISearchContext",
+	providerName: "AISearchContextProvider",
 });
 
-function useChatContext() {
-	const context = useGeneralContext();
+const useChatContext = () => {
+	const context = useAISearchContext();
 
 	return context.chat;
-}
+};
 
-function Header() {
-	const { setOpen } = useGeneralContext();
+export function AISearchPanelHeader(props: ComponentProps<"div">) {
+	const { className, ...restOfProps } = props;
+
+	const { setOpen } = useAISearchContext();
 
 	return (
-		<div className="sticky top-0 flex items-start gap-2">
-			<div className="flex-1 rounded-xl border bg-fd-card p-3 text-fd-card-foreground">
-				<p className="mb-2 text-sm font-medium">Ask AI</p>
+		<div
+			className={cnMerge(
+				`sticky top-0 flex items-start gap-2 rounded-xl border bg-fd-secondary
+				text-fd-secondary-foreground shadow-sm`,
+				className
+			)}
+			{...restOfProps}
+		>
+			<div className="flex-1 px-3 py-2">
+				<p className="mb-2 text-sm font-medium">AI Chat</p>
 				<p className="text-xs text-fd-muted-foreground">
 					Powered by{" "}
 					<a href="https://gemini.google.com" target="_blank" rel="noreferrer noopener">
@@ -49,21 +68,24 @@ function Header() {
 				</p>
 			</div>
 
-			<Button
-				size="icon-sm"
-				theme="secondary"
-				className="rounded-full"
+			<button
+				type="button"
 				aria-label="Close"
 				tabIndex={-1}
+				className={buttonVariants({
+					className: "rounded-full text-fd-muted-foreground",
+					size: "icon-sm",
+					theme: "ghost",
+				})}
 				onClick={() => setOpen(false)}
 			>
 				<X />
-			</Button>
+			</button>
 		</div>
 	);
 }
 
-function SearchAIActions() {
+export function AISearchInputActions() {
 	const { error, messages, regenerate, setMessages, status } = useChatContext();
 	const isLoading = status === "streaming";
 
@@ -83,28 +105,61 @@ function SearchAIActions() {
 
 	return (
 		<>
-			<Button size="sm" theme="secondary" className="rounded-full" onClick={() => setMessages([])}>
-				Clear Chat
-			</Button>
-
 			{shouldShowRetry && (
-				<Button
-					size="sm"
-					theme="secondary"
-					className="gap-1.5 rounded-full"
+				<button
+					type="button"
+					className={buttonVariants({
+						className: "gap-1.5 rounded-full",
+						size: "sm",
+						theme: "secondary",
+					})}
 					onClick={() => void regenerate()}
 				>
 					<RefreshCw className="size-4" />
 					<p>Retry</p>
-				</Button>
+				</button>
 			)}
+
+			<button
+				type="button"
+				className={buttonVariants({
+					className: "rounded-full",
+					size: "sm",
+					theme: "secondary",
+				})}
+				onClick={() => setMessages([])}
+			>
+				Clear Chat
+			</button>
 		</>
+	);
+}
+
+function AISearchInputPrimitive(props: InferProps<"textarea">) {
+	const { className, value, ...restOfProps } = props;
+
+	const shared = cnMerge("col-start-1 row-start-1", className);
+
+	return (
+		<div className="grid flex-1">
+			<textarea
+				value={value}
+				id="nd-ai-input"
+				{...restOfProps}
+				className={cnMerge(
+					"resize-none bg-transparent placeholder:text-fd-muted-foreground focus-visible:outline-none",
+					shared
+				)}
+			/>
+
+			<div className={cnMerge(shared, "invisible break-all")}>{`${value?.toString() ?? ""}\n`}</div>
+		</div>
 	);
 }
 
 const StorageKeyInput = "__ai_search_input";
 
-function SearchAIInput(props: InferProps<"form">) {
+export function AISearchInput(props: InferProps<"form">) {
 	const { className, ...restOfProps } = props;
 	const { sendMessage, status, stop } = useChatContext();
 
@@ -130,7 +185,7 @@ function SearchAIInput(props: InferProps<"form">) {
 
 	return (
 		<form {...restOfProps} className={cnMerge("flex items-start pe-2", className)} onSubmit={onStart}>
-			<Input
+			<AISearchInputPrimitive
 				value={input}
 				placeholder={isLoading ? "AI is answering..." : "Ask a question"}
 				autoFocus={true}
@@ -147,52 +202,35 @@ function SearchAIInput(props: InferProps<"form">) {
 			/>
 
 			{isLoading ?
-				<Button
+				<button
 					key="bn"
-					theme="secondary"
-					className="mt-2 gap-2 rounded-full transition-all"
+					type="button"
+					className={buttonVariants({
+						className: "mt-2 gap-2 rounded-full transition-all",
+						theme: "secondary",
+					})}
 					onClick={() => void stop()}
 				>
 					<Loader2 className="size-4 animate-spin text-fd-muted-foreground" />
 					<p>Abort Answer</p>
-				</Button>
-			:	<Button
+				</button>
+			:	<button
 					key="bn"
 					type="submit"
-					theme="secondary"
-					className="mt-2 rounded-full transition-all"
+					className={buttonVariants({
+						className: "mt-2 rounded-full transition-all",
+						theme: "primary",
+					})}
 					disabled={input.length === 0}
 				>
 					<Send className="size-4" />
-				</Button>
+				</button>
 			}
 		</form>
 	);
 }
 
-function Input(props: InferProps<"textarea">) {
-	const { className, value, ...restOfProps } = props;
-
-	const shared = cnMerge("col-start-1 row-start-1", className);
-
-	return (
-		<div className="grid flex-1">
-			<textarea
-				value={value}
-				id="nd-ai-input"
-				{...restOfProps}
-				className={cnMerge(
-					"resize-none bg-transparent placeholder:text-fd-muted-foreground focus-visible:outline-none",
-					shared
-				)}
-			/>
-
-			<div className={cnMerge(shared, "invisible break-all")}>{`${value?.toString() ?? ""}\n`}</div>
-		</div>
-	);
-}
-
-function Message(props: InferProps<"div"> & { message: UIMessage }) {
+function AISearchMessagePrimitive(props: InferProps<"div"> & { message: UIMessage }) {
 	const { message, ...restOfProps } = props;
 
 	let markdown = "";
@@ -212,7 +250,7 @@ function Message(props: InferProps<"div"> & { message: UIMessage }) {
 	}
 
 	return (
-		<div {...restOfProps}>
+		<div onClick={(event) => event.stopPropagation()} {...restOfProps}>
 			<p
 				className={cnMerge(
 					"mb-1 text-sm font-medium text-fd-muted-foreground",
@@ -245,7 +283,7 @@ function Message(props: InferProps<"div"> & { message: UIMessage }) {
 	);
 }
 
-function MessageList(props: Omit<InferProps<"div">, "dir">) {
+function AISearchMessageList(props: Omit<InferProps<"div">, "dir">) {
 	const { children, className, ...restOfProps } = props;
 
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -305,37 +343,79 @@ export function AISearchRoot(props: { children: React.ReactNode }) {
 		}),
 	});
 
-	const contextValue = useMemo<GeneralContextType>(
-		() => ({ chat, open, setOpen }) satisfies GeneralContextType,
+	const contextValue = useMemo<AISearchContextType>(
+		() => ({ chat, open, setOpen }) satisfies AISearchContextType,
 		[chat, open]
 	);
 
-	return <GeneralContextProvider value={contextValue}>{children}</GeneralContextProvider>;
+	return <AISearchContextProvider value={contextValue}>{children}</AISearchContextProvider>;
 }
 
-export function AISearchTrigger() {
-	const { open, setOpen } = useGeneralContext();
+export function AISearchTrigger(
+	props: React.ComponentProps<"button"> & { asChild?: boolean; position?: "default" | "float" }
+) {
+	const { asChild = false, children, className, position = "default", ...restOfProps } = props;
+	const { open, setOpen } = useAISearchContext();
+
+	const Component = asChild ? Slot.Root : "button";
 
 	return (
-		<Button
-			theme="secondary"
+		<Component
+			type="button"
+			data-state={open ? "open" : "closed"}
 			className={cnMerge(
-				`fixed inset-e-[calc(--spacing(4)+var(--removed-body-scroll-bar-size,0px))] bottom-4 z-20 w-24
-				gap-3 rounded-2xl text-fd-muted-foreground shadow-lg transition-[translate,opacity]`,
-				open && "translate-y-10 opacity-0"
+				position === "float" && [
+					`fixed inset-e-[calc(--spacing(4)+var(--removed-body-scroll-bar-size,0px))] bottom-4 z-20
+					w-24 gap-3 shadow-lg transition-[translate,opacity]`,
+					open && "translate-y-10 opacity-0",
+				],
+				className
 			)}
-			onClick={() => setOpen(true)}
+			onClick={() => setOpen(!open)}
+			{...restOfProps}
 		>
-			<MessageCircleIcon className="size-4.5" />
-			Ask AI
-		</Button>
+			{children}
+		</Component>
 	);
 }
 
-export function AISearchPanel() {
-	const { chat, open, setOpen } = useGeneralContext();
+export function AISearchPanelList({ className, style, ...props }: ComponentProps<"div">) {
+	const chat = useChatContext();
 
-	const onKeyPress = useCallbackRef((event: KeyboardEvent) => {
+	const messages = chat.messages.filter((msg) => msg.role !== "system");
+
+	return (
+		<AISearchMessageList
+			className={cn("overscroll-contain py-4", className)}
+			style={{
+				maskImage:
+					"linear-gradient(to bottom, transparent, white 1rem, white calc(100% - 1rem), transparent 100%)",
+				...style,
+			}}
+			{...props}
+		>
+			{messages.length === 0 ?
+				<div
+					className="flex size-full flex-col items-center justify-center gap-2 text-center text-sm
+						text-fd-muted-foreground/80"
+				>
+					<MessageCircleIcon fill="currentColor" stroke="none" />
+					<p onClick={(event) => event.stopPropagation()}>Start a new chat below.</p>
+				</div>
+			:	<div className="flex flex-col gap-4 px-3">
+					{messages.map((item) => (
+						<AISearchMessagePrimitive key={item.id} message={item} />
+					))}
+				</div>
+			}
+		</AISearchMessageList>
+	);
+}
+
+const useHotKey = () => {
+	const { open, setOpen } = useAISearchContext();
+
+	const onKeyPress = useEffectEvent((event: KeyboardEvent) => {
 		if (event.key === "Escape" && open) {
 			setOpen(false);
 			event.preventDefault();
@@ -351,7 +431,13 @@ export function AISearchPanel() {
 		const cleanup = on("keydown", globalThis, onKeyPress);
 
 		return () => cleanup();
-	}, [onKeyPress]);
+	}, []);
+};
+
+export function AISearchPanel() {
+	const { open, setOpen } = useAISearchContext();
+
+	useHotKey();
 
 	return (
 		<>
@@ -359,10 +445,10 @@ export function AISearchPanel() {
 				{css`
 					@keyframes ask-ai-open {
 						from {
-							width: 0px;
+							translate: 100% 0;
 						}
 						to {
-							width: var(--ai-chat-width);
+							translate: 0 0;
 						}
 					}
 					@keyframes ask-ai-close {
@@ -388,8 +474,8 @@ export function AISearchPanel() {
 			<Presence present={open}>
 				<div
 					className={cnMerge(
-						`z-30 overflow-hidden bg-fd-popover text-fd-popover-foreground [--ai-chat-width:400px]
-						xl:[--ai-chat-width:460px]`,
+						`z-30 overflow-hidden bg-fd-card text-fd-card-foreground [--ai-chat-width:400px]
+						2xl:[--ai-chat-width:460px]`,
 						`max-lg:fixed max-lg:inset-x-2 max-lg:top-4 max-lg:rounded-2xl max-lg:border
 						max-lg:shadow-xl`,
 						`lg:sticky lg:top-0 lg:ms-auto lg:h-dvh lg:border-s
@@ -402,33 +488,17 @@ export function AISearchPanel() {
 				>
 					<div
 						className="flex size-full flex-col p-2 max-lg:max-h-[80dvh] lg:w-(--ai-chat-width)
-							xl:p-4"
+							lg:p-3"
 					>
-						<Header />
-
-						<MessageList
-							className="flex-1 overscroll-contain px-3 py-4"
-							style={{
-								maskImage:
-									"linear-gradient(to bottom, transparent, white 1rem, white calc(100% - 1rem), transparent 100%)",
-							}}
-						>
-							<div className="flex flex-col gap-4">
-								{chat.messages
-									.filter((msg) => msg.role !== "system")
-									.map((item) => (
-										<Message key={item.id} message={item} />
-									))}
-							</div>
-						</MessageList>
-
+						<AISearchPanelHeader />
+						<AISearchPanelList className="flex-1" />
 						<div
-							className="rounded-xl border bg-fd-card text-fd-card-foreground
-								has-focus-visible:ring-2 has-focus-visible:ring-fd-ring"
+							className="rounded-xl border bg-fd-secondary text-fd-secondary-foreground shadow-sm
+								has-focus-visible:shadow-md"
 						>
-							<SearchAIInput />
+							<AISearchInput />
 							<div className="flex items-center gap-1.5 p-1 empty:hidden">
-								<SearchAIActions />
+								<AISearchInputActions />
 							</div>
 						</div>
 					</div>

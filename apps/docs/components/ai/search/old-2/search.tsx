@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import type { ProvideLinksToolSchema } from "@/lib/chat/ai-tools-schema";
 import { cnMerge } from "@/lib/utils/cn";
-import { Button } from "../../ui/button";
+import { Button } from "../../../ui/button";
 import { Markdown } from "../markdown";
 
 type GeneralContextType = {

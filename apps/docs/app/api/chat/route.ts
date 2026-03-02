@@ -21,11 +21,11 @@ export async function POST(request: Request) {
 	const [documentationContext, sourceCodeContext, userMessages] = await Promise.all([
 		documentationContextPromise,
 		sourceCodeContextPromise,
-		request.json().then((json: Record<string, unknown>) =>
-			convertToModelMessages(json.messages as never, {
-				ignoreIncompleteToolCalls: true,
-			})
-		),
+		request
+			.json()
+			.then((json: Record<string, unknown>) =>
+				convertToModelMessages(json.messages as never, { ignoreIncompleteToolCalls: true })
+			),
 	]);
 
 	const result = streamText({

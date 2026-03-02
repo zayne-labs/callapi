@@ -12,7 +12,7 @@ import {
 } from "fumadocs-ui/layouts/notebook/page";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { LLMCopyButton, ViewOptions } from "@/components/ai/page-actions";
+import { LLMCopyButton, ViewOptions } from "@/components/ai/search/page-actions";
 import { getMDXComponents } from "@/components/common";
 import { EditOnGithub } from "@/components/common/EditOnGithub";
 import { HoverCard } from "@/components/ui";

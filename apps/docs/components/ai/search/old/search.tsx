@@ -10,7 +10,7 @@ import { createContext, use, useEffect, useRef, useState } from "react";
 import type { z } from "zod";
 import type { ProvideLinksToolSchema } from "@/lib/chat/ai-tools-schema";
 import { cn } from "@/lib/cn";
-import { Button } from "../../ui/button";
+import { Button } from "../../../ui/button";
 import { Markdown } from "../markdown";
 
 const ChatContext = createContext<UseChatHelpers<UIMessage> | null>(null);
