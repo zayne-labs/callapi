@@ -624,7 +624,8 @@ const { data, error } = await callApi("/products/:id", {
 });
 
 if (isValidationError(error)) {
-	console.log(error.issues); // Validation issues
+	console.log(error.errorData); // Validation issues array
+	console.log(error.issueCause); // Which schema key caused the validation error
 }
 ```
 

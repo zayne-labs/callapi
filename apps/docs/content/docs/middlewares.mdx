@@ -85,9 +85,9 @@ const loggingPlugin = definePlugin({
 
 ## Fetch Middleware Composition
 
-When multiple fetch middlewares are defined, they compose in reverse order, wrapping each other like onion layers:
+When multiple fetch middlewares are defined, they compose in order, with each wrapping the previous one like onion layers. The last middleware added gets the outermost position:
 
-**Execution flow: Instance → Base → Plugins (reverse order) → customFetchImpl → fetch**
+**Execution flow: Instance → Base → Plugins (last to first) → customFetchImpl/fetch**
 
 ```ts title="example.ts"
 import { createFetchClient } from "@zayne-labs/callapi";

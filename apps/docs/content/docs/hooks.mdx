@@ -24,6 +24,9 @@ const callApi = createFetchClient({
 	onRequest: (ctx) => {
 		// Do something with context object
 	},
+	onRequestReady: (ctx) => {
+		// Do something with context object
+	},
 	onRequestError: (ctx) => {
 		// Do something with context object
 	},
@@ -278,8 +281,6 @@ const client = createFetchClient({
 
 #### onError
 
-Called for any error .
-
 This hook is called for any error. It's basically a combination of onRequestError and onResponseError. It's perfect for global error handling.
 
 ```ts twoslash title="example.ts"
@@ -511,7 +512,7 @@ const result = await callBackendApi("/data", {
 
 - The plugin's `onRequest` and `onResponse` run first.
 - The base client's `onRequest` is a single function, and the instance provides its own `onRequest`. The instance hook **replaces** the base hook for this specific call.
-- The base client's `onResponse` is an **array**. The instance `onResponse` is **added** to this array. The combined array `[2.1 Base, 2.2 Base, 3.1 Instance]` is then executed sequentially.
+- The base client's `onResponse` is an **array**. The instance `onResponse` is **added** to this array. The combined array `[2.2 Base, 2.3 Base, 3.2 Instance]` is then executed.
 
 ## Async Hooks
 

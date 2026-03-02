@@ -101,8 +101,8 @@ Listen to retry attempts using the `onRetry` hook:
 const result = await callApi("/todos/1", {
 	retryAttempts: 3,
 
-	onRetry: (response) => {
-		console.log(`Retrying request.`);
+	onRetry: ({ retryAttemptCount }) => {
+		console.log(`Retrying request (attempt ${retryAttemptCount}).`);
 	},
 });
 ```
