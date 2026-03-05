@@ -3,21 +3,21 @@ title: Request Deduplication
 description: Optimize your API calls by preventing duplicate requests
 ---
 
-Request deduplication prevents redundant API calls when multiple requests are made to the same endpoint. For example, if a user rapidly clicks a "Refresh Profile" button - without deduplication, it would trigger multiple API calls for the same data. With deduplication, these duplicate calls are handled based on your strategy.
+Request deduplication prevents redundant API calls when multiple identical requests are made to the same endpoint simultaneously or in quick succession. For example, if a user rapidly clicks a "Refresh Profile" button, without deduplication it would trigger multiple API calls for the same data, wasting bandwidth and potentially causing race conditions. With deduplication enabled, duplicate calls are intelligently handled based on your chosen strategy.
 
 **Key benefits:**
 
 - Prevents duplicate API calls
-- Reduces network requests
+- Reduces network traffic
 - Prevents race conditions
 
 ## How it works
 
 Request deduplication works by:
 
-1. Generating a unique key for each request based on URL and parameters by default (can be customized via [dedupeKey](#custom-deduplication-key))
+1. Generating a unique key for each request based on URL and parameters (customizable via [dedupeKey](#custom-deduplication-key))
 2. Tracking in-flight requests using this key
-3. Handling requests with the same key (duplicates) according to your chosen strategy
+3. Handling duplicate requests according to your chosen strategy
 
 <Callout type="info">
 	Requests are only deduplicated when made from the same `callApi` instance. Requests made from different
@@ -62,7 +62,7 @@ const { data } = await callMainApi("/users/123", {
 
 ### 2. Defer Strategy
 
-The `defer` strategy shares the same response promise between duplicate requests. If a request is made while an identical one is still in-flight, it will receive the same response.
+Shares the same response promise between duplicate requests. If a request is made while an identical one is in-flight, it receives the same response.
 
 ![Defer Strategy Visualization](/media/defer.svg)
 
@@ -105,7 +105,7 @@ function ProfileDetails() {
 
 ### 3. None Strategy
 
-The `none` strategy disables deduplication, allowing each request to execute independently:
+Disables deduplication, allowing each request to execute independently:
 
 ```ts title="api.ts"
 const { data } = await callMainApi("/users/123", {
@@ -115,7 +115,7 @@ const { data } = await callMainApi("/users/123", {
 
 ## Custom deduplication key
 
-By default, callApi generates a dedupeKey based on the request URL and parameters. You can customize this by providing either a static string or a callback function using the `dedupeKey` option:
+By default, CallApi generates a dedupeKey based on the request URL and parameters. Customize this by providing either a static string or a callback function:
 
 ### Static deduplication key
 
@@ -127,7 +127,7 @@ const { data } = await callMainApi("/users/123", {
 
 ### Dynamic deduplication key with callback
 
-For more advanced use cases, you can provide a callback function that receives the request context and returns a custom key:
+For advanced use cases, provide a callback function that receives the request context and returns a custom key:
 
 ```ts title="api.ts"
 // URL and method only - ignore headers and body
@@ -158,6 +158,63 @@ The callback receives a `RequestContext` object with the following properties:
 - `context.request` - The request object with headers, body, etc.
 - `context.baseConfig` - Base configuration from `createFetchClient`
 - `context.config` - Instance-specific configuration
+
+## Cache Scope
+
+By default, deduplication state is isolated per client instance. You can control this using the `dedupeCacheScope` option.
+
+### Local scope (default)
+
+```ts title="api.ts"
+// These clients don't share deduplication state
+const userClient = createFetchClient({ baseURL: "/api/users" });
+const postClient = createFetchClient({ baseURL: "/api/posts" });
+```
+
+### Global scope
+
+By setting `dedupeCacheScope: "global"`, different client instances can share the same deduplication state.
+
+```ts title="api.ts"
+// These clients share deduplication state
+const userClient = createFetchClient({
+	baseURL: "/api/users",
+	dedupeCacheScope: "global",
+});
+
+const profileClient = createFetchClient({
+	baseURL: "/api/profiles",
+	dedupeCacheScope: "global",
+});
+```
+
+### dedupeCacheScopeKey
+
+When using global scope, you can group related clients together using `dedupeCacheScopeKey`. Only clients with the same key will share deduplication state.
+
+```ts title="api.ts"
+// Group related services
+const userClient = createFetchClient({
+	baseURL: "/api/users",
+	dedupeCacheScope: "global",
+	dedupeCacheScopeKey: "user-service",
+});
+
+const profileClient = createFetchClient({
+	baseURL: "/api/profiles",
+	dedupeCacheScope: "global",
+	// Shares cache with userClient
+	dedupeCacheScopeKey: "user-service",
+});
+
+// Separate analytics
+const analyticsClient = createFetchClient({
+	baseURL: "/api/analytics",
+	dedupeCacheScope: "global",
+	// Different cache namespace
+	dedupeCacheScopeKey: "analytics",
+});
+```
 
 ## Recommendations
 

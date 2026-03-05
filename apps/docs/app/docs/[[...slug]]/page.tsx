@@ -1,6 +1,7 @@
 import Link from "fumadocs-core/link";
 import { PathUtils } from "fumadocs-core/source";
 import * as Twoslash from "fumadocs-twoslash/ui";
+import * as Steps from "fumadocs-ui/components/steps";
 import * as Tabs from "fumadocs-ui/components/tabs";
 import * as TypeTable from "fumadocs-ui/components/type-table";
 import {
@@ -56,6 +57,7 @@ async function Page({ params }: PageProps<"/docs/[[...slug]]">) {
 					components={getMDXComponents({
 						...Twoslash,
 						...Tabs,
+						...Steps,
 						...TypeTable,
 						a: ({ children, href, ...restOfProps }) => {
 							const foundPage = source.getPageByHref(href ?? "", {

@@ -3,7 +3,7 @@ title: Logger
 description: Comprehensive HTTP request/response logging with beautiful console output
 ---
 
-The logger plugin provides detailed, structured logging for all HTTP request/response lifecycle events. Built on top of [consola](https://github.com/unjs/consola)c.
+The logger plugin provides detailed, structured logging for all HTTP request/response lifecycle events. Built on [consola](https://github.com/unjs/consola).
 
 ## Features
 
@@ -42,7 +42,7 @@ const callMainApi = createFetchClient({
 Type: `boolean | { onError?: boolean; onRequest?: boolean; onRequestError?: boolean; onResponse?: boolean; onResponseError?: boolean; onRetry?: boolean; onSuccess?: boolean; onValidationError?: boolean; }`
 Default: `true`
 
-Toggle logging on/off. Can be a boolean to enable/disable all logging, or an object for granular control over specific events.
+Toggle logging on/off. Can be a boolean for all logging, or an object for granular control over specific events.
 
 ```ts
 // Simple boolean toggle
@@ -77,7 +77,7 @@ export const client3 = createFetchClient({
 				onSuccess: true,
 				onRequestError: true, // Only network/request errors
 				onResponseError: false, // Disable HTTP error logging
-				onValidationError: false, // Disable validation error logging
+				onValidationError: false,
 			},
 		}),
 	],
@@ -89,7 +89,7 @@ export const client3 = createFetchClient({
 Type: `ConsoleLikeObject`
 Default: A pre-configured `consola` instance
 
-Allows you to provide a custom console-like object that implements the following interface:
+Provide a custom console-like object implementing this interface:
 
 ```ts
 interface ConsoleLikeObject {
@@ -101,7 +101,7 @@ interface ConsoleLikeObject {
 }
 ```
 
-Whatever you provide will be used instead of the default `consola` instance.
+Example:
 
 ```ts title="api.ts"
 import { loggerPlugin, type ConsoleLikeObject } from "@zayne-labs/callapi-plugins";
@@ -136,11 +136,11 @@ export const client = createFetchClient({
 
 ## Logged Events
 
-The logger plugin will log the following events:
+The logger plugin logs these events:
 
 - **Request Started**: When a request is initiated
 - **Request Error**: When a request fails to be sent
-- **Response Error**: When a response is received with an error status
+- **Response Error**: When a response has an error status
 - **Retry**: When a request is being retried (with attempt count)
 - **Success**: When a request completes successfully
-- **Validation Error**: When request/response validation fails (schema validation)
+- **Validation Error**: When request/response validation fails (via schema validation)

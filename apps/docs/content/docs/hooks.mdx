@@ -3,17 +3,18 @@ title: Hooks
 description: Learn how to use hooks in CallApi
 ---
 
-Hooks are callback functions that let you observe and react to events during the request lifecycle. Think of them like event listeners for your API requests.
-
-CallApi runs these functions (sync or async) automatically at specific points – before sending, after receiving a response, when an error occurs, and so on. Hooks are great for logging, metrics, error handling, and side effects.
+Hooks are callback functions that let you observe and react to events during the request lifecycle. They're perfect for logging, metrics, error handling, and other side effects that don't need to control the request flow.
 
 <Callout type="info">
-	**Hooks vs Middleware:** Hooks observe and react to events, but their return values are ignored. If you
-	need explicit control over execution flow (return a custom response, short-circuit operations etc.), use
-	[Middleware](/docs/middlewares) instead.
+	**Hooks vs Middleware:** Hooks observe events, so naturally their return values are ignored. Middleware
+	on the other hand, controls execution flow and can modify or replace operations. Use hooks for side
+	effects, middleware for control flow. See [Middleware](/docs/middlewares) for details.
 </Callout>
 
-You can configure how hooks execute using `hooksExecutionMode` (parallel vs sequential). Plugin hooks always execute before main hooks. See the [Hook Configuration Options](#hook-configuration-options) section for details.
+<Callout type="info">
+	You can configure hook execution using `hooksExecutionMode` (parallel vs sequential). Plugin hooks
+	always execute before main hooks.
+</Callout>
 
 ```ts twoslash title="example.ts"
 import { createFetchClient } from "@zayne-labs/callapi";

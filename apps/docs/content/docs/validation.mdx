@@ -3,10 +3,9 @@ title: Validation
 description: Define validation schemas for your requests details and response data
 ---
 
-Validation Schema allows you to pre-define the URL path and the shape of request and response data. You can easily document your API using this schema.
-This validation happens at both type-level and runtime.
+Validation schemas let you pre-define URL paths and validate the shape of request and response data. This validation happens at both the type-level (TypeScript) and at runtime, helping you catch errors early, ensure data integrity, and document your API structure.
 
-CallApi uses Standard Schema internally, allowing you to bring your own Standard Schema-compliant validator (e.g., Zod, Valibot, ArkType etc).
+CallApi uses Standard Schema internally, allowing you to bring your own Standard Schema-compliant validator like Zod, Valibot, or ArkType.
 
 ## Basic Usage
 
@@ -47,14 +46,14 @@ const callApi = createFetchClient({
 
 ## Validation Schema
 
-The Validation Schema is a map of paths/urls and schema. Each path in the schema can define multiple validation rules through the following keys:
+The validation schema is a map of paths to their validation rules. Each path can define validation for different parts of the request and response.
 
-### Response Validation
+**Response Validation:**
 
-- `data`: Validates successful response data
-- `errorData`: Validates error response data
+- `data` - Validates successful response data
+- `errorData` - Validates error response data
 
-If any validation fails, a `ValidationError` will be thrown.
+When validation fails, CallApi throws a `ValidationError` with details about what went wrong.
 
 ```ts twoslash title="client.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -89,13 +88,13 @@ const { data, error } = await callApi("/products/:id", {
 // @annotate: errorData for HTTP errors will be typed as { code: string; message: string }
 ```
 
-### Request Validation
+**Request Validation:**
 
-- `body`: Validates request body data before sending
-- `headers`: Ensures required headers are present and correctly formatted
-- `method`: Validates or enforces specific HTTP methods (GET, POST, etc.)
-- `params`: Validates URL parameters (`:param`)
-- `query`: Validates query string parameters before they're added to the URL
+- `body` - Validates request body data before sending
+- `headers` - Ensures required headers are present and correctly formatted
+- `method` - Validates or enforces specific HTTP methods (GET, POST, etc.)
+- `params` - Validates URL parameters (`:param`)
+- `query` - Validates query string parameters before adding to the URL
 
 ```ts title="client.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -119,7 +118,7 @@ const callApi = createFetchClient({
 
 #### Body Validation
 
-The `body` key is used to validate the request body data, as well provide type safety for the request body data.
+The `body` key validates request body data and provides type safety for the request body:
 
 ```ts twoslash title="client.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -147,7 +146,7 @@ const { data } = await callApi("/products", {
 
 #### Headers Validation
 
-The `headers` key validates request headers. This is useful for enforcing required headers or validating header formats:
+The `headers` key validates request headers, useful for enforcing required headers or validating header formats:
 
 ```ts twoslash title="client.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -176,7 +175,7 @@ const { data } = await callApi("/products", {
 
 #### Meta Validation
 
-The `meta` key validates the meta option, which can be used to pass arbitrary metadata through the request lifecycle:
+The `meta` key validates the meta option, which passes arbitrary metadata through the request lifecycle:
 
 ```ts twoslash title="client.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -204,7 +203,7 @@ const { data } = await callApi("/analytics", {
 
 #### Query Parameters
 
-The query schema validates query parameters. If you define a query schema, the parameters will be validated before being added to the URL.
+The `query` schema validates query parameters before they're added to the URL:
 
 ```ts twoslash title="client.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -233,10 +232,10 @@ const { data } = await callApi("/products", {
 
 #### Dynamic Path Parameters
 
-The params schema validates URL parameters. You can define dynamic parameters in the following ways:
+The `params` schema validates URL parameters. You can define dynamic parameters in two ways:
 
-1. Using colon syntax in the schema path (`:paramName`) with providing a params schema. This only enforces the type of the parameter at the type level.
-2. Using the `params` validator schema. This takes precedence over the colon syntax.
+1. Using colon syntax in the schema path (`:paramName`) - Enforces types at the type level only
+2. Using the `params` validator schema - Validates at both type level and runtime (takes precedence over colon syntax)
 
 ```ts twoslash title="client.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -305,17 +304,9 @@ const response3 = await callApi("/products/:id/:category", {
 You can specify the HTTP method in two ways:
 
 1. Using the `method` validator schema
-2. Prefixing the path with `@method-name`
+2. Prefixing the path with `@method-name` (supported: `@get/`, `@post/`, `@put/`, `@patch/`, `@delete/`)
 
-The supported method modifiers are:
-
-- `@get/`
-- `@post/`
-- `@put/`
-- `@patch/`
-- `@delete/`
-
-If you use the `@method-name/` prefix, it will added to the request options automatically. You can override it by explicitly passing the `method` option to the `callApi` function.
+When using the `@method-name/` prefix, it's automatically added to request options. You can override it by explicitly passing the `method` option to `callApi`.
 
 ```ts title="client.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -343,7 +334,7 @@ const callApi = createFetchClient({
 
 ## Validation Schema Per Instance
 
-You can also define a validation schema for a specific instance of `callApi` instead of globally on `createFetchClient`:
+You can define a validation schema for a specific request instead of globally on `createFetchClient`:
 
 ```ts title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";

@@ -1,24 +1,23 @@
 ---
 title: Integrations
-description: Learn how to use CallApi with various higher order libraries and frameworks
+description: Learn how to use CallApi with various libraries and frameworks
 ---
 
-CallApi is designed to be flexible and can be easily integrated with various JavaScript libraries and frameworks. Since it's built on top of the native Fetch API, it works well with any library that expects a Promise-based HTTP client.
+CallApi works seamlessly with any library that expects a Promise-based HTTP client, since it's built on the native Fetch API.
 
 <Callout type="info">
-	Choose an integration guide from the sidebar to learn more about its specific details and best
-	practices.
+	Choose an integration guide from the sidebar to learn more about specific details and best practices.
 </Callout>
 
 ## Common Integration Pattern
 
-Most integrations follow a similar pattern:
+Most integrations follow this pattern:
 
 1. Create a CallApi instance with your base configuration
 2. Use the instance in your data fetching hooks or functions
-3. Handle errors appropriately using CallApi's error handling utilities
+3. Handle errors using CallApi's error handling utilities
 
-Here's a comprehensive example showing the common integration pattern:
+Example:
 
 ```tsx title="example.ts"
 import { createFetchClient } from "@zayne-labs/callapi";

@@ -26,9 +26,7 @@ CallApi aims to make dealing with these failures much more predictable and conve
 
 As introduced in the [Getting Started](/docs/getting-started) guide, CallApi wraps responses in a result object with three key properties: `data`, `error`, and `response`.
 
-When something goes wrong while making a request, the `error` property will contain a structured object detailing the problem.
-
-The `error` property is an object that has the following properties:
+When something goes wrong, the `error` property contains a structured object with:
 
 1. **name**: A string identifying the type of error (e.g., `'HTTPError'`, `'ValidationError'`, `'TypeError'`, `'TimeoutError'`, ...etc).
 
@@ -54,7 +52,7 @@ const { error } = await callApi("https://my-api.com/api/v1/session");
 // @annotate: Hover over the error object to see the type
 ```
 
-## Handling HTTP Errors (HTTPError)
+## Handling HTTP Errors
 
 One of the most common types of errors you'll encounter is when the server responds with a status code outside the 200-299 range (like 400, 401, 403, 404, 500, 503, etc.). Standard `fetch` doesn't throw an error for these responses.
 
@@ -104,10 +102,9 @@ if (isHTTPError(error)) {
 }
 ```
 
-## Handling Validation Errors (ValidationError)
+## Handling Validation Errors
 
-While covered in more detail in the [Validation](/docs/validation) section, CallApi also has built-in support for schema validation.
-If you configure a schema (whether for any request option or for the response data) and the received data does not match that schema, CallApi will wrap this failure in a `ValidationError`.
+When schema validation fails, CallApi wraps the failure in a `ValidationError`. See the [Validation](/docs/validation) section for details.
 
 You can use the `isValidationError` utility to check specifically for this error type:
 
@@ -130,19 +127,14 @@ const { data, error } = await callApi("https://my-api.com/api/v1/session", {
 });
 
 if (isValidationError(error)) {
-	console.error(error);
 	console.error(error.name); // 'ValidationError'
-	console.error(error.message);
-	console.error(error.errorData); // Will be set to the validation issues array
+	console.error(error.errorData); // Validation issues array
 }
 ```
 
-As seen in the case above, if the data received from the API does not match the schema, the `ValidationError` thrown will be captured in the `error` property.
+## Throwing Errors
 
-## Handling Thrown Errors
-
-Sometimes you might prefer that errors are thrown instead of returned in the result object. Set `throwOnError` to `true` to enable this behavior.
-This is useful when integrating with libraries that expect promises to reject on failure (like TanStack Query).
+Set `throwOnError: true` to throw errors instead of returning them—useful for libraries expecting promise rejection:
 
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
@@ -166,16 +158,10 @@ try {
 	});
 } catch (error) {
 	if (isHTTPErrorInstance<ErrorResponseData>(error)) {
-		console.error(error);
-		console.error(error.name);
-		console.error(error.message);
 		console.error(error.errorData);
 	}
 
 	if (isValidationErrorInstance(error)) {
-		console.error(error);
-		console.error(error.name);
-		console.error(error.message);
 		console.error(error.errorData);
 	}
 }
@@ -230,16 +216,9 @@ const resultThree = await callApi("https://my-api.com/api/sensitive", {
 });
 ```
 
-## The `data` and `error` properties as a discriminated union
+## Type Narrowing
 
-Another way to look at the `data` and `error` properties is as a pair of mutually exclusive properties.
-
-This implies that:
-
-- If `error` is present, `data` is null.
-- If `error` is null, `data` is present.
-
-TypeScript understands this relationship. So if you check for error first and handle it, TypeScript can automatically narrow the type of `data` to exclude null.
+The `data` and `error` properties form a discriminated union—if one is present, the other is null. TypeScript automatically narrows types after error checks:
 
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
@@ -264,7 +243,6 @@ if (isHTTPError(error)) {
 } else if (error) {
 	console.error(error);
 } else {
-	console.log(data); // TypeScript knows data is not null here
+	console.log(data); // TypeScript knows data is not null
 }
-// @annotate: Hover over the data object to see the narrowed type
 ```

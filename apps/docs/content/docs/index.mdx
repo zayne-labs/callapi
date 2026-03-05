@@ -6,24 +6,20 @@ icon: BookOpenText
 
 ## What is CallApi?
 
-CallApi is a [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) wrapper that adds the convenience features developers actually need when making HTTP requests. Due to its 1-to-1 API similarity with Fetch, it works as a drop-in replacement. This implies that if you know Fetch, you already know the basics of CallApi.
+CallApi is a modern [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) wrapper that adds essential features for real-world HTTP requests. If you know Fetch, you already know CallApi as it's a drop-in replacement with the same API, meaning you can use it anywhere Fetch works.
 
-It comes with built-in request deduplication, retries, error handling, hooks, plugins and more. Runs everywhere JavaScript does: browsers, Node.js (18+), workers, Deno, and Bun.
+Built-in features include request deduplication, automatic retries, structured error handling, lifecycle hooks, schema validation, and a plugin system. Works everywhere: browsers, Node.js 18+, Deno, Bun, and edge workers.
 
 ## Why CallApi?
 
-Data fetching is at the core of most web applications. While the Fetch API provides a standard way to make HTTP requests, it's too primitive or rather too basic for most real-world use cases. Developers often end up writing boilerplate code or creating incomplete abstractions to fill the gaps.
+Most HTTP clients either lack critical features or ship with bloated bundles. CallApi addresses common pain points while staying lightweight:
 
-Many existing HTTP clients I've used in the past to solve this problem had one or more of the following drawbacks:
-
-- They are not based on modern web standards (like the Fetch API in this case)
-- Miss crucial features like request deduplication, interceptors, retries, ergonomic error handling, validation schema support, etc.
-- Have clunky or verbose APIs for the simplest of things
-- Lack proper TypeScript support
-- Ship with bloated bundles due to things like legacy/backwards-compat constraints, large external dependencies, little to no tree-shaking support etc.
-- Hard to extend or customize to suit specific requirements and so on...
-
-So in the end, I decided to create CallApi in order to address these pain points.
+- **Modern standards**: Built on Fetch API, not legacy XMLHttpRequest
+- **Complete feature set**: Deduplication, retries, interceptors, validation—all included out of the box
+- **Intuitive API**: Simple, consistent interface without verbose configuration
+- **Full TypeScript support**: Automatic type inference from validation schemas
+- **Lightweight**: Less than 6KB minified and gzipped with zero dependencies
+- **Extensible**: Plugin system for custom functionality
 
 ## Features
 

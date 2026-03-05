@@ -3,7 +3,7 @@ title: Authorization
 description: Learn how to use convenience authorization helpers callApi provides
 ---
 
-CallApi allows you to generate authorization headers conveniently by using an `auth` property.
+CallApi provides convenient authorization helpers via the `auth` property, making it easy to add authentication headers to your requests without manually constructing Authorization headers.
 
 <Callout type="warn">
 	**Security Best Practice:** Never hardcode sensitive tokens or credentials in your source code. Always
@@ -12,7 +12,7 @@ CallApi allows you to generate authorization headers conveniently by using an `a
 
 ## Bearer
 
-The bearer authorization is used to add a bearer token to the request. Since this is the more commonly used authorization, passing a string to the `auth` property will generate a `Bearer` Authorization header. You can also pass an object with a `bearer` property to achieve the same result.
+Since Bearer is the most common authorization type, passing a string to `auth` automatically generates a `Bearer` Authorization header. You can also use an object with a `bearer` property.
 
 ```ts title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -42,7 +42,7 @@ fetch("http://localhost:3000/users/123", {
 });
 ```
 
-You can also pass a function that returns a string or a promise that resolves to a string. This is useful when you need to retrieve the token dynamically
+You can also pass a function that returns a string or a promise that resolves to a string. This is useful for retrieving tokens dynamically:
 
 ```ts title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -60,13 +60,13 @@ const result = callBackendApi("/users/123", {
 ```
 
 <Callout type="info">
-	The function will be called only once when the request is made. If it returns undefined, the header will
-	not be added to the request.
+	The function will be called only once when the request is made. If it returns undefined or null, the
+	header will not be added to the request. This allows for conditional authentication.
 </Callout>
 
 ## Token
 
-This is similar to the bearer authorization, but the header prefix is named `Token` instead of `Bearer`. To use it, you can pass an object with a `token` property.
+Similar to Bearer authorization, but uses `Token` as the header prefix instead of `Bearer`.
 
 ```ts title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -94,7 +94,7 @@ fetch("http://localhost:3000/users/123", {
 
 ## Basic
 
-The basic authorization is used to add a basic authentication to the request. The username and password are added to the `Authorization` header.
+Basic authentication adds username and password to the `Authorization` header, automatically base64 encoded.
 
 ```ts title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -109,9 +109,21 @@ const callBackendApi = createFetchClient({
 });
 ```
 
+You can also pass async getter functions for the username and password fields.
+
+```ts
+const { data } = await callApi("/api/data", {
+	auth: {
+		type: "Basic",
+		username: async () => await getUsername(),
+		password: async () => await getPassword(),
+	},
+});
+```
+
 ## Custom
 
-To use a custom authorization not supported by default, you can pass an object with a `type` property set to `Custom` together with `prefix` and `value` properties.
+For custom authorization schemes not supported by default, use the `Custom` type with `prefix` and `value` properties.
 
 ```ts title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -133,5 +145,82 @@ The above is equivalent to writing the following with Fetch:
 ```ts
 fetch("http://localhost:3000/users/123", {
 	headers: { Authorization: `SomePrefix my-token` },
+});
+```
+
+## Advanced Examples
+
+### Token Refresh
+
+Combine `auth` with the `onError` hook and `retry` behavior to implement automatic token refreshing:
+
+```ts title="api.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+const api = createFetchClient({
+	baseURL: "https://api.example.com",
+
+	// The auth function is called on every request, ensuring we use a fresh token
+	auth: () => getAccessToken(),
+
+	// We can automatically retry failed requests that were unauthorized
+	onResponseError: async ({ response, options }) => {
+		if (response.status === 401) {
+			// Force a network refresh to get a new token
+			await refreshAccessToken();
+
+			// Retry the original request with the new token
+			options.retryAttempts = 1;
+		}
+	},
+});
+```
+
+### Conditional Auth
+
+Conditionally trigger authentication by returning `null` or `undefined` from your auth function when the user is not authenticated:
+
+```ts title="api.ts"
+const client = createFetchClient({
+	baseURL: "https://api.example.com",
+
+	auth: async () => {
+		// Only add auth if user is logged in
+		const isLoggedIn = await checkAuthStatus();
+
+		// Returning null means no auth header will be added
+		return isLoggedIn ? await getToken() : null;
+	},
+});
+
+// Or dynamically per-request
+async function makeRequest(endpoint: string, requiresAuth: boolean) {
+	return callApi(endpoint, {
+		auth: requiresAuth ? () => getToken() : undefined,
+	});
+}
+```
+
+### Global Auth with Override
+
+Define a global authentication strategy when creating a client and override or disable it for specific requests:
+
+```ts title="api.ts"
+const client = createFetchClient({
+	baseURL: "https://api.example.com",
+	auth: () => getSessionToken(),
+});
+
+// Uses the global auth token
+const userData = await client("/api/user");
+
+// Override with a different token for a specific request
+const adminData = await client("/api/admin", {
+	auth: () => getAdminToken(),
+});
+
+// Disable auth entirely for a specific request
+const publicData = await client("/api/public", {
+	auth: undefined,
 });
 ```

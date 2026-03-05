@@ -3,26 +3,25 @@ title: Middlewares
 description: Intercept and wrap internal operations in CallApi
 ---
 
-Middleware lets you wrap and intercept internal operations in CallApi. Currently, only fetch middleware is available for intercepting requests at the network layer, but the system is designed to support additional middleware types in the future.
+Middleware wraps and intercepts internal operations, giving you full control over execution flow. Currently CallApi supports fetch middleware for intercepting network requests at the lowest level, with more middleware types planned for future releases.
 
-When a given middleware is defined at multiple levels (plugins, base config, per-request), they compose automatically (i.e. each one wrapping the next in a chain).
+<Callout type="info">
+	**Middleware vs Hooks:** Middleware controls execution (can return custom responses, short-circuit
+	requests). Hooks observe events (return values ignored). Use middleware for control flow, hooks for side
+	effects. See [Hooks](/docs/hooks) for details.
+</Callout>
+
+When a given middleware is defined at multiple levels (plugins, base config, per-request), they compose automatically in reverse order—the last middleware added wraps all previous ones.
 
 ## Fetch Middleware
 
-Fetch middleware wraps the underlying fetch implementation (native fetch or your custom implementation via `customFetchImpl`), giving you full control over when and how requests execute.
+Fetch middleware wraps the underlying fetch implementation, giving you full control over when and how requests execute. Use it to cache responses, track progress, handle offline mode, add logging, or short-circuit requests.
 
 ```ts
 type FetchMiddleware = (context: RequestContext & { fetchImpl: FetchImpl }) => FetchImpl;
 ```
 
-Each middleware receives a context object (containing the fetch implementation and request context) and returns a new fetch function. Use this to:
-
-- Cache responses
-- Track upload/download progress
-- Handle offline mode
-- Add logging or metrics
-- Short-circuit requests
-- Modify requests/responses
+Each middleware receives a context object (containing the fetch implementation and request context) and returns a new fetch function.
 
 ## Using Fetch Middleware
 
@@ -308,21 +307,19 @@ const client = createFetchClient({
 
 ## Middleware vs Hooks
 
-The key difference: **middleware controls execution flow, hooks observe and react**.
-
 **Use fetch middleware when you need to:**
 
-- **Control whether fetch is called** - Short-circuit requests, return cached responses without hitting the network
-- **Replace the fetch implementation** - Use XHR, mock responses, or alternative HTTP clients
-- **Transform the response** - Return a completely different Response object
-- **Wrap the network call** - Add retry logic, circuit breakers, or request queuing at the fetch level
+- Control whether fetch is called (short-circuit, return cached responses)
+- Replace the fetch implementation (use XHR, mock responses, alternative clients)
+- Transform the response (return a different Response object)
+- Wrap the network call (add retry logic, circuit breakers, request queuing)
 
 **Use hooks when you need to:**
 
-- **Observe lifecycle events** - React to what's happening without controlling the flow
-- **Log or track metrics** - Record timing, errors, or success rates
-- **Modify request options** - Change headers, body, or other options before the request (by mutation)
-- **Handle errors** - Process errors after they occur
-- **Side effects** - Update UI, trigger analytics, or perform other actions
+- Observe lifecycle events without controlling flow
+- Log or track metrics
+- Modify request options by mutation
+- Handle errors after they occur
+- Trigger side effects (update UI, analytics)
 
-**Key distinction:** Hooks receive context and can mutate objects, but their return values are ignored. Middleware wraps functions and controls what gets called and what gets returned. If you need to prevent a fetch call or return a custom response, use middleware. If you need to observe or react to events, use hooks.
+**Key distinction:** Middleware wraps functions and controls what gets called and returned. Hooks receive context and can mutate objects, but their return values are ignored.

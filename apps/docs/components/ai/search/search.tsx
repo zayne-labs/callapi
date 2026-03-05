@@ -428,7 +428,7 @@ const useHotKey = () => {
 	});
 
 	useEffect(() => {
-		const cleanup = on("keydown", globalThis, onKeyPress);
+		const cleanup = on(globalThis, "keydown", onKeyPress);
 
 		return () => cleanup();
 	}, []);

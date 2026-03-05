@@ -5,7 +5,7 @@ description: Configure automatic retries and request timeouts
 
 ## Timeout
 
-You can set the request timeout in milliseconds.
+Set a maximum time limit for requests using the `timeout` option (in milliseconds). If a request takes longer than the specified timeout, it will be aborted and a `TimeoutError` will be returned:
 
 ```ts title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -22,7 +22,7 @@ const result = await callBackendApi("/api/users", {
 
 ## Auto Retry
 
-For most use cases, you only need to specify the number of retry attempts:
+CallApi can automatically retry failed requests. For most use cases, you only need to specify the number of retry attempts:
 
 ```ts title="api.ts"
 const result = await callApi("/api/users", {
@@ -48,7 +48,7 @@ const result = await callApi("/api/users", {
 
 ### Exponential Retry Strategy
 
-Increases the delay between retries exponentially:
+Increases the delay between retries exponentially. This is the recommended strategy for most APIs to prevent overwhelming servers.
 
 ```ts title="api.ts"
 const result = await callApi("/api/users", {
@@ -60,40 +60,55 @@ const result = await callApi("/api/users", {
 });
 ```
 
-### RetryMethods and RetryStatusCodes
+### Dynamic Retry Delay
 
-You can customize when to retry a request with the `retryMethods` and `retryStatusCodes` options.
-
-1. **Retry Methods**: This option allows you to specify which HTTP methods should be retried. By default, this option is set to `["GET", "POST"]`.This implies that only `GET` and `POST` requests will be retried by default.
-
-2. **Retry Status Codes**: This option allows you to specify which HTTP status codes should be retried. There are no default values for this option.
+Pass a function to `retryDelay` to dynamically calculate the delay based on the current attempt count:
 
 ```ts title="api.ts"
-const result = await callApi("/api/users", {
-	retryStrategy: "linear",
-	retryAttempts: 3,
-	retryDelay: 1000,
-	retryMethods: ["GET", "POST"],
-	retryStatusCodes: [409, 425, 429, 500, 502, 503, 504],
-});
-```
-
-### Custom condition
-
-Use `retryCondition` to implement custom retry logic:
-
-```ts title="api.ts"
-const result = await callApi("/api/users", {
-	retryStrategy: "linear",
-	retryAttempts: 3,
-
-	retryCondition: ({ error, response }) => {
-		return response?.status === 429; // Only retry on rate limit errors
+const result = await callApi("/api/data", {
+	retryAttempts: 5,
+	retryDelay: (attemptCount) => {
+		// Example: Add random jitter to prevent thundering herd
+		const baseDelay = 1000 * 2 ** attemptCount;
+		const jitter = Math.random() * 1000;
+		return Math.min(baseDelay + jitter, 10000);
 	},
 });
 ```
 
-### onRetry callback
+### Retry Methods and Status Codes
+
+Customize when to retry a request with `retryMethods` and `retryStatusCodes`:
+
+1. **Retry Methods**: Specifies which HTTP methods should be retried. Defaults to `["GET", "POST"]`. Be careful when configuring this to retry `PUT` or `DELETE` requests unless they are idempotent.
+
+2. **Retry Status Codes**: Specifies which HTTP status codes should be retried. If not specified, all error status codes are eligible for retry.
+
+```ts title="api.ts"
+const result = await callApi("/api/users", {
+	retryAttempts: 3,
+	retryDelay: 1000,
+	retryMethods: ["GET", "POST"],
+	// Only retry on rate limits and server errors
+	retryStatusCodes: [429, 500, 502, 503, 504],
+});
+```
+
+### Custom Retry Condition
+
+Use `retryCondition` to implement custom retry logic. This function receives the error context and returns a boolean (or promise) indicating whether to retry:
+
+```ts title="api.ts"
+const result = await callApi("/api/users", {
+	retryAttempts: 3,
+
+	retryCondition: ({ error, response }) => {
+		return response?.status === 429;
+	},
+});
+```
+
+### The onRetry hook
 
 Listen to retry attempts using the `onRetry` hook:
 
@@ -101,8 +116,8 @@ Listen to retry attempts using the `onRetry` hook:
 const result = await callApi("/todos/1", {
 	retryAttempts: 3,
 
-	onRetry: ({ retryAttemptCount }) => {
-		console.log(`Retrying request (attempt ${retryAttemptCount}).`);
+	onRetry: ({ retryAttemptCount, error }) => {
+		console.log(`Retrying request (attempt ${retryAttemptCount}). Reason: ${error.message}`);
 	},
 });
 ```

@@ -3,13 +3,13 @@ title: React Query
 description: Learn how to use CallApi with React Query
 ---
 
-This guide covers the essential patterns and best practices for using CallApi within [React Query](https://tanstack.com/query/v5/docs/framework/react), allowing you to use CallApi's many features alongside React Query's caching and synchronization capabilities.
+This guide covers essential patterns and best practices for using CallApi with [React Query](https://tanstack.com/query/v5/docs/framework/react), combining CallApi's features with React Query's caching and synchronization capabilities.
 
 ## Quick Start
 
-By default, CallApi returns errors as values in the result object instead of throwing them. However, React Query expects either a resolved promise with data or a rejected promise with an error.
+By default, CallApi returns errors as values in the result object instead of throwing them, which is great for explicit error handling. However, React Query expects query functions to either return data on success or throw an error on failure.
 
-You configure callApi to align with that expectation:
+To make CallApi work seamlessly with React Query, configure it to throw errors and return only the data:
 
 ```ts title="api/todos.ts"
 import { useQuery } from "@tanstack/react-query";
@@ -36,10 +36,10 @@ export const useTodos = () => {
 
 ## Configuration Options
 
-The key options for React Query integration include:
+Key options for React Query integration:
 
-- **`throwOnError: true`** - Makes CallApi throw errors instead of returning them in the result object
-- **`resultMode: "onlyData"`** - Returns just the data property with its exact type, perfect for React Query
+- **`throwOnError: true`** - Makes CallApi throw errors instead of returning them
+- **`resultMode: "onlyData"`** - Returns just the data property, perfect for React Query
 
 <Callout type="info">
 	These settings ensure CallApi behaves exactly like React Query expects: throwing errors for failures and

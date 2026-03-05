@@ -7,7 +7,7 @@ This page covers advanced CallApi configuration options for specialized use case
 
 ## Response Cloning
 
-Enable `cloneResponse` to read the response multiple times in different places (hooks and main code).
+Enable `cloneResponse` to read the response multiple times in different places (e.g., in hooks and main code).
 
 ```ts title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -52,9 +52,9 @@ Control which configuration parts skip automatic merging between base and instan
 
 **How it works:**
 
-By default, CallApi automatically merges base config with instance config. When you set `skipAutoMergeFor`, CallApi stops automatically merging that part of the configuration - **you become responsible for manually spreading the skipped object if you want to preserve instance values**.
+By default, CallApi automatically merges base config with instance config. When you set `skipAutoMergeFor`, CallApi stops merging that part - **you become responsible for manually spreading the skipped object to preserve instance values**.
 
-This is essential when you need to manually spread instance options and then selectively override specific nested properties with defaults.
+This is useful when you need to manually spread instance options and then selectively override specific nested properties with defaults.
 
 **Available options:**
 

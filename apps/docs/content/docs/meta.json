@@ -3,8 +3,9 @@
 	"pages": [
 		"---Guide---",
 		"index",
-		"comparisons",
 		"getting-started",
+		"comparisons",
+		"migration-guide",
 		"error-handling",
 		"integrations",
 

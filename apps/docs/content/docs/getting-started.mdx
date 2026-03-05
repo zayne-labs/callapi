@@ -6,25 +6,11 @@ icon: CirclePlay
 
 ## Installation
 
-### Via NPM (recommended)
-
-To install CallApi via npm, run the following command:
-
 ```package-install
 @zayne-labs/callapi
 ```
 
-### Without NPM
-
-To use CallApi without npm, import it directly into your JavaScript files via a CDN by using a script tag with the `type="module"` attribute:
-
-```html
-<script type="module">
-	import { callApi } from "https://esm.run/@zayne-labs/callapi";
-</script>
-```
-
-If you want to use a specific version, you can specify it in the URL like this:
+Or via CDN:
 
 ```html
 <script type="module">
@@ -72,7 +58,7 @@ type Todo = {
 // Via TypeScript generics
 const { data, error, response } = await callApi<Todo>("https://jsonplaceholder.typicode.com/todos/1");
 
-// Via Validation Schemas
+// Via Validation Schemas (automatic type inference)
 const dataSchema = z.object({
 	userId: z.string(),
 	id: z.number(),
@@ -107,13 +93,9 @@ const data = await callApi<Todo>("https://jsonplaceholder.typicode.com/todos/1",
 });
 ```
 
-## CreateFetchClient
+## Creating a Configured Client
 
-`CreateFetchClient` allows you to create a callApi instance with custom base configurations.
-
-The `createFetchClient` function accepts all standard [Fetch API options](https://developer.mozilla.org/en-US/docs/Web/API/fetch#parameters) alongside [CallApi's extended options](/docs/extra-options).
-
-Options provided to `createFetchClient` act as base defaults. You can override these defaults at any time by passing the corresponding options directly to the `callApi` instance.
+Create a reusable client with base configuration using `createFetchClient`. Instance options override base defaults.
 
 ```ts twoslash title="callBackendApi.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -143,18 +125,11 @@ const resultTwo = await callBackendApi<Todo>("/todos/5", {
 
 ## Request and Response Validation
 
-CallApi comes with built-in support for request and response validation, both on type-level and runtime, ensuring your API calls and their responses match their expected types. The validation system is powered by the [Standard Schema specification](https://github.com/standard-schema/standard-schema), giving you the freedom to use your favorite validation library:
-
-- **Zod** - Popular choice with excellent TypeScript integration
-- **Valibot** - Lightweight and performant validation
-- **ArkType** - Advanced type-level validation
-- **And more!** - Any library implementing the Standard Schema spec
-
-Here's a quick example of how to validate your API responses:
+CallApi supports runtime validation using the [Standard Schema specification](https://github.com/standard-schema/standard-schema), compatible with Zod, Valibot, ArkType, and more.
 
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
-import { z } from "zod"; // You can use any schema validation library that implements the Standard Schema specification
+import { z } from "zod";
 
 const dataSchema = z.object({
 	id: z.number(),
@@ -180,7 +155,7 @@ const { data, error } = await callApi("/todos/1", {
 });
 ```
 
-For a comprehensive deep-dive into validation strategies, including global validation, request-options (body, headers, params, query) validation, custom validators, and best practices, check out our [Validation Guide](/docs/validation).
+See the [Validation Guide](/docs/validation) for comprehensive details on validation strategies and best practices.
 
 ## Throwing Errors
 
