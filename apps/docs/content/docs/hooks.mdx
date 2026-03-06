@@ -346,6 +346,33 @@ const client = createFetchClient({
 });
 ```
 
+## Manual Refetching
+
+The error-related hooks all receive an `options` object that contains a `refetch` function.
+
+This allows you to manually trigger a retry of the original request directly from an error hook. It's particularly useful for recovery flows like authentication token refreshes.
+
+```ts title="api.ts"
+const client = createFetchClient({
+	onResponseError: async ({ response, options }) => {
+		if (response.status === 401) {
+			await refreshAuthToken();
+
+			// Manually trigger a retry
+			return options.refetch();
+		}
+	},
+});
+```
+
+For a detailed walkthrough on using `refetch()` for token refreshing, see the [Authorization guide](/docs/authorization#refreshing-tokens).
+
+<Callout type="warning">
+	To prevent infinite loops, manual refetches are limited by the `refetchAttempts` option (defaults to
+	`1`). If the limit is reached, `refetch()` will return `null` and log an error to the console instead of
+	retrying recursively.
+</Callout>
+
 ## Ways in which hooks can be provided
 
 Hooks can be provided at three levels:

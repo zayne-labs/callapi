@@ -122,6 +122,12 @@ const result = await callApi("/todos/1", {
 });
 ```
 
+## Manual Refetching
+
+While `retryAttempts` handles automatic retries for common scenarios, sometimes you need more control—like refreshing an expired authentication token before retrying.
+
+In these cases, you can use the `refetch()` function available in most error-related hooks. See the [Manual Refetching](/docs/hooks#manual-refetching) section in the Hooks documentation for more details.
+
 ## Types
 
 ### Timeout

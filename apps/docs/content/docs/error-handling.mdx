@@ -246,3 +246,9 @@ if (isHTTPError(error)) {
 	console.log(data); // TypeScript knows data is not null
 }
 ```
+
+## Error Recovery with `refetch`
+
+Sometimes you want to silently recover from an error and retry the request (e.g., refreshing an expired auth token). CallApi provides a `refetch()` function within the `options` object of your error hooks for this purpose.
+
+For common recovery patterns like token refreshing, see the [Authorization guide](/docs/authorization#refreshing-tokens).

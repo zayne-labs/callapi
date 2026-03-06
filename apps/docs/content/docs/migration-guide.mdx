@@ -689,7 +689,7 @@ const api = createFetchClient({
 			localStorage.setItem("token", newToken);
 
 			// Retry request
-			options.retryAttempts = 1;
+			options.refetch();
 		}
 	},
 });

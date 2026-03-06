@@ -16,6 +16,8 @@ export type {
 	SuccessContext,
 } from "./hooks";
 
+export type { RefetchOptions } from "./refetch";
+
 export type { FetchImpl, FetchMiddlewareContext, Middlewares } from "./middlewares";
 
 export type { CallApiPlugin, PluginHooks, PluginMiddlewares, PluginSetupContext } from "./plugins";
