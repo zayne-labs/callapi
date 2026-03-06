@@ -1,5 +1,19 @@
 # @zayne-labs/callapi
 
+## 1.12.0
+
+### Minor Changes
+
+- 5bf8413: feat: ✨ add refetch functionality to error hooks
+
+   feat(hooks): 🎣 add refetch function to error context options
+   feat(refetch): 🔄 implement refetch manager with attempt limiting
+   feat(types): 📝 add refetch types and interfaces
+   test(refetch): 🧪 add comprehensive refetch test suite
+   feat(constants): 📋 add refetchAttempts default value
+   refactor(client): 🔧 integrate refetch into fetch client
+   refactor(retry): 🛠️ update retry logic for refetch compatibility
+
 ## 1.11.46
 
 ### Patch Changes
