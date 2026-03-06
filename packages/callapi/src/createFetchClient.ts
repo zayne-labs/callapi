@@ -2,13 +2,17 @@ import { createDedupeStrategy, type GlobalRequestInfoCache, type RequestInfoCach
 import {
 	executeHooks,
 	executeHooksInCatchBlock,
+	type CallApiExtraOptionsForHooks,
+	type CallApiRequestOptionsForHooks,
 	type ErrorContext,
 	type ExecuteHookInfo,
 	type RequestContext,
 	type ResponseContext,
 	type SuccessContext,
+	type ValidationErrorContext,
 } from "./hooks";
 import { initializePlugins, type CallApiPlugin } from "./plugins";
+import { createRefetchManager } from "./refetch";
 import {
 	getCustomizedErrorResult,
 	resolveErrorResult,
@@ -24,9 +28,7 @@ import type {
 	BaseCallApiConfig,
 	CallApiConfig,
 	CallApiContext,
-	CallApiExtraOptionsForHooks,
 	CallApiRequestOptions,
-	CallApiRequestOptionsForHooks,
 	CallApiResult,
 	GetBaseSchemaConfig,
 	GetBaseSchemaRoutes,
@@ -208,7 +210,15 @@ export const createFetchClientWithContext = <
 				fullURL,
 				initURL: resolvedInitURL,
 				initURLNormalized: normalizedInitURL,
-			} satisfies CallApiExtraOptionsForHooks;
+			} as CallApiExtraOptionsForHooks;
+
+			const { refetch } = createRefetchManager({
+				callApi,
+				callApiArgs: { config, initURL },
+				options,
+			});
+
+			options.refetch = refetch;
 
 			const newFetchController = new AbortController();
 
@@ -222,7 +232,6 @@ export const createFetchClientWithContext = <
 
 			const request = {
 				...resolvedRequest,
-
 				signal: combinedSignal,
 			} satisfies CallApiRequestOptionsForHooks;
 
@@ -390,15 +399,13 @@ export const createFetchClientWithContext = <
 				});
 
 				const responseContext: ResponseContext | null =
-					(errorContext.response as typeof errorDetails.response) ?
-						{ ...errorContext, data: null }
-					:	null;
+					(errorContext.response as Response | null) ? { ...errorContext, data: null } : null;
 
 				if (isValidationErrorInstance(error)) {
 					const hookError = await executeHooksInCatchBlock(
 						[
 							responseContext && options.onResponse?.(responseContext),
-							options.onValidationError?.(errorContext),
+							options.onValidationError?.(errorContext as ValidationErrorContext),
 							options.onError?.(errorContext),
 						],
 						hookInfo

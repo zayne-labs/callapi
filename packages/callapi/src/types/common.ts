@@ -1,9 +1,10 @@
 import type { AuthOption } from "../auth";
 import type { fetchSpecificKeys } from "../constants/common";
 import type { DedupeOptions } from "../dedupe";
-import type { HookConfigOptions, Hooks, HooksOrHooksArray } from "../hooks";
+import type { HookConfigOptions, HooksOrHooksArray } from "../hooks";
 import type { FetchImpl, Middlewares } from "../middlewares";
 import type { CallApiPlugin, InferPluginExtraOptions } from "../plugins";
+import type { RefetchOptions } from "../refetch";
 import type { InferCallApiResult, ResponseParser, ResponseTypeType, ResultModeType } from "../result";
 import type { RetryOptions } from "../retry";
 import type { InitURLOrURLObject, URLOptions } from "../url";
@@ -34,7 +35,7 @@ import type {
 	DefaultPluginArray,
 	DefaultThrowOnError,
 } from "./default-types";
-import type { CommonRequestHeaders, NoInferUnMasked, Writeable } from "./type-helpers";
+import type { NoInferUnMasked, Writeable } from "./type-helpers";
 
 // eslint-disable-next-line ts-eslint/no-empty-object-type -- This needs to be empty to allow users to register their own meta
 export interface Register {
@@ -82,10 +83,6 @@ export type CallApiRequestOptions = {
 	// eslint-disable-next-line perfectionist/sort-intersection-types -- Allow
 } & Pick<ModifiedRequestInit, FetchSpecificKeysUnion>;
 
-export type CallApiRequestOptionsForHooks = Omit<CallApiRequestOptions, "headers"> & {
-	headers: Record<"Authorization" | "Content-Type" | CommonRequestHeaders, string | undefined>;
-};
-
 type SharedExtraOptions<
 	TCallApiContext extends CallApiContext = DefaultCallApiContext,
 	TData = DefaultDataType,
@@ -114,6 +111,7 @@ type SharedExtraOptions<
 	& HookConfigOptions
 	& HooksOrHooksArray<NoInferUnMasked<TComputedCallApiContext>>
 	& Middlewares<NoInferUnMasked<TComputedCallApiContext>>
+	& RefetchOptions
 	& ResultModeOption<TErrorData, TResultMode>
 	& RetryOptions<TErrorData>
 	& TComputedMergedPluginExtraOptions
@@ -670,9 +668,6 @@ export type CallApiExtraOptions<
 		| TSchemaConfig
 		| ((context: GetExtendSchemaConfigContext<TBaseSchemaConfig>) => TSchemaConfig);
 };
-
-export type CallApiExtraOptionsForHooks<TCallApiContext extends CallApiContext = DefaultCallApiContext> =
-	Hooks & Omit<CallApiExtraOptions<TCallApiContext>, keyof Hooks>;
 
 export type InstanceContext = {
 	initURL: string;

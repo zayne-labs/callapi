@@ -20,6 +20,9 @@ export const extraOptionDefaults = Object.freeze(
 		// Hook defaults
 		hooksExecutionMode: "parallel",
 
+		// Refetch defaults
+		refetchAttempts: 1,
+
 		// Response defaults
 		responseParser: JSON.parse,
 		responseType: "json",

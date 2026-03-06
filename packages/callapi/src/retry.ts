@@ -6,7 +6,7 @@ import {
 	type RetryContext,
 } from "./hooks";
 import type { CallApiResultErrorVariant } from "./result";
-import type { CallApiConfig } from "./types/common";
+import type { CallApiConfig, CallApiResultLoose } from "./types/common";
 import type { MethodUnion } from "./types/conditional-types";
 import { defineEnum, type AnyNumber, type Awaitable, type UnmaskType } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
@@ -99,7 +99,10 @@ const getExponentialDelay = (currentAttemptCount: number, options: RetryOptions<
 	return Math.min(exponentialDelay, maxDelay);
 };
 
-type CallApiImpl = (initURL: never, init?: CallApiConfig) => Promise<CallApiResultErrorVariant<unknown>>;
+export type CallApiImpl = (
+	initURL: never,
+	init?: CallApiConfig
+) => Promise<CallApiResultLoose<unknown, unknown>>;
 
 export const createRetryManager = <TCallApi extends CallApiImpl>(ctx: {
 	callApi: TCallApi;
@@ -139,11 +142,11 @@ export const createRetryManager = <TCallApi extends CallApiImpl>(ctx: {
 
 		const retryCondition = options.retryCondition ?? extraOptionDefaults.retryCondition;
 
-		const maximumRetryAttempts = options.retryAttempts ?? extraOptionDefaults.retryAttempts;
+		const maxRetryAttempts = options.retryAttempts ?? extraOptionDefaults.retryAttempts;
 
 		const customRetryCondition = await retryCondition(errorContext);
 
-		const baseShouldRetry = currentAttemptCount <= maximumRetryAttempts && customRetryCondition;
+		const baseShouldRetry = currentAttemptCount <= maxRetryAttempts && customRetryCondition;
 
 		if (!baseShouldRetry) {
 			return false;
@@ -192,9 +195,7 @@ export const createRetryManager = <TCallApi extends CallApiImpl>(ctx: {
 		const shouldRetry = await shouldAttemptRetry();
 
 		if (shouldRetry) {
-			const callApiRetryResult = handleRetry();
-
-			return callApiRetryResult;
+			return handleRetry() as never;
 		}
 
 		if (hookInfo.shouldThrowOnError) {
