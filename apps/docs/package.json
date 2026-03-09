@@ -1,7 +1,7 @@
 {
-	"name": "docs",
+	"name": "@zayne-labs/callapi-docs",
 	"type": "module",
-	"version": "0.0.47",
+	"version": "0.0.0",
 	"private": true,
 	"scripts": {
 		"build": "turbo run --filter=@zayne-labs/callapi build:dev && next build",
@@ -9,7 +9,7 @@
 		"dev": "next dev",
 		"lint:eslint": "eslint . --max-warnings 0",
 		"lint:format": "prettier --write .",
-		"lint:type-check": "tsc --pretty  -p tsconfig.json",
+		"lint:type-check": "tsc --pretty -p tsconfig.json",
 		"postinstall": "fumadocs-mdx",
 		"start": "next start"
 	},
@@ -19,13 +19,13 @@
 		"@bprogress/next": "^3.2.12",
 		"@iconify/react": "^6.0.2",
 		"@shikijs/twoslash": "4.0.1",
+		"@takumi-rs/image-response": "^0.70.4",
 		"@zayne-labs/callapi": "workspace:*",
 		"@zayne-labs/toolkit-core": "^0.12.44",
 		"@zayne-labs/toolkit-react": "^0.12.44",
 		"@zayne-labs/toolkit-type-helpers": "^0.12.44",
 		"@zayne-labs/ui-react": "^0.10.52",
 		"ai": "^6.0.116",
-		"clsx": "^2.1.1",
 		"fumadocs-core": "16.6.9",
 		"fumadocs-docgen": "3.0.8",
 		"fumadocs-mdx": "14.2.9",

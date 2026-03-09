@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import type { ImageResponseOptions } from "next/server";
+import type { ImageResponseOptions } from "@takumi-rs/image-response";
 import type { ReactNode } from "react";
 import { baseURL } from "@/lib/metadata";
 
@@ -31,7 +31,7 @@ const fontBold = fs.readFile("./lib/og/JetBrainsMono-Bold.ttf").then(
 export const getImageResponseOptions = async (): Promise<ImageResponseOptions> => {
 	return {
 		fonts: await Promise.all([font, fontBold]),
-		// format: "webp",
+		format: "webp",
 		height: 630,
 		width: 1200,
 	};

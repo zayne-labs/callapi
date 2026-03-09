@@ -1,7 +1,10 @@
+import { metaSchema, pageSchema } from "fumadocs-core/source/schema";
 import { applyMdxPreset, defineConfig, defineDocs } from "fumadocs-mdx/config";
 import lastModified from "fumadocs-mdx/plugins/last-modified";
+import type { RemarkAutoTypeTableOptions } from "fumadocs-typescript";
 import type { ElementContent } from "hast";
 import type { ShikiTransformer } from "shiki";
+import { shikiConfig } from "./lib/shiki";
 
 export const docs = defineDocs({
 	dir: "content/docs",
@@ -16,19 +19,20 @@ export const docs = defineDocs({
 				{ transformerTwoslash },
 				{ createFileSystemGeneratorCache, createGenerator, remarkAutoTypeTable },
 				{ createFileSystemTypesCache },
-				{ remarkStructureDefaultOptions },
 			] = await Promise.all([
 				import("@shikijs/twoslash"),
 				import("fumadocs-core/mdx-plugins/rehype-code"),
 				import("fumadocs-twoslash"),
 				import("fumadocs-typescript"),
 				import("fumadocs-twoslash/cache-fs"),
-				import("fumadocs-core/mdx-plugins/remark-structure"),
 			]);
 
-			const generator = createGenerator({
-				cache: createFileSystemGeneratorCache(".next/fumadocs-typescript"),
-			});
+			const typeTableOptions: RemarkAutoTypeTableOptions = {
+				generator: createGenerator({
+					cache: createFileSystemGeneratorCache(".next/fumadocs-typescript"),
+				}),
+				shiki: shikiConfig,
+			};
 
 			const defaultTwoSlashOptions = defaultTwoslashOptions();
 
@@ -36,10 +40,7 @@ export const docs = defineDocs({
 				rehypeCodeOptions: {
 					inline: "tailing-curly-colon",
 					langs: ["ts", "js", "html", "tsx", "mdx", "bash"],
-					themes: {
-						dark: "material-theme-darker",
-						light: "material-theme-lighter",
-					},
+					themes: shikiConfig.defaultThemes.themes,
 
 					transformers: [
 						...(rehypeCodeDefaultOptions.transformers ?? []),
@@ -68,11 +69,7 @@ export const docs = defineDocs({
 					},
 				},
 
-				remarkPlugins: [[remarkAutoTypeTable, { generator }]],
-
-				remarkStructureOptions: {
-					types: [...remarkStructureDefaultOptions.types, "code"],
-				},
+				remarkPlugins: [[remarkAutoTypeTable, typeTableOptions]],
 			})(options);
 		},
 
@@ -80,6 +77,12 @@ export const docs = defineDocs({
 			extractLinkReferences: true,
 			includeProcessedMarkdown: true,
 		},
+
+		schema: pageSchema,
+	},
+
+	meta: {
+		schema: metaSchema,
 	},
 });
 

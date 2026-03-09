@@ -13,7 +13,7 @@ import {
 } from "fumadocs-ui/layouts/notebook/page";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { LLMCopyButton, ViewOptions } from "@/components/ai/search/page-actions";
+import { LLMCopyButton, ViewOptions } from "@/components/ai/page-actions";
 import { getMDXComponents } from "@/components/common";
 import { EditOnGithub } from "@/components/common/EditOnGithub";
 import { HoverCard } from "@/components/ui";
@@ -116,21 +116,16 @@ export async function generateMetadata({ params }: PageProps<"/docs/[[...slug]]"
 
 	const description = page.data.description ?? defaultDescription;
 
-	const image = {
-		height: 630,
-		url: getPageImage(page).url,
-		width: 1200,
-	} satisfies NonNullable<Metadata["openGraph"]>["images"];
+	const imageURL = getPageImage(page).url;
 
 	return createMetadata({
 		description,
 		openGraph: {
-			images: [image],
-			url: `/docs/${page.slugs.join("/")}`,
+			url: imageURL,
 		},
 		title: page.data.title,
 		twitter: {
-			images: [image],
+			images: [{ height: 630, url: imageURL, width: 1200 }],
 		},
 	});
 }

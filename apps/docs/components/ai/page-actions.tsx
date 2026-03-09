@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "fumadocs-ui/components/
 import { useCopyButton } from "fumadocs-ui/utils/use-copy-button";
 import { Check, ChevronDown, Copy, ExternalLinkIcon, MessageCircleIcon, TextIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Button } from "../../ui/button";
+import { Button } from "../ui/button";
 
 const cache = new Map<string, string>();
 
