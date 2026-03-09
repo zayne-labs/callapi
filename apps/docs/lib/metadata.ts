@@ -4,9 +4,7 @@ const VERCEL_PROJECT_PRODUCTION_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL;
 const NETLIFY_PRODUCTION_URL = process.env.URL;
 
 const withHttps = (url: string | undefined) => {
-	if (!url) {
-		return;
-	}
+	if (!url) return;
 
 	if (!url.startsWith("https")) {
 		return `https://${url}`;
