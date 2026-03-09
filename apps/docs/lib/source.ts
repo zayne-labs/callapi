@@ -1,31 +1,10 @@
-import { loader, type InferPageType, type LoaderPlugin } from "fumadocs-core/source";
+import { loader, type InferPageType } from "fumadocs-core/source";
 import { lucideIconsPlugin } from "fumadocs-core/source/lucide-icons";
-import { createElement } from "react";
 import { docs } from "@/.source/server";
-
-const pageTreeCodeTitles = () => {
-	return {
-		transformPageTree: {
-			file: (node) => {
-				if (
-					typeof node.name === "string"
-					&& (node.name.endsWith("()") || /^<\w+ \/>$/.test(node.name))
-				) {
-					return {
-						...node,
-						name: createElement("code", { children: node.name, className: "text-[13px]" }),
-					};
-				}
-
-				return node;
-			},
-		},
-	} satisfies LoaderPlugin;
-};
 
 export const source = loader({
 	baseUrl: "/docs",
-	plugins: [pageTreeCodeTitles(), lucideIconsPlugin()],
+	plugins: [lucideIconsPlugin()],
 	source: docs.toFumadocsSource(),
 });
 

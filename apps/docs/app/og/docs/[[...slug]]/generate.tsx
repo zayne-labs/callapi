@@ -9,7 +9,7 @@ export type GenerateProps = {
 };
 
 // eslint-disable-next-line unicorn/prefer-top-level-await
-const font = fs.readFile("./lib/og/JetBrainsMono-Regular.ttf").then(
+const font = fs.readFile("../-fonts/JetBrainsMono-Regular.ttf").then(
 	(data) =>
 		({
 			data,
@@ -19,7 +19,7 @@ const font = fs.readFile("./lib/og/JetBrainsMono-Regular.ttf").then(
 );
 
 // eslint-disable-next-line unicorn/prefer-top-level-await
-const fontBold = fs.readFile("./lib/og/JetBrainsMono-Bold.ttf").then(
+const fontBold = fs.readFile("../-fonts/JetBrainsMono-Bold.ttf").then(
 	(data) =>
 		({
 			data,
