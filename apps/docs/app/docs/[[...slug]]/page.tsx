@@ -17,7 +17,7 @@ import { LLMCopyButton, ViewOptions } from "@/components/ai/page-actions";
 import { getMDXComponents } from "@/components/common";
 import { EditOnGithub } from "@/components/common/EditOnGithub";
 import { HoverCard } from "@/components/ui";
-import { owner, repo } from "@/lib/github";
+import { repoName, repoOwner } from "@/lib/github";
 import { createMetadata, defaultDescription } from "@/lib/metadata";
 import { getPageImage, source } from "@/lib/source";
 
@@ -34,7 +34,7 @@ async function Page({ params }: PageProps<"/docs/[[...slug]]">) {
 
 	const { body: MDX, lastModified, toc } = await page.data.load();
 
-	const githubURL = `https://github.com/${owner}/${repo}/blob/main/apps/docs/content/docs/${page.path}`;
+	const githubURL = `https://github.com/${repoOwner}/${repoName}/blob/main/apps/docs/content/docs/${page.path}`;
 
 	return (
 		<DocsPage

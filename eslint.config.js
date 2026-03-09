@@ -10,7 +10,6 @@ export default zayne(
 			},
 		},
 		tailwindcssBetter: {
-			enforceCanonicalClasses: true,
 			settings: { entryPoint: "apps/docs/tailwind.css" },
 		},
 		type: "lib",

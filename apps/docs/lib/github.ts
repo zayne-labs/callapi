@@ -1,2 +1,5 @@
-export const repo = "callapi";
-export const owner = "zayne-labs";
+export const repoName = "callapi";
+export const repoOwner = "zayne-labs";
+
+export const packageScope = `@${repoOwner}`;
+export const packageName = repoName;
