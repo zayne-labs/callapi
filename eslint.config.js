@@ -4,7 +4,6 @@ export default zayne(
 	{
 		ignores: ["packages/**/dist/**", "apps/docs/.source/**", "packages/callapi/tests/**"],
 		react: {
-			files: ["apps/docs/**/*.{ts,tsx}"],
 			nextjs: {
 				overrides: { "nextjs/no-html-link-for-pages": ["error", "apps/docs"] },
 			},
@@ -25,7 +24,7 @@ export default zayne(
 		},
 	},
 	{
-		files: ["apps/docs/**/*.{ts,tsx}"],
+		files: ["apps/docs/**/*"],
 		rules: {
 			"eslint-comments/require-description": "off",
 		},
