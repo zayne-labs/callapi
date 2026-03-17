@@ -11,7 +11,7 @@ function Ripple(props: RippleProps) {
 
 	return (
 		<div
-			className="absolute inset-0 overflow-hidden bg-white/5
+			className="absolute inset-0 -z-1 overflow-hidden bg-white/5
 				mask-[linear-gradient(to_bottom,white,transparent)]"
 		>
 			{Array.from({ length: numCircles }, (_, index) => {

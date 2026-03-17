@@ -1,7 +1,7 @@
 ---
 title: Migration Guide
 description: Migrate to CallApi from other fetch libraries
-icon: ArrowRight
+icon: Move
 ---
 
 This guide helps you migrate from other popular fetch libraries to CallApi with step-by-step instructions and code examples.
@@ -12,8 +12,8 @@ This guide helps you migrate from other popular fetch libraries to CallApi with 
 
 First, install CallApi alongside or instead of Axios:
 
-```bash
-	pnpm install @zayne-labs/callapi # Optionally remove axios npm uninstall axios
+```package-install
+@zayne-labs/callapi
 ```
 
 ### Basic Request
@@ -207,7 +207,7 @@ if (error) {
 		console.error("Data:", error.errorData);
 		console.error("Message:", error.message);
 	} else {
-		console.error("Unexpected error:", error.message);
+		console.error("Network error:", error.message);
 	}
 }
 ```
@@ -310,12 +310,11 @@ const { data: user } = await callApi("/users/1", {
 
 ### Installation
 
-<Tabs items={["npm", "pnpm", "yarn", "bun"]}>
-	<Tab value="npm">```bash npm install @zayne-labs/callapi npm uninstall ky ```</Tab>
-	<Tab value="pnpm">```bash pnpm add @zayne-labs/callapi pnpm remove ky ```</Tab>
-	<Tab value="yarn">```bash yarn add @zayne-labs/callapi yarn remove ky ```</Tab>
-	<Tab value="bun">```bash bun add @zayne-labs/callapi bun remove ky ```</Tab>
-</Tabs>
+First, install CallApi alongside or instead of Ky:
+
+```package-install
+@zayne-labs/callapi
+```
 
 ### Basic Usage
 
@@ -479,12 +478,11 @@ if (isHTTPError(error)) {
 
 ### Installation
 
-<Tabs items={["npm", "pnpm", "yarn", "bun"]}>
-	<Tab value="npm">```bash npm install @zayne-labs/callapi npm uninstall ofetch ```</Tab>
-	<Tab value="pnpm">```bash pnpm add @zayne-labs/callapi pnpm remove ofetch ```</Tab>
-	<Tab value="yarn">```bash yarn add @zayne-labs/callapi yarn remove ofetch ```</Tab>
-	<Tab value="bun">```bash bun add @zayne-labs/callapi bun remove ofetch ```</Tab>
-</Tabs>
+First, install CallApi alongside or instead of Ofetch:
+
+```package-install
+@zayne-labs/callapi
+```
 
 ### Basic Usage
 
@@ -688,7 +686,7 @@ const api = createFetchClient({
 
 			localStorage.setItem("token", newToken);
 
-			// Retry request
+			// Retry request with new token
 			options.refetch();
 		}
 	},
@@ -728,10 +726,9 @@ formData.append("file", file);
 
 const { data } = await callApi("@post/upload", {
 	body: formData,
-	onResponseStream: ({ event }) => {
-		if (event.type === "progress") {
-			console.log(`Upload progress: ${event.progress}%`);
-		}
+	onRequestStream: ({ event }) => {
+		console.log(`Upload progress: ${event.progress}%`);
+		console.log(`Transferred: ${event.transferredBytes} / ${event.totalBytes} bytes`);
 	},
 });
 ```
@@ -800,9 +797,11 @@ const { data: user } = await callApi("/users/:id", {
 ## Migration Checklist
 
 - Install `@zayne-labs/callapi`
-- Update imports from `axios`/`ky`/`ofetch` to `callApi`
-- Replace `axios.create()` or `ky.create()` with `createFetchClient()`
-- Update HTTP method calls (`api.get()`, `api.post()`) to either `callApi('@method/path')` or use the `method` option.
-- Convert interceptors to hooks (`onRequest`, `onSuccess`, `onError`)
-- Update error handling to check the `error` property in the returned result object and use `isHTTPError(error)`
-- For React Query, see the [React Query Integration](/docs/integrations/react-query) guide.
+- Update imports from `axios`/`ky`/`ofetch` to `@zayne-labs/callapi`
+- Replace `axios.create()`, `ky.create()`, or `ofetch.create()` with `createFetchClient()`
+- Update HTTP method calls to use `@method/path` syntax or the `method` option
+- Convert interceptors to hooks (`onRequest`, `onSuccess`, `onError`, `onRequestError`, `onResponseError`)
+- Update error handling to use result destructuring and `isHTTPError()` utility
+- Replace `.json()` calls with automatic data extraction from the `data` property
+- Update retry configuration (`retryAttempts`, `retryDelay` instead of `retry`)
+- For React Query, see the [React Query Integration](/docs/integrations/react-query) guide

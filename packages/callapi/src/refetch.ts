@@ -48,7 +48,7 @@ export const createRefetchManager = <TCallApi extends CallApiImpl>(ctx: {
 	// eslint-disable-next-line ts-eslint/no-deprecated -- Allowed for internal use
 	const currentRefetchCount = options["~refetchCount"] ?? 1;
 
-	const refetch: RefetchFn = (refetchOptionOverrides) => {
+	const refetch: RefetchFn = async (refetchOptionOverrides) => {
 		const maxRefetchAttempts =
 			refetchOptionOverrides?.refetchAttempts
 			?? options.refetchAttempts
@@ -61,7 +61,7 @@ export const createRefetchManager = <TCallApi extends CallApiImpl>(ctx: {
 
 			console.error(message);
 
-			return Promise.resolve(null);
+			return null;
 		}
 
 		const updatedConfig = {

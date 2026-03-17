@@ -356,10 +356,13 @@ This allows you to manually trigger a retry of the original request directly fro
 const client = createFetchClient({
 	onResponseError: async ({ response, options }) => {
 		if (response.status === 401) {
-			await refreshAuthToken();
+			// Refresh session logic
+			const newToken = await refreshToken();
 
-			// Manually trigger a retry
-			return options.refetch();
+			localStorage.setItem("token", newToken);
+
+			// Retry request with new token
+			options.refetch();
 		}
 	},
 });

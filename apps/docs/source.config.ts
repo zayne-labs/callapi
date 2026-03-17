@@ -2,8 +2,6 @@ import { metaSchema, pageSchema } from "fumadocs-core/source/schema";
 import { applyMdxPreset, defineConfig, defineDocs } from "fumadocs-mdx/config";
 import lastModified from "fumadocs-mdx/plugins/last-modified";
 import type { RemarkAutoTypeTableOptions } from "fumadocs-typescript";
-import type { ElementContent } from "hast";
-import type { ShikiTransformer } from "shiki";
 import { shikiConfig } from "./lib/shiki";
 
 export const docs = defineDocs({
@@ -55,7 +53,6 @@ export const docs = defineDocs({
 							},
 							typesCache: createFileSystemTypesCache(),
 						}),
-						transformerEscape(),
 					],
 				},
 
@@ -85,29 +82,6 @@ export const docs = defineDocs({
 		schema: metaSchema,
 	},
 });
-
-const transformerEscape = (): ShikiTransformer => {
-	const replace = (node: ElementContent) => {
-		if (node.type === "text") {
-			// eslint-disable-next-line no-param-reassign
-			node.value = node.value.replace(String.raw`[\!code`, "[!code");
-		} else if ("children" in node) {
-			for (const child of node.children) {
-				replace(child);
-			}
-		}
-	};
-
-	return {
-		name: "@shikijs/transformers:remove-notation-escape",
-
-		// eslint-disable-next-line perfectionist/sort-objects
-		code: (hast) => {
-			replace(hast);
-			return hast;
-		},
-	};
-};
 
 export default defineConfig({
 	plugins: [lastModified()],

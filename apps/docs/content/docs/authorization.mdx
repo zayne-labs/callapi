@@ -169,10 +169,12 @@ const api = createFetchClient({
 	onResponseError: async ({ response, options }) => {
 		if (response.status === 401) {
 			// Refresh session logic
-			await refreshToken();
+			const newToken = await refreshToken();
 
-			// Retry the original call
-			return options.refetch();
+			localStorage.setItem("token", newToken);
+
+			// Retry request with new token
+			options.refetch();
 		}
 	},
 });

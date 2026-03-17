@@ -5,9 +5,9 @@ import { css, on } from "@zayne-labs/toolkit-core";
 import { createCustomContext } from "@zayne-labs/toolkit-react";
 import type { InferProps } from "@zayne-labs/toolkit-react/utils";
 import { Presence } from "@zayne-labs/ui-react/common/presence";
-import { DefaultChatTransport } from "ai";
+import { DefaultChatTransport, type Tool, type UIToolInvocation } from "ai";
 import Link from "fumadocs-core/link";
-import { Loader2, MessageCircleIcon, RefreshCw, Send, X } from "lucide-react";
+import { Loader2, MessageCircleIcon, RefreshCw, SearchIcon, Send, X } from "lucide-react";
 import {
 	useEffect,
 	useEffectEvent,
@@ -21,7 +21,8 @@ import { toast } from "sonner";
 import { cn } from "tailwind-variants";
 import { z } from "zod";
 import { Slot } from "@/components/common";
-import type { ProvideLinksToolSchema } from "@/lib/chat/ai-tools-schema";
+import type { ProvideLinksToolSchema } from "@/lib/chat/tools/provideLinks";
+import type { SearchToolType } from "@/lib/chat/tools/search";
 import { cnMerge } from "@/lib/utils/cn";
 import { buttonVariants } from "../../ui/button";
 import { Markdown } from "./markdown";
@@ -230,7 +231,8 @@ export function AISearchInput(props: InferProps<"form">) {
 	);
 }
 
-function AISearchMessagePrimitive(props: InferProps<"div"> & { message: UIMessage }) {
+// eslint-disable-next-line ts-eslint/no-unused-vars
+function AISearchMessagePrimitiveWithLinksTool(props: InferProps<"div"> & { message: UIMessage }) {
 	const { message, ...restOfProps } = props;
 
 	let markdown = "";
@@ -279,6 +281,61 @@ function AISearchMessagePrimitive(props: InferProps<"div"> & { message: UIMessag
 					))}
 				</div>
 			)}
+		</div>
+	);
+}
+
+function AISearchMessagePrimitiveWithSearchTool(props: InferProps<"div"> & { message: UIMessage }) {
+	const { message, ...restOfProps } = props;
+
+	let markdown = "";
+
+	const searchCalls: Array<UIToolInvocation<SearchToolType>> = [];
+
+	// eslint-disable-next-line ts-eslint/no-unnecessary-condition
+	for (const part of message.parts ?? []) {
+		if (part.type === "text") {
+			markdown += part.text;
+			continue;
+		}
+
+		if (part.type.startsWith("tool-")) {
+			const toolName = part.type.slice("tool-".length);
+			const castedPart = part as UIToolInvocation<Tool>;
+
+			(toolName !== "search" || !castedPart.toolCallId) && searchCalls.push(castedPart);
+		}
+	}
+
+	return (
+		<div onClick={(e) => e.stopPropagation()} {...restOfProps}>
+			<p
+				className={cn(
+					"mb-1 text-sm font-medium text-fd-muted-foreground",
+					message.role === "assistant" && "text-fd-primary"
+				)}
+			>
+				{roleName[message.role] ?? "unknown"}
+			</p>
+
+			<div className="prose text-sm">
+				<Markdown text={markdown} />
+			</div>
+
+			{searchCalls.map((call) => {
+				return (
+					<div
+						key={call.toolCallId}
+						className="mt-3 flex flex-row items-center gap-2 rounded-lg border bg-fd-secondary p-2
+							text-xs text-fd-muted-foreground"
+					>
+						<SearchIcon className="size-4" />
+						{call.state === "output-error" || call.state === "output-denied" ?
+							<p className="text-fd-error">{call.errorText ?? "Failed to search"}</p>
+						:	<p>{!call.output ? "Searching…" : `${call.output.length} search results`}</p>}
+					</div>
+				);
+			})}
 		</div>
 	);
 }
@@ -404,7 +461,7 @@ export function AISearchPanelList({ className, style, ...props }: ComponentProps
 				</div>
 			:	<div className="flex flex-col gap-4 px-3">
 					{messages.map((item) => (
-						<AISearchMessagePrimitive key={item.id} message={item} />
+						<AISearchMessagePrimitiveWithSearchTool key={item.id} message={item} />
 					))}
 				</div>
 			}

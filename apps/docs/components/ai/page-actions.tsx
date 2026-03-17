@@ -1,7 +1,6 @@
 "use client";
 
 import { callApi } from "@zayne-labs/callapi";
-import { isBrowser } from "@zayne-labs/toolkit-core";
 import { Popover, PopoverContent, PopoverTrigger } from "fumadocs-ui/components/ui/popover";
 import { useCopyButton } from "fumadocs-ui/utils/use-copy-button";
 import { Check, ChevronDown, Copy, ExternalLinkIcon, MessageCircleIcon, TextIcon } from "lucide-react";
@@ -17,7 +16,7 @@ type CopyBtnProps = {
 export function LLMCopyButton(props: CopyBtnProps) {
 	const { markdownURL } = props;
 
-	const [isLoading, setLoading] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
 
 	const [checked, onClick] = useCopyButton(async () => {
 		const cached = cache.get(markdownURL);
@@ -41,8 +40,8 @@ export function LLMCopyButton(props: CopyBtnProps) {
 
 		const clipboardItem = new ClipboardItem({ "text/plain": markDownPromise });
 
-		setLoading(true);
-		await navigator.clipboard.write([clipboardItem]).finally(() => setLoading(false));
+		setIsLoading(true);
+		await navigator.clipboard.write([clipboardItem]).finally(() => setIsLoading(false));
 	});
 
 	return (
@@ -107,9 +106,7 @@ export function ViewOptions(props: ViewOptionsProps) {
 }
 
 const getLinkViewItems = (markdownUrl: string, githubUrl: string) => {
-	const pageUrl = isBrowser() ? globalThis.location.href : "loading";
-
-	const q = `Read ${pageUrl}, I want to ask questions about it.`;
+	const q = `Read ${markdownUrl}, I want to ask questions about it.`;
 
 	return [
 		{
