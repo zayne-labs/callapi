@@ -6,7 +6,7 @@ type RippleProps = {
 	numCircles?: number;
 };
 
-function Ripple(props: RippleProps) {
+function RippleImpl(props: RippleProps) {
 	const { mainCircleOpacity = 0.2, mainCircleSize = 310, numCircles = 20 } = props;
 
 	return (
@@ -46,4 +46,4 @@ function Ripple(props: RippleProps) {
 	);
 }
 
-export default memo(Ripple);
+export const Ripple = memo(RippleImpl);

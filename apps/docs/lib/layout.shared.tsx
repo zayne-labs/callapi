@@ -67,7 +67,7 @@ export const docsOptions = () => {
 			},
 
 			{
-				children: <GithubInfo owner={repoOwner} repo={repoName} className="lg:-mx-2" />,
+				children: <GithubInfo owner={repoOwner} repo={repoName} />,
 				type: "custom",
 			},
 		],

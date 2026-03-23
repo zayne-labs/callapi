@@ -1,6 +1,8 @@
-import Link from "next/link";
+"use client";
+
+import Link from "fumadocs-core/link";
+import { Ripple } from "@/components/common/Ripple";
 import { DocsIcon, GitHubIcon } from "@/components/icons";
-import Ripple from "@/components/landing/ripple";
 import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
