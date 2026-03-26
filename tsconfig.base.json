@@ -1,5 +1,6 @@
 {
 	"compilerOptions": {
+		"types": ["node"]
 		// "incremental": true,
 		// "tsBuildInfoFile": ".tsbuildinfo"
 	}

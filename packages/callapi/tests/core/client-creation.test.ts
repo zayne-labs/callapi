@@ -4,9 +4,10 @@
  */
 
 import { expect, test, vi } from "vitest";
+import type { CallApiRequestOptionsForHooks } from "../../src";
 import { createFetchClient } from "../../src/createFetchClient";
 import { definePlugin } from "../../src/utils/external";
-import { createFetchMock, createMockResponse } from "../test-setup/fetch-mock";
+import { createFetchMock, createMockResponse, getHeadersFromCall } from "../test-setup/fetch-mock";
 import { mockUser } from "../test-setup/fixtures";
 
 test("createFetchClient creates function client with no configuration", () => {
@@ -43,7 +44,7 @@ test("createFetchClient creates function client with plugins", () => {
 	const mockPlugin = definePlugin({
 		hooks: {
 			onRequest: (context) => {
-				context.request.headers["X-Test-Plugin"] = "true";
+				context.request.headers.set("X-Test-Plugin", "true");
 			},
 		},
 		id: "test-plugin",
@@ -88,15 +89,9 @@ test("createFetchClient inherits headers from base config when making requests",
 
 	await client("https://api.example.com/users/1");
 
-	expect(mockFetch).toHaveBeenCalledWith(
-		"https://api.example.com/users/1",
-		expect.objectContaining({
-			headers: expect.objectContaining({
-				"Content-Type": "application/json",
-				"X-API-Key": "base-key",
-			}),
-		})
-	);
+	const headers = getHeadersFromCall(mockFetch);
+	expect(headers.get("Content-Type")).toBe("application/json");
+	expect(headers.get("X-API-Key")).toBe("base-key");
 });
 
 test("createFetchClient inherits timeout from base config when making requests", async () => {
@@ -133,14 +128,8 @@ test("createFetchClient inherits auth from base config when making requests", as
 
 	await client("/users/1");
 
-	expect(mockFetch).toHaveBeenCalledWith(
-		"https://api.example.com/users/1",
-		expect.objectContaining({
-			headers: expect.objectContaining({
-				Authorization: expect.stringContaining("Bearer"),
-			}),
-		})
-	);
+	const headers = getHeadersFromCall(mockFetch);
+	expect(headers.get("Authorization")).toContain("Bearer");
 });
 
 test("createFetchClient merges base config with instance config when making requests", async () => {
@@ -162,18 +151,9 @@ test("createFetchClient merges base config with instance config when making requ
 		method: "POST",
 	});
 
-	// Check that the call was made with the correct URL and method
-	expect(mockFetch).toHaveBeenCalledWith(
-		"https://api.example.com/users/1",
-		expect.objectContaining({
-			method: "POST",
-		})
-	);
-
-	// Check that both headers are present in the actual call
-	const callArgs = mockFetch.mock.calls[0]?.[1] as RequestInit;
-	const headers = callArgs.headers as Record<string, string>;
-	expect(headers).toHaveProperty("X-Instance-Header", "instance-value");
+	const request = mockFetch.mock.calls[0]?.[1] as Request;
+	expect(request.method).toBe("POST");
+	expect(request.headers.get("X-Instance-Header")).toBe("instance-value");
 });
 
 test("createFetchClient allows instance config to override base config", async () => {
@@ -195,14 +175,8 @@ test("createFetchClient allows instance config to override base config", async (
 		timeout: 3000,
 	});
 
-	expect(mockFetch).toHaveBeenCalledWith(
-		"https://api.example.com/users/1",
-		expect.objectContaining({
-			headers: expect.objectContaining({
-				"Content-Type": "application/xml",
-			}),
-		})
-	);
+	const headers = getHeadersFromCall(mockFetch);
+	expect(headers.get("Content-Type")).toBe("application/xml");
 });
 
 test("createFetchClient handles skipAutoMergeFor option correctly", async () => {
@@ -247,7 +221,7 @@ test("createFetchClient executes plugin hooks when making requests", async () =>
 	const mockPlugin = definePlugin({
 		hooks: {
 			onRequest: (context) => {
-				context.request.headers["X-Test-Plugin"] = "true";
+				context.request.headers.set("X-Test-Plugin", "true");
 			},
 		},
 		id: "test-plugin",
@@ -261,14 +235,8 @@ test("createFetchClient executes plugin hooks when making requests", async () =>
 
 	await client("/users/1");
 
-	expect(mockFetch).toHaveBeenCalledWith(
-		"https://api.example.com/users/1",
-		expect.objectContaining({
-			headers: expect.objectContaining({
-				"X-Test-Plugin": "true",
-			}),
-		})
-	);
+	const headers = getHeadersFromCall(mockFetch);
+	expect(headers?.get("X-Test-Plugin")).toBe("true");
 });
 
 test("createFetchClient executes plugin setup functions when making requests", async () => {
@@ -278,7 +246,7 @@ test("createFetchClient executes plugin setup functions when making requests", a
 	const mockPluginWithSetup = definePlugin({
 		hooks: {
 			onRequest: (context) => {
-				context.request.headers["X-Setup-Plugin"] = "true";
+				context.request.headers.set("X-Setup-Plugin", "true");
 			},
 		},
 		id: "test-plugin-with-setup",
@@ -301,14 +269,8 @@ test("createFetchClient executes plugin setup functions when making requests", a
 
 	await client("/users/1");
 
-	expect(mockFetch).toHaveBeenCalledWith(
-		"https://api.example.com/users/1",
-		expect.objectContaining({
-			headers: expect.objectContaining({
-				"X-Setup-Plugin": "true",
-			}),
-		})
-	);
+	const headers = getHeadersFromCall(mockFetch);
+	expect(headers.get("X-Setup-Plugin")).toBe("true");
 });
 
 test("createFetchClient handles multiple plugins when making requests", async () => {
@@ -318,7 +280,7 @@ test("createFetchClient handles multiple plugins when making requests", async ()
 	const firstPlugin = definePlugin({
 		hooks: {
 			onRequest: (context) => {
-				context.request.headers["X-Test-Plugin"] = "true";
+				context.request.headers.set("X-Test-Plugin", "true");
 			},
 		},
 		id: "test-plugin",
@@ -328,7 +290,7 @@ test("createFetchClient handles multiple plugins when making requests", async ()
 	const secondPlugin = definePlugin({
 		hooks: {
 			onRequest: (context) => {
-				context.request.headers["X-Second-Plugin"] = "true";
+				context.request.headers.set("X-Second-Plugin", "true");
 			},
 		},
 		id: "second-plugin",
@@ -342,13 +304,7 @@ test("createFetchClient handles multiple plugins when making requests", async ()
 
 	await client("/users/1");
 
-	expect(mockFetch).toHaveBeenCalledWith(
-		"https://api.example.com/users/1",
-		expect.objectContaining({
-			headers: expect.objectContaining({
-				"X-Second-Plugin": "true",
-				"X-Test-Plugin": "true",
-			}),
-		})
-	);
+	const headers = getHeadersFromCall(mockFetch);
+	expect(headers.get("X-Test-Plugin")).toBe("true");
+	expect(headers.get("X-Second-Plugin")).toBe("true");
 });

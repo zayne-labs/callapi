@@ -113,13 +113,10 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 		const dedupeCacheScopeKey = getDedupeCacheScopeKey();
 
-		if (dedupeCacheScope === "global" && !$GlobalRequestInfoCache.has(dedupeCacheScopeKey)) {
-			$GlobalRequestInfoCache.set(dedupeCacheScopeKey, new Map());
-		}
-
 		const $RequestInfoCache =
 			dedupeCacheScope === "global" ?
-				$GlobalRequestInfoCache.get(dedupeCacheScopeKey)
+				($GlobalRequestInfoCache.get(dedupeCacheScopeKey)
+				?? $GlobalRequestInfoCache.set(dedupeCacheScopeKey, new Map()).get(dedupeCacheScopeKey))
 			:	$LocalRequestInfoCache;
 
 		return {

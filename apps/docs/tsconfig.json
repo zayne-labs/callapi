@@ -2,7 +2,6 @@
 	"extends": ["../../tsconfig.base.json", "@zayne-labs/tsconfig/bundler/next"],
 
 	"compilerOptions": {
-		"baseUrl": ".",
 		"paths": {
 			"@/*": ["./*"]
 			// "fumadocs-mdx:collections/*": [".source/*"]

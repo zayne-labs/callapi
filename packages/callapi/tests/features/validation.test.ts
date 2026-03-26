@@ -6,7 +6,7 @@
 import { expect, test, vi } from "vitest";
 import { createFetchClient } from "../../src";
 import { expectErrorResult, expectValidationError } from "../test-setup/assertions";
-import { createFetchMock, mockFetchSuccess } from "../test-setup/fetch-mock";
+import { createFetchMock, getHeadersFromCall, mockFetchSuccess } from "../test-setup/fetch-mock";
 import { mockUser } from "../test-setup/fixtures";
 
 // --- Mock Schema Helper ---
@@ -38,7 +38,7 @@ test("Basic Validation - validates request body with schema", async () => {
 		baseURL: "https://api.example.com",
 		schema: {
 			routes: {
-				"@post/users": { body: userSchema as any },
+				"@post/users": { body: userSchema },
 			},
 		},
 	});
@@ -58,13 +58,13 @@ test("Basic Validation - returns ValidationError for invalid request body", asyn
 		baseURL: "https://api.example.com",
 		schema: {
 			routes: {
-				"@post/users": { body: userSchema as any },
+				"@post/users": { body: userSchema },
 			},
 		},
 	});
 
 	const result = await client("@post/users", {
-		body: { name: "John" } as any,
+		body: { name: "John" },
 		resultMode: "all",
 	});
 
@@ -79,7 +79,7 @@ test("Basic Validation - validates request headers", async () => {
 		baseURL: "https://api.example.com",
 		schema: {
 			routes: {
-				"/users": { headers: headersSchema as any },
+				"/users": { headers: headersSchema },
 			},
 		},
 	});
@@ -87,12 +87,8 @@ test("Basic Validation - validates request headers", async () => {
 	const headers = { "X-Custom": "value" };
 	await client("/users", { headers });
 
-	expect(mockFetch).toHaveBeenCalledWith(
-		"https://api.example.com/users",
-		expect.objectContaining({
-			headers: expect.objectContaining(headers),
-		})
-	);
+	const requestHeaders = getHeadersFromCall(mockFetch);
+	expect(requestHeaders.get("X-Custom")).toBe("value");
 });
 
 test("Basic Validation - validates URL parameters", async () => {
@@ -102,7 +98,7 @@ test("Basic Validation - validates URL parameters", async () => {
 		baseURL: "https://api.example.com",
 		schema: {
 			routes: {
-				"/users/:id": { params: paramsSchema as any },
+				"/users/:id": { params: paramsSchema },
 			},
 		},
 	});
@@ -119,7 +115,7 @@ test("Basic Validation - validates query parameters", async () => {
 		baseURL: "https://api.example.com",
 		schema: {
 			routes: {
-				"/users": { query: querySchema as any },
+				"/users": { query: querySchema },
 			},
 		},
 	});
@@ -136,7 +132,7 @@ test("Basic Validation - validates response data", async () => {
 		baseURL: "https://api.example.com",
 		schema: {
 			routes: {
-				"/users/1": { data: userSchema as any },
+				"/users/1": { data: userSchema },
 			},
 		},
 	});
@@ -152,7 +148,7 @@ test("Basic Validation - returns ValidationError for invalid response data", asy
 		baseURL: "https://api.example.com",
 		schema: {
 			routes: {
-				"/users/1": { data: userSchema as any },
+				"/users/1": { data: userSchema },
 			},
 		},
 	});
@@ -173,13 +169,13 @@ test("Advanced Validation - supports custom validator functions", async () => {
 		baseURL: "https://api.example.com",
 		schema: {
 			routes: {
-				"@post/users": { body: customValidator as any },
+				"@post/users": { body: customValidator },
 			},
 		},
 	});
 
 	const body = { name: "John" };
-	await client("@post/users", { method: "POST", body: body as any });
+	await client("@post/users", { method: "POST", body: body });
 
 	expect(customValidator).toHaveBeenCalledWith(body);
 	expect(mockFetch).toHaveBeenCalledWith(
@@ -199,13 +195,13 @@ test("Advanced Validation - supports async validator functions", async () => {
 		baseURL: "https://api.example.com",
 		schema: {
 			routes: {
-				"@post/users": { body: asyncValidator as any },
+				"@post/users": { body: asyncValidator },
 			},
 		},
 	});
 
 	const body = { name: "John" };
-	await client("@post/users", { method: "POST", body: body as any });
+	await client("@post/users", { method: "POST", body: body });
 
 	expect(asyncValidator).toHaveBeenCalledWith(body);
 });
@@ -247,8 +243,8 @@ test("Advanced Validation - supports dynamic schema resolution", async () => {
 	const body = { name: "John" };
 	await client("/users", {
 		method: "POST",
-		body: body as any,
-		schema: dynamicSchemaResolver as any,
+		body: body,
+		schema: dynamicSchemaResolver,
 	});
 
 	expect(dynamicSchemaResolver).toHaveBeenCalled();
@@ -272,13 +268,13 @@ test("Advanced Validation - formats validation errors with detailed issues and p
 		throwOnError: true,
 		schema: {
 			routes: {
-				"@post/users": { body: detailedSchema as any },
+				"@post/users": { body: detailedSchema },
 			},
 		},
 	});
 
 	try {
-		await client("@post/users", { method: "POST", body: {} as any });
+		await client("@post/users", { method: "POST", body: {} });
 		expect.fail("Should have thrown");
 	} catch (error: any) {
 		expectValidationError(error);
@@ -298,13 +294,13 @@ test("Advanced Validation - disables runtime validation transform when configure
 		schema: {
 			config: { disableRuntimeValidationTransform: true },
 			routes: {
-				"@post/users": { body: transformingValidator as any },
+				"@post/users": { body: transformingValidator },
 			},
 		},
 	});
 
 	const body = { name: "John" };
-	await client("@post/users", { method: "POST", body: body as any });
+	await client("@post/users", { method: "POST", body: body });
 
 	expect(transformingValidator).toHaveBeenCalledWith(body);
 	expect(mockFetch).toHaveBeenCalledWith(
@@ -331,13 +327,13 @@ test("Advanced Validation - handles complex path structures in validation errors
 		throwOnError: true,
 		schema: {
 			routes: {
-				"@post/users": { body: complexPathSchema as any },
+				"@post/users": { body: complexPathSchema },
 			},
 		},
 	});
 
 	try {
-		await client("@post/users", { method: "POST", body: {} as any });
+		await client("@post/users", { method: "POST", body: {} });
 		expect.fail("Should have thrown");
 	} catch (error: any) {
 		expectValidationError(error);
@@ -355,17 +351,17 @@ test("Advanced Validation - merges fallback and specific route schemas", async (
 		baseURL: "https://api.example.com",
 		schema: {
 			routes: {
-				"@default": { body: fallbackValidator as any },
-				"@post/users": { body: specificValidator as any },
+				"@default": { body: fallbackValidator },
+				"@post/users": { body: specificValidator },
 			},
 		},
 	});
 
-	await client("@post/users", { method: "POST", body: { name: "John" } as any });
+	await client("@post/users", { method: "POST", body: { name: "John" } });
 	expect(specificValidator).toHaveBeenCalled();
 	expect(fallbackValidator).not.toHaveBeenCalled();
 
-	await client("/posts", { method: "POST", body: { title: "Hello" } as any });
+	await client("/posts", { method: "POST", body: { title: "Hello" } });
 	expect(fallbackValidator).toHaveBeenCalled();
 });
 
@@ -380,7 +376,7 @@ test("Advanced Validation - resolves correctly with prefix and method-scoped key
 				strict: true,
 			},
 			routes: {
-				"@get/users": { data: userSchema as any },
+				"@get/users": { data: userSchema },
 			},
 		},
 	});
@@ -403,7 +399,7 @@ test("Advanced Validation - prioritizes prefix over baseURL match", async () => 
 				baseURL: "https://external-api.com",
 			},
 			routes: {
-				"/users": { data: userSchema as any },
+				"/users": { data: userSchema },
 			},
 		},
 	});

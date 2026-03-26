@@ -11,7 +11,6 @@ import {
 	getHeaders,
 	getInitFetchImpl,
 	getMethod,
-	objectifyHeaders,
 	omitKeys,
 	pickKeys,
 	splitBaseConfig,
@@ -19,7 +18,7 @@ import {
 	toArray,
 	waitFor,
 } from "../../src/utils/common";
-import { resetFetchMock } from "../test-setup/fetch-mock";
+import { objectifyHeaders } from "../../src/utils/external";
 
 // Keys
 test("omitKeys omits specified keys from object", () => {
@@ -44,7 +43,6 @@ test("splitConfig and splitBaseConfig correctly separate fetch options from extr
 	expect(baseExtra).toEqual({ baseURL: "https://api.com", retry: { attempts: 3 } });
 });
 
-// Headers
 test("objectifyHeaders converts Headers instance or arrays to plain object", () => {
 	const headers = new Headers({ "Content-Type": "application/json" });
 	expect(objectifyHeaders(headers)).toEqual({ "content-type": "application/json" });
@@ -59,15 +57,13 @@ test("getHeaders merges auth, body, and custom headers", async () => {
 		resolvedHeaders: { "X-Custom": "val" },
 	});
 
-	expect(result).toEqual({
-		Authorization: "Bearer token",
-		"Content-Type": "application/json",
-		Accept: "application/json",
-		"X-Custom": "val",
-	});
+	expect(result).toBeInstanceOf(Headers);
+	expect(result.get("Authorization")).toBe("Bearer token");
+	expect(result.get("Content-Type")).toBe("application/json");
+	expect(result.get("Accept")).toBe("application/json");
+	expect(result.get("X-Custom")).toBe("val");
 });
 
-// Method
 test("getMethod returns uppercase method and prioritizes explicit method over URL prefix", () => {
 	expect(getMethod({ initURL: "/test", method: "post" })).toBe("POST");
 	expect(getMethod({ initURL: "@post/test", method: undefined })).toBe("POST");

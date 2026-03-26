@@ -521,9 +521,9 @@ export function AISearchPanel() {
 
 			<Presence present={open}>
 				<div
-					data-state={open ? "open" : "closed"}
 					className="fixed inset-0 z-30 bg-fd-overlay backdrop-blur-xs
-						data-[state=closed]:animate-fd-fade-out data-[state=open]:animate-fd-fade-in lg:hidden"
+						data-[animation-phase=enter]:animate-fd-fade-in
+						data-[animation-phase=exit]:animate-fd-fade-out lg:hidden"
 					onClick={() => setOpen(false)}
 				/>
 			</Presence>

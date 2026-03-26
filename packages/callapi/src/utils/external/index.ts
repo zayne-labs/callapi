@@ -2,3 +2,4 @@ export * from "./body";
 export * from "./define";
 export * from "./error";
 export * from "./guards";
+export * from "./headers";

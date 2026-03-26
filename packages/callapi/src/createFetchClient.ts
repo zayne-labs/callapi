@@ -28,6 +28,7 @@ import type {
 	BaseCallApiConfig,
 	CallApiConfig,
 	CallApiContext,
+	CallApiExtraOptions,
 	CallApiRequestOptions,
 	CallApiResult,
 	GetBaseSchemaConfig,
@@ -53,6 +54,7 @@ import {
 	getFetchImpl,
 	getHeaders,
 	getMethod,
+	getResolvedHeaders,
 	splitBaseConfig,
 	splitConfig,
 } from "./utils/common";
@@ -60,6 +62,7 @@ import { HTTPError } from "./utils/external/error";
 import { isHTTPErrorInstance, isValidationErrorInstance } from "./utils/external/guards";
 import { isFunction } from "./utils/guards";
 import {
+	getCurrentRouteSchemaKeyAndMainInitURL,
 	handleConfigValidation,
 	handleSchemaValidation,
 	type BaseCallApiSchemaAndConfig,
@@ -180,6 +183,12 @@ export const createFetchClientWithContext = <
 				...(!shouldSkipAutoMergeForRequest && fetchOptions),
 			} satisfies CallApiRequestOptions;
 
+			const initURLResult = getCurrentRouteSchemaKeyAndMainInitURL({
+				baseExtraOptions: baseConfig,
+				extraOptions: config,
+				initURL: initURL.toString(),
+			});
+
 			const {
 				resolvedCurrentRouteSchemaKey,
 				resolvedHooks,
@@ -190,9 +199,13 @@ export const createFetchClientWithContext = <
 			} = await initializePlugins({
 				baseConfig,
 				config,
-				initURL: initURL.toString(),
+				...initURLResult,
 				options: mergedExtraOptions as CallApiExtraOptionsForHooks,
-				request: mergedRequestOptions as CallApiRequestOptionsForHooks,
+				request: {
+					...mergedRequestOptions,
+					headers: getResolvedHeaders({ baseHeaders: baseConfig.headers, headers: config.headers }),
+					method: getMethod({ initURL: initURLResult.initURL, method: mergedRequestOptions.method }),
+				} as CallApiRequestOptionsForHooks,
 			});
 
 			const { fullURL, normalizedInitURL } = getFullAndNormalizedURL({
@@ -202,23 +215,25 @@ export const createFetchClientWithContext = <
 				query: resolvedOptions.query,
 			});
 
-			const options = {
+			const initOptions = {
 				...resolvedOptions,
 				...resolvedHooks,
 				...resolvedMiddlewares,
-
 				fullURL,
 				initURL: resolvedInitURL,
 				initURLNormalized: normalizedInitURL,
-			} as CallApiExtraOptionsForHooks;
+			} satisfies CallApiExtraOptions;
 
 			const { refetch } = createRefetchManager({
 				callApi,
 				callApiArgs: { config, initURL },
-				options,
+				options: initOptions,
 			});
 
-			options.refetch = refetch;
+			const options = {
+				...initOptions,
+				refetch,
+			} satisfies CallApiExtraOptionsForHooks;
 
 			const newFetchController = new AbortController();
 
@@ -273,8 +288,7 @@ export const createFetchClientWithContext = <
 
 				Object.assign(options, extraOptionsValidationResult);
 
-				// == Apply Schema Output for Request Options
-				Object.assign(request, {
+				const modifiedRequestOptionsValidationResult = {
 					body: getBody({
 						body: requestOptionsValidationResult.body,
 						bodySerializer: options.bodySerializer,
@@ -289,9 +303,17 @@ export const createFetchClientWithContext = <
 						initURL: resolvedInitURL,
 						method: requestOptionsValidationResult.method,
 					}),
-				});
+				} satisfies CallApiRequestOptionsForHooks;
 
-				const readyRequestContext = { baseConfig, config, options, request } satisfies RequestContext;
+				// == Apply Schema Output for Request Options
+				Object.assign(request, modifiedRequestOptionsValidationResult);
+
+				const readyRequestContext = {
+					baseConfig,
+					config,
+					options,
+					request,
+				} satisfies RequestContext;
 
 				await executeHooks(options.onRequestReady?.(readyRequestContext));
 

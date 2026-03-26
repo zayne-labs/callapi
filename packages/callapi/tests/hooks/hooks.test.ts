@@ -15,8 +15,6 @@ import {
 	mockFetchSuccess,
 } from "../test-setup/fetch-mock";
 
-// --- Hook Composition ---
-
 test("Hook Composition - multiple hooks of the same type compose in sequential mode", async () => {
 	using _ignoredMockFetch = createFetchMock();
 	mockFetchSuccess({ success: true });
@@ -139,8 +137,8 @@ test("Hook Composition - hooks can modify request context", async () => {
 	await callApi("/test", {
 		onRequest: (context) => {
 			capturedContext = context;
-			context.request.headers["X-Modified"] = "true";
-			context.request.headers["X-Hook-Added"] = "hook-value";
+			context.request.headers.set("X-Modified", "true");
+			context.request.headers.set("X-Hook-Added", "hook-value");
 		},
 	});
 
@@ -148,8 +146,6 @@ test("Hook Composition - hooks can modify request context", async () => {
 	expect(capturedContext.request).toBeDefined();
 	expect(capturedContext.request.headers).toBeDefined();
 });
-
-// --- Execution Modes ---
 
 test("Execution Modes - hooks execute in parallel mode by default", async () => {
 	using _ignoredMockFetch = createFetchMock();
@@ -247,8 +243,6 @@ test("Execution Modes - async hooks execute in parallel mode with fastest finish
 	expect(results).toHaveLength(3);
 	expect(results[0]).toBe("async3");
 });
-
-// --- Hook Types ---
 
 test("Hook Types - onRequestReady hook executes with correct context", async () => {
 	using _ignoredMockFetch = createFetchMock();

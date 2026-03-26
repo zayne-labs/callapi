@@ -486,5 +486,5 @@ export const getCurrentRouteSchemaKeyAndMainInitURL = (
 		currentRouteSchemaKey = mergeURLParts({ method: methodFromURL, path: restOfPathWithoutBaseURL });
 	}
 
-	return { currentRouteSchemaKey, mainInitURL };
+	return { currentRouteSchemaKey, initURL, mainInitURL };
 };

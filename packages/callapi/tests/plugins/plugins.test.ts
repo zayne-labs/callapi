@@ -6,8 +6,14 @@
 import { expect, test, vi } from "vitest";
 import { createFetchClient } from "../../src/createFetchClient";
 import type { CallApiPlugin } from "../../src/plugins";
+import { objectifyHeaders } from "../../src/utils/external";
 import { expectErrorResult, expectSuccessResult } from "../test-setup/assertions";
-import { createFetchMock, createMockResponse, mockFetchSuccess } from "../test-setup/fetch-mock";
+import {
+	createFetchMock,
+	createMockResponse,
+	getHeadersFromCall,
+	mockFetchSuccess,
+} from "../test-setup/fetch-mock";
 import { mockUser } from "../test-setup/fixtures";
 
 // --- Plugin Composition ---
@@ -301,7 +307,7 @@ test("Plugin Middleware - plugin middleware can modify request and response", as
 			fetchMiddleware: (ctx) => async (input, init) => {
 				const modifiedInit = {
 					...init,
-					headers: { ...init?.headers, "X-Modified": "true" },
+					headers: new Headers({ ...objectifyHeaders(init?.headers), "X-Modified": "true" }),
 				};
 
 				const response = await ctx.fetchImpl(input, modifiedInit);
@@ -324,12 +330,9 @@ test("Plugin Middleware - plugin middleware can modify request and response", as
 
 	expectSuccessResult(result);
 	expect(result.data).toMatchObject({ ...mockUser, transformed: true });
-	expect(mockFetch).toHaveBeenCalledWith(
-		"https://api.example.com/users/1",
-		expect.objectContaining({
-			headers: expect.objectContaining({ "X-Modified": "true" }),
-		})
-	);
+
+	const headers = getHeadersFromCall(mockFetch);
+	expect(headers.get("X-Modified")).toBe("true");
 });
 
 test("Plugin Middleware - composes plugin middleware with base and instance middleware in correct order", async () => {

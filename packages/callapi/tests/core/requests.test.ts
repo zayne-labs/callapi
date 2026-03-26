@@ -3,10 +3,10 @@
  * Tests basic functionality, URL processing, parameter handling, and HTTP methods
  */
 
-import { expect, test, vi } from "vitest";
+import { expect, test } from "vitest";
 import { callApi } from "../../src/createFetchClient";
 import { expectSuccessResult } from "../test-setup/assertions";
-import { createFetchMock, mockFetchSuccess } from "../test-setup/fetch-mock";
+import { createFetchMock, getHeadersFromCall, mockFetchSuccess } from "../test-setup/fetch-mock";
 import { mockUser, mockUsers } from "../test-setup/fixtures";
 import { mockFetch } from "../test-setup/setup";
 
@@ -30,7 +30,7 @@ test("Basic Requests - callApi makes GET request by default", async () => {
 });
 
 test("Basic Requests - callApi makes requests with different HTTP methods", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser, 201);
 
 	const result = await callApi("https://api.example.com/users", {
@@ -42,19 +42,19 @@ test("Basic Requests - callApi makes requests with different HTTP methods", asyn
 		"https://api.example.com/users",
 		expect.objectContaining({
 			body: JSON.stringify({ email: "john@example.com", name: "John" }),
-			headers: expect.objectContaining({
-				"Content-Type": "application/json",
-			}),
 			method: "POST",
 		})
 	);
+
+	const headers = getHeadersFromCall(mockFetch);
+	expect(headers.get("Content-Type")).toBe("application/json");
 
 	expectSuccessResult(result);
 	expect(result.data).toEqual(mockUser);
 });
 
 test("Basic Requests - callApi handles request body serialization correctly", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser, 201);
 
 	const requestData = { email: "john@example.com", name: "John" };
@@ -68,16 +68,16 @@ test("Basic Requests - callApi handles request body serialization correctly", as
 		"https://api.example.com/users",
 		expect.objectContaining({
 			body: JSON.stringify(requestData),
-			headers: expect.objectContaining({
-				"Content-Type": "application/json",
-			}),
 			method: "POST",
 		})
 	);
+
+	const headers = getHeadersFromCall(mockFetch);
+	expect(headers.get("Content-Type")).toBe("application/json");
 });
 
 test("Basic Requests - callApi handles custom headers correctly", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	await callApi("https://api.example.com/users/1", {
@@ -87,15 +87,9 @@ test("Basic Requests - callApi handles custom headers correctly", async () => {
 		},
 	});
 
-	expect(mockFetch).toHaveBeenCalledWith(
-		"https://api.example.com/users/1",
-		expect.objectContaining({
-			headers: expect.objectContaining({
-				Authorization: "Bearer token123",
-				"X-Custom-Header": "custom-value",
-			}),
-		})
-	);
+	const headers = getHeadersFromCall(mockFetch);
+	expect(headers.get("Authorization")).toBe("Bearer token123");
+	expect(headers.get("X-Custom-Header")).toBe("custom-value");
 });
 
 test("Basic Requests - callApi extracts method from URL prefix", async () => {

@@ -15,7 +15,6 @@ import type { CallApiContext, CallApiRequestOptions, OverrideCallApiContext } fr
 import type { DefaultCallApiContext, DefaultDataType } from "./types/default-types";
 import type { AnyFunction, Awaitable, UnionToIntersection } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
-import { getMethod, getResolvedHeaders } from "./utils/common";
 import { isArray, isFunction, isString } from "./utils/guards";
 import {
 	getCurrentRouteSchemaKeyAndMainInitURL,
@@ -24,7 +23,7 @@ import {
 } from "./validation";
 
 export type PluginSetupContext<TCallApiContext extends CallApiContext = DefaultCallApiContext> =
-	RequestContext<TCallApiContext> & { initURL: string };
+	RequestContext<TCallApiContext> & ReturnType<typeof getCurrentRouteSchemaKeyAndMainInitURL>;
 
 export type PluginInitResult<TCallApiContext extends CallApiContext = DefaultCallApiContext> = Partial<
 	Omit<PluginSetupContext<TCallApiContext>, "initURL" | "request"> & {
@@ -136,7 +135,7 @@ export const getResolvedPlugins = (context: Pick<RequestContext, "baseConfig" | 
 };
 
 export const initializePlugins = async (setupContext: PluginSetupContext) => {
-	const { baseConfig, config, initURL, options, request } = setupContext;
+	const { baseConfig, config, currentRouteSchemaKey, mainInitURL, options, request } = setupContext;
 
 	const {
 		addMainHooks,
@@ -147,19 +146,10 @@ export const initializePlugins = async (setupContext: PluginSetupContext) => {
 		getResolvedMiddlewares,
 	} = setupHooksAndMiddlewares({ baseConfig, config, options });
 
-	const initURLResult = getCurrentRouteSchemaKeyAndMainInitURL({
-		baseExtraOptions: baseConfig,
-		extraOptions: config,
-		initURL,
-	});
-
-	let resolvedCurrentRouteSchemaKey = initURLResult.currentRouteSchemaKey;
-	let resolvedInitURL = initURLResult.mainInitURL;
+	let resolvedCurrentRouteSchemaKey = currentRouteSchemaKey;
+	let resolvedInitURL = mainInitURL;
 	const resolvedOptions = options;
-	const resolvedRequest = Object.assign(request, {
-		headers: getResolvedHeaders({ baseHeaders: baseConfig.headers, headers: config.headers }),
-		method: getMethod({ initURL: resolvedInitURL, method: request.method }),
-	});
+	const resolvedRequest = request;
 
 	const executePluginSetupFn = async (pluginSetup: CallApiPlugin["setup"]) => {
 		if (!pluginSetup) return;

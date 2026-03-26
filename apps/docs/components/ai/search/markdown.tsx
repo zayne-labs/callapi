@@ -22,7 +22,7 @@ export type Processor = {
 	process: (content: string) => Promise<ReactNode>;
 };
 
-function rehypeWrapWords() {
+const rehypeWrapWords = () => {
 	// eslint-disable-next-line unicorn/consistent-function-scoping
 	return (tree: Root) => {
 		visit(tree, ["text", "element"], (node, index, parent) => {
@@ -60,9 +60,9 @@ function rehypeWrapWords() {
 			return "skip";
 		});
 	};
-}
+};
 
-function createProcessor(): Processor {
+const createProcessor = (): Processor => {
 	const processor = remark().use(remarkGfm).use(remarkRehype).use(rehypeWrapWords);
 
 	return {
@@ -83,7 +83,7 @@ function createProcessor(): Processor {
 			}) as React.JSX.Element;
 		},
 	};
-}
+};
 
 function Pre(props: ComponentProps<"pre">) {
 	const { children } = props;
@@ -128,8 +128,12 @@ const cache = new Map<string, Promise<ReactNode>>();
 function Renderer(props: { text: string }) {
 	const { text } = props;
 
-	const result = cache.get(text) ?? processor.process(text);
-	cache.set(text, result);
+	let result = cache.get(text);
+
+	if (!result) {
+		result = processor.process(text);
+		cache.set(text, result);
+	}
 
 	return use(result);
 }

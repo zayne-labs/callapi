@@ -17,16 +17,10 @@ import type {
 	CallApiRequestOptions,
 } from "./types/common";
 import type { DefaultCallApiContext } from "./types/default-types";
-import type {
-	AnyFunction,
-	Awaitable,
-	CommonRequestHeaders,
-	DistributiveOmit,
-	Prettify,
-} from "./types/type-helpers";
+import type { AnyFunction, Awaitable, DistributiveOmit, Prettify } from "./types/type-helpers";
 
 export type CallApiRequestOptionsForHooks = Omit<CallApiRequestOptions, "headers"> & {
-	headers: Record<"Authorization" | "Content-Type" | CommonRequestHeaders, string | undefined>;
+	headers: Headers;
 };
 
 export type CallApiExtraOptionsForHooks<TCallApiContext extends CallApiContext = DefaultCallApiContext> =

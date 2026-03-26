@@ -8,6 +8,7 @@ import type { InferHeadersOption } from "../types/conditional-types";
 import type { DistributiveOmit } from "../types/type-helpers";
 import { extractMethodFromURL } from "../url";
 import type { CallApiSchema } from "../validation";
+import { objectifyHeaders } from "./external";
 import {
 	isArray,
 	isFunction,
@@ -71,18 +72,6 @@ export const splitConfig = (config: Record<string, any>) =>
 		omitKeys(config, fetchSpecificKeys) as CallApiExtraOptions,
 	] as const;
 
-export const objectifyHeaders = (headers: CallApiRequestOptions["headers"]) => {
-	if (!headers) {
-		return {};
-	}
-
-	if (isPlainObject(headers)) {
-		return headers as Record<string, string>;
-	}
-
-	return Object.fromEntries(headers);
-};
-
 export type GetResolvedHeadersOptions = {
 	baseHeaders: CallApiRequestOptions["headers"];
 	headers: InferHeadersOption<CallApiSchema>["headers"];
@@ -96,7 +85,7 @@ export const getResolvedHeaders = (options: GetResolvedHeadersOptions) => {
 			headers({ baseHeaders: objectifyHeaders(baseHeaders) })
 		:	(headers ?? baseHeaders);
 
-	return objectifyHeaders(resolvedHeaders);
+	return new Headers(objectifyHeaders(resolvedHeaders));
 };
 
 const detectContentTypeHeader = (body: CallApiRequestOptions["body"]) => {
@@ -133,10 +122,10 @@ export const getHeaders = async (options: GetHeadersOptions) => {
 		contentTypeHeader && Object.assign(resolvedHeadersObject, contentTypeHeader);
 	}
 
-	const headersObject: Record<string, string> = {
+	const headersObject = new Headers({
 		...authHeaderObject,
 		...resolvedHeadersObject,
-	};
+	});
 
 	return headersObject;
 };

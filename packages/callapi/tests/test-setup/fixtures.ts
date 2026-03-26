@@ -82,7 +82,7 @@ export const mockBaseConfig = defineBaseConfig({
 export const mockPlugin = definePlugin({
 	hooks: {
 		onRequest: (context) => {
-			context.request.headers["X-Test-Plugin"] = "true";
+			context.request.headers.set("X-Test-Plugin", "true");
 		},
 		onResponse: (context) => {
 			// Add a custom meta to track plugin execution instead of mutating context

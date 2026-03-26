@@ -11,6 +11,7 @@ import {
 	createFetchMock,
 	createMockErrorResponse,
 	createMockResponse,
+	getHeadersFromCall,
 	mockFetchError,
 	mockFetchSuccess,
 } from "../test-setup/fetch-mock";
@@ -238,7 +239,7 @@ test("callApi handles response with wrong content-type as HTTPError", async () =
 });
 
 test("callApi provides complete error context to throwOnError function", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchError(mockError, 400);
 
 	const throwOnErrorSpy = vi.fn().mockReturnValue(false);
@@ -254,9 +255,6 @@ test("callApi provides complete error context to throwOnError function", async (
 		expect.objectContaining({
 			config: expect.objectContaining({
 				baseURL: "https://api.example.com",
-				headers: expect.objectContaining({
-					"X-Test": "value",
-				}),
 			}),
 			error: expect.objectContaining({
 				name: "HTTPError",
@@ -267,6 +265,9 @@ test("callApi provides complete error context to throwOnError function", async (
 			response: expect.any(Response),
 		})
 	);
+
+	const headers = getHeadersFromCall(mockFetch);
+	expect(headers.get("X-Test")).toBe("value");
 });
 
 test("callApi handles errors with custom error messages correctly", async () => {

@@ -13,8 +13,6 @@ import {
 } from "../test-setup/fetch-mock";
 import { mockUser } from "../test-setup/fixtures";
 
-// --- Dedupe Keys ---
-
 test("Dedupe Keys - uses custom string dedupe key to deduplicate different endpoints", async () => {
 	using _ignoredMockFetch = createFetchMock();
 	const client = createFetchClient({
@@ -174,8 +172,6 @@ test("Dedupe Scopes - isolates deduplication between different global cache scop
 	expect(result2.data).toBeDefined();
 	expect(getFetchCallCount()).toBe(2);
 });
-
-// --- Dedupe Strategies ---
 
 test("Dedupe Strategies - cancel strategy aborts previous duplicate requests", async () => {
 	using _ignoredMockFetch = createFetchMock();
