@@ -14,8 +14,6 @@ import { packageName, packageScope, repoName, repoOwner } from "./github";
 
 /**
  * Shared layout configurations
- *
-
  */
 
 export const baseOptions = () => {
@@ -25,7 +23,7 @@ export const baseOptions = () => {
 				<>
 					<Image
 						alt="CallApi"
-						src={logo as unknown as string}
+						src={logo}
 						width={18}
 						height={18}
 						className="size-4.5 rounded-[5px]"
