@@ -1,5 +1,13 @@
 # @zayne-labs/callapi
 
+## 1.12.1
+
+### Patch Changes
+
+- de4a259: refactor: make headers to be a headers object when passed to hooks
+
+   refactor: export objectifyHeaders util from callapi
+
 ## 1.12.0
 
 ### Minor Changes
