@@ -5,11 +5,11 @@ import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 import { TagIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import logoImage from "public/logo.png";
 import { z } from "zod";
 import { IconBox } from "@/components/common";
 import { Button } from "@/components/ui/button";
 import { source } from "@/lib/source";
+import logo from "@/public/logo.png";
 import { packageName, packageScope, repoName, repoOwner } from "./github";
 
 /**
@@ -26,7 +26,7 @@ export const baseOptions = () => {
 				<>
 					<Image
 						alt="CallApi"
-						src={logoImage as unknown as string}
+						src={logo as unknown as string}
 						width={18}
 						height={18}
 						className="rounded-[5px]"
@@ -77,7 +77,7 @@ export const docsOptions = () => {
 				<>
 					<Image
 						alt="CallApi"
-						src={logoImage as unknown as string}
+						src={logo as unknown as string}
 						width={18}
 						height={18}
 						className="rounded-[5px]"
