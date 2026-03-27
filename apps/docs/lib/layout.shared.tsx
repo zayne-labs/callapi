@@ -20,7 +20,6 @@ import { packageName, packageScope, repoName, repoOwner } from "./github";
 
 export const baseOptions = () => {
 	return {
-		githubUrl: `https://github.com/${repoOwner}/${repoName}`,
 		nav: {
 			title: (
 				<>
@@ -51,6 +50,8 @@ export const docsOptions = () => {
 	const descriptionPromise = npmDataPromise.then((result) => `v${result.data?.version ?? "*.*.*"}`);
 
 	return {
+		...baseOptions(),
+
 		links: [
 			{
 				children: (
@@ -71,24 +72,6 @@ export const docsOptions = () => {
 				type: "custom",
 			},
 		],
-
-		nav: {
-			title: (
-				<>
-					<Image
-						alt="CallApi"
-						src={logo as unknown as string}
-						width={18}
-						height={18}
-						className="rounded-[5px]"
-						aria-label="CallApi"
-					/>
-					<p className="font-medium in-[header]:text-[15px]">CallApi</p>
-				</>
-			),
-
-			transparentMode: "top",
-		},
 
 		sidebar: {
 			tabs: [
