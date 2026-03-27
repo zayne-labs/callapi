@@ -1,9 +1,21 @@
 import { expect, test } from "vitest";
 import { callApi } from "../../src/createFetchClient";
+import type { StreamProgressEvent } from "../../src/stream";
 import { createCallTracker } from "../test-setup/common";
 import { createFetchMock } from "../test-setup/fetch-mock";
 
-// --- Response Streaming ---
+async function consumeStreamBody(body: unknown): Promise<void> {
+	if (!body || typeof body !== "object") return;
+
+	if (!("getReader" in body)) return;
+
+	const reader = (body as ReadableStream).getReader();
+	let done = false;
+	while (!done) {
+		const result = await reader.read();
+		done = result.done;
+	}
+}
 
 test("onResponseStream - tracks download progress from ReadableStream response", async () => {
 	using mockFetch = createFetchMock();
@@ -34,7 +46,8 @@ test("onResponseStream - tracks download progress from ReadableStream response",
 	expect(tracker.getCallCount()).toBeGreaterThanOrEqual(2);
 
 	const lastCall = tracker.getLastCall();
-	const lastEvent = lastCall?.args[1] as any;
+	// --- Response Streaming ---
+	const lastEvent = lastCall?.args[1] as StreamProgressEvent;
 
 	expect(lastEvent.transferredBytes).toBe(10);
 	expect(lastEvent.totalBytes).toBe(10);
@@ -63,7 +76,7 @@ test("onResponseStream - handles response without Content-Length", async () => {
 	});
 
 	expect(tracker.getCallCount()).toBeGreaterThan(0);
-	const lastEvent = tracker.getLastCall()?.args[1] as any;
+	const lastEvent = tracker.getLastCall()?.args[1] as StreamProgressEvent;
 
 	// Total bytes updates to match transferred bytes if unknown content-length
 	// The implementation performs: totalBytes = Math.max(totalBytes, transferredBytes)
@@ -75,16 +88,9 @@ test("onRequestStream - tracks upload progress for ReadableStream body", async (
 	using mockFetch = createFetchMock();
 
 	// Mock fetch to consume the request body stream to trigger progress events
-	mockFetch.mockImplementation(async (url, options) => {
+	mockFetch.mockImplementation(async (_url, options) => {
 		const init = options as RequestInit;
-		// Check if body is a readable stream and consume it
-		if (init?.body && typeof (init.body as any).getReader === "function") {
-			const reader = (init.body as ReadableStream).getReader();
-			while (true) {
-				const { done } = await reader.read();
-				if (done) break;
-			}
-		}
+		await consumeStreamBody(init.body);
 		return new Response("ok");
 	});
 
@@ -110,7 +116,8 @@ test("onRequestStream - tracks upload progress for ReadableStream body", async (
 
 	expect(tracker.getCallCount()).toBeGreaterThanOrEqual(2);
 
-	const lastEvent = tracker.getLastCall()?.args[1] as any;
+	const lastCall = tracker.getLastCall();
+	const lastEvent = lastCall?.args[1] as StreamProgressEvent;
 
 	expect(lastEvent.transferredBytes).toBe(12);
 	expect(lastEvent.totalBytes).toBe(12);
@@ -137,15 +144,9 @@ test("onRequestStream - ignores non-stream bodies", async () => {
 test("onRequestStream - handles upload without Content-Length (unknown size)", async () => {
 	using mockFetch = createFetchMock();
 
-	mockFetch.mockImplementation(async (url, options) => {
+	mockFetch.mockImplementation(async (_url, options) => {
 		const init = options as RequestInit;
-		if (init?.body && typeof (init.body as any).getReader === "function") {
-			const reader = (init.body as ReadableStream).getReader();
-			while (true) {
-				const { done } = await reader.read();
-				if (done) break;
-			}
-		}
+		await consumeStreamBody(init.body);
 		return new Response("ok");
 	});
 
@@ -167,7 +168,8 @@ test("onRequestStream - handles upload without Content-Length (unknown size)", a
 		},
 	});
 
-	const lastEvent = tracker.getLastCall()?.args[1] as any;
+	const lastCall = tracker.getLastCall();
+	const lastEvent = lastCall?.args[1] as StreamProgressEvent;
 	expect(lastEvent.transferredBytes).toBe(6);
 	// When size is unknown, it updates total to match transferred
 	expect(lastEvent.totalBytes).toBe(6);
@@ -176,18 +178,12 @@ test("onRequestStream - handles upload without Content-Length (unknown size)", a
 test("onRequestStream - propagates stream errors", async () => {
 	using mockFetch = createFetchMock();
 
-	mockFetch.mockImplementation(async (url, options) => {
+	mockFetch.mockImplementation(async (_url, options) => {
 		const init = options as RequestInit;
-		if (init?.body && typeof (init.body as any).getReader === "function") {
-			const reader = (init.body as ReadableStream).getReader();
-			try {
-				while (true) {
-					const { done } = await reader.read();
-					if (done) break;
-				}
-			} catch (e) {
-				// Expected error during consumption
-			}
+		try {
+			await consumeStreamBody(init.body);
+		} catch {
+			// Expected error during consumption
 		}
 		return new Response("ok");
 	});
@@ -209,7 +205,8 @@ test("onRequestStream - propagates stream errors", async () => {
 				tracker.track("upload", context.event);
 			},
 		})
-	).resolves.toBeDefined(); // The error happens in the background stream reading inside fetch for many implementations, or throws.
+	).resolves.toBeDefined();
+	// The error happens in the background stream reading inside fetch for many implementations, or throws.
 	// However, since we mock fetch and consume it, if the stream errors during read(), our mock catches it or it bubbles.
 	// In `toStreamableRequest`, we return a NEW Request with a transparent stream.
 	// If the source stream errors, the destination stream (consumed by fetch) should error.

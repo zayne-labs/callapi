@@ -5,7 +5,7 @@
  * Following flat test structure - each test is self-contained with inline setup.
  */
 
-import { expect, test, vi } from "vitest";
+import { expect, test } from "vitest";
 import { callApi } from "../../src/createFetchClient";
 import { expectSuccessResult } from "../test-setup/assertions";
 import { createFetchMock, createMockResponse, mockFetchSuccess } from "../test-setup/fetch-mock";
@@ -108,7 +108,7 @@ test("should handle custom response parser", async () => {
 
 	expectSuccessResult(result);
 	// Check if the response parser was applied
-	if (typeof result.data === "object" && result.data !== null && "parsedXML" in result.data) {
+	if (typeof result.data === "object" && "parsedXML" in result.data) {
 		expect(result.data).toEqual({ parsedXML: "<user><name>John</name></user>" });
 	} else {
 		// If parser wasn't applied, at least check we got the text
@@ -138,7 +138,8 @@ test("should handle custom response parser with complex transformation", async (
 				const values = line.split(",");
 				return headers?.reduce(
 					(obj, header, index) => {
-						obj[header] = values[index]!;
+						// eslint-disable-next-line no-param-reassign -- Ignore
+						obj[header] = values[index] as string;
 						return obj;
 					},
 					{} as Record<string, string>
@@ -185,13 +186,11 @@ test("should handle custom body serializer with XML format", async () => {
 
 	mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }, 201));
 
-	const userData = { name: "John", email: "john@example.com" };
-
 	await callApi("https://api.example.com/users", {
-		body: userData,
-		bodySerializer: (body: any) => `<user><name>${body.name}</name><email>${body.email}</email></user>`,
 		method: "POST",
-		// Don't set Content-Type header so bodySerializer is used
+		body: { name: "John", email: "john@example.com" },
+		bodySerializer: (body) =>
+			`<user><name>${body.name as string}</name><email>${body.email as string}</email></user>`,
 	});
 
 	expect(mockFetch).toHaveBeenCalledWith(
@@ -269,7 +268,7 @@ test("should handle response with no content (204)", async () => {
 });
 
 test("should handle response with empty JSON object", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess({});
 
 	const result = await callApi("https://api.example.com/empty");
@@ -279,7 +278,7 @@ test("should handle response with empty JSON object", async () => {
 });
 
 test("should handle response with null JSON value", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(null);
 
 	const result = await callApi("https://api.example.com/null");
@@ -289,7 +288,7 @@ test("should handle response with null JSON value", async () => {
 });
 
 test("should handle response with boolean JSON value", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(true);
 
 	const result = await callApi("https://api.example.com/boolean");
@@ -299,7 +298,7 @@ test("should handle response with boolean JSON value", async () => {
 });
 
 test("should handle response with number JSON value", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(42);
 
 	const result = await callApi("https://api.example.com/number");
@@ -309,7 +308,7 @@ test("should handle response with number JSON value", async () => {
 });
 
 test("should handle response with string JSON value", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess("hello world");
 
 	const result = await callApi("https://api.example.com/string");
@@ -319,7 +318,7 @@ test("should handle response with string JSON value", async () => {
 });
 
 test("should handle response with array JSON value", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const arrayData = [1, 2, 3, "test"];
 	mockFetchSuccess(arrayData);
 
@@ -330,7 +329,7 @@ test("should handle response with array JSON value", async () => {
 });
 
 test("should preserve response headers in result", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 
 	const customHeaders = {
 		"X-Custom-Header": "custom-value",
@@ -346,7 +345,7 @@ test("should preserve response headers in result", async () => {
 });
 
 test("should handle response with custom status code", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser, 201);
 
 	const result = await callApi("https://api.example.com/users", {

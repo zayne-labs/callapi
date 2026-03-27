@@ -13,7 +13,7 @@ beforeEach(() => {
 	// These warnings are expected when testing relative URLs without baseURL
 	const originalConsoleError = console.error;
 
-	console.error = (...args) => {
+	console.error = (...args: unknown[]) => {
 		const message = args[0];
 		if (typeof message === "string" && message.includes("Invalid URL")) return;
 

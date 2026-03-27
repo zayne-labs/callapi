@@ -2,7 +2,7 @@ import { GLOB_MARKDOWN_CODE, zayne } from "@zayne-labs/eslint-config";
 
 export default zayne(
 	{
-		ignores: ["packages/**/dist/**", "apps/docs/.source/**", "packages/callapi/tests/**"],
+		ignores: ["packages/**/dist/**", "apps/docs/.source/**"],
 		react: {
 			nextjs: {
 				overrides: { "nextjs/no-html-link-for-pages": ["error", "apps/docs"] },
@@ -39,6 +39,18 @@ export default zayne(
 		files: ["packages/callapi/src/createFetchClient.ts"],
 		rules: {
 			complexity: ["warn", { max: 70 }],
+		},
+	},
+	{
+		files: ["packages/callapi/tests/**"],
+		rules: {
+			"no-await-in-loop": "off",
+			"perfectionist/sort-objects": "off",
+			"ts-eslint/no-unsafe-assignment": "off",
+			"ts-eslint/no-unsafe-member-access": "off",
+			"ts-eslint/no-unsafe-return": "off",
+			"unicorn/consistent-function-scoping": "off",
+			"unicorn/no-useless-undefined": "off",
 		},
 	}
 );

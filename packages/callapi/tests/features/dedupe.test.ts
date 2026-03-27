@@ -5,6 +5,7 @@
 
 import { expect, test } from "vitest";
 import { createFetchClient } from "../../src";
+import { waitUntil } from "../../src/utils/common";
 import {
 	createFetchMock,
 	getFetchCallCount,
@@ -14,7 +15,7 @@ import {
 import { mockUser } from "../test-setup/fixtures";
 
 test("Dedupe Keys - uses custom string dedupe key to deduplicate different endpoints", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const client = createFetchClient({
 		baseURL: "https://api.example.com",
 		dedupeKey: "shared-key",
@@ -36,7 +37,7 @@ test("Dedupe Keys - uses custom string dedupe key to deduplicate different endpo
 });
 
 test("Dedupe Keys - uses custom function dedupe key for granular control", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const client = createFetchClient({
 		baseURL: "https://api.example.com",
 		dedupeKey: (context) => {
@@ -58,7 +59,7 @@ test("Dedupe Keys - uses custom function dedupe key for granular control", async
 });
 
 test("Dedupe Keys - handles empty string dedupe key correctly", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const client = createFetchClient({
 		baseURL: "https://api.example.com",
 		dedupeKey: () => "",
@@ -78,7 +79,7 @@ test("Dedupe Keys - handles empty string dedupe key correctly", async () => {
 });
 
 test("Dedupe Keys - disables deduplication when dedupe key function returns null", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const client = createFetchClient({
 		baseURL: "https://api.example.com",
 		dedupeKey: () => null as never,
@@ -98,7 +99,7 @@ test("Dedupe Keys - disables deduplication when dedupe key function returns null
 // --- Dedupe Scopes ---
 
 test("Dedupe Scopes - isolates deduplication between different clients with local cache scope", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const client1 = createFetchClient({
 		baseURL: "https://api.example.com",
 		dedupeCacheScope: "local",
@@ -122,7 +123,7 @@ test("Dedupe Scopes - isolates deduplication between different clients with loca
 });
 
 test("Dedupe Scopes - shares deduplication between clients with same global cache scope key", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const client1 = createFetchClient({
 		baseURL: "https://api.example.com",
 		dedupeCacheScope: "global",
@@ -148,7 +149,7 @@ test("Dedupe Scopes - shares deduplication between clients with same global cach
 });
 
 test("Dedupe Scopes - isolates deduplication between different global cache scope keys", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const client1 = createFetchClient({
 		baseURL: "https://api.example.com",
 		dedupeCacheScope: "global",
@@ -174,14 +175,26 @@ test("Dedupe Scopes - isolates deduplication between different global cache scop
 });
 
 test("Dedupe Strategies - cancel strategy aborts previous duplicate requests", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
+
+	// Mock fetch to respect abort signals
+	mockFetch.mockImplementation(async (_url, init: RequestInit) => {
+		// Simulate async operation to allow abort to happen
+		await waitUntil(0.01);
+
+		// Check if aborted during the async operation
+		if (init.signal?.aborted) {
+			throw new DOMException("The operation was aborted", "AbortError");
+		}
+
+		return Response.json(mockUser, { status: 200 });
+	});
+
 	const client = createFetchClient({
 		baseURL: "https://api.example.com",
 		dedupeStrategy: "cancel",
+		throwOnError: true, // Make abort errors throw so they can be caught by Promise.allSettled
 	});
-
-	mockFetchSuccess(mockUser);
-	mockFetchSuccess(mockUser);
 
 	const firstRequestPromise = client("/users/1");
 	const secondRequestPromise = client("/users/1");
@@ -189,11 +202,22 @@ test("Dedupe Strategies - cancel strategy aborts previous duplicate requests", a
 	const results = await Promise.allSettled([firstRequestPromise, secondRequestPromise]);
 
 	expect(results).toHaveLength(2);
-	expect(results.every((r) => r.status === "fulfilled" || r.status === "rejected")).toBe(true);
+
+	// First request should be rejected with AbortError
+	expect(results[0].status).toBe("rejected");
+
+	if (results[0].status === "rejected") {
+		expect(results[0].reason).toBeInstanceOf(DOMException);
+		expect(results[0].reason.name).toBe("AbortError");
+		expect(results[0].reason.message).toContain("aborted");
+	}
+
+	// Second request should succeed
+	expect(results[1].status).toBe("fulfilled");
 });
 
 test("Dedupe Strategies - defer strategy shares response between duplicate requests", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const client = createFetchClient({
 		baseURL: "https://api.example.com",
 		dedupeStrategy: "defer",
@@ -218,7 +242,7 @@ test("Dedupe Strategies - defer strategy shares response between duplicate reque
 });
 
 test("Dedupe Strategies - none strategy allows duplicate requests to execute independently", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const client = createFetchClient({
 		baseURL: "https://api.example.com",
 		dedupeStrategy: "none",
@@ -235,7 +259,7 @@ test("Dedupe Strategies - none strategy allows duplicate requests to execute ind
 });
 
 test("Dedupe Strategies - defer strategy shares error responses between requests", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const client = createFetchClient({
 		baseURL: "https://api.example.com",
 		dedupeStrategy: "defer",
@@ -255,7 +279,7 @@ test("Dedupe Strategies - defer strategy shares error responses between requests
 });
 
 test("Dedupe Strategies - supports dynamic function-based strategy selection", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const client = createFetchClient({
 		baseURL: "https://api.example.com",
 		dedupeStrategy: (context) => {

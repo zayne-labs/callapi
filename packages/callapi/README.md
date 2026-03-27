@@ -115,7 +115,7 @@ Hook into CallApi's lifecycle at any point.
 ```js
 const api = createFetchClient({
 	onRequest: ({ request }) => {
-		request.headers.set("Authorization", `Bearer ${token}`);
+		 request.headers.Authorization = `Bearer ${token}`;
 	},
 	onError: ({ error }) => {
 		Sentry.captureException(error);

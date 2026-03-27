@@ -16,10 +16,8 @@ import {
 } from "../test-setup/fetch-mock";
 import { mockUser } from "../test-setup/fixtures";
 
-// --- Plugin Composition ---
-
 test("Plugin Composition - composes multiple plugins with different hook types correctly", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 	const hookTracker: Record<string, string[]> = {
 		onRequest: [],
@@ -29,13 +27,13 @@ test("Plugin Composition - composes multiple plugins with different hook types c
 	const requestPlugin: CallApiPlugin = {
 		id: "request-plugin",
 		name: "Request Plugin",
-		hooks: { onRequest: () => hookTracker.onRequest!.push("request-plugin") },
+		hooks: { onRequest: () => hookTracker.onRequest?.push("request-plugin") },
 	};
 
 	const responsePlugin: CallApiPlugin = {
 		id: "response-plugin",
 		name: "Response Plugin",
-		hooks: { onResponse: () => hookTracker.onResponse!.push("response-plugin") },
+		hooks: { onResponse: () => hookTracker.onResponse?.push("response-plugin") },
 	};
 
 	const client = createFetchClient({
@@ -50,7 +48,7 @@ test("Plugin Composition - composes multiple plugins with different hook types c
 });
 
 test("Plugin Composition - supports plugins config as a function for dynamic modification", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 	const order: string[] = [];
 
@@ -78,10 +76,8 @@ test("Plugin Composition - supports plugins config as a function for dynamic mod
 	expect(order).toEqual(["base", "extra"]);
 });
 
-// --- Plugin Hooks ---
-
 test("Plugin Hooks - plugin registers and executes hooks correctly", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 	const hookSpy = vi.fn();
 
@@ -107,7 +103,7 @@ test("Plugin Hooks - plugin registers and executes hooks correctly", async () =>
 });
 
 test("Plugin Hooks - handles plugin hooks that throw errors", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	const throwingHookPlugin: CallApiPlugin = {
@@ -131,7 +127,7 @@ test("Plugin Hooks - handles plugin hooks that throw errors", async () => {
 });
 
 test("Plugin Hooks - executes plugin hooks before main hooks in sequential mode", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 	const order: string[] = [];
 
@@ -152,10 +148,8 @@ test("Plugin Hooks - executes plugin hooks before main hooks in sequential mode"
 	expect(order).toEqual(["plugin", "main"]);
 });
 
-// --- Plugin Initialization ---
-
 test("Plugin Initialization - plugin setup function is called during initialization", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 	const setupSpy = vi.fn();
 
@@ -181,7 +175,7 @@ test("Plugin Initialization - plugin setup function is called during initializat
 });
 
 test("Plugin Initialization - async plugin setup function is handled correctly", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	const asyncSetupPlugin: CallApiPlugin = {
@@ -228,10 +222,8 @@ test("Plugin Initialization - gracefully handles errors in plugin setup", async 
 	expect(mockFetch).not.toHaveBeenCalled();
 });
 
-// --- Plugin Middleware ---
-
 test("Plugin Middleware - multiple plugin middlewares execute in reverse order", async () => {
-	using mockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 	const executionOrder: string[] = [];
 
@@ -278,9 +270,7 @@ test("Plugin Middleware - plugin middleware can short-circuit a request", async 
 		id: "short-circuit-plugin",
 		name: "Short Circuit Plugin",
 		middlewares: {
-			fetchMiddleware: () => async () => {
-				return createMockResponse({ cached: true });
-			},
+			fetchMiddleware: () => () => createMockResponse({ cached: true }),
 		},
 	};
 
@@ -305,18 +295,19 @@ test("Plugin Middleware - plugin middleware can modify request and response", as
 		name: "Transform Plugin",
 		middlewares: {
 			fetchMiddleware: (ctx) => async (input, init) => {
-				const modifiedInit = {
+				const response = await ctx.fetchImpl(input, {
 					...init,
-					headers: new Headers({ ...objectifyHeaders(init?.headers), "X-Modified": "true" }),
-				};
-
-				const response = await ctx.fetchImpl(input, modifiedInit);
+					headers: { ...objectifyHeaders(init?.headers), "X-Modified": "true" },
+				});
 				const data = (await response.json()) as Record<string, unknown>;
 
-				return new Response(JSON.stringify({ ...data, transformed: true }), {
-					status: response.status,
-					headers: response.headers,
-				});
+				return Response.json(
+					{ ...data, transformed: true },
+					{
+						status: response.status,
+						headers: response.headers,
+					}
+				);
 			},
 		},
 	};
@@ -332,11 +323,11 @@ test("Plugin Middleware - plugin middleware can modify request and response", as
 	expect(result.data).toMatchObject({ ...mockUser, transformed: true });
 
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("X-Modified")).toBe("true");
+	expect(headers).toEqual(expect.objectContaining({ "X-Modified": "true" }));
 });
 
 test("Plugin Middleware - composes plugin middleware with base and instance middleware in correct order", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 	const executionOrder: string[] = [];
 

@@ -1,3 +1,6 @@
+// Do this so tsdown can easily bundle //FIXME Should remove when no longer a problem
+// eslint-disable-next-line unicorn/require-module-specifiers -- Ignore
+import type {} from "@zayne-labs/callapi";
 import { definePlugin } from "@zayne-labs/callapi/utils";
 import { isBoolean, type AnyFunction } from "@zayne-labs/toolkit-type-helpers";
 import { createConsola } from "consola";

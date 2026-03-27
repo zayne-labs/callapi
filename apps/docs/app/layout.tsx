@@ -19,6 +19,7 @@ const geistMono = Geist_Mono({
 function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<html
+			data-scroll-behavior="smooth"
 			lang="en"
 			className={cnJoin(geistSans.variable, geistMono.variable)}
 			suppressHydrationWarning={true}

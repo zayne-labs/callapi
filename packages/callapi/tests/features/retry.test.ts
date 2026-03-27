@@ -12,10 +12,8 @@ import {
 	resetFetchMock,
 } from "../test-setup/fetch-mock";
 
-// --- Retry Conditions ---
-
 test("Retry Conditions - uses custom retry condition correctly", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
 	const retryCondition = vi.fn().mockResolvedValue(true);
@@ -51,7 +49,7 @@ test("Retry Conditions - uses custom retry condition correctly", async () => {
 });
 
 test("Retry Conditions - handles async retry conditions correctly", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
 	const retryCondition = vi.fn().mockImplementation(async () => {
@@ -81,7 +79,7 @@ test("Retry Conditions - handles async retry conditions correctly", async () => 
 });
 
 test("Retry Conditions - handles retry condition returning false", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
 	const retryCondition = vi.fn().mockResolvedValue(false);
@@ -106,7 +104,7 @@ test("Retry Conditions - handles retry condition returning false", async () => {
 });
 
 test("Retry Conditions - tracks retry attempt count accurately in condition context", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
 	const retryCondition = vi.fn().mockResolvedValue(true);
@@ -131,12 +129,10 @@ test("Retry Conditions - tracks retry attempt count accurately in condition cont
 	expect(retryCondition).toHaveBeenCalledTimes(3);
 	const calls = retryCondition.mock.calls;
 	expect(calls).toHaveLength(3);
-	// eslint-disable-next-line ts-eslint/no-deprecated
-	expect(calls[0]![0].options["~retryAttemptCount"] ?? 1).toBe(1);
-	// eslint-disable-next-line ts-eslint/no-deprecated
-	expect(calls[1]![0].options["~retryAttemptCount"]).toBe(2);
-	// eslint-disable-next-line ts-eslint/no-deprecated
-	expect(calls[2]![0].options["~retryAttemptCount"]).toBe(3);
+
+	expect(calls[0]?.[0].options["~retryAttemptCount"] ?? 1).toBe(1);
+	expect(calls[1]?.[0].options["~retryAttemptCount"]).toBe(2);
+	expect(calls[2]?.[0].options["~retryAttemptCount"]).toBe(3);
 
 	vi.useRealTimers();
 });
@@ -144,7 +140,7 @@ test("Retry Conditions - tracks retry attempt count accurately in condition cont
 // --- Retry Filtering ---
 
 test("Retry Filtering - retries on specified status codes", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
 	const statusCodes = [500, 502, 503, 504];
@@ -172,7 +168,7 @@ test("Retry Filtering - retries on specified status codes", async () => {
 });
 
 test("Retry Filtering - retries on any error status when retryStatusCodes is empty", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
 	const client = createFetchClient({
@@ -196,7 +192,7 @@ test("Retry Filtering - retries on any error status when retryStatusCodes is emp
 });
 
 test("Retry Filtering - respects allowed retry methods", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
 	const client = createFetchClient({
@@ -248,7 +244,7 @@ test("Retry Filtering - handles network errors with retries", async () => {
 });
 
 test("Retry Filtering - respects maximum retry attempt limit", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
 	const client = createFetchClient({
@@ -275,7 +271,7 @@ test("Retry Filtering - respects maximum retry attempt limit", async () => {
 // --- Retry Strategies ---
 
 test("Retry Strategies - linear retry strategy retries with fixed delays", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
 	const client = createFetchClient({
@@ -306,7 +302,7 @@ test("Retry Strategies - linear retry strategy retries with fixed delays", async
 });
 
 test("Retry Strategies - linear retry strategy uses custom delay function correctly", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
 	const delayFn = vi.fn((attemptCount: number) => attemptCount * 500);
@@ -336,7 +332,7 @@ test("Retry Strategies - linear retry strategy uses custom delay function correc
 });
 
 test("Retry Strategies - exponential retry strategy retries with backoff", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
 	const client = createFetchClient({
@@ -367,7 +363,7 @@ test("Retry Strategies - exponential retry strategy retries with backoff", async
 });
 
 test("Retry Strategies - exponential retry strategy respects maximum delay limit", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
 	const client = createFetchClient({

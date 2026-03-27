@@ -146,10 +146,11 @@ const api = createFetchClient({
 	baseURL: "https://api.example.com",
 
 	// Request hook
-	onRequest: ({ request }) => {
+	onRequest: ({ request, options }) => {
 		const token = localStorage.getItem("token");
+
 		if (token) {
-			request.headers.set("Authorization", `Bearer ${token}`);
+			options.auth = token; // Or request.headers["Authorization"] = `Bearer ${token}`;
 		}
 	},
 
@@ -425,8 +426,8 @@ const api = ky.create({
 import { createFetchClient } from "@zayne-labs/callapi";
 
 const api = createFetchClient({
-	onRequest: ({ request }) => {
-		request.headers.set("Authorization", `Bearer ${token}`);
+	onRequest: ({ request, options }) => {
+		options.auth = token; // Or request.headers["Authorization"] = `Bearer ${token}`;
 	},
 	onSuccess: ({ response }) => {
 		console.log("Response:", response.status);
@@ -598,8 +599,8 @@ import { createFetchClient } from "@zayne-labs/callapi";
 const api = createFetchClient({
 	baseURL: "https://api.example.com",
 
-	onRequest: ({ request }) => {
-		request.headers.set("Authorization", `Bearer ${token}`);
+	onRequest: ({ request, options }) => {
+		options.auth = token; // Or request.headers["Authorization"] = `Bearer ${token}`;
 	},
 
 	onSuccess: ({ response }) => {

@@ -4,16 +4,9 @@
  */
 
 /**
- * Helper to wait for a specified time (useful for testing delays)
+ * @description Helper to create a promise that can be resolved/rejected externally
  */
-export function delay(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Helper to create a promise that can be resolved/rejected externally
- */
-export function createDeferredPromise<T>() {
+export const createDeferredPromise = <T>() => {
 	let resolve!: (value: T) => void;
 	let reject!: (reason?: unknown) => void;
 
@@ -23,12 +16,12 @@ export function createDeferredPromise<T>() {
 	});
 
 	return { promise, reject, resolve };
-}
+};
 
 /**
- * Helper to track function calls with timestamps
+ * @description Helper to track function calls with timestamps
  */
-export function createCallTracker() {
+export const createCallTracker = () => {
 	const calls: Array<{ args: unknown[]; timestamp: number }> = [];
 
 	const track = (...args: unknown[]) => {
@@ -41,20 +34,20 @@ export function createCallTracker() {
 	const reset = () => (calls.length = 0);
 
 	return { getCallCount, getCalls, getLastCall, reset, track };
-}
+};
 
 /**
- * Helper to mock network errors
+ * @description Helper to mock network errors
  */
-export function mockNetworkError(message = "Network error"): Error {
+export const mockNetworkError = (message = "Network error"): Error => {
 	return new Error(message);
-}
+};
 
 /**
- * Helper to mock timeout errors
+ *@description  Helper to mock timeout errors
  */
-export function mockTimeoutError(): Error {
+export const mockTimeoutError = (): Error => {
 	const error = new Error("The operation was aborted");
 	error.name = "AbortError";
 	return error;
-}
+};

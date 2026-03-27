@@ -4,9 +4,11 @@
  */
 
 import { expect, test } from "vitest";
+import type { RequestContext } from "../../src";
 import { callApi, createFetchClient } from "../../src/createFetchClient";
 import type { CallApiPlugin } from "../../src/plugins";
-import { createCallTracker, delay, mockNetworkError } from "../test-setup/common";
+import { waitUntil } from "../../src/utils/common";
+import { createCallTracker, mockNetworkError } from "../test-setup/common";
 import {
 	createFetchMock,
 	createMockErrorResponse,
@@ -16,7 +18,7 @@ import {
 } from "../test-setup/fetch-mock";
 
 test("Hook Composition - multiple hooks of the same type compose in sequential mode", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess({ success: true });
 
 	const executionOrder: string[] = [];
@@ -34,7 +36,7 @@ test("Hook Composition - multiple hooks of the same type compose in sequential m
 });
 
 test("Hook Composition - hooks from plugins and main hooks compose together", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess({ success: true });
 
 	const executionOrder: string[] = [];
@@ -71,7 +73,7 @@ test("Hook Composition - hooks from plugins and main hooks compose together", as
 });
 
 test("Hook Composition - hooks execute in correct lifecycle order for successful requests", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess({ success: true });
 
 	const executionOrder: string[] = [];
@@ -90,7 +92,7 @@ test("Hook Composition - hooks execute in correct lifecycle order for successful
 });
 
 test("Hook Composition - hooks execute in correct lifecycle order for error requests", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchError({ error: "Not found" }, 404);
 
 	const executionOrder: string[] = [];
@@ -111,7 +113,7 @@ test("Hook Composition - hooks execute in correct lifecycle order for error requ
 });
 
 test("Hook Composition - nested hook arrays are flattened correctly", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess({ success: true });
 
 	const executionOrder: string[] = [];
@@ -129,26 +131,26 @@ test("Hook Composition - nested hook arrays are flattened correctly", async () =
 });
 
 test("Hook Composition - hooks can modify request context", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess({ success: true });
 
-	let capturedContext: any;
+	let capturedContext: RequestContext | undefined;
 
 	await callApi("/test", {
 		onRequest: (context) => {
 			capturedContext = context;
-			context.request.headers.set("X-Modified", "true");
-			context.request.headers.set("X-Hook-Added", "hook-value");
+			context.request.headers["X-Modified"] = "true";
+			context.request.headers["X-Hook-Added"] = "hook-value";
 		},
 	});
 
 	expect(capturedContext).toBeDefined();
-	expect(capturedContext.request).toBeDefined();
-	expect(capturedContext.request.headers).toBeDefined();
+	expect(capturedContext?.request).toBeDefined();
+	expect(capturedContext?.request.headers).toBeDefined();
 });
 
 test("Execution Modes - hooks execute in parallel mode by default", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess({ success: true });
 
 	const tracker = createCallTracker();
@@ -158,15 +160,15 @@ test("Execution Modes - hooks execute in parallel mode by default", async () => 
 		hooksExecutionMode: "parallel",
 		onRequest: [
 			async () => {
-				await delay(50);
+				await waitUntil(50);
 				tracker.track("hook1", Date.now() - startTime);
 			},
 			async () => {
-				await delay(50);
+				await waitUntil(50);
 				tracker.track("hook2", Date.now() - startTime);
 			},
 			async () => {
-				await delay(50);
+				await waitUntil(50);
 				tracker.track("hook3", Date.now() - startTime);
 			},
 		],
@@ -181,7 +183,7 @@ test("Execution Modes - hooks execute in parallel mode by default", async () => 
 });
 
 test("Execution Modes - hooks execute in sequential mode one after another", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess({ success: true });
 
 	const tracker = createCallTracker();
@@ -191,15 +193,15 @@ test("Execution Modes - hooks execute in sequential mode one after another", asy
 		hooksExecutionMode: "sequential",
 		onRequest: [
 			async () => {
-				await delay(50);
+				await waitUntil(50);
 				tracker.track("hook1", Date.now() - startTime);
 			},
 			async () => {
-				await delay(50);
+				await waitUntil(50);
 				tracker.track("hook2", Date.now() - startTime);
 			},
 			async () => {
-				await delay(50);
+				await waitUntil(50);
 				tracker.track("hook3", Date.now() - startTime);
 			},
 		],
@@ -209,15 +211,15 @@ test("Execution Modes - hooks execute in sequential mode one after another", asy
 	const calls = tracker.getCalls();
 
 	const timestamps = calls.map((call) => call.args[1] as number);
-	expect(timestamps[0]).toBeLessThan(timestamps[1]!);
-	expect(timestamps[1]).toBeLessThan(timestamps[2]!);
+	expect(timestamps[0]).toBeLessThan(timestamps[1] as number);
+	expect(timestamps[1]).toBeLessThan(timestamps[2] as number);
 
-	const totalTime = timestamps[2]! - timestamps[0]!;
+	const totalTime = (timestamps[2] as number) - (timestamps[0] as number);
 	expect(totalTime).toBeGreaterThanOrEqual(90);
 });
 
 test("Execution Modes - async hooks execute in parallel mode with fastest finishing first", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess({ success: true });
 
 	const results: string[] = [];
@@ -226,15 +228,15 @@ test("Execution Modes - async hooks execute in parallel mode with fastest finish
 		hooksExecutionMode: "parallel",
 		onRequest: [
 			async () => {
-				await delay(30);
+				await waitUntil(30);
 				results.push("async1");
 			},
 			async () => {
-				await delay(20);
+				await waitUntil(20);
 				results.push("async2");
 			},
 			async () => {
-				await delay(10);
+				await waitUntil(10);
 				results.push("async3");
 			},
 		],
@@ -245,12 +247,12 @@ test("Execution Modes - async hooks execute in parallel mode with fastest finish
 });
 
 test("Hook Types - onRequestReady hook executes with correct context", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const tracker = createCallTracker();
 	mockFetchSuccess({ success: true });
 
 	await callApi("/test", {
-		onRequestReady: (context: any) => {
+		onRequestReady: (context) => {
 			tracker.track("onRequestReady", context.options.fullURL);
 		},
 	});
@@ -260,7 +262,7 @@ test("Hook Types - onRequestReady hook executes with correct context", async () 
 });
 
 test("Hook Types - onResponse hook executes for successful responses", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const tracker = createCallTracker();
 	mockFetchSuccess({ success: true });
 
@@ -273,7 +275,7 @@ test("Hook Types - onResponse hook executes for successful responses", async () 
 });
 
 test("Hook Types - onSuccess hook executes for successful responses with data", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const tracker = createCallTracker();
 	mockFetchSuccess({ id: 1, name: "test" });
 
@@ -300,7 +302,7 @@ test("Hook Types - onError hook executes for any error", async () => {
 });
 
 test("Hook Types - onResponseError hook executes for HTTP error responses", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const tracker = createCallTracker();
 	mockFetchError({ error: "Not found" }, 404);
 
@@ -330,7 +332,7 @@ test("Hook Types - onRetry hook executes during retry attempts", async () => {
 });
 
 test("Hook Types - onValidationError hook executes for validation failures", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const tracker = createCallTracker();
 	mockFetchSuccess({ invalid: "data" });
 

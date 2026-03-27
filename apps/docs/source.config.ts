@@ -54,6 +54,7 @@ export const docs = defineDocs({
 								// == Spreading default twoslash options from shiki cuz it contains the support for annotation tags like `@annotate`.
 								...defaultTwoSlashOptions,
 								compilerOptions: {
+									types: ["node"],
 									...defaultTwoSlashOptions.compilerOptions,
 									noErrorTruncation: true,
 								},

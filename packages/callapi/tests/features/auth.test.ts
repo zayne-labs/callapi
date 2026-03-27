@@ -16,7 +16,7 @@ test("Bearer token as string sets Authorization header correctly", async () => {
 	await callApi("https://api.example.com/users/1", { auth: mockAuthToken });
 
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe(`Bearer ${mockAuthToken}`);
+	expect(headers).toEqual(expect.objectContaining({ Authorization: `Bearer ${mockAuthToken}` }));
 });
 
 test("Bearer token with auth object sets Authorization header correctly", async () => {
@@ -28,7 +28,7 @@ test("Bearer token with auth object sets Authorization header correctly", async 
 	});
 
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe(`Bearer ${mockAuthToken}`);
+	expect(headers).toEqual(expect.objectContaining({ Authorization: `Bearer ${mockAuthToken}` }));
 });
 
 test("Bearer token with function value resolves and sets header", async () => {
@@ -40,7 +40,7 @@ test("Bearer token with function value resolves and sets header", async () => {
 	});
 
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe(`Bearer ${mockAuthToken}`);
+	expect(headers).toEqual(expect.objectContaining({ Authorization: `Bearer ${mockAuthToken}` }));
 });
 
 test("Bearer token with async function resolves and sets header", async () => {
@@ -57,7 +57,7 @@ test("Bearer token with async function resolves and sets header", async () => {
 	});
 
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe(`Bearer ${mockAuthToken}`);
+	expect(headers).toEqual(expect.objectContaining({ Authorization: `Bearer ${mockAuthToken}` }));
 });
 
 test("Bearer token with undefined value does not set Authorization header", async () => {
@@ -87,7 +87,7 @@ test("Basic auth with username and password encodes correctly", async () => {
 
 	const expectedEncoded = globalThis.btoa(`${mockBasicAuth.username}:${mockBasicAuth.password}`);
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe(`Basic ${expectedEncoded}`);
+	expect(headers).toEqual(expect.objectContaining({ Authorization: `Basic ${expectedEncoded}` }));
 });
 
 test("Basic auth with function values resolves and encodes correctly", async () => {
@@ -107,7 +107,7 @@ test("Basic auth with function values resolves and encodes correctly", async () 
 
 	const expectedEncoded = globalThis.btoa(`${mockBasicAuth.username}:${mockBasicAuth.password}`);
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe(`Basic ${expectedEncoded}`);
+	expect(headers).toEqual(expect.objectContaining({ Authorization: `Basic ${expectedEncoded}` }));
 });
 
 test("Basic auth with async functions resolves and encodes correctly", async () => {
@@ -134,7 +134,7 @@ test("Basic auth with async functions resolves and encodes correctly", async () 
 
 	const expectedEncoded = globalThis.btoa(`${mockBasicAuth.username}:${mockBasicAuth.password}`);
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe(`Basic ${expectedEncoded}`);
+	expect(headers).toEqual(expect.objectContaining({ Authorization: `Basic ${expectedEncoded}` }));
 });
 
 test("Basic auth with empty username encodes correctly", async () => {
@@ -151,7 +151,7 @@ test("Basic auth with empty username encodes correctly", async () => {
 
 	const expectedEncoded = globalThis.btoa(":password");
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe(`Basic ${expectedEncoded}`);
+	expect(headers).toEqual(expect.objectContaining({ Authorization: `Basic ${expectedEncoded}` }));
 });
 
 test("Token auth with value sets Authorization header correctly", async () => {
@@ -163,7 +163,7 @@ test("Token auth with value sets Authorization header correctly", async () => {
 	});
 
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe(`Token ${mockAuthToken}`);
+	expect(headers).toEqual(expect.objectContaining({ Authorization: `Token ${mockAuthToken}` }));
 });
 
 test("Token auth with function value resolves and sets header", async () => {
@@ -175,7 +175,7 @@ test("Token auth with function value resolves and sets header", async () => {
 	});
 
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe(`Token ${mockAuthToken}`);
+	expect(headers).toEqual(expect.objectContaining({ Authorization: `Token ${mockAuthToken}` }));
 });
 
 test("Token auth with async function resolves and sets header", async () => {
@@ -195,7 +195,7 @@ test("Token auth with async function resolves and sets header", async () => {
 	});
 
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe(`Token ${mockAuthToken}`);
+	expect(headers).toEqual(expect.objectContaining({ Authorization: `Token ${mockAuthToken}` }));
 });
 
 test("Token auth with undefined value does not set Authorization header", async () => {
@@ -227,7 +227,9 @@ test("Custom auth with prefix and value sets Authorization header correctly", as
 	});
 
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe(`${mockCustomAuth.prefix} ${mockCustomAuth.value}`);
+	expect(headers).toEqual(
+		expect.objectContaining({ Authorization: `${mockCustomAuth.prefix} ${mockCustomAuth.value}` })
+	);
 });
 
 test("Custom auth with function values resolves and sets header", async () => {
@@ -246,7 +248,9 @@ test("Custom auth with function values resolves and sets header", async () => {
 	});
 
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe(`${mockCustomAuth.prefix} ${mockCustomAuth.value}`);
+	expect(headers).toEqual(
+		expect.objectContaining({ Authorization: `${mockCustomAuth.prefix} ${mockCustomAuth.value}` })
+	);
 });
 
 test("Custom auth with async functions resolves and sets header", async () => {
@@ -272,7 +276,9 @@ test("Custom auth with async functions resolves and sets header", async () => {
 	});
 
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe(`${mockCustomAuth.prefix} ${mockCustomAuth.value}`);
+	expect(headers).toEqual(
+		expect.objectContaining({ Authorization: `${mockCustomAuth.prefix} ${mockCustomAuth.value}` })
+	);
 });
 
 test("Custom auth with different prefix formats works correctly", async () => {
@@ -288,7 +294,7 @@ test("Custom auth with different prefix formats works correctly", async () => {
 	});
 
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe("X-API-Key secret-key-123");
+	expect(headers).toEqual(expect.objectContaining({ Authorization: "X-API-Key secret-key-123" }));
 });
 
 test("createFetchClient inherits auth from base config", async () => {
@@ -306,7 +312,7 @@ test("createFetchClient inherits auth from base config", async () => {
 	const result = await client("/users/1");
 
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe(`Bearer ${mockAuthToken}`);
+	expect(headers).toEqual(expect.objectContaining({ Authorization: `Bearer ${mockAuthToken}` }));
 	expectSuccessResult(result);
 });
 
@@ -330,7 +336,7 @@ test("instance auth overrides base auth in createFetchClient", async () => {
 	});
 
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe("Bearer instance-token");
+	expect(headers).toEqual(expect.objectContaining({ Authorization: "Bearer instance-token" }));
 });
 
 test("instance auth can use different type than base auth", async () => {
@@ -355,11 +361,11 @@ test("instance auth can use different type than base auth", async () => {
 
 	const expectedEncoded = globalThis.btoa(`${mockBasicAuth.username}:${mockBasicAuth.password}`);
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe(`Basic ${expectedEncoded}`);
+	expect(headers).toEqual(expect.objectContaining({ Authorization: `Basic ${expectedEncoded}` }));
 });
 
 test("async auth function that throws propagates error", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	const getTokenWithError = () => {
@@ -393,7 +399,7 @@ test("Basic auth with special characters in password encodes correctly", async (
 
 	const expectedEncoded = globalThis.btoa(`user:${specialPassword}`);
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe(`Basic ${expectedEncoded}`);
+	expect(headers).toEqual(expect.objectContaining({ Authorization: `Basic ${expectedEncoded}` }));
 });
 
 test("Custom auth with special characters in value works correctly", async () => {
@@ -411,5 +417,5 @@ test("Custom auth with special characters in value works correctly", async () =>
 	});
 
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe(`X-Special ${specialValue}`);
+	expect(headers).toEqual(expect.objectContaining({ Authorization: `X-Special ${specialValue}` }));
 });

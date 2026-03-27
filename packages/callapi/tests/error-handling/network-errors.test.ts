@@ -3,7 +3,7 @@
  * Tests network errors, timeouts, AbortError, and malformed response handling
  */
 
-import { expect, test, vi } from "vitest";
+import { expect, test } from "vitest";
 import { callApi } from "../../src/createFetchClient";
 import { expectErrorResult } from "../test-setup/assertions";
 import { mockNetworkError, mockTimeoutError } from "../test-setup/common";
@@ -139,7 +139,7 @@ test("callApi handles successful response with JSON content-type but invalid JSO
 });
 
 test("callApi handles response parsing with custom parser that throws", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	const result = await callApi("/users", {
@@ -159,9 +159,8 @@ test("callApi handles errors during error processing gracefully", async () => {
 
 	const mockError = { message: "Test error", code: "TEST_ERROR" };
 	mockFetch.mockResolvedValue(
-		new Response(JSON.stringify(mockError), {
+		Response.json(mockError, {
 			status: 400,
-			headers: { "Content-Type": "application/json" },
 		})
 	);
 

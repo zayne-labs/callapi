@@ -5,9 +5,9 @@
 		"index",
 		"getting-started",
 		"comparisons",
-		"migration-guide",
 		"error-handling",
 		"integrations",
+		"migration-guide",
 
 		"---Features---",
 		"url-helpers",

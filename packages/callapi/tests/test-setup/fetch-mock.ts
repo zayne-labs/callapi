@@ -4,11 +4,9 @@
  */
 
 import { expect } from "vitest";
+import type { CallApiRequestOptionsForHooks } from "../../src";
 import { mockFetch } from "./setup";
 
-/**
- * Helper to get standard HTTP status text
- */
 export const getStatusText = (status: number): string => {
 	const statusTexts: Record<number, string> = {
 		200: "OK",
@@ -27,15 +25,12 @@ export const getStatusText = (status: number): string => {
 	return statusTexts[status] ?? "Unknown";
 };
 
-/**
- * Creates a simple mock Response object
- */
 export const createMockResponse = (
 	data: unknown,
 	status = 200,
 	headers: Record<string, string> = {}
 ): Response => {
-	return new Response(JSON.stringify(data), {
+	return Response.json(data, {
 		headers: {
 			"Content-Type": "application/json",
 			...headers,
@@ -45,9 +40,6 @@ export const createMockResponse = (
 	});
 };
 
-/**
- * Creates a mock error response
- */
 export const createMockErrorResponse = (
 	errorData: unknown,
 	status = 400,
@@ -56,27 +48,18 @@ export const createMockErrorResponse = (
 	return createMockResponse(errorData, status, headers);
 };
 
-/**
- * Mock fetch to resolve with a successful response
- */
 export const mockFetchSuccess = (data: unknown, status = 200, headers: Record<string, string> = {}) => {
 	const response = createMockResponse(data, status, headers);
 	mockFetch.mockResolvedValueOnce(response);
 	return response;
 };
 
-/**
- * Mock fetch to resolve with an error response
- */
 export const mockFetchError = (errorData: unknown, status = 400, headers: Record<string, string> = {}) => {
 	const response = createMockErrorResponse(errorData, status, headers);
 	mockFetch.mockResolvedValueOnce(response);
 	return response;
 };
 
-/**
- * Mock fetch to reject with a network error
- */
 export const mockFetchNetworkError = (message = "Network error") => {
 	const error = new Error(message);
 	error.name = "TypeError";
@@ -84,9 +67,6 @@ export const mockFetchNetworkError = (message = "Network error") => {
 	return error;
 };
 
-/**
- * Mock multiple fetch calls in sequence
- */
 export const mockFetchSequence = (
 	responses: Array<{
 		data?: unknown;
@@ -110,16 +90,10 @@ export const getFetchCallCount = () => {
 	return mockFetch.mock.calls.length;
 };
 
-/**
- * Reset fetch mock
- */
 export const resetFetchMock = () => {
 	mockFetch.mockReset();
 };
 
-/**
- * Disposable fetch mock setup
- */
 export const createFetchMock = () => {
 	globalThis.fetch = mockFetch;
 
@@ -130,17 +104,11 @@ export const createFetchMock = () => {
 	});
 };
 
-/**
- * Verify fetch was called a specific number of times
- */
 export const expectFetchCallCount = (count: number) => {
 	expect(mockFetch).toHaveBeenCalledTimes(count);
 };
 
-/**
- * Helper to extract headers from mock fetch call
- */
-export const getHeadersFromCall = (mockFetch: any, callIndex = 0) => {
-	const request = mockFetch.mock.calls[callIndex]?.[1] as Request;
+export const getHeadersFromCall = (fetch: typeof mockFetch, callIndex = 0) => {
+	const request = fetch.mock.calls[callIndex]?.[1] as CallApiRequestOptionsForHooks;
 	return request.headers;
 };

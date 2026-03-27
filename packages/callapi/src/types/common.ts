@@ -24,6 +24,7 @@ import type {
 	InferRequestOptions,
 	MethodUnion,
 	ResultModeOption,
+	SerializableObject,
 	ThrowOnErrorBoolean,
 	ThrowOnErrorOption,
 	ThrowOnErrorType,
@@ -156,7 +157,7 @@ type SharedExtraOptions<
 		 * bodySerializer: (data) => JSON.stringify(data, null, 2)
 		 * ```
 		 */
-		bodySerializer?: (bodyData: Record<string, unknown>) => string;
+		bodySerializer?: (bodyData: SerializableObject) => string;
 
 		/**
 		 * Whether to clone the response so it can be read multiple times.

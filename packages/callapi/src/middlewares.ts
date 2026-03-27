@@ -1,10 +1,10 @@
 import type { RequestContext } from "./hooks";
 import type { CallApiContext } from "./types/common";
 import type { DefaultCallApiContext } from "./types/default-types";
-import type { UnmaskType } from "./types/type-helpers";
+import type { Awaitable, UnmaskType } from "./types/type-helpers";
 
 export type FetchImpl = UnmaskType<
-	(input: string | Request | URL, init?: RequestInit) => Promise<Response>
+	(input: string | Request | URL, init?: RequestInit) => Awaitable<Response>
 >;
 
 export type FetchMiddlewareContext<TCallApiContext extends CallApiContext> =

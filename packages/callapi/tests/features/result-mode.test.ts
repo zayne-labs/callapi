@@ -16,8 +16,8 @@ import {
 } from "../test-setup/fetch-mock";
 import { mockHTTPError, mockUser } from "../test-setup/fixtures";
 
-test("resultMode 'all' returns data, error, and response for success", async () => {
-	using _ignoredMockFetch = createFetchMock();
+test("ResultMode - resultMode 'all' returns data, error, and response for success", async () => {
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	const result = await callApi("https://api.example.com/users/1");
@@ -28,8 +28,8 @@ test("resultMode 'all' returns data, error, and response for success", async () 
 	expect(result.response).toBeInstanceOf(Response);
 });
 
-test("resultMode 'onlyData' returns only data for success", async () => {
-	using _ignoredMockFetch = createFetchMock();
+test("ResultMode - resultMode 'onlyData' returns only data for success", async () => {
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	const result = await callApi("https://api.example.com/users/1", {
@@ -39,8 +39,8 @@ test("resultMode 'onlyData' returns only data for success", async () => {
 	expect(result).toEqual(mockUser);
 });
 
-test("resultMode 'onlyResponse' returns only response for success", async () => {
-	using _ignoredMockFetch = createFetchMock();
+test("ResultMode - resultMode 'onlyResponse' returns only response for success", async () => {
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	const result = await callApi("https://api.example.com/users/1", {
@@ -53,7 +53,7 @@ test("resultMode 'onlyResponse' returns only response for success", async () => 
 	expect(data).toEqual(mockUser);
 });
 
-test("resultMode 'fetchApi' returns raw response and skips internal parsing", async () => {
+test("ResultMode - resultMode 'fetchApi' returns raw response and skips internal parsing", async () => {
 	using mockFetch = createFetchMock();
 	const response = createMockResponse(mockUser);
 	mockFetch.mockResolvedValue(response);
@@ -66,8 +66,8 @@ test("resultMode 'fetchApi' returns raw response and skips internal parsing", as
 	expect(result).toBeInstanceOf(Response);
 });
 
-test("resultMode 'fetchApi' has null data in hooks", async () => {
-	using _ignoredMockFetch = createFetchMock();
+test("ResultMode - resultMode 'fetchApi' has null data in hooks", async () => {
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 	const onSuccess = vi.fn();
 
@@ -83,7 +83,7 @@ test("resultMode 'fetchApi' has null data in hooks", async () => {
 	);
 });
 
-test("resultMode 'fetchApi' skips data and errorData schema validation", async () => {
+test("ResultMode - resultMode 'fetchApi' skips data and errorData schema validation", async () => {
 	const dataValidator = vi.fn((data) => data);
 	const errorDataValidator = vi.fn((error) => error);
 	const bodyValidator = vi.fn((body) => body);
@@ -118,8 +118,8 @@ test("resultMode 'fetchApi' skips data and errorData schema validation", async (
 	expect(errorDataValidator).not.toHaveBeenCalled();
 });
 
-test("resultMode 'withoutResponse' returns data and error without response", async () => {
-	using _ignoredMockFetch = createFetchMock();
+test("ResultMode - resultMode 'withoutResponse' returns data and error without response", async () => {
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	const result = await callApi("https://api.example.com/users/1", {
@@ -134,8 +134,8 @@ test("resultMode 'withoutResponse' returns data and error without response", asy
 	expect((result as { response?: Response }).response).toBeUndefined();
 });
 
-test("resultMode 'all' returns error structure for HTTP errors", async () => {
-	using _ignoredMockFetch = createFetchMock();
+test("ResultMode - resultMode 'all' returns error structure for HTTP errors", async () => {
+	using ignoredMockFetch = createFetchMock();
 	mockFetchError(mockHTTPError, 404);
 
 	const result = await callApi("https://api.example.com/users/999", {
@@ -150,8 +150,8 @@ test("resultMode 'all' returns error structure for HTTP errors", async () => {
 	expect(result.response?.status).toBe(404);
 });
 
-test("resultMode 'onlyData' returns null for HTTP errors", async () => {
-	using _ignoredMockFetch = createFetchMock();
+test("ResultMode - resultMode 'onlyData' returns null for HTTP errors", async () => {
+	using ignoredMockFetch = createFetchMock();
 	mockFetchError(mockHTTPError, 404);
 
 	const result = await callApi("https://api.example.com/users/999", {
@@ -161,8 +161,8 @@ test("resultMode 'onlyData' returns null for HTTP errors", async () => {
 	expect(result).toBeNull();
 });
 
-test("resultMode 'onlyResponse' returns response for HTTP errors", async () => {
-	using _ignoredMockFetch = createFetchMock();
+test("ResultMode - resultMode 'onlyResponse' returns response for HTTP errors", async () => {
+	using ignoredMockFetch = createFetchMock();
 	mockFetchError(mockHTTPError, 404);
 
 	const result = await callApi("https://api.example.com/users/999", {
@@ -173,7 +173,7 @@ test("resultMode 'onlyResponse' returns response for HTTP errors", async () => {
 	expect(result?.status).toBe(404);
 });
 
-test("resultMode 'fetchApi' returns raw response for HTTP errors", async () => {
+test("ResultMode - resultMode 'fetchApi' returns raw response for HTTP errors", async () => {
 	using mockFetch = createFetchMock();
 	const response = createMockErrorResponse(mockHTTPError, 404);
 	mockFetch.mockResolvedValue(response);
@@ -186,8 +186,8 @@ test("resultMode 'fetchApi' returns raw response for HTTP errors", async () => {
 	expect(result?.status).toBe(404);
 });
 
-test("resultMode 'withoutResponse' returns error without response", async () => {
-	using _ignoredMockFetch = createFetchMock();
+test("ResultMode - resultMode 'withoutResponse' returns error without response", async () => {
+	using ignoredMockFetch = createFetchMock();
 	mockFetchError(mockHTTPError, 404);
 
 	const result = await callApi("https://api.example.com/users/999", {
@@ -205,8 +205,8 @@ test("resultMode 'withoutResponse' returns error without response", async () => 
 	expect(result.response).toBeUndefined();
 });
 
-test("resultMode 'all' with throwOnError true returns data structure on success", async () => {
-	using _ignoredMockFetch = createFetchMock();
+test("ResultMode - resultMode 'all' with throwOnError true returns data structure on success", async () => {
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	const result = await callApi("https://api.example.com/users/1", {
@@ -221,8 +221,8 @@ test("resultMode 'all' with throwOnError true returns data structure on success"
 	});
 });
 
-test("resultMode 'onlyData' with throwOnError true returns only data on success", async () => {
-	using _ignoredMockFetch = createFetchMock();
+test("ResultMode - resultMode 'onlyData' with throwOnError true returns only data on success", async () => {
+	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	const result = await callApi("https://api.example.com/users/1", {
@@ -233,8 +233,8 @@ test("resultMode 'onlyData' with throwOnError true returns only data on success"
 	expect(result).toEqual(mockUser);
 });
 
-test("throwOnError true throws HTTPError instead of returning", async () => {
-	using _ignoredMockFetch = createFetchMock();
+test("ResultMode - throwOnError true throws HTTPError instead of returning", async () => {
+	using ignoredMockFetch = createFetchMock();
 	mockFetchError(mockHTTPError, 404);
 
 	await expect(

@@ -23,7 +23,7 @@ import {
 	isString,
 	isValidJsonString,
 } from "../../src/utils/guards";
-import { createMockErrorResponse, createMockResponse } from "../test-setup/fetch-mock";
+import { createMockErrorResponse } from "../test-setup/fetch-mock";
 import { mockError } from "../test-setup/fixtures";
 
 // isHTTPError
@@ -110,69 +110,67 @@ test("isJavascriptError returns false for HTTPError and ValidationError", () => 
 	expect(isJavascriptError({ name: "ValidationError" } as never)).toBe(false);
 });
 
-// primitives
-test("isArray correctly identifies arrays", () => {
+test("Guard Primitives - isArray correctly identifies arrays", () => {
 	expect(isArray([])).toBe(true);
 	expect(isArray({})).toBe(false);
 });
 
-test("isObject correctly identifies objects", () => {
+test("Guard Primitives - isObject correctly identifies objects", () => {
 	expect(isObject({})).toBe(true);
 	expect(isObject(null)).toBe(false);
 });
 
-test("isPlainObject correctly identifies plain objects", () => {
+test("Guard Primitives - isPlainObject correctly identifies plain objects", () => {
 	expect(isPlainObject({})).toBe(true);
 	expect(isPlainObject([])).toBe(false);
 	expect(isPlainObject(new Date())).toBe(false);
 });
 
-test("isValidJsonString correctly identifies valid JSON strings", () => {
+test("Guard Primitives - isValidJsonString correctly identifies valid JSON strings", () => {
 	expect(isValidJsonString('{"key": "value"}')).toBe(true);
 	expect(isValidJsonString("{ invalid json")).toBe(false);
 });
 
-test("isSerializableObject correctly identifies serializable values", () => {
+test("Guard Primitives - isSerializableObject correctly identifies serializable values", () => {
 	expect(isSerializableObject({})).toBe(true);
 	expect(isSerializableObject(new Date())).toBe(true); // Date has toJSON
 	expect(isSerializableObject("string")).toBe(false);
 });
 
-test("isFunction correctly identifies functions", () => {
+test("Guard Primitives - isFunction correctly identifies functions", () => {
 	expect(isFunction(() => {})).toBe(true);
 	expect(isFunction({})).toBe(false);
 });
 
-test("isQueryString correctly identifies query strings", () => {
+test("Guard Primitives - isQueryString correctly identifies query strings", () => {
 	expect(isQueryString("key=value")).toBe(true);
 	expect(isQueryString("justtext")).toBe(false);
 });
 
-test("isString correctly identifies strings", () => {
+test("Guard Primitives - isString correctly identifies strings", () => {
 	expect(isString("")).toBe(true);
 	expect(isString(123)).toBe(false);
 });
 
-test("isReadableStream correctly identifies ReadableStream instances", () => {
+test("Guard Primitives - isReadableStream correctly identifies ReadableStream instances", () => {
 	expect(isReadableStream(new ReadableStream())).toBe(true);
 	expect(isReadableStream({})).toBe(false);
 });
 
-test("isJSONSerializable correctly identifies JSON serializable values", () => {
+test("Guard Primitives - isJSONSerializable correctly identifies JSON serializable values", () => {
 	expect(isJSONSerializable({ a: 1 })).toBe(true);
 	expect(isJSONSerializable(undefined)).toBe(false);
 	expect(isJSONSerializable(/regex/)).toBe(false);
 });
 
-// Edge Cases
-test("type guards handle Symbol and BigInt correctly", () => {
+test("Guard edge cases - type guards handle Symbol and BigInt correctly", () => {
 	const sym = Symbol("test");
-	const big = BigInt(123);
+	const big = 123n;
 	expect(isString(sym)).toBe(false);
 	expect(isObject(big)).toBe(false);
 });
 
-test("type guards handle Proxy and null prototype objects", () => {
+test("Guard edge cases - type guards handle Proxy and null prototype objects", () => {
 	expect(isPlainObject(new Proxy({}, {}))).toBe(true);
 	expect(isPlainObject(Object.create(null))).toBe(true);
 });

@@ -10,13 +10,13 @@ CallApi is a modern fetch wrapper designed to solve real problems. Here's how it
 
 CallApi is built on four core principles:
 
-**Lightweight:** Under 6KB. Zero dependencies. Pure ESM.
+1. **Lightweight:** Under 6KB. Zero dependencies. Pure ESM.
 
-**Simple:** Based on Fetch API, mirrors its interface 1-to-1. Only adds useful features with sensible defaults.
+2. **Simple:** Based on Fetch API, mirrors its interface 1-to-1. Only adds useful features with sensible defaults.
 
-**Type-safe:** Full TypeScript support with type inference via schemas, validators, and manual generics.
+3. **Type-safe:** Full TypeScript support with type inference via schemas, validators, and manual generics.
 
-**Extensible:** Plugins and hooks let you add or modify features without changing core code.
+4. **Extensible:** Plugins and hooks let you add or modify features without changing core code.
 
 ## CallApi vs Axios
 
@@ -130,7 +130,7 @@ const api = createFetchClient({
 
 	// Add auth token
 	onRequest: ({ request }) => {
-		request.headers.set("Authorization", `Bearer ${getToken()}`);
+		options.auth = getToken(); // Or request.headers["Authorization"] = `Bearer ${getToken()}`;
 	},
 
 	// Handle errors
@@ -327,8 +327,8 @@ import { createFetchClient } from "@zayne-labs/callapi";
 
 const api = createFetchClient({
 	baseURL: "https://api.example.com",
-	onRequest: ({ request }) => {
-		request.headers.set("Authorization", `Bearer ${token}`);
+	onRequest: ({ request, options }) => {
+		options.auth = token; // Or request.headers["Authorization"] = `Bearer ${token}`;
 	},
 });
 

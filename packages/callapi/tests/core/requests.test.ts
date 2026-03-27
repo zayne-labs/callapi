@@ -8,12 +8,9 @@ import { callApi } from "../../src/createFetchClient";
 import { expectSuccessResult } from "../test-setup/assertions";
 import { createFetchMock, getHeadersFromCall, mockFetchSuccess } from "../test-setup/fetch-mock";
 import { mockUser, mockUsers } from "../test-setup/fixtures";
-import { mockFetch } from "../test-setup/setup";
-
-// --- Basic Requests ---
 
 test("Basic Requests - callApi makes GET request by default", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	const result = await callApi("https://api.example.com/users/1");
@@ -47,7 +44,7 @@ test("Basic Requests - callApi makes requests with different HTTP methods", asyn
 	);
 
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Content-Type")).toBe("application/json");
+	expect(headers).toEqual(expect.objectContaining({ "Content-Type": "application/json" }));
 
 	expectSuccessResult(result);
 	expect(result.data).toEqual(mockUser);
@@ -55,6 +52,7 @@ test("Basic Requests - callApi makes requests with different HTTP methods", asyn
 
 test("Basic Requests - callApi handles request body serialization correctly", async () => {
 	using mockFetch = createFetchMock();
+
 	mockFetchSuccess(mockUser, 201);
 
 	const requestData = { email: "john@example.com", name: "John" };
@@ -73,7 +71,7 @@ test("Basic Requests - callApi handles request body serialization correctly", as
 	);
 
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Content-Type")).toBe("application/json");
+	expect(headers).toEqual(expect.objectContaining({ "Content-Type": "application/json" }));
 });
 
 test("Basic Requests - callApi handles custom headers correctly", async () => {
@@ -88,12 +86,16 @@ test("Basic Requests - callApi handles custom headers correctly", async () => {
 	});
 
 	const headers = getHeadersFromCall(mockFetch);
-	expect(headers.get("Authorization")).toBe("Bearer token123");
-	expect(headers.get("X-Custom-Header")).toBe("custom-value");
+	expect(headers).toEqual(
+		expect.objectContaining({
+			Authorization: "Bearer token123",
+			"X-Custom-Header": "custom-value",
+		})
+	);
 });
 
 test("Basic Requests - callApi extracts method from URL prefix", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser, 201);
 
 	await callApi("@post/https://api.example.com/users", {
@@ -121,7 +123,7 @@ test("Basic Requests - callApi handles different method prefixes correctly", asy
 	];
 
 	for (const { method, prefix } of methods) {
-		using _ignoredMockFetch = createFetchMock();
+		using mockFetch = createFetchMock();
 		mockFetchSuccess(mockUser);
 
 		await callApi(`${prefix}/https://api.example.com/users`);
@@ -135,7 +137,7 @@ test("Basic Requests - callApi handles different method prefixes correctly", asy
 });
 
 test("Basic Requests - callApi prioritizes explicit method over URL prefix", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	await callApi("@post/https://api.example.com/users", {
@@ -154,10 +156,8 @@ test("Basic Requests - callApi prioritizes explicit method over URL prefix", asy
 	expect(actualUrl).toContain("api.example.com/users");
 });
 
-// --- URL Handling ---
-
 test("URL Handling - should handle URL objects", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUsers);
 
 	const url = new URL("https://api.example.com/users");
@@ -174,7 +174,7 @@ test("URL Handling - should handle URL objects", async () => {
 });
 
 test("URL Handling - should handle query parameters", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUsers);
 
 	const result = await callApi("https://api.example.com/users", {
@@ -196,7 +196,7 @@ test("URL Handling - should handle query parameters", async () => {
 });
 
 test("URL Handling - should handle URL parameters with object syntax", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	await callApi("https://api.example.com/users/:id", {
@@ -212,7 +212,7 @@ test("URL Handling - should handle URL parameters with object syntax", async () 
 });
 
 test("URL Handling - should handle URL parameters with curly brace syntax", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	await callApi("https://api.example.com/users/{userId}/posts/{postId}", {
@@ -228,7 +228,7 @@ test("URL Handling - should handle URL parameters with curly brace syntax", asyn
 });
 
 test("URL Handling - should handle URL parameters with array syntax", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	await callApi("https://api.example.com/users/:id/posts/:postId", {
@@ -244,7 +244,7 @@ test("URL Handling - should handle URL parameters with array syntax", async () =
 });
 
 test("URL Handling - should combine params and query parameters", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	await callApi("https://api.example.com/users/:id", {
@@ -261,7 +261,7 @@ test("URL Handling - should combine params and query parameters", async () => {
 });
 
 test("URL Handling - should handle relative URLs with baseURL", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	await callApi("/users/1", {
@@ -277,7 +277,7 @@ test("URL Handling - should handle relative URLs with baseURL", async () => {
 });
 
 test("URL Handling - should prioritize absolute URLs over baseURL", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	await callApi("https://other-api.com/users/1", {
@@ -293,7 +293,7 @@ test("URL Handling - should prioritize absolute URLs over baseURL", async () => 
 });
 
 test("URL Handling - should handle baseURL with trailing slash and relative URL with leading slash", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	await callApi("/users/1", {
@@ -305,7 +305,7 @@ test("URL Handling - should handle baseURL with trailing slash and relative URL 
 });
 
 test("URL Handling - should handle baseURL without trailing slash and relative URL without leading slash", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	await callApi("users/1", {
@@ -321,7 +321,7 @@ test("URL Handling - should handle baseURL without trailing slash and relative U
 });
 
 test("URL Handling - should handle query parameters with special characters", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUsers);
 
 	await callApi("https://api.example.com/users", {
@@ -339,7 +339,7 @@ test("URL Handling - should handle query parameters with special characters", as
 });
 
 test("URL Handling - should handle query parameters with arrays", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUsers);
 
 	await callApi("https://api.example.com/users", {
@@ -355,7 +355,7 @@ test("URL Handling - should handle query parameters with arrays", async () => {
 });
 
 test("URL Handling - should handle null and undefined query parameter values", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUsers);
 
 	await callApi("https://api.example.com/users", {
@@ -371,7 +371,7 @@ test("URL Handling - should handle null and undefined query parameter values", a
 });
 
 test("URL Handling - should handle URL parameters with special characters", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	await callApi("https://api.example.com/users/:id", {
@@ -387,7 +387,7 @@ test("URL Handling - should handle URL parameters with special characters", asyn
 });
 
 test("URL Handling - should handle multiple parameter substitutions in same URL segment", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
 	await callApi("https://api.example.com/:version/users/:id", {

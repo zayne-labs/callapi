@@ -3,7 +3,7 @@ import { defineConfig, type UserConfig } from "tsdown";
 const isDevMode = process.env.NODE_ENV === "development";
 
 const commonOptions = {
-	clean: true, // clean up dist folder,
+	clean: true,
 	dts: true,
 	entry: ["src/index.ts", "src/plugins/*/index.ts"],
 	ignoreWatch: [".turbo"],

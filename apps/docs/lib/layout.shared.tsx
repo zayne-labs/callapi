@@ -28,7 +28,7 @@ export const baseOptions = () => {
 						src={logo as unknown as string}
 						width={18}
 						height={18}
-						className="rounded-[5px]"
+						className="size-4.5 rounded-[5px]"
 						aria-label="CallApi"
 					/>
 					<p className="font-medium in-[header]:text-[15px]">CallApi</p>

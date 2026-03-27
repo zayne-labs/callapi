@@ -16,23 +16,21 @@ import {
 	splitBaseConfig,
 	splitConfig,
 	toArray,
-	waitFor,
+	waitUntil,
 } from "../../src/utils/common";
 import { objectifyHeaders } from "../../src/utils/external";
 
-// Keys
-test("omitKeys omits specified keys from object", () => {
+test("Keys utils - omitKeys omits specified keys from object", () => {
 	const obj = { a: 1, b: 2, c: 3 };
 	expect(omitKeys(obj, ["b"])).toEqual({ a: 1, c: 3 });
 });
 
-test("pickKeys picks specified keys from object", () => {
+test("Keys utils  - pickKeys picks specified keys from object", () => {
 	const obj = { a: 1, b: 2, c: 3 };
 	expect(pickKeys(obj, ["a", "c"])).toEqual({ a: 1, c: 3 });
 });
 
-// Config
-test("splitConfig and splitBaseConfig correctly separate fetch options from extra options", () => {
+test("Config utils- splitConfig and splitBaseConfig correctly separate fetch options from extra options", () => {
 	const config = { method: "POST", baseURL: "https://api.com", retry: { attempts: 3 } };
 	const [fetchOpts, extraOpts] = splitConfig(config as never);
 	expect(fetchOpts).toEqual({ method: "POST" });
@@ -43,35 +41,37 @@ test("splitConfig and splitBaseConfig correctly separate fetch options from extr
 	expect(baseExtra).toEqual({ baseURL: "https://api.com", retry: { attempts: 3 } });
 });
 
-test("objectifyHeaders converts Headers instance or arrays to plain object", () => {
+test("Header utils - objectifyHeaders converts Headers instance or arrays to plain object", () => {
 	const headers = new Headers({ "Content-Type": "application/json" });
 	expect(objectifyHeaders(headers)).toEqual({ "content-type": "application/json" });
 
 	expect(objectifyHeaders([["X-A", "B"]])).toEqual({ "X-A": "B" });
 });
 
-test("getHeaders merges auth, body, and custom headers", async () => {
+test("Header utils - getHeaders merges auth, body, and custom headers", async () => {
 	const result = await getHeaders({
 		auth: { type: "Bearer", value: "token" },
 		body: { a: 1 },
 		resolvedHeaders: { "X-Custom": "val" },
 	});
 
-	expect(result).toBeInstanceOf(Headers);
-	expect(result.get("Authorization")).toBe("Bearer token");
-	expect(result.get("Content-Type")).toBe("application/json");
-	expect(result.get("Accept")).toBe("application/json");
-	expect(result.get("X-Custom")).toBe("val");
+	expect(result).toEqual(
+		expect.objectContaining({
+			Authorization: "Bearer token",
+			"Content-Type": "application/json",
+			Accept: "application/json",
+			"X-Custom": "val",
+		})
+	);
 });
 
-test("getMethod returns uppercase method and prioritizes explicit method over URL prefix", () => {
+test("Method utils - getMethod returns uppercase method and prioritizes explicit method over URL prefix", () => {
 	expect(getMethod({ initURL: "/test", method: "post" })).toBe("POST");
 	expect(getMethod({ initURL: "@post/test", method: undefined })).toBe("POST");
 	expect(getMethod({ initURL: "@post/test", method: "PUT" })).toBe("PUT");
 });
 
-// Body
-test("getBody serializes body correctly and respects custom serializers", () => {
+test("Body utils - getBody serializes body correctly and respects custom serializers", () => {
 	const body = { a: 1 };
 	expect(getBody({ body, bodySerializer: undefined, resolvedHeaders: {} })).toBe(JSON.stringify(body));
 
@@ -79,8 +79,7 @@ test("getBody serializes body correctly and respects custom serializers", () => 
 	expect(getBody({ body, bodySerializer: custom, resolvedHeaders: {} })).toBe("serialized");
 });
 
-// fetchImpl
-test("getInitFetchImpl returns provided or global fetch", () => {
+test("Fetch utils - getInitFetchImpl returns provided or global fetch", () => {
 	const custom = vi.fn();
 	expect(getInitFetchImpl(custom)).toBe(custom);
 
@@ -91,16 +90,17 @@ test("getInitFetchImpl returns provided or global fetch", () => {
 	globalThis.fetch = originalFetch;
 });
 
-// waitFor
-test("waitFor handles zero and non-zero delays", async () => {
-	expect(waitFor(0)).toBeUndefined();
+test("Wait utils - waitUntil handles zero and non-zero delays", async () => {
+	expect(waitUntil(0)).toBeUndefined();
+
 	const start = Date.now();
-	await waitFor(50);
+
+	await waitUntil(50);
+
 	expect(Date.now() - start).toBeGreaterThanOrEqual(45);
 });
 
-// Signals
-test("createCombinedSignal combines multiple signals", () => {
+test("Signals utils - createCombinedSignal combines multiple signals", () => {
 	const c1 = new AbortController();
 	const combined = createCombinedSignal(c1.signal);
 	expect(combined).toBeInstanceOf(AbortSignal);
@@ -108,20 +108,18 @@ test("createCombinedSignal combines multiple signals", () => {
 	expect(combined.aborted).toBe(true);
 });
 
-test("createTimeoutSignal creates a signal that times out", () => {
+test("Signals utils - createTimeoutSignal creates a signal that times out", () => {
 	const signal = createTimeoutSignal(100);
 	expect(signal).toBeInstanceOf(AbortSignal);
 });
 
-// Hash
-test("deterministicHashFn creates consistent hashes", () => {
+test("Hash utils - deterministicHashFn creates consistent hashes", () => {
 	const obj1 = { a: 1, b: 2 };
 	const obj2 = { b: 2, a: 1 };
 	expect(deterministicHashFn(obj1)).toBe(deterministicHashFn(obj2));
 });
 
-// toArray
-test("toArray wraps non-array values", () => {
+test("Array utils - toArray wraps non-array values", () => {
 	expect(toArray("a")).toEqual(["a"]);
 	expect(toArray([1])).toEqual([1]);
 });

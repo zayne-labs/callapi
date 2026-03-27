@@ -17,11 +17,10 @@ test("middleware can return response without calling fetchImpl", async () => {
 	using mockFetch = createFetchMock();
 
 	const cachedResponse = createMockResponse({ cached: true, id: 999 });
-	const cachingMiddleware: FetchMiddleware = () => async () => cachedResponse;
 
 	const client = createFetchClient({
 		baseURL: "https://api.example.com",
-		fetchMiddleware: cachingMiddleware,
+		fetchMiddleware: () => () => cachedResponse,
 	});
 
 	const result = await client("/users/1");
@@ -38,7 +37,7 @@ test("plugin middleware can short-circuit request", async () => {
 	const mockingPlugin: CallApiPlugin = {
 		id: "mocking-plugin",
 		name: "Mocking Plugin",
-		middlewares: { fetchMiddleware: () => async () => mockResponse },
+		middlewares: { fetchMiddleware: () => () => mockResponse },
 	};
 
 	const client = createFetchClient({
@@ -63,7 +62,7 @@ test("per-request middleware can short-circuit request", async () => {
 	});
 
 	const result = await client("/users/1", {
-		fetchMiddleware: () => async () => offlineResponse,
+		fetchMiddleware: () => () => offlineResponse,
 	});
 
 	expectSuccessResult(result);
@@ -76,7 +75,7 @@ test("short-circuit stops middleware chain execution", async () => {
 	using mockFetch = createFetchMock();
 	const executionOrder: string[] = [];
 
-	const shortCircuitMiddleware: FetchMiddleware = () => async () => {
+	const shortCircuitMiddleware: FetchMiddleware = () => () => {
 		executionOrder.push("short-circuit");
 		return createMockResponse({ shortCircuited: true });
 	};
@@ -105,7 +104,7 @@ test("conditional short-circuiting based on request URL", async () => {
 	mockFetch.mockResolvedValue(createMockResponse(mockUser));
 
 	const cacheMiddleware: FetchMiddleware = (ctx) => async (input, init) => {
-		const url = input.toString();
+		const url = input instanceof Request ? input.url : input.toString();
 
 		// Short-circuit for cached endpoints
 		if (url.includes("/cached")) {
@@ -139,10 +138,8 @@ test("middleware can short-circuit based on request method", async () => {
 	mockFetch.mockResolvedValue(createMockResponse(mockUser));
 
 	const methodMiddleware: FetchMiddleware = (ctx) => async (input, init) => {
-		const method = init?.method || "GET";
-
 		// Short-circuit GET requests with cached response
-		if (method === "GET") {
+		if (init?.method === "GET") {
 			return createMockResponse({ cached: true, method: "GET" });
 		}
 

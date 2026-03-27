@@ -85,7 +85,7 @@ export const getResolvedHeaders = (options: GetResolvedHeadersOptions) => {
 			headers({ baseHeaders: objectifyHeaders(baseHeaders) })
 		:	(headers ?? baseHeaders);
 
-	return new Headers(objectifyHeaders(resolvedHeaders));
+	return objectifyHeaders(resolvedHeaders);
 };
 
 const detectContentTypeHeader = (body: CallApiRequestOptions["body"]) => {
@@ -122,10 +122,10 @@ export const getHeaders = async (options: GetHeadersOptions) => {
 		contentTypeHeader && Object.assign(resolvedHeadersObject, contentTypeHeader);
 	}
 
-	const headersObject = new Headers({
+	const headersObject: Record<string, string> = {
 		...authHeaderObject,
 		...resolvedHeadersObject,
-	});
+	};
 
 	return headersObject;
 };
@@ -196,10 +196,10 @@ export const getFetchImpl = (context: {
 	return resolvedFetchImpl;
 };
 
-export const waitFor = (delay: number) => {
-	if (delay === 0) return;
+export const waitUntil = (ms: number) => {
+	if (ms === 0) return;
 
-	const promise = new Promise((resolve) => setTimeout(resolve, delay));
+	const promise = new Promise((resolve) => setTimeout(resolve, ms));
 
 	return promise;
 };

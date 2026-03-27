@@ -3,21 +3,20 @@
  */
 
 import { expect, test, vi } from "vitest";
+import { waitUntil } from "../../src/utils/common";
 import { HTTPError, ValidationError } from "../../src/utils/external/error";
 import { expectHTTPError, expectValidationError } from "./assertions";
-import { createCallTracker, delay } from "./common";
+import { createCallTracker } from "./common";
 import { createFetchMock, createMockErrorResponse, createMockResponse } from "./fetch-mock";
 import { mockBaseConfig, mockError, mockPlugin, mockUser, resetMockHookTracker } from "./fixtures";
 import { mockFetch } from "./setup";
 
-// Setup
 test("should have global fetch mock available", () => {
 	expect(globalThis.fetch).toBeDefined();
 	expect(mockFetch).toBeDefined();
 	expect(vi.isMockFunction(mockFetch)).toBe(true);
 });
 
-// Helpers
 test("should create mock responses correctly", () => {
 	const response = createMockResponse(mockUser, 200);
 	expect(response.status).toBe(200);
@@ -32,24 +31,26 @@ test("should create mock error responses correctly", () => {
 
 test("should have working assertion helpers", () => {
 	const mockResponse = createMockResponse("Not found", 404);
-	const httpError = new HTTPError({
+	const httpError: unknown = new HTTPError({
 		defaultHTTPErrorMessage: "HTTP Error",
 		errorData: { message: "Not found" },
 		response: mockResponse,
 	});
+
 	expectHTTPError(httpError, 404);
 
-	const validationError = new ValidationError({
+	const validationError: unknown = new ValidationError({
 		issueCause: "unknown",
 		issues: [{ message: "Validation failed", path: [] }],
 		response: null,
 	});
+
 	expectValidationError(validationError);
 });
 
-test("should have working delay helper", async () => {
+test("should have working waitUntil helper", async () => {
 	const start = Date.now();
-	await delay(50);
+	await waitUntil(50);
 	const elapsed = Date.now() - start;
 	expect(elapsed).toBeGreaterThanOrEqual(45); // Allow some tolerance
 });
@@ -102,7 +103,7 @@ test("should reset hook tracker", () => {
 
 // Fetch Mocking
 test("should work with basic fetch mock", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const mockResponse = createMockResponse(mockUser);
 	mockFetch.mockResolvedValueOnce(mockResponse);
 
@@ -114,7 +115,7 @@ test("should work with basic fetch mock", async () => {
 });
 
 test("should handle mock errors", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const mockErrorResponse = createMockErrorResponse(mockError, 400);
 	mockFetch.mockResolvedValueOnce(mockErrorResponse);
 
@@ -126,7 +127,7 @@ test("should handle mock errors", async () => {
 });
 
 test("should handle network errors", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const networkError = new Error("Network error");
 	mockFetch.mockRejectedValueOnce(networkError);
 

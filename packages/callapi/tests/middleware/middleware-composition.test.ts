@@ -47,7 +47,7 @@ test("middleware composes in correct order: per-request → base → plugin → 
 		return response;
 	};
 
-	const customFetch: FetchImpl = async (input, init) => {
+	const customFetch: FetchImpl = (input, init) => {
 		executionOrder.push("customFetch");
 		return mockFetch(input, init);
 	};
@@ -75,7 +75,7 @@ test("middleware composes in correct order: per-request → base → plugin → 
 });
 
 test("multiple plugin middlewares execute in reverse registration order", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const executionOrder: string[] = [];
 	mockFetchSuccess(mockUser);
 
@@ -136,7 +136,7 @@ test("multiple plugin middlewares execute in reverse registration order", async 
 });
 
 test("works with only base middleware", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const executionOrder: string[] = [];
 	mockFetchSuccess(mockUser);
 
@@ -156,7 +156,7 @@ test("works with only base middleware", async () => {
 });
 
 test("works with only per-request middleware", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const executionOrder: string[] = [];
 	mockFetchSuccess(mockUser);
 
@@ -177,7 +177,7 @@ test("works with only per-request middleware", async () => {
 });
 
 test("works with only plugin middleware", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	const executionOrder: string[] = [];
 	mockFetchSuccess(mockUser);
 
@@ -212,7 +212,8 @@ test("plugin maintains state via closure for caching", async () => {
 		name: "Caching Plugin",
 		middlewares: {
 			fetchMiddleware: (ctx) => async (input, init) => {
-				const cacheKey = input.toString();
+				const cacheKey = input instanceof Request ? input.url : input.toString();
+
 				const cached = cache.get(cacheKey);
 
 				if (cached) {
@@ -244,7 +245,7 @@ test("plugin maintains state via closure for caching", async () => {
 });
 
 test("plugin tracks request count via closure", async () => {
-	using _ignoredMockFetch = createFetchMock();
+	using ignoredMockFetch = createFetchMock();
 	let requestCount = 0;
 	mockFetchSuccess(mockUser);
 

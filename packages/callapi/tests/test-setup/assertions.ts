@@ -12,7 +12,7 @@ import type {
 import { HTTPError, ValidationError } from "../../src/utils/external/error";
 
 /**
- * Assertion helper to check if result is successful (for "all" result mode)
+ * @description Assertion helper to check if result is successful (for "all" result mode)
  */
 export function expectSuccessResult<TData, TError>(
 	result: CallApiResultSuccessOrErrorVariant<TData, TError>
@@ -23,7 +23,7 @@ export function expectSuccessResult<TData, TError>(
 }
 
 /**
- * Assertion helper to check if result is error (for "all" result mode)
+ * @description Assertion helper to check if result is error (for "all" result mode)
  */
 export function expectErrorResult<TData, TError>(
 	result: CallApiResultSuccessOrErrorVariant<TData, TError>
@@ -33,7 +33,7 @@ export function expectErrorResult<TData, TError>(
 }
 
 /**
- * Assertion helper for HTTP errors
+ * @description Assertion helper for HTTP errors
  */
 export function expectHTTPError(
 	error: unknown,
@@ -54,7 +54,7 @@ export function expectHTTPError(
 }
 
 /**
- * Assertion helper for validation errors
+ * @description Assertion helper for validation errors
  */
 export function expectValidationError(
 	error: unknown,
