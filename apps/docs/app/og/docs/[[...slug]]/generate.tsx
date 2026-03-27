@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import path from "node:path";
 import type { ImageResponseOptions } from "@takumi-rs/image-response";
 import type { ReactNode } from "react";
 import { baseURL } from "@/lib/metadata";
@@ -9,7 +10,7 @@ export type GenerateProps = {
 };
 
 // eslint-disable-next-line unicorn/prefer-top-level-await
-const font = fs.readFile("./lib/og/JetBrainsMono-Regular.ttf").then(
+const font = fs.readFile(path.join(process.cwd(), "lib/og/JetBrainsMono-Regular.ttf")).then(
 	(data) =>
 		({
 			data,
@@ -19,7 +20,7 @@ const font = fs.readFile("./lib/og/JetBrainsMono-Regular.ttf").then(
 );
 
 // eslint-disable-next-line unicorn/prefer-top-level-await
-const fontBold = fs.readFile("./lib/og/JetBrainsMono-Bold.ttf").then(
+const fontBold = fs.readFile(path.join(process.cwd(), "lib/og/JetBrainsMono-Bold.ttf")).then(
 	(data) =>
 		({
 			data,
