@@ -7,7 +7,7 @@
 		"build": "turbo run --filter=@zayne-labs/callapi build:dev && next build",
 		"build:analyze": "next experimental-analyze",
 		"dev": "cross-env NODE_OPTIONS=\"--max-old-space-size=6144\" next dev",
-		"lint:eslint": "eslint . --max-warnings 0",
+		"lint:eslint": "eslint . --max-warnings=0",
 		"lint:format": "prettier --write .",
 		"lint:type-check": "tsc --pretty -p tsconfig.json",
 		"postinstall": "fumadocs-mdx",

@@ -8,7 +8,7 @@
 		"dev": "vite --force",
 		"dev:client": "pnpm dev",
 		"dev:server": "tsx --watch src/server.ts --clear-screen=false",
-		"lint:eslint": "eslint . --max-warnings 0",
+		"lint:eslint": "eslint . --max-warnings=0",
 		"lint:format": "prettier --write .",
 		"preview": "vite preview"
 	},
