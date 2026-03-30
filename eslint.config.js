@@ -5,7 +5,11 @@ export default zayne(
 		type: "lib",
 		ignores: ["packages/**/dist/**", "eslint.config.js", "apps/docs/.source/**"],
 		react: {
-			nextjs: true,
+			nextjs: {
+				overrides: {
+					"nextjs/no-html-link-for-pages": ["error", "apps/docs"],
+				},
+			},
 		},
 		tailwindcssBetter: {
 			settings: { entryPoint: "apps/docs/tailwind.css" },
