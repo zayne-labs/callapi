@@ -10,7 +10,7 @@ import type { CallApiConfig, CallApiResultLoose } from "./types/common";
 import type { MethodUnion } from "./types/conditional-types";
 import { defineEnum, type AnyNumber, type Awaitable, type UnmaskType } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
-import { waitUntil } from "./utils/common";
+import { waitFor } from "./utils/common";
 import { isBoolean, isFunction, isString } from "./utils/guards";
 
 // eslint-disable-next-line ts-eslint/no-unused-vars -- Ignore
@@ -181,7 +181,7 @@ export const createRetryManager = <TCallApi extends CallApiImpl>(ctx: {
 			return hookError;
 		}
 
-		await waitUntil(getDelay());
+		await waitFor(getDelay());
 
 		const updatedConfig = {
 			...callApiArgs.config,

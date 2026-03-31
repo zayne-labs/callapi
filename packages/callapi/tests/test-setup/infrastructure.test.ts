@@ -3,7 +3,7 @@
  */
 
 import { expect, test, vi } from "vitest";
-import { waitUntil } from "../../src/utils/common";
+import { waitFor } from "../../src/utils/common";
 import { HTTPError, ValidationError } from "../../src/utils/external/error";
 import { expectHTTPError, expectValidationError } from "./assertions";
 import { createCallTracker } from "./common";
@@ -50,7 +50,7 @@ test("should have working assertion helpers", () => {
 
 test("should have working waitUntil helper", async () => {
 	const start = Date.now();
-	await waitUntil(50);
+	await waitFor(50);
 	const elapsed = Date.now() - start;
 	expect(elapsed).toBeGreaterThanOrEqual(45); // Allow some tolerance
 });

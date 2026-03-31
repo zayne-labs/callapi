@@ -1,10 +1,11 @@
-// Do this so tsdown can easily bundle //FIXME Should remove when no longer a problem
-// eslint-disable-next-line unicorn/require-module-specifiers -- Ignore
-import type {} from "@zayne-labs/callapi";
 import { definePlugin } from "@zayne-labs/callapi/utils";
 import { isBoolean, type AnyFunction } from "@zayne-labs/toolkit-type-helpers";
 import { createConsola } from "consola";
 import { getStatusText } from "./utils";
+// Do this so tsdown can bundle without erroring out due to TS `error TS2883`
+// FIXME Should remove when no longer a problem
+// eslint-disable-next-line unicorn/require-module-specifiers -- Ignore
+import type {} from "@zayne-labs/callapi";
 
 type ConsoleLikeObject = {
 	error: AnyFunction<void>;

@@ -16,7 +16,7 @@ import {
 	splitBaseConfig,
 	splitConfig,
 	toArray,
-	waitUntil,
+	waitFor,
 } from "../../src/utils/common";
 import { objectifyHeaders } from "../../src/utils/external";
 
@@ -91,11 +91,11 @@ test("Fetch utils - getInitFetchImpl returns provided or global fetch", () => {
 });
 
 test("Wait utils - waitUntil handles zero and non-zero delays", async () => {
-	expect(waitUntil(0)).toBeUndefined();
+	expect(waitFor(0)).toBeUndefined();
 
 	const start = Date.now();
 
-	await waitUntil(50);
+	await waitFor(50);
 
 	expect(Date.now() - start).toBeGreaterThanOrEqual(45);
 });

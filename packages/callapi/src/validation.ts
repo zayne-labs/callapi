@@ -280,23 +280,23 @@ type LastOf<TValue> =
 
 type Push<TArray extends unknown[], TArrayItem> = [...TArray, TArrayItem];
 
-type UnionToTuple<
+type UnionToTupleImpl<
 	TUnion,
 	TComputedLastUnion = LastOf<TUnion>,
 	TComputedIsUnionEqualToNever = [TUnion] extends [never] ? true : false,
 > =
 	true extends TComputedIsUnionEqualToNever ? []
-	:	Push<UnionToTuple<Exclude<TUnion, TComputedLastUnion>>, TComputedLastUnion>;
+	:	Push<UnionToTupleImpl<Exclude<TUnion, TComputedLastUnion>>, TComputedLastUnion>;
 
-export type Tuple<TTuple, TArray extends TTuple[] = []> =
-	UnionToTuple<TTuple>["length"] extends TArray["length"] ? [...TArray]
-	:	Tuple<TTuple, [TTuple, ...TArray]>;
+export type UnionToTuple<TUnion, TArray extends TUnion[] = []> =
+	UnionToTupleImpl<TUnion>["length"] extends TArray["length"] ? [...TArray]
+	:	UnionToTuple<TUnion, [TUnion, ...TArray]>;
 
 type ExtraOptionsValidationOptions = {
 	options: CallApiExtraOptions;
 };
 
-const extraOptionsToBeValidated = ["meta", "params", "query", "auth"] satisfies Tuple<
+const extraOptionsToBeValidated = ["meta", "params", "query", "auth"] satisfies UnionToTuple<
 	Extract<keyof CallApiSchema, keyof CallApiExtraOptions>
 >;
 
@@ -304,7 +304,7 @@ type RequestOptionsValidationOptions = {
 	request: CallApiRequestOptions;
 };
 
-const requestOptionsToBeValidated = ["body", "headers", "method"] satisfies Tuple<
+const requestOptionsToBeValidated = ["body", "headers", "method"] satisfies UnionToTuple<
 	Extract<keyof CallApiSchema, keyof CallApiRequestOptions>
 >;
 

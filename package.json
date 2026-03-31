@@ -63,7 +63,7 @@
 		"prettier-plugin-merge": "^0.10.1",
 		"prettier-plugin-tailwindcss": "^0.7.2",
 		"tailwindcss": "^4.2.2",
-		"turbo": "^2.8.20",
+		"turbo": "^2.9.2",
 		"typescript": "^6.0.2"
 	}
 }

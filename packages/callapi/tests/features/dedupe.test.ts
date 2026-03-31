@@ -5,7 +5,7 @@
 
 import { expect, test } from "vitest";
 import { createFetchClient } from "../../src";
-import { waitUntil } from "../../src/utils/common";
+import { waitFor } from "../../src/utils/common";
 import {
 	createFetchMock,
 	getFetchCallCount,
@@ -180,7 +180,7 @@ test("Dedupe Strategies - cancel strategy aborts previous duplicate requests", a
 	// Mock fetch to respect abort signals
 	mockFetch.mockImplementation(async (_url, init: RequestInit) => {
 		// Simulate async operation to allow abort to happen
-		await waitUntil(0.01);
+		await waitFor(0.01);
 
 		// Check if aborted during the async operation
 		if (init.signal?.aborted) {

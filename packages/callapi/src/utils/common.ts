@@ -196,7 +196,7 @@ export const getFetchImpl = (context: {
 	return resolvedFetchImpl;
 };
 
-export const waitUntil = (ms: number) => {
+export const waitFor = (ms: number) => {
 	if (ms === 0) return;
 
 	const promise = new Promise((resolve) => setTimeout(resolve, ms));

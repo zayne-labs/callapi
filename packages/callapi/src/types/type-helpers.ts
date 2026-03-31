@@ -73,9 +73,10 @@ export type Awaitable<TValue> = Promise<TValue> | TValue;
 // 	[Key in keyof TActualObject]: Key extends keyof TExpectedObject ? TActualObject[Key] : never;
 // };
 
-export type Satisfies<TActualObject extends TExpectedObject, TExpectedObject> = {
-	[Key in keyof TActualObject]: Key extends keyof TExpectedObject ? TActualObject[Key] : never;
+export type Satisfies<TActualType extends TExpectedTypeShape, TExpectedTypeShape> = {
+	[Key in keyof TActualType]: Key extends keyof TExpectedTypeShape ? TActualType[Key] : never;
 };
+
 // export type Satisfies<TActualObject extends TExpectedObject, TExpectedObject> = {
 // 	[Key in keyof TActualObject & keyof TExpectedObject]: TActualObject[Key];
 // };

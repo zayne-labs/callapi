@@ -2,7 +2,7 @@ import { extraOptionDefaults } from "./constants/defaults";
 import type { RequestContext } from "./hooks";
 import { toStreamableRequest, toStreamableResponse } from "./stream";
 import type { AnyString, Awaitable, UnmaskType } from "./types/type-helpers";
-import { waitUntil } from "./utils/common";
+import { waitFor } from "./utils/common";
 import { isFunction } from "./utils/guards";
 
 type RequestInfo = {
@@ -153,7 +153,7 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 	 * proper sequential task queue scheduling, ensuring each request gets its own task slot.
 	 */
 	if (dedupeKey !== null) {
-		await waitUntil(0.01);
+		await waitFor(0.01);
 	}
 
 	const prevRequestInfo = $RequestInfoCache?.get();

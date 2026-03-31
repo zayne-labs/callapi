@@ -7,7 +7,7 @@ import { expect, test } from "vitest";
 import type { RequestContext } from "../../src";
 import { callApi, createFetchClient } from "../../src/createFetchClient";
 import type { CallApiPlugin } from "../../src/plugins";
-import { waitUntil } from "../../src/utils/common";
+import { waitFor } from "../../src/utils/common";
 import { createCallTracker, mockNetworkError } from "../test-setup/common";
 import {
 	createFetchMock,
@@ -160,15 +160,15 @@ test("Execution Modes - hooks execute in parallel mode by default", async () => 
 		hooksExecutionMode: "parallel",
 		onRequest: [
 			async () => {
-				await waitUntil(50);
+				await waitFor(50);
 				tracker.track("hook1", Date.now() - startTime);
 			},
 			async () => {
-				await waitUntil(50);
+				await waitFor(50);
 				tracker.track("hook2", Date.now() - startTime);
 			},
 			async () => {
-				await waitUntil(50);
+				await waitFor(50);
 				tracker.track("hook3", Date.now() - startTime);
 			},
 		],
@@ -193,15 +193,15 @@ test("Execution Modes - hooks execute in sequential mode one after another", asy
 		hooksExecutionMode: "sequential",
 		onRequest: [
 			async () => {
-				await waitUntil(50);
+				await waitFor(50);
 				tracker.track("hook1", Date.now() - startTime);
 			},
 			async () => {
-				await waitUntil(50);
+				await waitFor(50);
 				tracker.track("hook2", Date.now() - startTime);
 			},
 			async () => {
-				await waitUntil(50);
+				await waitFor(50);
 				tracker.track("hook3", Date.now() - startTime);
 			},
 		],
@@ -228,15 +228,15 @@ test("Execution Modes - async hooks execute in parallel mode with fastest finish
 		hooksExecutionMode: "parallel",
 		onRequest: [
 			async () => {
-				await waitUntil(30);
+				await waitFor(30);
 				results.push("async1");
 			},
 			async () => {
-				await waitUntil(20);
+				await waitFor(20);
 				results.push("async2");
 			},
 			async () => {
-				await waitUntil(10);
+				await waitFor(10);
 				results.push("async3");
 			},
 		],
