@@ -2,6 +2,7 @@ import { metaSchema, pageSchema } from "fumadocs-core/source/schema";
 import { applyMdxPreset, defineConfig, defineDocs } from "fumadocs-mdx/config";
 import lastModified from "fumadocs-mdx/plugins/last-modified";
 import type { RemarkAutoTypeTableOptions } from "fumadocs-typescript";
+import { shikiOptions } from "./lib/shiki";
 
 export const docs = defineDocs({
 	dir: "content/docs",
@@ -29,10 +30,7 @@ export const docs = defineDocs({
 					cache: createFileSystemGeneratorCache(".next/fumadocs-typescript"),
 				}),
 				shiki: {
-					themes: {
-						dark: "material-theme-darker",
-						light: "material-theme-lighter",
-					},
+					themes: shikiOptions.themes,
 				},
 			};
 
@@ -42,10 +40,7 @@ export const docs = defineDocs({
 				rehypeCodeOptions: {
 					inline: "tailing-curly-colon",
 					langs: ["ts", "js", "html", "tsx", "mdx", "bash"],
-					themes: {
-						dark: "material-theme-darker",
-						light: "material-theme-lighter",
-					},
+					themes: shikiOptions.themes,
 
 					transformers: [
 						...(rehypeCodeDefaultOptions.transformers ?? []),

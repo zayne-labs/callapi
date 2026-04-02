@@ -10,6 +10,7 @@
 @theme inline {
 	--font-geist-sans: var(--font-geist-sans);
 	--font-geist-mono: var(--font-geist-mono);
+	--font-jetbrains-mono: var(--font-jetbrains-mono);
 }
 
 @theme {
@@ -132,7 +133,7 @@
 	kbd,
 	samp,
 	pre {
-		font-family: var(--font-geist-mono);
+		font-family: var(--font-jetbrains-mono);
 	}
 
 	body {
