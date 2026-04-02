@@ -44,7 +44,6 @@
 		"react-remove-scroll": "^2.7.2",
 		"remark": "^15.0.1",
 		"remark-gfm": "^4.0.1",
-		"remark-mdx": "^3.1.1",
 		"remark-rehype": "^11.1.2",
 		"schema-dts": "^2.0.0",
 		"shiki": "^4.0.2",

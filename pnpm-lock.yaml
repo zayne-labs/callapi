@@ -192,9 +192,6 @@ importers:
       remark-gfm:
         specifier: ^4.0.1
         version: 4.0.1
-      remark-mdx:
-        specifier: ^3.1.1
-        version: 3.1.1
       remark-rehype:
         specifier: ^11.1.2
         version: 11.1.2
