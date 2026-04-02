@@ -73,6 +73,7 @@ const defaultKeywords = [
 	"fetch response handling",
 ];
 
+export const defaultSiteName = "CallApi";
 export const defaultDescription =
 	"A lightweight, type-safe Fetch API wrapper with dozens of convenience features.";
 
@@ -85,20 +86,30 @@ export function createMetadata(overrides?: Metadata): Metadata {
 			...overrides?.alternates,
 		},
 
+		applicationName: overrides?.applicationName ?? defaultSiteName,
+
 		description: overrides?.description ?? defaultDescription,
+
+		generator: "Next.js",
 
 		keywords: overrides?.keywords ?? defaultKeywords,
 
 		openGraph: {
 			description: overrides?.description ?? defaultDescription,
 			images: bannerImage,
-			siteName: "CallApi",
+			siteName: defaultSiteName,
 			title: overrides?.title ?? undefined,
 			type: "website",
 			url: baseURL,
 
 			...overrides?.openGraph,
 		},
+
+		robots: {
+			follow: true,
+			index: true,
+		},
+
 		twitter: {
 			card: "summary_large_image",
 			creator: "@zayne_el_kaiser",
