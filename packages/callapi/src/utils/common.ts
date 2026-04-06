@@ -205,9 +205,43 @@ export const waitFor = (ms: number) => {
 };
 
 export const createCombinedSignal = (...signals: Array<AbortSignal | null | undefined>) => {
-	const combinedSignal = AbortSignal.any(signals.filter((signal) => signal != null));
+	const filteredSignals = signals.filter((signal) => signal != null);
 
-	return combinedSignal;
+	// Use native AbortSignal.any if available
+	if (typeof AbortSignal.any === 'function') {
+		return AbortSignal.any(filteredSignals);
+	}
+
+	// Fallback for browsers that don't support AbortSignal.any (e.g., Safari)
+	if (filteredSignals.length === 0) {
+		// Return a never-aborted signal
+		const controller = new AbortController();
+		return controller.signal;
+	}
+
+	if (filteredSignals.length === 1) {
+		return filteredSignals[0];
+	}
+
+	// For multiple signals, create a controller that aborts when any input signal aborts
+	const controller = new AbortController();
+	let isAborted = false;
+
+	for (const signal of filteredSignals) {
+		if (signal.aborted) {
+			controller.abort(signal.reason);
+			return controller.signal;
+		}
+
+		signal.addEventListener('abort', () => {
+			if (!isAborted) {
+				isAborted = true;
+				controller.abort(signal.reason);
+			}
+		}, { once: true });
+	}
+
+	return controller.signal;
 };
 
 export const createTimeoutSignal = (milliseconds: number | null | undefined) => {
@@ -215,7 +249,18 @@ export const createTimeoutSignal = (milliseconds: number | null | undefined) => 
 		return null;
 	}
 
-	return AbortSignal.timeout(milliseconds);
+	// Use native AbortSignal.timeout if available
+	if (typeof AbortSignal.timeout === 'function') {
+		return AbortSignal.timeout(milliseconds);
+	}
+
+	// Fallback for browsers that don't support AbortSignal.timeout (e.g., Safari)
+	const controller = new AbortController();
+	setTimeout(() => {
+		controller.abort();
+	}, milliseconds);
+
+	return controller.signal;
 };
 
 export const deterministicHashFn = (value: unknown): string => {
