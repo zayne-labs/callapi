@@ -65,7 +65,10 @@ export type OverrideCallApiContext<
 
 type FetchSpecificKeysUnion = Exclude<(typeof fetchSpecificKeys)[number], "body" | "headers" | "method">;
 
-export type ModifiedRequestInit = RequestInit & { duplex?: "half" };
+export type ModifiedRequestInit = RequestInit & {
+	duplex?: "half";
+	extraFetchOptions?: RequestInit;
+};
 
 export type CallApiRequestOptions = {
 	/**
@@ -96,6 +99,7 @@ type SharedExtraOptions<
 		InferPluginExtraOptions<TPluginArray>
 			& InferSchemaOutput<
 				TCallApiContext["InferredExtraOptions"],
+				// eslint-disable-next-line ts-eslint/no-unnecessary-type-arguments -- Ignore
 				TCallApiContext["InferredExtraOptions"]
 			>
 	>,

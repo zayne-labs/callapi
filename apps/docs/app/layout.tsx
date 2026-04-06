@@ -21,7 +21,7 @@ const jetBrainsMono = JetBrains_Mono({
 	variable: "--font-jetbrains-mono",
 });
 
-function RootLayout({ children }: { children: React.ReactNode }) {
+function RootLayout({ children }: LayoutProps<"/">) {
 	return (
 		<html
 			data-scroll-behavior="smooth"

@@ -1,10 +1,9 @@
 import { callApi } from "@zayne-labs/callapi";
+import { Image, Link } from "fumadocs-core/framework";
 import { GithubInfo } from "fumadocs-ui/components/github-info";
 import type { DocsLayoutProps } from "fumadocs-ui/layouts/docs";
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 import { TagIcon } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
 import { z } from "zod";
 import { IconBox } from "@/components/common";
 import { Button } from "@/components/ui/button";
@@ -40,16 +39,13 @@ export const baseOptions = () => {
 
 export const docsOptions = () => {
 	const npmDataPromise = callApi(`https://registry.npmjs.org/${packageScope}/${packageName}/latest`, {
-		schema: {
-			data: z.object({ version: z.string() }),
-		},
+		extraFetchOptions: { next: { revalidate: 60 } },
+		schema: { data: z.object({ version: z.string() }) },
 	});
 
 	const descriptionPromise = npmDataPromise.then((result) => `v${result.data?.version ?? "*.*.*"}`);
 
 	return {
-		...baseOptions(),
-
 		links: [
 			{
 				children: (
@@ -71,14 +67,19 @@ export const docsOptions = () => {
 			},
 		],
 
+		nav: {
+			...baseOptions().nav,
+			url: "/",
+		},
+
 		sidebar: {
 			tabs: [
 				{
 					description: descriptionPromise,
 					icon: (
-						<div className="grid size-full place-items-center rounded-lg max-md:border max-md:bg-fd-primary/10 max-md:p-1.5">
+						<span className="flex size-full items-center justify-center rounded-lg max-md:border max-md:bg-fd-primary/10 max-md:p-1.5">
 							<TagIcon className="size-full text-fd-primary" />
-						</div>
+						</span>
 					),
 					title: "Latest",
 					url: "/docs",

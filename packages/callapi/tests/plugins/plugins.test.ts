@@ -360,3 +360,45 @@ test("Plugin Middleware - composes plugin middleware with base and instance midd
 
 	expect(executionOrder).toEqual(["instance", "base", "plugin"]);
 });
+
+test("Plugin Initialization - plugin setup can modify request with extraFetchOptions and merge with configs", async () => {
+	using mockFetch = createFetchMock();
+	mockFetchSuccess(mockUser);
+
+	const extraFetchOptionsPlugin: CallApiPlugin = {
+		id: "extra-fetch-options-plugin",
+		name: "Extra Fetch Options Plugin",
+		setup: () => {
+			return {
+				request: {
+					extraFetchOptions: {
+						keepalive: true,
+					},
+				},
+			};
+		},
+	};
+
+	const client = createFetchClient({
+		baseURL: "https://api.example.com",
+		extraFetchOptions: {
+			credentials: "include",
+		},
+		plugins: [extraFetchOptionsPlugin],
+	});
+
+	await client("/users/1", {
+		extraFetchOptions: {
+			referrerPolicy: "no-referrer",
+		},
+	});
+
+	expect(mockFetch).toHaveBeenCalledWith(
+		"https://api.example.com/users/1",
+		expect.objectContaining({
+			credentials: "include",
+			keepalive: true,
+			referrerPolicy: "no-referrer",
+		})
+	);
+});

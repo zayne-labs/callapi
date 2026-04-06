@@ -69,10 +69,10 @@ export function Grid(props: GridProps) {
 	useEffect(() => {
 		// eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler
 		if (dimensions.width && dimensions.height) {
-			// eslint-disable-next-line react-you-might-not-need-an-effect/no-derived-state, react-x/set-state-in-effect
+			// eslint-disable-next-line react-you-might-not-need-an-effect/no-derived-state, react/set-state-in-effect
 			setSquares(generateSquares(numSquares));
 		}
-		// eslint-disable-next-line react-x/exhaustive-deps
+		// eslint-disable-next-line react/exhaustive-deps
 	}, [dimensions, numSquares]);
 
 	// Resize observer to update container dimensions
@@ -122,7 +122,7 @@ export function Grid(props: GridProps) {
 							repeatType: "reverse",
 						}}
 						onAnimationComplete={() => updateSquarePosition(id)}
-						// eslint-disable-next-line react-x/no-array-index-key
+						// eslint-disable-next-line react/no-array-index-key
 						key={`${posX}-${posY}-${index}`}
 						width={width - 1}
 						height={height - 1}

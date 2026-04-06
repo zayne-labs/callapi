@@ -180,7 +180,9 @@ export const createFetchClientWithContext = <
 			// == Merged Request Options
 			const mergedRequestOptions = {
 				...baseFetchOptions,
+				...baseFetchOptions.extraFetchOptions,
 				...(!shouldSkipAutoMergeForRequest && fetchOptions),
+				...(!shouldSkipAutoMergeForRequest && fetchOptions.extraFetchOptions),
 			} satisfies CallApiRequestOptions;
 
 			const initURLResult = getCurrentRouteSchemaKeyAndMainInitURL({

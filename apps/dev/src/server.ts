@@ -57,8 +57,7 @@ const callZoomApi = createFetchClient({
 	schema: zoomOauthApiSchema,
 });
 
-// eslint-disable-next-line ts-eslint/no-unused-vars -- Ignore
-const resultFromZoomApi = await callZoomApi("api.main/token", {
+export const resultFromZoomApi = await callZoomApi("api.main/token", {
 	auth: {
 		password: "123456",
 		type: "Basic",

@@ -1,5 +1,4 @@
-import fs from "node:fs/promises";
-import path from "node:path";
+import fsPromises from "node:fs/promises";
 import type { ImageResponseOptions } from "@takumi-rs/image-response";
 import type { ReactNode } from "react";
 import { baseURL } from "@/lib/metadata";
@@ -9,25 +8,29 @@ export type GenerateProps = {
 	title: ReactNode;
 };
 
-// eslint-disable-next-line unicorn/prefer-top-level-await
-const font = fs.readFile(path.join(process.cwd(), "lib/og/JetBrainsMono-Regular.ttf")).then(
-	(data) =>
-		({
-			data,
-			name: "Mono",
-			weight: 400,
-		}) as const
-);
+const font = fsPromises
+	.readFile(new URL("../../../../lib/og/JetBrainsMono-Regular.ttf", import.meta.url))
+	// eslint-disable-next-line unicorn/prefer-top-level-await
+	.then(
+		(data) =>
+			({
+				data,
+				name: "Mono",
+				weight: 400,
+			}) as const
+	);
 
-// eslint-disable-next-line unicorn/prefer-top-level-await
-const fontBold = fs.readFile(path.join(process.cwd(), "lib/og/JetBrainsMono-Bold.ttf")).then(
-	(data) =>
-		({
-			data,
-			name: "Mono",
-			weight: 600,
-		}) as const
-);
+const fontBold = fsPromises
+	.readFile(new URL("../../../../lib/og/JetBrainsMono-Bold.ttf", import.meta.url))
+	// eslint-disable-next-line unicorn/prefer-top-level-await
+	.then(
+		(data) =>
+			({
+				data,
+				name: "Mono",
+				weight: 600,
+			}) as const
+	);
 
 export const getImageResponseOptions = async (): Promise<ImageResponseOptions> => {
 	return {

@@ -1,6 +1,8 @@
 "use client";
 
 import { callApi } from "@zayne-labs/callapi";
+import { isBrowser } from "@zayne-labs/toolkit-core";
+import { usePathname } from "fumadocs-core/framework";
 import { Popover, PopoverContent, PopoverTrigger } from "fumadocs-ui/components/ui/popover";
 import { useCopyButton } from "fumadocs-ui/utils/use-copy-button";
 import { Check, ChevronDown, Copy, ExternalLinkIcon, MessageCircleIcon, TextIcon } from "lucide-react";
@@ -74,12 +76,21 @@ type ViewOptionsProps = {
 export function ViewOptions(props: ViewOptionsProps) {
 	const { githubURL, markdownURL } = props;
 
-	const items = useMemo(() => getLinkViewItems(markdownURL, githubURL), [githubURL, markdownURL]);
+	const pathname = usePathname();
+
+	const items = useMemo(
+		() => getLinkViewItems({ githubURL, markdownURL, pathname }),
+		[githubURL, markdownURL, pathname]
+	);
 
 	return (
 		<Popover>
 			<PopoverTrigger asChild={true}>
-				<Button theme="secondary" size="sm" className="gap-2">
+				<Button
+					theme="secondary"
+					size="sm"
+					className="gap-2 data-[state=open]:bg-fd-accent data-[state=open]:text-fd-accent-foreground"
+				>
 					Open
 					<ChevronDown className="size-3.5 text-fd-muted-foreground" />
 				</Button>
@@ -105,12 +116,16 @@ export function ViewOptions(props: ViewOptionsProps) {
 	);
 }
 
-const getLinkViewItems = (markdownUrl: string, githubUrl: string) => {
-	const q = `Read ${markdownUrl}, I want to ask questions about it.`;
+const getLinkViewItems = (options: { githubURL: string; markdownURL: string; pathname: string }) => {
+	const { githubURL, markdownURL, pathname } = options;
+
+	const pageUrl = isBrowser() ? new URL(pathname, globalThis.location.origin) : pathname;
+
+	const q = `Read ${pageUrl}, I want to ask questions about it.`;
 
 	return [
 		{
-			href: githubUrl,
+			href: githubURL,
 			icon: (
 				<svg fill="currentColor" role="img" viewBox="0 0 24 24">
 					<title>GitHub</title>
@@ -121,7 +136,7 @@ const getLinkViewItems = (markdownUrl: string, githubUrl: string) => {
 		},
 
 		{
-			href: markdownUrl,
+			href: markdownURL,
 			icon: <TextIcon />,
 			title: "View as Markdown",
 		},
@@ -136,6 +151,7 @@ const getLinkViewItems = (markdownUrl: string, githubUrl: string) => {
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 				>
+					<title>Scira AI</title>
 					<path
 						d="M647.664 197.775C569.13 189.049 525.5 145.419 516.774 66.8849C508.048 145.419 464.418 189.049 385.884 197.775C464.418 206.501 508.048 250.131 516.774 328.665C525.5 250.131 569.13 206.501 647.664 197.775Z"
 						fill="currentColor"
@@ -209,10 +225,9 @@ const getLinkViewItems = (markdownUrl: string, githubUrl: string) => {
 			),
 			title: "Open in Claude",
 		},
+
 		{
-			href: `https://cursor.com/link/prompt?${new URLSearchParams({
-				text: q,
-			})}`,
+			href: `https://cursor.com/link/prompt?${new URLSearchParams({ text: q })}`,
 			icon: (
 				<svg fill="currentColor" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
 					<title>Cursor</title>
@@ -221,6 +236,7 @@ const getLinkViewItems = (markdownUrl: string, githubUrl: string) => {
 			),
 			title: "Open in Cursor",
 		},
+
 		{
 			href: `https://t3.chat/new?${new URLSearchParams({ q })}`,
 			icon: <MessageCircleIcon />,

@@ -266,3 +266,78 @@ test("createFetchClient handles multiple plugins when making requests", async ()
 		})
 	);
 });
+
+test("createFetchClient merges extraFetchOptions from base and instance config with override support", async () => {
+	using mockFetch = createFetchMock();
+	mockFetch.mockResolvedValue(createMockResponse(mockUser));
+
+	const client = createFetchClient({
+		baseURL: "https://api.example.com",
+		extraFetchOptions: {
+			credentials: "include",
+			mode: "cors",
+		},
+	});
+
+	// Test merging from both configs
+	await client("/users/1", {
+		extraFetchOptions: {
+			referrerPolicy: "no-referrer",
+			keepalive: true,
+		},
+	});
+
+	expect(mockFetch).toHaveBeenCalledWith(
+		"https://api.example.com/users/1",
+		expect.objectContaining({
+			credentials: "include",
+			mode: "cors",
+			referrerPolicy: "no-referrer",
+			keepalive: true,
+		})
+	);
+
+	mockFetch.mockClear();
+
+	// Test instance overriding base
+	await client("/users/2", {
+		extraFetchOptions: {
+			credentials: "same-origin",
+			mode: "no-cors",
+		},
+	});
+
+	expect(mockFetch).toHaveBeenCalledWith(
+		"https://api.example.com/users/2",
+		expect.objectContaining({
+			credentials: "same-origin",
+			mode: "no-cors",
+		})
+	);
+});
+
+test("createFetchClient respects skipAutoMergeFor with extraFetchOptions", async () => {
+	using mockFetch = createFetchMock();
+	mockFetch.mockResolvedValue(createMockResponse(mockUser));
+
+	const client = createFetchClient({
+		baseURL: "https://api.example.com",
+		extraFetchOptions: {
+			credentials: "include",
+			mode: "cors",
+		},
+		skipAutoMergeFor: "request",
+	});
+
+	await client("/users/1", {
+		extraFetchOptions: {
+			referrerPolicy: "no-referrer",
+		},
+	});
+
+	const callArgs = mockFetch.mock.calls[0]?.[1] as RequestInit;
+
+	expect(callArgs.credentials).toBe("include");
+	expect(callArgs.mode).toBe("cors");
+	expect(callArgs.referrerPolicy).toBeUndefined();
+});

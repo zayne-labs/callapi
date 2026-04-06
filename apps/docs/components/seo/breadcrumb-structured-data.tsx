@@ -26,7 +26,7 @@ export function BreadcrumbStructuredData(props: BreadcrumbStructuredDataProps) {
 	return (
 		<script
 			type="application/ld+json"
-			// eslint-disable-next-line react-dom/no-dangerously-set-innerhtml
+			// eslint-disable-next-line react/dom-no-dangerously-set-innerhtml
 			dangerouslySetInnerHTML={{
 				__html: JSON.stringify(structuredData),
 			}}

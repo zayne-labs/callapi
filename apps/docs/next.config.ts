@@ -1,12 +1,7 @@
-import { fileURLToPath } from "node:url";
 import { createMDX } from "fumadocs-mdx/next";
 import type { NextConfig } from "next";
 
 const withMDX = createMDX();
-
-const getRoot = (rootPath = "/") => fileURLToPath(new URL(rootPath, import.meta.url));
-
-const isDevMode = process.env.NODE_ENV !== "production";
 
 const config: NextConfig = {
 	devIndicators: {
@@ -31,10 +26,6 @@ const config: NextConfig = {
 	},
 
 	serverExternalPackages: ["typescript", "twoslash", "shiki", "@takumi-rs/image-response"],
-
-	...(isDevMode && {
-		outputFileTracingRoot: getRoot(),
-	}),
 
 	typescript: {
 		ignoreBuildErrors: true,

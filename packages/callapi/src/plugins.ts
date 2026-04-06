@@ -172,7 +172,7 @@ export const initializePlugins = async (setupContext: PluginSetupContext) => {
 		}
 
 		if (initResult.request) {
-			Object.assign(resolvedRequest, initResult.request);
+			Object.assign(resolvedRequest, initResult.request, initResult.request.extraFetchOptions);
 		}
 
 		if (initResult.options) {

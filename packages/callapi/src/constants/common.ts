@@ -17,4 +17,5 @@ export const fetchSpecificKeys = defineEnum([
 	"priority",
 	"mode",
 	"referrerPolicy",
+	"extraFetchOptions",
 ] satisfies Array<keyof ModifiedRequestInit> as Array<keyof ModifiedRequestInit>);

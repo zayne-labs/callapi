@@ -1,4 +1,5 @@
-/* eslint-disable ts-eslint/no-unused-vars -- allow */
+/* eslint-disable ts-eslint/no-unused-vars -- Allow */
+
 // Test file to verify the InferParamsFromRoute type works with mixed patterns
 import type { InferParamsFromRoute } from "./conditional-types";
 

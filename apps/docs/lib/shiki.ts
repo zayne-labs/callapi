@@ -5,7 +5,7 @@ type ShikiOptions = CodeOptionsThemes<BundledTheme> & Omit<CodeToHastOptionsComm
 
 export const shikiOptions = defineEnumDeep({
 	themes: {
-		dark: "material-theme-darker",
-		light: "material-theme-lighter",
+		dark: "dark-plus",
+		light: "light-plus",
 	},
 }) satisfies ShikiOptions;

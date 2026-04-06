@@ -162,18 +162,14 @@ import { createFetchClient } from "@zayne-labs/callapi";
 const api = createFetchClient({
 	baseURL: "https://api.example.com",
 
-	// 1. Always use a fresh token retrieval function
 	auth: () => getAccessToken(),
 
-	// 2. Refresh on failure and retry
 	onResponseError: async ({ response, options }) => {
 		if (response.status === 401) {
-			// Refresh session logic
 			const newToken = await refreshToken();
 
 			localStorage.setItem("token", newToken);
 
-			// Retry request with new token
 			options.refetch();
 		}
 	},
