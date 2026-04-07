@@ -3,21 +3,16 @@ import type { AnyString, UnmaskType } from "./types/type-helpers";
 import { isArray } from "./utils/guards";
 import { routeKeyMethods, type RouteKeyMethodsURLUnion } from "./validation";
 
-export const slash = "/";
-const colon = ":";
-const openBrace = "{";
-const closeBrace = "}";
-
 const handleArrayParams = (url: string, params: Extract<CallApiExtraOptions["params"], unknown[]>) => {
 	let newUrl = url;
 
-	const urlParts = newUrl.split(slash);
+	const urlParts = newUrl.split("/");
 
 	// == Find all parameters in order (both :param and {param} patterns)
 	const matchedParamsArray: string[] = [];
 
 	for (const part of urlParts) {
-		const isMatch = part.startsWith(colon) || (part.startsWith(openBrace) && part.endsWith(closeBrace));
+		const isMatch = part.startsWith(":") || (part.startsWith("{") && part.endsWith("}"));
 
 		if (!isMatch) continue;
 
@@ -40,8 +35,8 @@ const handleObjectParams = (
 
 	for (const [paramKey, paramValue] of Object.entries(params)) {
 		// == Replace both :param and {param} patterns
-		const colonPattern = `${colon}${paramKey}` as const;
-		const bracePattern = `${openBrace}${paramKey}${closeBrace}` as const;
+		const colonPattern = `:${paramKey}` as const;
+		const bracePattern = `{${paramKey}}` as const;
 
 		const stringValue = String(paramValue);
 
@@ -62,8 +57,6 @@ const mergeUrlWithParams = (url: string, params: CallApiExtraOptions["params"]) 
 	return newUrl;
 };
 
-const questionMark = "?";
-const ampersand = "&";
 const mergeUrlWithQuery = (url: string, query: CallApiExtraOptions["query"]): string => {
 	if (!query) {
 		return url;
@@ -75,15 +68,15 @@ const mergeUrlWithQuery = (url: string, query: CallApiExtraOptions["query"]): st
 		return url;
 	}
 
-	if (url.endsWith(questionMark)) {
+	if (url.endsWith("?")) {
 		return `${url}${queryString}`;
 	}
 
-	if (url.includes(questionMark)) {
-		return `${url}${ampersand}${queryString}`;
+	if (url.includes("?")) {
+		return `${url}&${queryString}`;
 	}
 
-	return `${url}${questionMark}${queryString}`;
+	return `${url}?${queryString}`;
 };
 
 /**
@@ -105,9 +98,7 @@ const mergeUrlWithQuery = (url: string, query: CallApiExtraOptions["query"]): st
 export const extractMethodFromURL = (initURL: string | undefined) => {
 	if (!initURL?.startsWith("@")) return;
 
-	const methodFromURL = routeKeyMethods.find((method) =>
-		initURL.startsWith(`${atSymbol}${method}${slash}`)
-	);
+	const methodFromURL = routeKeyMethods.find((method) => initURL.startsWith(`@${method}/`));
 
 	if (!methodFromURL) return;
 
@@ -132,8 +123,8 @@ export const normalizeURL = (initURL: string, options: NormalizeURLOptions = {})
 
 	const normalizedURL =
 		retainLeadingSlashForRelativeURLs && !initURL.includes("http") ?
-			initURL.replace(`${atSymbol}${methodFromURL}`, "")
-		:	initURL.replace(`${atSymbol}${methodFromURL}${slash}`, "");
+			initURL.replace(`@${methodFromURL}`, "")
+		:	initURL.replace(`@${methodFromURL}/`, "");
 
 	return normalizedURL;
 };
@@ -154,9 +145,9 @@ const getFullURL = (initURL: string, baseURL: string | undefined) => {
 		return initURL;
 	}
 
-	const shouldAddSlash = initURL.length > 0 && !initURL.startsWith(slash) && !baseURL.endsWith(slash);
+	const shouldAddSlash = initURL.length > 0 && !initURL.startsWith("/") && !baseURL.endsWith("/");
 
-	return shouldAddSlash ? `${baseURL}${slash}${initURL}` : `${baseURL}${initURL}`;
+	return shouldAddSlash ? `${baseURL}/${initURL}` : `${baseURL}${initURL}`;
 };
 
 export const getFullAndNormalizedURL = (options: GetFullURLOptions) => {

@@ -67,6 +67,11 @@ type FetchSpecificKeysUnion = Exclude<(typeof fetchSpecificKeys)[number], "body"
 
 export type ModifiedRequestInit = RequestInit & {
 	duplex?: "half";
+	/**
+	 * Custom fetch options that are merged into the final request configuration.
+	 *
+	 * This property is intended for environment-specific extensions not included in the standard web `RequestInit` type, such as `dispatcher` for Undici/Node.js or the `next` object for Next.js extended fetch.
+	 */
 	extraFetchOptions?: RequestInit;
 };
 
@@ -87,7 +92,7 @@ export type CallApiRequestOptions = {
 	// eslint-disable-next-line perfectionist/sort-intersection-types -- Allow
 } & Pick<ModifiedRequestInit, FetchSpecificKeysUnion>;
 
-type SharedExtraOptions<
+export type SharedExtraOptions<
 	TCallApiContext extends CallApiContext = DefaultCallApiContext,
 	TData = DefaultDataType,
 	TErrorData = DefaultDataType,

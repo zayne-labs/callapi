@@ -13,9 +13,7 @@ import {
 	getMethod,
 	omitKeys,
 	pickKeys,
-	splitBaseConfig,
 	splitConfig,
-	toArray,
 	waitFor,
 } from "../../src/utils/common";
 import { objectifyHeaders } from "../../src/utils/external";
@@ -30,15 +28,11 @@ test("Keys utils  - pickKeys picks specified keys from object", () => {
 	expect(pickKeys(obj, ["a", "c"])).toEqual({ a: 1, c: 3 });
 });
 
-test("Config utils- splitConfig and splitBaseConfig correctly separate fetch options from extra options", () => {
+test("Config utils - splitConfig correctly separate fetch options from extra options", () => {
 	const config = { method: "POST", baseURL: "https://api.com", retry: { attempts: 3 } };
 	const [fetchOpts, extraOpts] = splitConfig(config as never);
 	expect(fetchOpts).toEqual({ method: "POST" });
 	expect(extraOpts).toEqual({ baseURL: "https://api.com", retry: { attempts: 3 } });
-
-	const [baseFetch, baseExtra] = splitBaseConfig(config as never);
-	expect(baseFetch).toEqual({ method: "POST" });
-	expect(baseExtra).toEqual({ baseURL: "https://api.com", retry: { attempts: 3 } });
 });
 
 test("Header utils - objectifyHeaders converts Headers instance or arrays to plain object", () => {
@@ -117,9 +111,4 @@ test("Hash utils - deterministicHashFn creates consistent hashes", () => {
 	const obj1 = { a: 1, b: 2 };
 	const obj2 = { b: 2, a: 1 };
 	expect(deterministicHashFn(obj1)).toBe(deterministicHashFn(obj2));
-});
-
-test("Array utils - toArray wraps non-array values", () => {
-	expect(toArray("a")).toEqual(["a"]);
-	expect(toArray([1])).toEqual([1]);
 });
