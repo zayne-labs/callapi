@@ -205,18 +205,18 @@ export const createTimeoutSignal = (ms: number | undefined) => {
 };
 
 export const deterministicHashFn = (value: unknown): string => {
-	return JSON.stringify(value, (_, val: unknown) => {
-		if (!isPlainObject(val)) {
-			return val;
+	return JSON.stringify(value, (_, innerValue: unknown) => {
+		if (!isPlainObject(innerValue)) {
+			return innerValue;
 		}
-
-		// eslint-disable-next-line unicorn/no-array-sort -- Not necessary here
-		const sortedKeys = Object.keys(val).sort();
 
 		const result: Record<string, unknown> = {};
 
+		// eslint-disable-next-line unicorn/no-array-sort -- Not necessary here
+		const sortedKeys = Object.keys(innerValue).sort();
+
 		for (const key of sortedKeys) {
-			result[key] = val[key];
+			result[key] = innerValue[key];
 		}
 
 		return result;

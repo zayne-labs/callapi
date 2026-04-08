@@ -72,16 +72,6 @@ import {
 	type InferSchemaOutput,
 } from "./validation";
 
-const getTimeoutSignal =
-	"timeout" in AbortSignal ? createTimeoutSignal
-		// eslint-disable-next-line unicorn/prefer-top-level-await -- Ignore
-	: import("./utils/polyfills/timeoutSignal").then((module) => module.createTimeoutSignal);
-
-const getCombinedSignal =
-	"any" in AbortSignal ? createCombinedSignal
-		// eslint-disable-next-line unicorn/prefer-top-level-await -- Ignore
-	: import("./utils/polyfills/combinedSignal").then((module) => module.createCombinedSignal);
-
 const $GlobalRequestInfoCache: GlobalRequestInfoCache = new Map();
 
 export const createFetchClientWithContext = <
@@ -247,9 +237,9 @@ export const createFetchClientWithContext = <
 
 			const newFetchController = new AbortController();
 
-			const timeoutSignal = (await getTimeoutSignal)(options.timeout);
+			const timeoutSignal = createTimeoutSignal(options.timeout);
 
-			const combinedSignal = (await getCombinedSignal)(
+			const combinedSignal = createCombinedSignal(
 				timeoutSignal,
 				resolvedRequest.signal,
 				newFetchController.signal
