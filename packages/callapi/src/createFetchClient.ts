@@ -26,6 +26,7 @@ import {
 import { createRetryManager } from "./retry";
 import type {
 	BaseCallApiConfig,
+	BaseCallApiExtraOptions,
 	CallApiConfig,
 	CallApiContext,
 	CallApiExtraOptions,
@@ -55,7 +56,6 @@ import {
 	getHeaders,
 	getMethod,
 	getResolvedHeaders,
-	splitBaseConfig,
 	splitConfig,
 } from "./utils/common";
 import { HTTPError } from "./utils/external/error";
@@ -71,6 +71,16 @@ import {
 	type CallApiSchemaConfig,
 	type InferSchemaOutput,
 } from "./validation";
+
+const getTimeoutSignal =
+	"timeout" in AbortSignal ? createTimeoutSignal
+		// eslint-disable-next-line unicorn/prefer-top-level-await -- Ignore
+	: import("./utils/polyfills/timeoutSignal").then((module) => module.createTimeoutSignal);
+
+const getCombinedSignal =
+	"any" in AbortSignal ? createCombinedSignal
+		// eslint-disable-next-line unicorn/prefer-top-level-await -- Ignore
+	: import("./utils/polyfills/combinedSignal").then((module) => module.createCombinedSignal);
 
 const $GlobalRequestInfoCache: GlobalRequestInfoCache = new Map();
 
@@ -149,7 +159,7 @@ export const createFetchClientWithContext = <
 				TPluginArray
 			> = {} as never
 		): Promise<TComputedResult> => {
-			const [fetchOptions, extraOptions] = splitConfig(initConfig);
+			const [fetchOptions, extraOptions] = splitConfig<CallApiExtraOptions>(initConfig);
 
 			const resolvedBaseConfig =
 				isFunction(initBaseConfig) ?
@@ -163,7 +173,8 @@ export const createFetchClientWithContext = <
 			const baseConfig = resolvedBaseConfig as Exclude<BaseCallApiConfig, AnyFunction>;
 			const config = initConfig as CallApiConfig;
 
-			const [baseFetchOptions, baseExtraOptions] = splitBaseConfig(baseConfig);
+			// eslint-disable-next-line ts-eslint/no-unnecessary-type-arguments -- False Positive
+			const [baseFetchOptions, baseExtraOptions] = splitConfig<BaseCallApiExtraOptions>(baseConfig);
 
 			const shouldSkipAutoMergeForOptions =
 				baseExtraOptions.skipAutoMergeFor === "all" || baseExtraOptions.skipAutoMergeFor === "options";
@@ -217,7 +228,7 @@ export const createFetchClientWithContext = <
 				query: resolvedOptions.query,
 			});
 
-			const initOptions = {
+			const options = {
 				...resolvedOptions,
 				...resolvedHooks,
 				...resolvedMiddlewares,
@@ -226,22 +237,19 @@ export const createFetchClientWithContext = <
 				initURLNormalized: normalizedInitURL,
 			} satisfies CallApiExtraOptions;
 
-			const { refetch } = createRefetchManager({
+			const refetchFnResult = createRefetchManager({
 				callApi,
 				callApiArgs: { config, initURL },
-				options: initOptions,
+				options,
 			});
 
-			const options = {
-				...initOptions,
-				refetch,
-			} satisfies CallApiExtraOptionsForHooks;
+			Object.assign(options, refetchFnResult);
 
 			const newFetchController = new AbortController();
 
-			const timeoutSignal = createTimeoutSignal(options.timeout);
+			const timeoutSignal = (await getTimeoutSignal)(options.timeout);
 
-			const combinedSignal = createCombinedSignal(
+			const combinedSignal = (await getCombinedSignal)(
 				timeoutSignal,
 				resolvedRequest.signal,
 				newFetchController.signal

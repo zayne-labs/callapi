@@ -1,4 +1,4 @@
-import type { RefetchFn } from "./refetch";
+import type { RefetchFnOption } from "./refetch";
 import {
 	resolveErrorResult,
 	type CallApiResultErrorVariant,
@@ -30,10 +30,7 @@ export type CallApiRequestOptionsForHooks = Omit<CallApiRequestOptions, "headers
 };
 
 export type CallApiExtraOptionsForHooks<TCallApiContext extends CallApiContext = DefaultCallApiContext> =
-	Hooks
-		& Omit<CallApiExtraOptions<TCallApiContext>, keyof Hooks> & {
-			refetch: RefetchFn;
-		};
+	Hooks & Omit<CallApiExtraOptions<TCallApiContext>, keyof Hooks> & RefetchFnOption;
 
 export interface Hooks<TCallApiContext extends CallApiContext = DefaultCallApiContext> {
 	/**

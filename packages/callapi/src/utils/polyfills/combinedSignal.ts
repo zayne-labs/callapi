@@ -1,4 +1,4 @@
-export const createCombinedSignalPolyfill = (signals: AbortSignal[]) => {
+export const createCombinedSignal = (...signals: Array<AbortSignal | null | undefined>) => {
 	const controller = new AbortController();
 
 	const handleAbort = (actualSignal: AbortSignal) => {
@@ -8,6 +8,8 @@ export const createCombinedSignalPolyfill = (signals: AbortSignal[]) => {
 	};
 
 	for (const actualSignal of signals) {
+		if (actualSignal == null) continue;
+
 		if (actualSignal.aborted) {
 			handleAbort(actualSignal);
 			break;

@@ -27,8 +27,6 @@
 		"...utilities",
 
 		"---API Reference---",
-		"extra-options",
-		"base-extra-options",
-		"request-options"
+		"...api-reference"
 	]
 }

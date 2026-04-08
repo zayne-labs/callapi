@@ -24,9 +24,8 @@ import {
 	type Params,
 	type Query,
 } from "./url";
-import { toArray } from "./utils/common";
 import { ValidationError } from "./utils/external/error";
-import { isFunction, isObject } from "./utils/guards";
+import { isArray, isFunction, isObject } from "./utils/guards";
 
 type ResultVariant = "infer-input" | "infer-output";
 
@@ -58,7 +57,7 @@ const handleValidatorFunction = <TInput>(
 ): Promise<StandardSchemaV1.Result<TInput>> => {
 	const result = new Promise((resolve) => resolve(validator(inputData as never)))
 		.then((value) => ({ issues: undefined, value: value as never }))
-		.catch((error) => ({ issues: toArray(error) as never, value: undefined }));
+		.catch((error) => ({ issues: (isArray(error) ? error : [error]) as never, value: undefined }));
 
 	return result;
 };

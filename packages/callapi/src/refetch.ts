@@ -38,17 +38,21 @@ export type RefetchFn = (
 	overrides?: Pick<RefetchOptions, "refetchAttempts">
 ) => Promise<CallApiResultLoose<unknown, unknown> | null>;
 
+export interface RefetchFnOption {
+	refetch: RefetchFn;
+}
+
 export const createRefetchManager = <TCallApi extends CallApiImpl>(ctx: {
 	callApi: TCallApi;
 	callApiArgs: { config: CallApiConfig; initURL: InitURLOrURLObject };
 	options: CallApiExtraOptions;
-}) => {
+}): RefetchFnOption => {
 	const { callApi, callApiArgs, options } = ctx;
 
 	// eslint-disable-next-line ts-eslint/no-deprecated -- Allowed for internal use
 	const currentRefetchCount = options["~refetchCount"] ?? 1;
 
-	const refetch: RefetchFn = async (refetchOptionOverrides) => {
+	const refetch: RefetchFnOption["refetch"] = async (refetchOptionOverrides) => {
 		const maxRefetchAttempts =
 			refetchOptionOverrides?.refetchAttempts
 			?? options.refetchAttempts

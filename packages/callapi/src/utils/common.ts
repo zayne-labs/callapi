@@ -3,14 +3,13 @@ import { fetchSpecificKeys } from "../constants/common";
 import { extraOptionDefaults, requestOptionDefaults } from "../constants/defaults";
 import type { RequestContext } from "../hooks";
 import type { Middlewares } from "../middlewares";
-import type { BaseCallApiExtraOptions, CallApiExtraOptions, CallApiRequestOptions } from "../types/common";
+import type { CallApiExtraOptions, CallApiRequestOptions, SharedExtraOptions } from "../types/common";
 import type { InferHeadersOption } from "../types/conditional-types";
 import type { DistributiveOmit } from "../types/type-helpers";
 import { extractMethodFromURL } from "../url";
 import type { CallApiSchema } from "../validation";
 import { objectifyHeaders } from "./external";
 import {
-	isArray,
 	isFunction,
 	isPlainObject,
 	isQueryString,
@@ -27,10 +26,8 @@ export const omitKeys = <
 ) => {
 	const updatedObject = {} as Record<string, unknown>;
 
-	const keysToOmitSet = new Set(keysToOmit);
-
 	for (const [key, value] of Object.entries(initialObject)) {
-		if (!keysToOmitSet.has(key)) {
+		if (!keysToOmit.includes(key)) {
 			updatedObject[key] = value;
 		}
 	}
@@ -47,10 +44,8 @@ export const pickKeys = <
 ) => {
 	const updatedObject = {} as Record<string, unknown>;
 
-	const keysToPickSet = new Set(keysToPick);
-
 	for (const [key, value] of Object.entries(initialObject)) {
-		if (keysToPickSet.has(key)) {
+		if (keysToPick.includes(key)) {
 			updatedObject[key] = value;
 		}
 	}
@@ -59,17 +54,10 @@ export const pickKeys = <
 };
 
 // eslint-disable-next-line ts-eslint/no-explicit-any -- Any is required here so that one can pass custom function type without type errors
-export const splitBaseConfig = (baseConfig: Record<string, any>) =>
-	[
-		pickKeys(baseConfig, fetchSpecificKeys) as CallApiRequestOptions,
-		omitKeys(baseConfig, fetchSpecificKeys) as BaseCallApiExtraOptions,
-	] as const;
-
-// eslint-disable-next-line ts-eslint/no-explicit-any -- Any is required here so that one can pass custom function type without type errors
-export const splitConfig = (config: Record<string, any>) =>
+export const splitConfig = <TExtraOptions extends SharedExtraOptions>(config: Record<string, any>) =>
 	[
 		pickKeys(config, fetchSpecificKeys) as CallApiRequestOptions,
-		omitKeys(config, fetchSpecificKeys) as CallApiExtraOptions,
+		omitKeys(config, fetchSpecificKeys) as TExtraOptions,
 	] as const;
 
 export type GetResolvedHeadersOptions = {
@@ -210,12 +198,10 @@ export const createCombinedSignal = (...signals: Array<AbortSignal | null | unde
 	return combinedSignal;
 };
 
-export const createTimeoutSignal = (milliseconds: number | null | undefined) => {
-	if (milliseconds == null) {
-		return null;
-	}
+export const createTimeoutSignal = (ms: number | undefined) => {
+	if (ms == null) return;
 
-	return AbortSignal.timeout(milliseconds);
+	return AbortSignal.timeout(ms);
 };
 
 export const deterministicHashFn = (value: unknown): string => {
@@ -236,5 +222,3 @@ export const deterministicHashFn = (value: unknown): string => {
 		return result;
 	});
 };
-
-export const toArray = (value: unknown) => (isArray(value) ? value : [value]);
