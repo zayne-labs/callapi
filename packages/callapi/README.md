@@ -177,7 +177,7 @@ await callApi("/search", { query: { q: "test" } });
 await callApi("@delete/users/123");
 ```
 
-And so many more
+And so much more
 
 See the [full documentation](https://zayne-labs-callapi.vercel.app/docs) for the full list of features.
 
@@ -206,7 +206,7 @@ const api = createFetchClient({
 
 ```html
 <script type="module">
-	import { callApi } from "https://esm.run/@zayne-labs/callapi";
+	import { callApi } from "https://esm.run/@zayne-labs/callapi@latest";
 </script>
 ```
 
