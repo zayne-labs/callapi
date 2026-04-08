@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.12.3
+
+### Patch Changes
+
+- 4777b99: feat(callapi): attempts at adding polyfills for .any and .timeout signals, while reducing bundle size from other opportunities
+
 ## 1.12.2
 
 ### Patch Changes
