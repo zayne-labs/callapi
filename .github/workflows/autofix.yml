@@ -19,7 +19,7 @@ jobs:
            uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
 
          - name: Setup pnpm
-           uses: pnpm/action-setup@v4
+           uses: pnpm/action-setup@v5
            with:
               version: 10.33.0
 
@@ -34,4 +34,4 @@ jobs:
               pnpm install --frozen-lockfile
               pnpm lint:format:root
 
-         - uses: autofix-ci/action@ff86a557419858bb967097bfc916833f5647fa8c
+         - uses: autofix-ci/action@7a166d7532b277f34e16238930461bf77f9d7ed8
