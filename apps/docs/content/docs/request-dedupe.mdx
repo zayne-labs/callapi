@@ -28,29 +28,43 @@ Configure deduplication globally during client creation or override it per reque
 
 Aborts the **previous** in-flight request and starts the new one. Best for search-as-you-type or rapid navigation where only the latest query is relevant.
 
-![Cancel Strategy Visualization](/media/cancel.webp)
-
 ```ts title="search.ts"
-// Typing "hello" rapidly:
-// "h", "he", "hel", "hell" are aborted. Only "hello" completes.
-const { data } = await callApi("/api/search", {
-	query: { q: "hello" },
-	dedupeStrategy: "cancel",
-});
+// Simulating a "search-as-you-type" feature.
+// We use a fixed dedupeKey so logical "searches" cancel each other regardless of the query string.
+const handleSearch = (query: string) => {
+	return callApi("/api/search", {
+		query: { q: query },
+		dedupeStrategy: "cancel",
+		dedupeKey: "site-search",
+	});
+};
+
+// Calling these in rapid succession:
+handleSearch("h");
+handleSearch("he");
+handleSearch("hel");
+const { data } = await handleSearch("hello");
+
+// Result: "h", "he", and "hel" are aborted. Only "hello" executes fully.
 ```
+
+![Cancel Strategy Visualization](/media/cancel.webp)
 
 ### 2. Defer Strategy
 
 Instead of starting a new fetch, the new call **waits** for the existing in-flight request and shares its promise. Ideal for loading initial config or data shared across multiple components.
 
-![Defer Strategy Visualization](/media/defer.svg)
-
 ```ts title="api.ts"
-// Multiple components calling this at the same time share one HTTP request.
-const { data } = await callApi("/api/app-config", {
-	dedupeStrategy: "defer",
-});
+// Parallel calls made at the same time will share a single underlying fetch.
+const [response1, response2] = await Promise.all([
+	callApi("/api/app-config", { dedupeStrategy: "defer" }),
+	callApi("/api/app-config", { dedupeStrategy: "defer" }),
+]);
+
+// Result: Only one network request is sent. Both calls receive the same response data.
 ```
+
+![Defer Strategy Visualization](/media/defer.svg)
 
 ### 3. None Strategy
 
@@ -65,11 +79,6 @@ const { data } = await callApi("/api/logs", {
 ## Custom Deduplication Key
 
 The default `dedupeKey` is generated from the **URL** plus a stable hash of the **Method**, **Body**, and **explicitly provided Headers**.
-
-<Callout type="warning">
-	Helpers like `auth` or automatic `Content-Type` detection are applied *after* the key is generated and
-	do not affect the default deduplication key.
-</Callout>
 
 ### Static Key
 
@@ -90,7 +99,6 @@ await callApi("/api/user/123", {
 	dedupeKey: (ctx) => {
 		const { method, fullURL } = ctx.options;
 
-		// Ignore headers/body, only deduplicate by URL and Method
 		return `${method}:${fullURL}`;
 	},
 });

@@ -30,9 +30,7 @@ export const getBaseOptions = () => {
 						className="size-4.5 rounded-[5px]"
 						aria-label="CallApi"
 					/>
-					<p className="text-[20px] font-medium tracking-tight text-fd-foreground in-[header]:text-[15px]">
-						CallApi
-					</p>
+					<p className="text-base font-medium tracking-tight in-[header]:text-[15px]">CallApi</p>
 				</div>
 			),
 

@@ -5,9 +5,9 @@ import type { InitURLOrURLObject } from "./url";
 
 export interface RefetchOptions {
 	/**
-	 * Tracks the number of times refetch has been called
+	 * Tracks the number of times the request has been refetched internally
 	 * @internal
-	 * @deprecated **NOTE**: This property is used internally to track refetch calls. Please abstain from modifying it.
+	 * @deprecated **WARNING**: This property is used internally to track refetch calls. Please abstain from reading or modifying it.
 	 */
 	readonly ["~refetchCount"]?: number;
 

@@ -151,10 +151,12 @@ export const createFetchClientWithContext = <
 		): Promise<TComputedResult> => {
 			const [fetchOptions, extraOptions] = splitConfig<CallApiExtraOptions>(initConfig);
 
+			const initURLString = initURL.toString();
+
 			const resolvedBaseConfig =
 				isFunction(initBaseConfig) ?
 					initBaseConfig({
-						initURL: initURL.toString(),
+						initURL: initURLString,
 						options: extraOptions,
 						request: fetchOptions,
 					})
@@ -163,7 +165,6 @@ export const createFetchClientWithContext = <
 			const baseConfig = resolvedBaseConfig as Exclude<BaseCallApiConfig, AnyFunction>;
 			const config = initConfig as CallApiConfig;
 
-			// eslint-disable-next-line ts-eslint/no-unnecessary-type-arguments -- False Positive
 			const [baseFetchOptions, baseExtraOptions] = splitConfig<BaseCallApiExtraOptions>(baseConfig);
 
 			const shouldSkipAutoMergeForOptions =
@@ -189,7 +190,7 @@ export const createFetchClientWithContext = <
 			const initURLResult = getCurrentRouteSchemaKeyAndMainInitURL({
 				baseExtraOptions: baseConfig,
 				extraOptions: config,
-				initURL: initURL.toString(),
+				initURL: initURLString,
 			});
 
 			const {

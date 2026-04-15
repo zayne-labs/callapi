@@ -32,9 +32,9 @@ type RetryCondition<TErrorData> = (context: ErrorContext<{ ErrorData: TErrorData
 
 export interface RetryOptions<TErrorData> {
 	/**
-	 * Keeps track of the number of times the request has already been retried
+	 * Keeps track of the number of times the request has already been retried internally
 	 * @internal
-	 * @deprecated **NOTE**: This property is used internally to track retries. Please abstain from modifying it.
+	 * @deprecated **WARNING**: This property is used internally to track retries. Please abstain from reading or modifying it.
 	 */
 	readonly ["~retryAttemptCount"]?: number;
 

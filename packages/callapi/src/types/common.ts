@@ -104,7 +104,6 @@ export type SharedExtraOptions<
 		InferPluginExtraOptions<TPluginArray>
 			& InferSchemaOutput<
 				TCallApiContext["InferredExtraOptions"],
-				// eslint-disable-next-line ts-eslint/no-unnecessary-type-arguments -- Ignore
 				TCallApiContext["InferredExtraOptions"]
 			>
 	>,
