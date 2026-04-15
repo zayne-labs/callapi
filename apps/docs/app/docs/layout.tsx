@@ -4,13 +4,13 @@ import { AISearchPanel, AISearchRoot, AISearchTrigger } from "@/components/ai/se
 import { BgPatternIcon } from "@/components/icons/BgPatternIcon";
 import { BreadcrumbStructuredData } from "@/components/seo/breadcrumb-structured-data";
 import { Button } from "@/components/ui/button";
-import { docsOptions } from "../../lib/layout.shared";
+import { getDocsOptions } from "../../lib/layout.shared";
 
 function Layout(props: LayoutProps<"/docs">) {
 	const { children } = props;
 
 	return (
-		<DocsLayout {...docsOptions()}>
+		<DocsLayout {...getDocsOptions()}>
 			<BreadcrumbStructuredData
 				items={[
 					{ name: "Home", url: "/" },

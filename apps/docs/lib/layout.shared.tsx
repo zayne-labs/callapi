@@ -15,11 +15,13 @@ import { packageName, packageScope, repoName, repoOwner } from "./github";
  * Shared layout configurations
  */
 
-export const baseOptions = () => {
+export const getBaseOptions = () => {
 	return {
+		githubUrl: `https://github.com/${repoOwner}/${repoName}`,
+
 		nav: {
 			title: (
-				<>
+				<div className="flex items-center gap-3">
 					<Image
 						alt="CallApi"
 						src={logo}
@@ -28,22 +30,26 @@ export const baseOptions = () => {
 						className="size-4.5 rounded-[5px]"
 						aria-label="CallApi"
 					/>
-					<p className="font-medium in-[header]:text-[15px]">CallApi</p>
-				</>
+					<p className="text-[20px] font-medium tracking-tight text-fd-foreground in-[header]:text-[15px]">
+						CallApi
+					</p>
+				</div>
 			),
-			transparentMode: "top",
+
 			url: "/docs",
 		},
 	} satisfies BaseLayoutProps;
 };
 
-export const docsOptions = () => {
+export const getDocsOptions = () => {
 	const npmDataPromise = callApi(`https://registry.npmjs.org/${packageScope}/${packageName}/latest`, {
 		extraFetchOptions: { next: { revalidate: 60 } },
 		schema: { data: z.object({ version: z.string() }) },
 	});
 
-	const descriptionPromise = npmDataPromise.then((result) => `v${result.data?.version ?? "*.*.*"}`);
+	const descriptionPromise = npmDataPromise.then((result) => `v${result.data?.version ?? "x.x.x"}`);
+
+	const baseOptions = getBaseOptions();
 
 	return {
 		links: [
@@ -68,7 +74,7 @@ export const docsOptions = () => {
 		],
 
 		nav: {
-			...baseOptions().nav,
+			...baseOptions.nav,
 			url: "/",
 		},
 
