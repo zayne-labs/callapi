@@ -22,7 +22,7 @@ function SonnerToaster(props: InferProps<typeof Sonner>) {
 
 					title: "group-[.toaster]:text-base group-[.toaster]:font-bold",
 
-					toast: "group toast p-5 mx-auto max-w-[280px] md:max-w-[300px]",
+					toast: "group toast mx-auto max-w-[280px] p-5 md:max-w-[300px]",
 				},
 			}}
 			{...props}
