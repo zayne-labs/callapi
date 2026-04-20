@@ -147,37 +147,37 @@ const stream = new ReadableStream({
 }).pipeThrough(new TextEncoderStream());
 
 const [result1, result2, result3, result4, result5, result6, result7] = await Promise.all([
-	callMainApi<{ price: number }>("/products/:id", {
-		onRequest: () => console.info("OnRequest - INSTANCE"),
-		params: { id: 1 },
-	}),
+	// callMainApi<{ price: number }>("/products/:id", {
+	// 	onRequest: () => console.info("OnRequest - INSTANCE"),
+	// 	params: { id: 1 },
+	// }),
 
-	callMainApi("/products/:id", {
-		params: [1],
-	}),
+	// callMainApi("/products/:id", {
+	// 	params: [1],
+	// }),
 
-	callMainApi("/products/:id", {
-		params: [1],
-	}),
+	// callMainApi("/products/:id", {
+	// 	params: [1],
+	// }),
 
-	callMainApi("/products/{id}", {
-		params: { id: 2 },
-	}),
+	// callMainApi("/products/{id}", {
+	// 	params: { id: 2 },
+	// }),
 
-	callMainApi("@delete/products/:id", {
-		params: {
-			id: "beans",
-		},
-	}),
+	// callMainApi("@delete/products/:id", {
+	// 	params: {
+	// 		id: "beans",
+	// 	},
+	// }),
 
 	callMainApi("/products/:id", {
 		body: stream,
+		method: "POST",
 		onRequestStream: (ctx) => console.info("OnRequestStream", { event: ctx.event }),
 		params: [1],
 	}),
 
 	callMainApi("https://api.github.com/repos/zayne-labs/ui/commits", {
-		onRequestStream: (ctx) => console.info("OnRequestStream", { event: ctx.event }),
 		onResponseStream: (ctx) => console.info("OnResponseStream", { event: ctx.event }),
 		query: { per_page: 50 },
 	}),

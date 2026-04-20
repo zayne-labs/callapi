@@ -4,13 +4,16 @@ import {
 	type RequestStreamContext,
 	type ResponseStreamContext,
 } from "./hooks";
-import { isReadableStream } from "./utils/guards";
+import type { Awaitable, DistributivePick } from "./types/type-helpers";
+import { isString } from "./utils/guards";
 
 export type StreamProgressEvent = {
 	/**
-	 * Current chunk of data being streamed
+	 * Current chunk of data being streamed.
+	 *
+	 * Will be `null` on the final completion tick (when progress reaches 100%).
 	 */
-	chunk: Uint8Array;
+	chunk: Uint8Array | null;
 	/**
 	 * Progress in percentage
 	 */
@@ -25,46 +28,126 @@ export type StreamProgressEvent = {
 	transferredBytes: number;
 };
 
-const createProgressEvent = (options: {
-	chunk: Uint8Array;
-	totalBytes: number;
-	transferredBytes: number;
-}): StreamProgressEvent => {
-	const { chunk, totalBytes, transferredBytes } = options;
+type CreateProgressEventOptions = Omit<StreamProgressEvent, "chunk" | "progress">
+	& (
+		| {
+				chunk: null;
+				isDone: true;
+		  }
+		| {
+				chunk: Uint8Array;
+				isDone?: false;
+		  }
+	);
+
+const createProgressEvent = (options: CreateProgressEventOptions): StreamProgressEvent => {
+	const { chunk, isDone, totalBytes, transferredBytes } = options;
+
+	let percentage = totalBytes === 0 ? 0 : transferredBytes / totalBytes;
+
+	// == Avoid reporting 100% progress before the stream is actually finished (in case totalBytes is inaccurate)
+	if (percentage >= 1) {
+		// == Epsilon is used here to get as close as possible to 100% without reaching it.
+		// == If we were to hardcode 0.99 here, the percentage could potentially go backwards.
+		percentage = 1 - Number.EPSILON;
+	}
+
+	const progress = (isDone ? 1 : percentage) * 100;
 
 	return {
 		chunk,
-		progress: Math.round((transferredBytes / totalBytes) * 100) || 0,
+		progress,
 		totalBytes,
 		transferredBytes,
 	};
 };
 
-const calculateTotalBytesFromBody = async (
-	requestBody: Request["body"] | null,
-	existingTotalBytes: number
-) => {
-	let totalBytes = existingTotalBytes;
+const textEncoder = new TextEncoder();
 
-	if (!requestBody) {
-		return totalBytes;
+const estimateBodySize = (body: RequestContext["request"]["body"]): number => {
+	if (!body) {
+		return 0;
 	}
 
-	for await (const chunk of requestBody) {
-		totalBytes += chunk.byteLength;
+	if (body instanceof ReadableStream) {
+		return 0;
 	}
 
-	return totalBytes;
+	if (body instanceof FormData) {
+		let size = 0;
+
+		for (const [key, value] of body) {
+			size += 40; // Size in bytes of a typical form boundary (e.g., '------WebKitFormBoundaryaxpyiPgbbPti10Rw'), used to help estimate upload size
+			size += textEncoder.encode(`Content-Disposition: form-data; name="${key}"`).byteLength;
+			size += isString(value) ? textEncoder.encode(value).byteLength : value.size;
+		}
+
+		return size;
+	}
+
+	if (body instanceof Blob) {
+		return body.size;
+	}
+
+	if (body instanceof ArrayBuffer || ArrayBuffer.isView(body)) {
+		return body.byteLength;
+	}
+
+	if (isString(body) || body instanceof URLSearchParams) {
+		return textEncoder.encode(String(body)).byteLength;
+	}
+
+	return 0;
+};
+
+const createTrackedStream = (streamOptions: {
+	initialTotalBytes: number;
+	onStream: (event: StreamProgressEvent) => Awaitable<void>;
+	streamBody: ReadableStream<Uint8Array<ArrayBuffer>>;
+}) => {
+	const { initialTotalBytes, onStream, streamBody } = streamOptions;
+
+	let totalBytes = initialTotalBytes;
+	let transferredBytes = 0;
+
+	const reportProgress = async (
+		progressOptions: DistributivePick<CreateProgressEventOptions, "chunk" | "isDone">
+	) => {
+		const { chunk, isDone } = progressOptions;
+
+		if (isDone) {
+			await onStream(createProgressEvent({ chunk: null, isDone: true, totalBytes, transferredBytes }));
+			return;
+		}
+
+		transferredBytes += chunk.byteLength;
+		totalBytes = Math.max(totalBytes, transferredBytes);
+
+		await onStream(createProgressEvent({ chunk, totalBytes, transferredBytes }));
+	};
+
+	return streamBody.pipeThrough(
+		new TransformStream({
+			flush: async () => {
+				await reportProgress({ chunk: null, isDone: true });
+			},
+			start: async () => {
+				await reportProgress({ chunk: new Uint8Array() });
+			},
+			transform: async (chunk, controller) => {
+				controller.enqueue(chunk);
+				await reportProgress({ chunk });
+			},
+		})
+	);
 };
 
 type ToStreamableRequestContext = RequestContext;
 
-export const toStreamableRequest = async (
-	context: ToStreamableRequestContext
-): Promise<Request | RequestInit> => {
+export const toStreamableRequest = (context: ToStreamableRequestContext): Request | RequestInit => {
 	const { baseConfig, config, options, request } = context;
 
-	if (!options.onRequestStream || !isReadableStream(request.body)) {
+	if (!options.onRequestStream || !request.body) {
 		return request as RequestInit;
 	}
 
@@ -75,103 +158,65 @@ export const toStreamableRequest = async (
 
 	const contentLength = requestInstance.headers.get("content-length");
 
-	let totalBytes = Number(contentLength ?? 0);
+	const initialTotalBytes =
+		contentLength ?
+			Math.max(0, Number(contentLength) || 0)
+		:	estimateBodySize(config.body ?? request.body);
 
-	// == If no content length is present, we read the total bytes from the body
-	if (!contentLength && options.forcefullyCalculateRequestStreamSize) {
-		totalBytes = await calculateTotalBytesFromBody(requestInstance.clone().body, totalBytes);
+	const streamBody = requestInstance.body;
+
+	if (!streamBody) {
+		return requestInstance;
 	}
 
-	let transferredBytes = 0;
+	const requestStreamContext = {
+		baseConfig,
+		config,
+		options,
+		request,
+		requestInstance,
+	} satisfies Omit<RequestStreamContext, "event">;
 
-	const stream = new ReadableStream({
-		start: async (controller) => {
-			const body = requestInstance.body;
-
-			if (!body) return;
-
-			const requestStreamContext = {
-				baseConfig,
-				config,
-				event: createProgressEvent({ chunk: new Uint8Array(), totalBytes, transferredBytes }),
-				options,
-				request,
-				requestInstance,
-			} satisfies RequestStreamContext;
-
-			await executeHooks(options.onRequestStream?.(requestStreamContext));
-
-			for await (const chunk of body) {
-				transferredBytes += chunk.byteLength;
-
-				totalBytes = Math.max(totalBytes, transferredBytes);
-
-				await executeHooks(
-					options.onRequestStream?.({
-						...requestStreamContext,
-						event: createProgressEvent({ chunk, totalBytes, transferredBytes }),
-					})
-				);
-
-				controller.enqueue(chunk);
-			}
-
-			controller.close();
+	const trackedStream = createTrackedStream({
+		initialTotalBytes,
+		onStream: async (event) => {
+			await executeHooks(options.onRequestStream?.({ ...requestStreamContext, event }));
 		},
+		streamBody,
 	});
 
-	return new Request(requestInstance, { body: stream, duplex: "half" } as RequestInit);
+	return new Request(requestInstance, { body: trackedStream, duplex: "half" } as RequestInit);
 };
 
-type StreamableResponseContext = RequestContext & { response: Response };
+type StreamableResponseContext = RequestContext & {
+	response: Response;
+};
 
 export const toStreamableResponse = (context: StreamableResponseContext): Response => {
 	const { baseConfig, config, options, request, response } = context;
 
-	if (!options.onResponseStream || !response.body) {
+	if (!options.onResponseStream || !response.body || response.status === 204) {
 		return response;
 	}
 
-	const contentLength = response.headers.get("content-length");
+	const initialTotalBytes = Math.max(0, Number(response.headers.get("content-length")) || 0);
 
-	let totalBytes = Number(contentLength ?? 0);
+	const streamBody = response.body;
 
-	let transferredBytes = 0;
+	const responseStreamContext = {
+		baseConfig,
+		config,
+		options,
+		request,
+		response,
+	} satisfies Omit<ResponseStreamContext, "event">;
 
-	const stream = new ReadableStream({
-		start: async (controller) => {
-			const body = response.body;
-
-			if (!body) return;
-
-			const responseStreamContext = {
-				baseConfig,
-				config,
-				event: createProgressEvent({ chunk: new Uint8Array(), totalBytes, transferredBytes }),
-				options,
-				request,
-				response,
-			} satisfies ResponseStreamContext;
-
-			await executeHooks(options.onResponseStream?.(responseStreamContext));
-
-			for await (const chunk of body) {
-				transferredBytes += chunk.byteLength;
-
-				totalBytes = Math.max(totalBytes, transferredBytes);
-
-				await executeHooks(
-					options.onResponseStream?.({
-						...responseStreamContext,
-						event: createProgressEvent({ chunk, totalBytes, transferredBytes }),
-					})
-				);
-
-				controller.enqueue(chunk);
-			}
-
-			controller.close();
+	const stream = createTrackedStream({
+		initialTotalBytes,
+		onStream: async (event) => {
+			await executeHooks(options.onResponseStream?.({ ...responseStreamContext, event }));
 		},
+		streamBody,
 	});
 
 	return new Response(stream, response);

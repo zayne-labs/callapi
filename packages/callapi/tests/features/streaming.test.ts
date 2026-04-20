@@ -42,16 +42,21 @@ test("onResponseStream - tracks download progress from ReadableStream response",
 		},
 	});
 
-	// Should have called hook for each chunk
-	expect(tracker.getCallCount()).toBeGreaterThanOrEqual(2);
+	// Should have called hook: 1 (start) + 2 (chunks) + 1 (flush) = 4 times
+	const events = tracker.getCalls().map((call) => call.args[1] as StreamProgressEvent);
+	expect(events).toHaveLength(4);
 
-	const lastCall = tracker.getLastCall();
-	// --- Response Streaming ---
-	const lastEvent = lastCall?.args[1] as StreamProgressEvent;
+	// --- Baseline (Start) ---
+	expect(events[0]?.transferredBytes).toBe(0);
+	expect(events[0]?.progress).toBe(0);
+	expect(events[0]?.chunk?.byteLength).toBe(0);
 
-	expect(lastEvent.transferredBytes).toBe(10);
-	expect(lastEvent.totalBytes).toBe(10);
-	expect(lastEvent.progress).toBe(100);
+	// --- Last Event (Completion) ---
+	const lastEvent = events[3];
+	expect(lastEvent?.chunk).toBeNull();
+	expect(lastEvent?.transferredBytes).toBe(10);
+	expect(lastEvent?.totalBytes).toBe(10);
+	expect(lastEvent?.progress).toBe(100);
 });
 
 test("onResponseStream - handles response without Content-Length", async () => {
@@ -75,13 +80,54 @@ test("onResponseStream - handles response without Content-Length", async () => {
 		},
 	});
 
-	expect(tracker.getCallCount()).toBeGreaterThan(0);
-	const lastEvent = tracker.getLastCall()?.args[1] as StreamProgressEvent;
+	const events = tracker.getCalls().map((call) => call.args[1] as StreamProgressEvent);
+	expect(events).toHaveLength(3); // Start, Data, Flush
 
 	// Total bytes updates to match transferred bytes if unknown content-length
-	// The implementation performs: totalBytes = Math.max(totalBytes, transferredBytes)
-	expect(lastEvent.totalBytes).toBe(4);
-	expect(lastEvent.transferredBytes).toBe(4);
+	const lastEvent = events[2];
+	expect(lastEvent?.totalBytes).toBe(4);
+	expect(lastEvent?.transferredBytes).toBe(4);
+	expect(lastEvent?.progress).toBe(100);
+});
+
+test("onResponseStream - progress never reaches 100% until completion (epsilon check)", async () => {
+	using mockFetch = createFetchMock();
+	const stream = new ReadableStream({
+		start(controller) {
+			// Enqueue all expected bytes but don't close yet
+			controller.enqueue(new TextEncoder().encode("1234"));
+			controller.close();
+		},
+	});
+
+	const response = new Response(stream, {
+		headers: { "Content-Length": "4" },
+	});
+
+	mockFetch.mockResolvedValue(response);
+
+	const tracker = createCallTracker();
+
+	await callApi("https://api.example.com/stream", {
+		onResponseStream: (context) => {
+			tracker.track("progress", context.event);
+		},
+	});
+
+	const events = tracker.getCalls().map((call) => call.args[1] as StreamProgressEvent);
+
+	// Event for "1234" chunk
+	const dataEvent = events[1];
+	expect(dataEvent?.transferredBytes).toBe(4);
+	expect(dataEvent?.totalBytes).toBe(4);
+	// Should be slightly less than 100 because isDone is false
+	expect(dataEvent?.progress).toBeLessThan(100);
+	expect(dataEvent?.progress).toBeCloseTo(100, 10);
+
+	// Completion event
+	const lastEvent = events[2];
+	expect(lastEvent?.progress).toBe(100);
+	expect(lastEvent?.chunk).toBeNull();
 });
 
 test("onRequestStream - tracks upload progress for ReadableStream body", async () => {
@@ -105,74 +151,22 @@ test("onRequestStream - tracks upload progress for ReadableStream body", async (
 	const tracker = createCallTracker();
 
 	await callApi("https://api.example.com/stream-up", {
-		method: "POST",
 		body: stream,
-		// We explicitly enable size calculation to test totalBytes logic
-		forcefullyCalculateRequestStreamSize: true,
-		onRequestStream: (context) => {
-			tracker.track("upload", context.event);
-		},
-	});
-
-	expect(tracker.getCallCount()).toBeGreaterThanOrEqual(2);
-
-	const lastCall = tracker.getLastCall();
-	const lastEvent = lastCall?.args[1] as StreamProgressEvent;
-
-	expect(lastEvent.transferredBytes).toBe(12);
-	expect(lastEvent.totalBytes).toBe(12);
-	expect(lastEvent.progress).toBe(100);
-});
-
-test("onRequestStream - ignores non-stream bodies", async () => {
-	using mockFetch = createFetchMock();
-	mockFetch.mockResolvedValue(new Response("ok"));
-
-	const tracker = createCallTracker();
-
-	await callApi("https://api.example.com/no-stream", {
 		method: "POST",
-		body: JSON.stringify({ a: 1 }),
 		onRequestStream: (context) => {
 			tracker.track("upload", context.event);
 		},
 	});
 
-	expect(tracker.getCallCount()).toBe(0);
-});
+	const events = tracker.getCalls().map((call) => call.args[1] as StreamProgressEvent);
+	expect(events).toHaveLength(4); // Start, Chunk1, Chunk2, Flush
 
-test("onRequestStream - handles upload without Content-Length (unknown size)", async () => {
-	using mockFetch = createFetchMock();
+	expect(events[0]?.progress).toBe(0);
 
-	mockFetch.mockImplementation(async (_url, options) => {
-		const init = options as RequestInit;
-		await consumeStreamBody(init.body);
-		return new Response("ok");
-	});
-
-	const stream = new ReadableStream({
-		start(controller) {
-			controller.enqueue(new TextEncoder().encode("chunk1")); // 6 bytes
-			controller.close();
-		},
-	});
-
-	const tracker = createCallTracker();
-
-	await callApi("https://api.example.com/stream-up-unknown", {
-		method: "POST",
-		body: stream,
-		forcefullyCalculateRequestStreamSize: false, // Default behavior
-		onRequestStream: (context) => {
-			tracker.track("upload", context.event);
-		},
-	});
-
-	const lastCall = tracker.getLastCall();
-	const lastEvent = lastCall?.args[1] as StreamProgressEvent;
-	expect(lastEvent.transferredBytes).toBe(6);
-	// When size is unknown, it updates total to match transferred
-	expect(lastEvent.totalBytes).toBe(6);
+	const lastEvent = events[3];
+	expect(lastEvent?.transferredBytes).toBe(12);
+	expect(lastEvent?.totalBytes).toBe(12);
+	expect(lastEvent?.progress).toBe(100);
 });
 
 test("onRequestStream - propagates stream errors", async () => {
@@ -199,19 +193,13 @@ test("onRequestStream - propagates stream errors", async () => {
 
 	await expect(
 		callApi("https://api.example.com/stream-error", {
-			method: "POST",
 			body: stream,
+			method: "POST",
 			onRequestStream: (context) => {
 				tracker.track("upload", context.event);
 			},
 		})
 	).resolves.toBeDefined();
-	// The error happens in the background stream reading inside fetch for many implementations, or throws.
-	// However, since we mock fetch and consume it, if the stream errors during read(), our mock catches it or it bubbles.
-	// In `toStreamableRequest`, we return a NEW Request with a transparent stream.
-	// If the source stream errors, the destination stream (consumed by fetch) should error.
 
-	// Actually, verifying exact error behavior depends heavily on the engine.
-	// But we can verify that WE started processing.
 	expect(tracker.getCallCount()).toBeGreaterThan(0);
 });
