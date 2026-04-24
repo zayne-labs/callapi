@@ -12,7 +12,11 @@
 		},
 		"build": {
 			"dependsOn": ["^build"],
-			"outputs": ["dist/**", "./next/**"]
+			"outputs": ["dist/**", "./next/**", "!.next/cache/**", ".vercel"]
+		},
+		"build:docs": {
+			"dependsOn": ["^build"],
+			"outputs": ["dist/**", "./next/**", "!.next/cache/**", ".vercel"]
 		},
 		"build:dev": {
 			"dependsOn": ["^build"],
