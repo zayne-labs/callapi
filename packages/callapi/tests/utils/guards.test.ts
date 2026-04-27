@@ -18,7 +18,6 @@ import {
 	isObject,
 	isPlainObject,
 	isQueryString,
-	isReadableStream,
 	isSerializableObject,
 	isString,
 	isValidJsonString,
@@ -150,11 +149,6 @@ test("Guard Primitives - isQueryString correctly identifies query strings", () =
 test("Guard Primitives - isString correctly identifies strings", () => {
 	expect(isString("")).toBe(true);
 	expect(isString(123)).toBe(false);
-});
-
-test("Guard Primitives - isReadableStream correctly identifies ReadableStream instances", () => {
-	expect(isReadableStream(new ReadableStream())).toBe(true);
-	expect(isReadableStream({})).toBe(false);
 });
 
 test("Guard Primitives - isJSONSerializable correctly identifies JSON serializable values", () => {

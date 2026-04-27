@@ -12,12 +12,10 @@
 		},
 		"build": {
 			"dependsOn": ["^build"],
-			"outputs": ["dist/**", "./next/**"]
+			"outputs": ["dist/**", ".next/**", "!.next/cache/**", ".vercel"]
 		},
-		"build:dev": {
-			"dependsOn": ["^build"],
-			"outputs": ["dist/**"]
-		},
+		"build:docs": {},
+		"build:dev": {},
 		"lint:format": {},
 		"lint:size": {},
 		"lint:publint": {},

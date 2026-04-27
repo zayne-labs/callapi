@@ -188,23 +188,24 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 		const shouldUsePromiseFromCache = prevRequestInfo && resolvedDedupeStrategy === "defer";
 
-		const streamableContext = {
+		const streamContext = {
 			baseConfig,
 			config,
 			options: localOptions,
 			request: localRequest,
 		} satisfies RequestContext;
 
-		const streamableRequest = await toStreamableRequest(streamableContext);
-
 		const responsePromise =
 			shouldUsePromiseFromCache ?
 				prevRequestInfo.responsePromise
-			:	fetchApi(localOptions.fullURL as NonNullable<typeof localOptions.fullURL>, streamableRequest);
+			:	fetchApi(
+					localOptions.fullURL as NonNullable<typeof localOptions.fullURL>,
+					toStreamableRequest(streamContext)
+				);
 
 		$RequestInfoCache?.set({ controller: newFetchController, responsePromise });
 
-		return toStreamableResponse({ ...streamableContext, response: await responsePromise });
+		return toStreamableResponse({ ...streamContext, response: await responsePromise });
 	};
 
 	const removeDedupeKeyFromCache = () => {

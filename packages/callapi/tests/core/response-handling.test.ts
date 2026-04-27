@@ -136,14 +136,11 @@ test("should handle custom response parser with complex transformation", async (
 			const headers = lines[0]?.split(",");
 			const data = lines.slice(1).map((line) => {
 				const values = line.split(",");
-				return headers?.reduce(
-					(obj, header, index) => {
-						// eslint-disable-next-line no-param-reassign -- Ignore
-						obj[header] = values[index] as string;
-						return obj;
-					},
-					{} as Record<string, string>
-				);
+				return headers?.reduce<Record<string, string>>((obj, header, index) => {
+					// eslint-disable-next-line no-param-reassign -- Ignore
+					obj[header] = values[index] as string;
+					return obj;
+				}, {});
 			});
 			return data;
 		},

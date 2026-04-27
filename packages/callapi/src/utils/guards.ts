@@ -72,18 +72,15 @@ export const isSerializableObject = (value: unknown) => {
 	);
 };
 
-export const isFunction = <TFunction extends AnyFunction>(value: unknown): value is TFunction =>
-	typeof value === "function";
+export const isFunction = <TFunction extends AnyFunction>(value: unknown): value is TFunction => {
+	return typeof value === "function";
+};
 
 export const isQueryString = (value: unknown): value is string => isString(value) && value.includes("=");
 
 export const isString = (value: unknown) => typeof value === "string";
 
 export const isPromise = (value: unknown) => value instanceof Promise;
-
-export const isReadableStream = (value: unknown): value is ReadableStream<unknown> => {
-	return value instanceof ReadableStream;
-};
 
 // https://github.com/unjs/ofetch/blob/main/src/utils.ts
 export const isJSONSerializable = (value: unknown) => {

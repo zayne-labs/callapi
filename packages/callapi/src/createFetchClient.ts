@@ -9,7 +9,6 @@ import {
 	type RequestContext,
 	type ResponseContext,
 	type SuccessContext,
-	type ValidationErrorContext,
 } from "./hooks";
 import { initializePlugins, type CallApiPlugin } from "./plugins";
 import { createRefetchManager } from "./refetch";
@@ -209,7 +208,7 @@ export const createFetchClientWithContext = <
 					...mergedRequestOptions,
 					headers: getResolvedHeaders({ baseHeaders: baseConfig.headers, headers: config.headers }),
 					method: getMethod({ initURL: initURLResult.initURL, method: mergedRequestOptions.method }),
-				} as CallApiRequestOptionsForHooks,
+				},
 			});
 
 			const { fullURL, normalizedInitURL } = getFullAndNormalizedURL({
@@ -428,7 +427,7 @@ export const createFetchClientWithContext = <
 					const hookError = await executeHooksInCatchBlock(
 						[
 							responseContext && options.onResponse?.(responseContext),
-							options.onValidationError?.(errorContext as ValidationErrorContext),
+							options.onValidationError?.(errorContext),
 							options.onError?.(errorContext),
 						],
 						hookInfo

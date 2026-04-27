@@ -172,12 +172,12 @@ const [result1, result2, result3, result4, result5, result6, result7] = await Pr
 
 	callMainApi("/products/:id", {
 		body: stream,
+		method: "POST",
 		onRequestStream: (ctx) => console.info("OnRequestStream", { event: ctx.event }),
 		params: [1],
 	}),
 
 	callMainApi("https://api.github.com/repos/zayne-labs/ui/commits", {
-		onRequestStream: (ctx) => console.info("OnRequestStream", { event: ctx.event }),
 		onResponseStream: (ctx) => console.info("OnResponseStream", { event: ctx.event }),
 		query: { per_page: 50 },
 	}),

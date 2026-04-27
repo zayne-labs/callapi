@@ -84,6 +84,9 @@ export type Satisfies<TActualType extends TExpectedTypeShape, TExpectedTypeShape
 export type DistributiveOmit<TObject, TKeysToOmit extends keyof TObject> =
 	TObject extends unknown ? Omit<TObject, TKeysToOmit> : never;
 
+export type DistributivePick<TObject, TKeysToPick extends keyof TObject> =
+	TObject extends unknown ? Pick<TObject, TKeysToPick> : never;
+
 type ErrorMessages<TType extends number | string | symbol = never> = Partial<
 	Record<"$all" | number | symbol | (AnyString | TType), unknown>
 > | null;

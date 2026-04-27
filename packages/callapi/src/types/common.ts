@@ -256,17 +256,6 @@ export type SharedExtraOptions<
 			| ((context: Pick<HTTPError<TErrorData>, "errorData" | "response">) => string);
 
 		/**
-		 * Forces calculation of total byte size from request body streams.
-		 *
-		 * Useful when the Content-Length header is missing or incorrect, and you need
-		 * accurate size information for progress tracking.
-		 *
-		 * @default false
-		 *
-		 */
-		forcefullyCalculateRequestStreamSize?: boolean;
-
-		/**
 		 * Optional metadata field for associating additional information with requests.
 		 *
 		 * Useful for logging, tracing, or handling specific cases in shared interceptors.
