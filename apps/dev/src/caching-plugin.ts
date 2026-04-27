@@ -60,7 +60,7 @@ export const cachingPlugin = (cacheConfig: CacheConfig) => {
 		id: "caching-plugin",
 		name: "Caching Plugin",
 
-		// eslint-disable-next-line perfectionist/sort-objects -- Ignore
+		// eslint-disable-next-line perfectionist/sort-objects, ts-eslint/no-unnecessary-type-assertion -- Ignore
 		defineExtraOptions: () => ({}) as CacheConfig,
 
 		middlewares: ({ options }: PluginSetupContext<{ InferredExtraOptions: CacheConfig }>) => {

@@ -242,7 +242,7 @@ export const handleSchemaValidation = async <
 
 	// == If resultMode is set to `fetchApi`, return the input value as is (which is going to be `null` in this)
 	if (resultMode === "fetchApi" && (schemaName === "data" || schemaName === "errorData")) {
-		return inputValue as never;
+		return inputValue;
 	}
 
 	const disableRuntimeValidationBooleanObject =
@@ -253,7 +253,7 @@ export const handleSchemaValidation = async <
 		|| disableRuntimeValidationBooleanObject[schemaName] === true;
 
 	if (shouldDisableRuntimeValidation) {
-		return inputValue as never;
+		return inputValue;
 	}
 
 	const validResult = await callApiSchemaParser(fullSchema, schemaName, { inputValue, response });
@@ -268,10 +268,10 @@ export const handleSchemaValidation = async <
 		|| disableResultApplicationBooleanObject[schemaName] === true;
 
 	if (shouldDisableResultApplication) {
-		return inputValue as never;
+		return inputValue;
 	}
 
-	return validResult as never;
+	return validResult;
 };
 
 type LastOf<TValue> =
