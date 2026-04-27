@@ -29,8 +29,6 @@ Configure deduplication globally during client creation or override it per reque
 Aborts the **previous** in-flight request and starts the new one. Best for search-as-you-type or rapid navigation where only the latest query is relevant.
 
 ```ts title="search.ts"
-// Simulating a "search-as-you-type" feature.
-// We use a fixed dedupeKey so logical "searches" cancel each other regardless of the query string.
 const handleSearch = (query: string) => {
 	return callApi("/api/search", {
 		query: { q: query },
@@ -39,11 +37,10 @@ const handleSearch = (query: string) => {
 	});
 };
 
-// Calling these in rapid succession:
 handleSearch("h");
 handleSearch("he");
 handleSearch("hel");
-const { data } = await handleSearch("hello");
+handleSearch("hello");
 
 // Result: "h", "he", and "hel" are aborted. Only "hello" executes fully.
 ```
@@ -55,7 +52,6 @@ const { data } = await handleSearch("hello");
 Instead of starting a new fetch, the new call **waits** for the existing in-flight request and shares its promise. Ideal for loading initial config or data shared across multiple components.
 
 ```ts title="api.ts"
-// Parallel calls made at the same time will share a single underlying fetch.
 const [response1, response2] = await Promise.all([
 	callApi("/api/app-config", { dedupeStrategy: "defer" }),
 	callApi("/api/app-config", { dedupeStrategy: "defer" }),
