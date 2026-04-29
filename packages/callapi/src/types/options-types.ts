@@ -220,6 +220,13 @@ export type SharedExtraOptions<
 		customFetchImpl?: FetchImpl;
 
 		/**
+		 * Enable debug mode for the request.
+		 *
+		 * @default true
+		 */
+		debugMode?: boolean;
+
+		/**
 		 * Default HTTP error message when server doesn't provide one.
 		 *
 		 * Can be a static string or a function that receives error context

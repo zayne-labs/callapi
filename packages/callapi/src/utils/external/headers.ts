@@ -1,4 +1,4 @@
-import type { CallApiRequestOptions } from "../../types/common";
+import type { CallApiRequestOptions } from "../../types/options-types";
 import { isPlainObject } from "../guards";
 
 export const objectifyHeaders = (headers: CallApiRequestOptions["headers"]) => {

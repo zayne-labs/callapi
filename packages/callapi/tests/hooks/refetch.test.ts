@@ -4,8 +4,8 @@
  */
 
 import { expect, test } from "vitest";
-import { callApi, createFetchClient } from "../../src/createFetchClient";
 import type { RefetchFn } from "../../src/refetch";
+import { callTestApi, createTestFetchClient } from "../test-setup/callapi-setup";
 import { createCallTracker, mockNetworkError } from "../test-setup/common";
 import {
 	createFetchMock,
@@ -21,7 +21,7 @@ test("Refetch - refetch function is available in onError hook", async () => {
 
 	let refetchFunction: RefetchFn | undefined;
 
-	const { error } = await callApi("/test", {
+	const { error } = await callTestApi("/test", {
 		onError: (context) => {
 			refetchFunction = context.options.refetch;
 		},
@@ -39,7 +39,7 @@ test("Refetch - refetch function is available in onResponseError hook", async ()
 
 	let refetchFunction: RefetchFn | undefined;
 
-	const { error } = await callApi("/test", {
+	const { error } = await callTestApi("/test", {
 		onResponseError: (context) => {
 			refetchFunction = context.options.refetch;
 		},
@@ -57,7 +57,7 @@ test("Refetch - refetch function is available in onRequestError hook", async () 
 
 	let refetchFunction: RefetchFn | undefined;
 
-	const { error } = await callApi("/test", {
+	const { error } = await callTestApi("/test", {
 		onRequestError: (context) => {
 			refetchFunction = context.options.refetch;
 		},
@@ -75,7 +75,7 @@ test("Refetch - refetch function is available in onValidationError hook", async 
 
 	let refetchFunction: RefetchFn | undefined;
 
-	const { error } = await callApi("/test", {
+	const { error } = await callTestApi("/test", {
 		onValidationError: (context) => {
 			refetchFunction = context.options.refetch;
 		},
@@ -106,7 +106,7 @@ test("Refetch - calling refetch retries the same request", async () => {
 
 	let refetchResult: Awaited<ReturnType<RefetchFn>> | undefined;
 
-	const { error } = await callApi("/test", {
+	const { error } = await callTestApi("/test", {
 		onResponseError: async (context) => {
 			tracker.track("error", context.response.status);
 			// Call refetch to retry
@@ -129,7 +129,7 @@ test("Refetch - refetch uses the same URL and options", async () => {
 		.mockResolvedValueOnce(createMockErrorResponse({ error: "Server error" }, 500))
 		.mockResolvedValueOnce(createMockResponse({ success: true }));
 
-	await callApi("/test-endpoint", {
+	await callTestApi("/test-endpoint", {
 		body: { key: "value" },
 		headers: { "X-Custom": "header" },
 		method: "POST",
@@ -154,7 +154,7 @@ test("Refetch - refetch can be called multiple times", async () => {
 
 	let refetchCount = 0;
 
-	const { error } = await callApi("/test", {
+	const { error } = await callTestApi("/test", {
 		onResponseError: async (context) => {
 			tracker.track("attempt", context.response.status);
 			refetchCount++;
@@ -180,7 +180,7 @@ test("Refetch - refetch works after network error", async () => {
 
 	let refetchResult: Awaited<ReturnType<RefetchFn>> | undefined;
 
-	const { error } = await callApi("/test", {
+	const { error } = await callTestApi("/test", {
 		onRequestError: async (context) => {
 			refetchResult = await context.options.refetch();
 		},
@@ -202,7 +202,7 @@ test("Refetch - refetch works after validation error", async () => {
 
 	let refetchResult: Awaited<ReturnType<RefetchFn>> | undefined;
 
-	const { error } = await callApi("/test", {
+	const { error } = await callTestApi("/test", {
 		onValidationError: async (context) => {
 			refetchResult = await context.options.refetch();
 		},
@@ -229,7 +229,7 @@ test("Refetch - refetch works with createFetchClient", async () => {
 		.mockResolvedValueOnce(createMockErrorResponse({ error: "Server error" }, 500))
 		.mockResolvedValueOnce(createMockResponse({ success: true }));
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
 		baseURL: "https://api.example.com",
 	});
 
@@ -254,7 +254,7 @@ test("Refetch - refetch preserves base client configuration", async () => {
 		.mockResolvedValueOnce(createMockErrorResponse({ error: "Unauthorized" }, 401))
 		.mockResolvedValueOnce(createMockResponse({ success: true }));
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
 		baseURL: "https://api.example.com",
 		headers: {
 			"X-Base-Header": "base-value",
@@ -283,7 +283,7 @@ test("Refetch - refetch returns result object with data and error", async () => 
 
 	let refetchResult: Awaited<ReturnType<RefetchFn>> | undefined;
 
-	await callApi("/test", {
+	await callTestApi("/test", {
 		onResponseError: async (context) => {
 			refetchResult = await context.options.refetch();
 		},
@@ -305,7 +305,7 @@ test("Refetch - refetch returns error if retry also fails", async () => {
 
 	let refetchResult: Awaited<ReturnType<RefetchFn>> | undefined;
 
-	await callApi("/test", {
+	await callTestApi("/test", {
 		onResponseError: async (context) => {
 			refetchResult = await context.options.refetch();
 		},
@@ -326,7 +326,7 @@ test("Refetch - refetch triggers hooks on retry", async () => {
 		.mockResolvedValueOnce(createMockErrorResponse({ error: "Server error" }, 500))
 		.mockResolvedValueOnce(createMockResponse({ success: true }));
 
-	await callApi("/test", {
+	await callTestApi("/test", {
 		onRequest: () => tracker.track("onRequest"),
 		onResponseError: async (context) => {
 			await context.options.refetch();
@@ -349,7 +349,7 @@ test("Refetch - refetch does not trigger onRetry hook", async () => {
 		.mockResolvedValueOnce(createMockErrorResponse({ error: "Server error" }, 500))
 		.mockResolvedValueOnce(createMockResponse({ success: true }));
 
-	await callApi("/test", {
+	await callTestApi("/test", {
 		onResponseError: async (context) => {
 			await context.options.refetch();
 		},
@@ -372,7 +372,7 @@ test("Refetch - refetch respects resultMode from original call", async () => {
 
 	let refetchResult: Awaited<ReturnType<RefetchFn>> | undefined;
 
-	await callApi("/test", {
+	await callTestApi("/test", {
 		onResponseError: async (context) => {
 			refetchResult = await context.options.refetch();
 		},
@@ -392,7 +392,7 @@ test("Refetch Edge cases - refetch can be stored and called later", async () => 
 
 	let refetchFunction: RefetchFn | undefined;
 
-	const { error } = await callApi("/test", {
+	const { error } = await callTestApi("/test", {
 		onResponseError: (context) => {
 			// Store refetch for later use
 			refetchFunction = context.options.refetch;
@@ -421,7 +421,7 @@ test("Refetch Edge cases - refetch works with throwOnError option", async () => 
 	let caughtError: unknown;
 
 	try {
-		await callApi("/test", {
+		await callTestApi("/test", {
 			onResponseError: async (context) => {
 				refetchResult = await context.options.refetch();
 			},
@@ -444,7 +444,7 @@ test("Refetch Edge cases - multiple error hooks can access refetch independently
 		.mockResolvedValueOnce(createMockErrorResponse({ error: "Server error" }, 500))
 		.mockResolvedValueOnce(createMockResponse({ success: true }));
 
-	await callApi("/test", {
+	await callTestApi("/test", {
 		hooksExecutionMode: "sequential",
 		onError: (context) => {
 			tracker.track("onError", typeof context.options.refetch);
@@ -472,7 +472,7 @@ test("Refetch Edge cases - refetch can be called from onRetry hook", async () =>
 		.mockResolvedValueOnce(createMockErrorResponse({ error: "Error 2" }, 500))
 		.mockResolvedValueOnce(createMockResponse({ success: true }));
 
-	await callApi("/test", {
+	await callTestApi("/test", {
 		onRetry: async (context) => {
 			tracker.track("retry", context.retryAttemptCount);
 

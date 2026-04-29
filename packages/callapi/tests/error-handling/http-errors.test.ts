@@ -4,9 +4,9 @@
  */
 
 import { expect, test, vi } from "vitest";
-import { callApi } from "../../src/createFetchClient";
 import { HTTPError } from "../../src/utils/external/error";
 import { expectErrorResult, expectHTTPError } from "../test-setup/assertions";
+import { callTestApi } from "../test-setup/callapi-setup";
 import {
 	createFetchMock,
 	createMockErrorResponse,
@@ -19,7 +19,7 @@ test("HTTPError is created with correct properties for 404 error", async () => {
 	using ignoredMockFetch = createFetchMock();
 	mockFetchError(mockHTTPError, 404);
 
-	const result = await callApi("/users/999", { resultMode: "all" });
+	const result = await callTestApi("/users/999", { resultMode: "all" });
 
 	expectErrorResult(result);
 	expectHTTPError(result.error.originalError, 404);
@@ -35,7 +35,7 @@ test("HTTPError is created with correct properties for 500 error", async () => {
 	using ignoredMockFetch = createFetchMock();
 	mockFetchError(mockServerError, 500);
 
-	const result = await callApi("/users", { resultMode: "all" });
+	const result = await callTestApi("/users", { resultMode: "all" });
 
 	expectErrorResult(result);
 	expectHTTPError(result.error.originalError, 500);
@@ -52,7 +52,7 @@ test("HTTPError uses custom error message from errorData when available", async 
 	const customError = { message: "Custom error message", code: "CUSTOM_ERROR" };
 	mockFetchError(customError, 422);
 
-	const result = await callApi("/users", { resultMode: "all" });
+	const result = await callTestApi("/users", { resultMode: "all" });
 
 	expectErrorResult(result);
 	expectHTTPError(result.error.originalError, 422, "Custom error message");
@@ -66,7 +66,7 @@ test("HTTPError uses default message when errorData has no message property", as
 	const errorWithoutMessage = { code: "NO_MESSAGE" };
 	mockFetchError(errorWithoutMessage, 400);
 
-	const result = await callApi("/users", { resultMode: "all" });
+	const result = await callTestApi("/users", { resultMode: "all" });
 
 	expectErrorResult(result);
 	expectHTTPError(result.error.originalError, 400);
@@ -80,7 +80,7 @@ test("HTTPError uses custom defaultHTTPErrorMessage function when provided", asy
 	using ignoredMockFetch = createFetchMock();
 	mockFetchError(mockError, 400);
 
-	const result = await callApi("/users", {
+	const result = await callTestApi("/users", {
 		defaultHTTPErrorMessage: ({ response, errorData }) =>
 			`Custom error for ${response.status}: ${(errorData as { code: string }).code}`,
 		resultMode: "all",
@@ -105,11 +105,11 @@ test("HTTPError.isError static method correctly identifies HTTPError instances",
 	expect(HTTPError.isError({})).toBe(false);
 });
 
-test("callApi handles errors in 'all' result mode correctly", async () => {
+test("callTestApi handles errors in 'all' result mode correctly", async () => {
 	using ignoredMockFetch = createFetchMock();
 	mockFetchError(mockError, 400);
 
-	const result = await callApi("/users", { resultMode: "all" });
+	const result = await callTestApi("/users", { resultMode: "all" });
 
 	expectErrorResult(result);
 	expect(result.data).toBeNull();
@@ -118,12 +118,12 @@ test("callApi handles errors in 'all' result mode correctly", async () => {
 	expectHTTPError(result.error.originalError, 400);
 });
 
-test("callApi throws errors in 'all' result mode when throwOnError is true", async () => {
+test("callTestApi throws errors in 'all' result mode when throwOnError is true", async () => {
 	using ignoredMockFetch = createFetchMock();
 	mockFetchError(mockError, 400);
 
 	try {
-		await callApi("/users", {
+		await callTestApi("/users", {
 			resultMode: "all",
 			throwOnError: true,
 		});
@@ -133,21 +133,21 @@ test("callApi throws errors in 'all' result mode when throwOnError is true", asy
 	}
 });
 
-test("callApi returns null in 'onlyData' result mode for errors", async () => {
+test("callTestApi returns null in 'onlyData' result mode for errors", async () => {
 	using ignoredMockFetch = createFetchMock();
 	mockFetchError(mockError, 400);
 
-	const result = await callApi("/users", { resultMode: "onlyData" });
+	const result = await callTestApi("/users", { resultMode: "onlyData" });
 
 	expect(result).toBeNull();
 });
 
-test("callApi throws errors in 'onlyData' result mode when throwOnError is true", async () => {
+test("callTestApi throws errors in 'onlyData' result mode when throwOnError is true", async () => {
 	using ignoredMockFetch = createFetchMock();
 	mockFetchError(mockError, 400);
 
 	try {
-		await callApi("/users", {
+		await callTestApi("/users", {
 			resultMode: "onlyData",
 			throwOnError: true,
 		});
@@ -157,11 +157,11 @@ test("callApi throws errors in 'onlyData' result mode when throwOnError is true"
 	}
 });
 
-test("callApi handles null error data correctly", async () => {
+test("callTestApi handles null error data correctly", async () => {
 	using ignoredMockFetch = createFetchMock();
 	mockFetchError(null, 400);
 
-	const result = await callApi("/users", { resultMode: "all" });
+	const result = await callTestApi("/users", { resultMode: "all" });
 
 	expectErrorResult(result);
 	expectHTTPError(result.error.originalError, 400);
@@ -170,7 +170,7 @@ test("callApi handles null error data correctly", async () => {
 	expect(httpError.errorData).toBeNull();
 });
 
-test("callApi handles very large error responses correctly", async () => {
+test("callTestApi handles very large error responses correctly", async () => {
 	using ignoredMockFetch = createFetchMock();
 	const largeError = {
 		message: "Large error",
@@ -179,7 +179,7 @@ test("callApi handles very large error responses correctly", async () => {
 
 	mockFetchError(largeError, 400);
 
-	const result = await callApi("/users", { resultMode: "all" });
+	const result = await callTestApi("/users", { resultMode: "all" });
 
 	expectErrorResult(result);
 	expectHTTPError(result.error.originalError, 400);
@@ -188,7 +188,7 @@ test("callApi handles very large error responses correctly", async () => {
 	expect(httpError.errorData).toEqual(largeError);
 });
 
-test("callApi handles response with circular reference in error data", async () => {
+test("callTestApi handles response with circular reference in error data", async () => {
 	using mockFetch = createFetchMock();
 	const response = new Response('{"message": "Circular error", "self": "[Circular]"}', {
 		status: 400,
@@ -197,13 +197,13 @@ test("callApi handles response with circular reference in error data", async () 
 
 	mockFetch.mockResolvedValue(response);
 
-	const result = await callApi("/users", { resultMode: "all" });
+	const result = await callTestApi("/users", { resultMode: "all" });
 
 	expectErrorResult(result);
 	expectHTTPError(result.error.originalError, 400);
 });
 
-test("callApi handles error with non-serializable properties", async () => {
+test("callTestApi handles error with non-serializable properties", async () => {
 	using ignoredMockFetch = createFetchMock();
 	const errorWithFunction = {
 		message: "Error with function",
@@ -213,13 +213,13 @@ test("callApi handles error with non-serializable properties", async () => {
 
 	mockFetchError(errorWithFunction, 400);
 
-	const result = await callApi("/users", { resultMode: "all" });
+	const result = await callTestApi("/users", { resultMode: "all" });
 
 	expectErrorResult(result);
 	expectHTTPError(result.error.originalError, 400);
 });
 
-test("callApi handles response with wrong content-type as HTTPError", async () => {
+test("callTestApi handles response with wrong content-type as HTTPError", async () => {
 	using mockFetch = createFetchMock();
 	const htmlResponse = new Response("<html><body>Error</body></html>", {
 		status: 500,
@@ -228,20 +228,20 @@ test("callApi handles response with wrong content-type as HTTPError", async () =
 
 	mockFetch.mockResolvedValue(htmlResponse);
 
-	const result = await callApi("/users", { resultMode: "all" });
+	const result = await callTestApi("/users", { resultMode: "all" });
 
 	expectErrorResult(result);
 	expect(result.error.name).toBe("HTTPError");
 	expectHTTPError(result.error.originalError, 500);
 });
 
-test("callApi provides complete error context to throwOnError function", async () => {
+test("callTestApi provides complete error context to throwOnError function", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchError(mockError, 400);
 
 	const throwOnErrorSpy = vi.fn().mockReturnValue(false);
 
-	await callApi("/users", {
+	await callTestApi("/users", {
 		baseURL: "https://api.example.com",
 		headers: { "X-Test": "value" },
 		resultMode: "all",
@@ -267,11 +267,11 @@ test("callApi provides complete error context to throwOnError function", async (
 	expect(headers).toEqual(expect.objectContaining({ "X-Test": "value" }));
 });
 
-test("callApi handles errors with custom error messages correctly", async () => {
+test("callTestApi handles errors with custom error messages correctly", async () => {
 	using ignoredMockFetch = createFetchMock();
 	mockFetchError(mockError, 400);
 
-	const result = await callApi("/users", {
+	const result = await callTestApi("/users", {
 		resultMode: "all",
 		throwOnError: false,
 	});

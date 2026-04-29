@@ -47,7 +47,7 @@ export type {
 	GetCallApiContextRequired,
 	InstanceContext,
 	Register,
-} from "./types/common";
+} from "./types/options-types";
 
 export type {
 	InferParamsFromRoute,

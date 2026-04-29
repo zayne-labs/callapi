@@ -1,5 +1,5 @@
 import type { CallApiPlugin } from "../../plugins";
-import type { BaseCallApiConfig, CallApiConfig } from "../../types/common";
+import type { BaseCallApiConfig, CallApiConfig } from "../../types/options-types";
 import type { AnyFunction, Satisfies, Writeable } from "../../types/type-helpers";
 import type {
 	BaseCallApiSchemaAndConfig,

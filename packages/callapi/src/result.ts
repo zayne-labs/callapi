@@ -1,7 +1,7 @@
 import { extraOptionDefaults } from "./constants/defaults";
-import type { CallApiExtraOptions } from "./types/common";
 import type { ThrowOnErrorBoolean } from "./types/conditional-types";
 import type { DefaultDataType, DefaultThrowOnError } from "./types/default-types";
+import type { CallApiExtraOptions } from "./types/options-types";
 import type {
 	AnyString,
 	Awaitable,

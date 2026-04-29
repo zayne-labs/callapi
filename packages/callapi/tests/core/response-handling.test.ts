@@ -6,8 +6,8 @@
  */
 
 import { expect, test } from "vitest";
-import { callApi } from "../../src/createFetchClient";
 import { expectSuccessResult } from "../test-setup/assertions";
+import { callTestApi } from "../test-setup/callapi-setup";
 import { createFetchMock, createMockResponse, mockFetchSuccess } from "../test-setup/fetch-mock";
 import { mockUser } from "../test-setup/fixtures";
 
@@ -19,7 +19,7 @@ test("should handle text response type", async () => {
 	});
 	mockFetch.mockResolvedValueOnce(textResponse);
 
-	const result = await callApi("https://api.example.com/text", {
+	const result = await callTestApi("https://api.example.com/text", {
 		responseType: "text",
 	});
 
@@ -41,7 +41,7 @@ test("should handle blob response type", async () => {
 	});
 	mockFetch.mockResolvedValueOnce(blobResponse);
 
-	const result = await callApi("https://api.example.com/file", {
+	const result = await callTestApi("https://api.example.com/file", {
 		responseType: "blob",
 	});
 
@@ -59,7 +59,7 @@ test("should handle json response type (default)", async () => {
 	using mockFetch = createFetchMock();
 	mockFetch.mockResolvedValueOnce(createMockResponse(mockUser));
 
-	const result = await callApi("https://api.example.com/user");
+	const result = await callTestApi("https://api.example.com/user");
 
 	expectSuccessResult(result);
 	expect(result.data).toEqual(mockUser);
@@ -80,7 +80,7 @@ test("should handle arrayBuffer response type", async () => {
 	});
 	mockFetch.mockResolvedValueOnce(arrayBufferResponse);
 
-	const result = await callApi("https://api.example.com/binary", {
+	const result = await callTestApi("https://api.example.com/binary", {
 		responseType: "arrayBuffer",
 	});
 
@@ -102,7 +102,7 @@ test("should handle custom response parser", async () => {
 	});
 	mockFetch.mockResolvedValueOnce(xmlResponse);
 
-	const result = await callApi("https://api.example.com/user.xml", {
+	const result = await callTestApi("https://api.example.com/user.xml", {
 		responseParser: (text) => ({ parsedXML: text }),
 	});
 
@@ -130,7 +130,7 @@ test("should handle custom response parser with complex transformation", async (
 	});
 	mockFetch.mockResolvedValueOnce(csvResponse);
 
-	const result = await callApi("https://api.example.com/users.csv", {
+	const result = await callTestApi("https://api.example.com/users.csv", {
 		responseParser: (text) => {
 			const lines = text.split("\n");
 			const headers = lines[0]?.split(",");
@@ -163,7 +163,7 @@ test("should handle custom body serializer for POST request", async () => {
 
 	const data = { email: "john@example.com", name: "John" };
 
-	await callApi("https://api.example.com/users", {
+	await callTestApi("https://api.example.com/users", {
 		body: data,
 		bodySerializer: (body) => `custom:${JSON.stringify(body)}`,
 		method: "POST",
@@ -183,7 +183,7 @@ test("should handle custom body serializer with XML format", async () => {
 
 	mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }, 201));
 
-	await callApi("https://api.example.com/users", {
+	await callTestApi("https://api.example.com/users", {
 		method: "POST",
 		body: { name: "John", email: "john@example.com" },
 		bodySerializer: (body) =>
@@ -208,7 +208,7 @@ test("should handle FormData body serialization", async () => {
 	formData.append("name", "John");
 	formData.append("email", "john@example.com");
 
-	await callApi("https://api.example.com/users", {
+	await callTestApi("https://api.example.com/users", {
 		body: formData,
 		method: "POST",
 	});
@@ -231,7 +231,7 @@ test("should handle URLSearchParams body serialization", async () => {
 	params.append("name", "John");
 	params.append("email", "john@example.com");
 
-	await callApi("https://api.example.com/users", {
+	await callTestApi("https://api.example.com/users", {
 		body: params,
 		method: "POST",
 	});
@@ -254,7 +254,7 @@ test("should handle response with no content (204)", async () => {
 	});
 	mockFetch.mockResolvedValueOnce(noContentResponse);
 
-	const result = await callApi("https://api.example.com/users/1", {
+	const result = await callTestApi("https://api.example.com/users/1", {
 		method: "DELETE",
 		responseType: "text", // Explicitly set to text to avoid JSON parsing
 	});
@@ -268,7 +268,7 @@ test("should handle response with empty JSON object", async () => {
 	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess({});
 
-	const result = await callApi("https://api.example.com/empty");
+	const result = await callTestApi("https://api.example.com/empty");
 
 	expectSuccessResult(result);
 	expect(result.data).toEqual({});
@@ -278,7 +278,7 @@ test("should handle response with null JSON value", async () => {
 	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(null);
 
-	const result = await callApi("https://api.example.com/null");
+	const result = await callTestApi("https://api.example.com/null");
 
 	expectSuccessResult(result);
 	expect(result.data).toBeNull();
@@ -288,7 +288,7 @@ test("should handle response with boolean JSON value", async () => {
 	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(true);
 
-	const result = await callApi("https://api.example.com/boolean");
+	const result = await callTestApi("https://api.example.com/boolean");
 
 	expectSuccessResult(result);
 	expect(result.data).toBe(true);
@@ -298,7 +298,7 @@ test("should handle response with number JSON value", async () => {
 	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(42);
 
-	const result = await callApi("https://api.example.com/number");
+	const result = await callTestApi("https://api.example.com/number");
 
 	expectSuccessResult(result);
 	expect(result.data).toBe(42);
@@ -308,7 +308,7 @@ test("should handle response with string JSON value", async () => {
 	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess("hello world");
 
-	const result = await callApi("https://api.example.com/string");
+	const result = await callTestApi("https://api.example.com/string");
 
 	expectSuccessResult(result);
 	expect(result.data).toBe("hello world");
@@ -319,7 +319,7 @@ test("should handle response with array JSON value", async () => {
 	const arrayData = [1, 2, 3, "test"];
 	mockFetchSuccess(arrayData);
 
-	const result = await callApi("https://api.example.com/array");
+	const result = await callTestApi("https://api.example.com/array");
 
 	expectSuccessResult(result);
 	expect(result.data).toEqual(arrayData);
@@ -334,7 +334,7 @@ test("should preserve response headers in result", async () => {
 	};
 	mockFetchSuccess(mockUser, 200, customHeaders);
 
-	const result = await callApi("https://api.example.com/user");
+	const result = await callTestApi("https://api.example.com/user");
 
 	expectSuccessResult(result);
 	expect(result.response.headers.get("X-Custom-Header")).toBe("custom-value");
@@ -345,7 +345,7 @@ test("should handle response with custom status code", async () => {
 	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser, 201);
 
-	const result = await callApi("https://api.example.com/users", {
+	const result = await callTestApi("https://api.example.com/users", {
 		method: "POST",
 		body: mockUser,
 	});

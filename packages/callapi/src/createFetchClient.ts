@@ -1,3 +1,4 @@
+import { extraOptionDefaults } from "./constants";
 import { createDedupeStrategy, type GlobalRequestInfoCache, type RequestInfoCache } from "./dedupe";
 import {
 	executeHooks,
@@ -10,7 +11,7 @@ import {
 	type ResponseContext,
 	type SuccessContext,
 } from "./hooks";
-import { initializePlugins, type CallApiPlugin } from "./plugins";
+import { initializePluginsAndHooks, type CallApiPlugin } from "./plugins";
 import { createRefetchManager } from "./refetch";
 import {
 	getCustomizedErrorResult,
@@ -24,17 +25,6 @@ import {
 } from "./result";
 import { createRetryManager } from "./retry";
 import type {
-	BaseCallApiConfig,
-	BaseCallApiExtraOptions,
-	CallApiConfig,
-	CallApiContext,
-	CallApiExtraOptions,
-	CallApiRequestOptions,
-	CallApiResult,
-	GetBaseSchemaConfig,
-	GetBaseSchemaRoutes,
-} from "./types/common";
-import type {
 	GetCurrentRouteSchema,
 	GetCurrentRouteSchemaKey,
 	InferInitURL,
@@ -45,6 +35,17 @@ import type {
 	DefaultPluginArray,
 	DefaultThrowOnError,
 } from "./types/default-types";
+import type {
+	BaseCallApiConfig,
+	BaseCallApiExtraOptions,
+	CallApiConfig,
+	CallApiContext,
+	CallApiExtraOptions,
+	CallApiRequestOptions,
+	CallApiResult,
+	GetBaseSchemaConfig,
+	GetBaseSchemaRoutes,
+} from "./types/options-types";
 import type { AnyFunction } from "./types/type-helpers";
 import { getFullAndNormalizedURL } from "./url";
 import {
@@ -199,7 +200,7 @@ export const createFetchClientWithContext = <
 				resolvedMiddlewares,
 				resolvedOptions,
 				resolvedRequest,
-			} = await initializePlugins({
+			} = await initializePluginsAndHooks({
 				baseConfig,
 				config,
 				...initURLResult,
@@ -213,6 +214,7 @@ export const createFetchClientWithContext = <
 
 			const { fullURL, normalizedInitURL } = getFullAndNormalizedURL({
 				baseURL: resolvedOptions.baseURL,
+				debugMode: resolvedOptions.debugMode ?? extraOptionDefaults.debugMode,
 				initURL: resolvedInitURL,
 				params: resolvedOptions.params,
 				query: resolvedOptions.query,
@@ -235,14 +237,14 @@ export const createFetchClientWithContext = <
 
 			Object.assign(options, refetchFnResult);
 
-			const newFetchController = new AbortController();
+			const newFetchController = options.dedupeStrategy === "none" ? null : new AbortController();
 
 			const timeoutSignal = createTimeoutSignal(options.timeout);
 
 			const combinedSignal = createCombinedSignal(
 				timeoutSignal,
 				resolvedRequest.signal,
-				newFetchController.signal
+				newFetchController?.signal
 			);
 
 			const request = {

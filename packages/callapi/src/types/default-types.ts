@@ -1,5 +1,5 @@
 import type { CallApiPlugin } from "../plugins";
-import type { CallApiContext, GlobalMeta, OverrideCallApiContext } from "./common";
+import type { CallApiContext, GlobalMeta, OverrideCallApiContext } from "./options-types";
 import type { Prettify } from "./type-helpers";
 
 export type DefaultDataType = unknown;

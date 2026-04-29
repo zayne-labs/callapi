@@ -3,8 +3,12 @@ import { fetchSpecificKeys } from "../constants/common";
 import { extraOptionDefaults, requestOptionDefaults } from "../constants/defaults";
 import type { RequestContext } from "../hooks";
 import type { Middlewares } from "../middlewares";
-import type { CallApiExtraOptions, CallApiRequestOptions, SharedExtraOptions } from "../types/common";
 import type { InferHeadersOption } from "../types/conditional-types";
+import type {
+	CallApiExtraOptions,
+	CallApiRequestOptions,
+	SharedExtraOptions,
+} from "../types/options-types";
 import type { DistributiveOmit } from "../types/type-helpers";
 import { extractMethodFromURL } from "../url";
 import type { CallApiSchema } from "../validation";

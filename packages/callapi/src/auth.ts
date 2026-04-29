@@ -1,6 +1,6 @@
 /* eslint-disable perfectionist/sort-object-types -- Avoid Sorting for now */
 
-import type { CallApiExtraOptions } from "./types/common";
+import type { CallApiExtraOptions } from "./types/options-types";
 import type { Awaitable } from "./types/type-helpers";
 import { isFunction, isObject, isPromise } from "./utils/guards";
 

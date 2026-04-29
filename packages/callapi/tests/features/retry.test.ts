@@ -4,7 +4,7 @@
  */
 
 import { expect, test, vi } from "vitest";
-import { createFetchClient } from "../../src/createFetchClient";
+import { createTestFetchClient } from "../test-setup/callapi-setup";
 import {
 	createFetchMock,
 	expectFetchCallCount,
@@ -18,7 +18,8 @@ test("Retry Conditions - uses custom retry condition correctly", async () => {
 
 	const retryCondition = vi.fn().mockResolvedValue(true);
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
+		debugMode: false,
 		retryAttempts: 2,
 		retryCondition,
 		retryStatusCodes: [500],
@@ -57,7 +58,8 @@ test("Retry Conditions - handles async retry conditions correctly", async () => 
 		return true;
 	});
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
+		debugMode: false,
 		retryAttempts: 1,
 		retryCondition,
 		retryStatusCodes: [500],
@@ -84,7 +86,8 @@ test("Retry Conditions - handles retry condition returning false", async () => {
 
 	const retryCondition = vi.fn().mockResolvedValue(false);
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
+		debugMode: false,
 		retryAttempts: 2,
 		retryCondition,
 		retryStatusCodes: [500],
@@ -109,7 +112,8 @@ test("Retry Conditions - tracks retry attempt count accurately in condition cont
 
 	const retryCondition = vi.fn().mockResolvedValue(true);
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
+		debugMode: false,
 		retryAttempts: 3,
 		retryCondition,
 		retryStatusCodes: [500],
@@ -144,7 +148,9 @@ test("Retry Filtering - retries on specified status codes", async () => {
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
 	const statusCodes = [500, 502, 503, 504];
-	const client = createFetchClient({
+
+	const client = createTestFetchClient({
+		debugMode: false,
 		retryAttempts: 1,
 		retryStatusCodes: statusCodes,
 	});
@@ -171,7 +177,8 @@ test("Retry Filtering - retries on any error status when retryStatusCodes is emp
 	using ignoredMockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
+		debugMode: false,
 		retryAttempts: 1,
 		retryStatusCodes: [],
 	});
@@ -195,7 +202,8 @@ test("Retry Filtering - respects allowed retry methods", async () => {
 	using ignoredMockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
+		debugMode: false,
 		retryAttempts: 1,
 		retryMethods: ["GET"],
 		retryStatusCodes: [500],
@@ -225,7 +233,8 @@ test("Retry Filtering - handles network errors with retries", async () => {
 	using mockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
+		debugMode: false,
 		retryAttempts: 1,
 		retryStatusCodes: [500],
 	});
@@ -247,7 +256,8 @@ test("Retry Filtering - respects maximum retry attempt limit", async () => {
 	using ignoredMockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
+		debugMode: false,
 		retryAttempts: 2,
 		retryStatusCodes: [500],
 	});
@@ -274,7 +284,8 @@ test("Retry Strategies - linear retry strategy retries with fixed delays", async
 	using ignoredMockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
+		debugMode: false,
 		retryAttempts: 3,
 		retryDelay: 1000,
 		retryStatusCodes: [500],
@@ -307,7 +318,8 @@ test("Retry Strategies - linear retry strategy uses custom delay function correc
 
 	const delayFn = vi.fn((attemptCount: number) => attemptCount * 500);
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
+		debugMode: false,
 		retryAttempts: 2,
 		retryDelay: delayFn,
 		retryStatusCodes: [500],
@@ -335,7 +347,8 @@ test("Retry Strategies - exponential retry strategy retries with backoff", async
 	using ignoredMockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
+		debugMode: false,
 		retryAttempts: 3,
 		retryDelay: 100,
 		retryMaxDelay: 10000,
@@ -366,7 +379,8 @@ test("Retry Strategies - exponential retry strategy respects maximum delay limit
 	using ignoredMockFetch = createFetchMock();
 	vi.useFakeTimers({ shouldAdvanceTime: true });
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
+		debugMode: false,
 		retryAttempts: 5,
 		retryDelay: 1000,
 		retryMaxDelay: 2000,

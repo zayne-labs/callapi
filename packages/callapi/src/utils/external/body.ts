@@ -1,4 +1,4 @@
-import type { CallApiRequestOptions } from "../../types/common";
+import type { CallApiRequestOptions } from "../../types/options-types";
 import { getValidatedValue, type CallApiSchemaType, type InferSchemaOutput } from "../../validation";
 import { isArray, isBlob, isObject, isString } from "../guards";
 import { ValidationError } from "./error";

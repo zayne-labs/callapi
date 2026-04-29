@@ -6,8 +6,8 @@ import {
 	type RetryContext,
 } from "./hooks";
 import type { CallApiResultErrorVariant } from "./result";
-import type { CallApiConfig, CallApiResultLoose } from "./types/common";
 import type { MethodUnion } from "./types/conditional-types";
+import type { CallApiConfig, CallApiResultLoose } from "./types/options-types";
 import { defineEnum, type AnyNumber, type Awaitable, type UnmaskType } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
 import { waitFor } from "./utils/common";

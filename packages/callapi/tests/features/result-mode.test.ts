@@ -4,9 +4,9 @@
  */
 
 import { expect, test, vi } from "vitest";
-import { callApi } from "../../src/createFetchClient";
 import { HTTPError } from "../../src/utils/external/error";
 import { expectErrorResult, expectSuccessResult } from "../test-setup/assertions";
+import { callTestApi } from "../test-setup/callapi-setup";
 import {
 	createFetchMock,
 	createMockErrorResponse,
@@ -20,7 +20,7 @@ test("ResultMode - resultMode 'all' returns data, error, and response for succes
 	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	const result = await callApi("https://api.example.com/users/1");
+	const result = await callTestApi("https://api.example.com/users/1");
 
 	expectSuccessResult(result);
 	expect(result.data).toEqual(mockUser);
@@ -32,7 +32,7 @@ test("ResultMode - resultMode 'onlyData' returns only data for success", async (
 	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	const result = await callApi("https://api.example.com/users/1", {
+	const result = await callTestApi("https://api.example.com/users/1", {
 		resultMode: "onlyData",
 	});
 
@@ -43,7 +43,7 @@ test("ResultMode - resultMode 'onlyResponse' returns only response for success",
 	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	const result = await callApi("https://api.example.com/users/1", {
+	const result = await callTestApi("https://api.example.com/users/1", {
 		resultMode: "onlyResponse",
 		cloneResponse: true,
 	});
@@ -58,7 +58,7 @@ test("ResultMode - resultMode 'fetchApi' returns raw response and skips internal
 	const response = createMockResponse(mockUser);
 	mockFetch.mockResolvedValue(response);
 
-	const result = await callApi("https://api.example.com/users/1", {
+	const result = await callTestApi("https://api.example.com/users/1", {
 		resultMode: "fetchApi",
 	});
 
@@ -71,7 +71,7 @@ test("ResultMode - resultMode 'fetchApi' has null data in hooks", async () => {
 	mockFetchSuccess(mockUser);
 	const onSuccess = vi.fn();
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		onSuccess,
 		resultMode: "fetchApi",
 	});
@@ -91,7 +91,7 @@ test("ResultMode - resultMode 'fetchApi' skips data and errorData schema validat
 	using mockFetch = createFetchMock();
 	mockFetch.mockResolvedValue(createMockResponse({ success: true }));
 
-	await callApi("https://api.example.com/data", {
+	await callTestApi("https://api.example.com/data", {
 		body: { foo: "bar" },
 		resultMode: "fetchApi",
 		schema: {
@@ -107,7 +107,7 @@ test("ResultMode - resultMode 'fetchApi' skips data and errorData schema validat
 
 	// Test with error response
 	mockFetch.mockResolvedValue(createMockResponse({ error: "failed" }, 400));
-	await callApi("https://api.example.com/error", {
+	await callTestApi("https://api.example.com/error", {
 		resultMode: "fetchApi",
 		schema: {
 			data: dataValidator,
@@ -122,7 +122,7 @@ test("ResultMode - resultMode 'withoutResponse' returns data and error without r
 	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	const result = await callApi("https://api.example.com/users/1", {
+	const result = await callTestApi("https://api.example.com/users/1", {
 		resultMode: "withoutResponse",
 	});
 
@@ -138,7 +138,7 @@ test("ResultMode - resultMode 'all' returns error structure for HTTP errors", as
 	using ignoredMockFetch = createFetchMock();
 	mockFetchError(mockHTTPError, 404);
 
-	const result = await callApi("https://api.example.com/users/999", {
+	const result = await callTestApi("https://api.example.com/users/999", {
 		resultMode: "all",
 	});
 
@@ -154,7 +154,7 @@ test("ResultMode - resultMode 'onlyData' returns null for HTTP errors", async ()
 	using ignoredMockFetch = createFetchMock();
 	mockFetchError(mockHTTPError, 404);
 
-	const result = await callApi("https://api.example.com/users/999", {
+	const result = await callTestApi("https://api.example.com/users/999", {
 		resultMode: "onlyData",
 	});
 
@@ -165,7 +165,7 @@ test("ResultMode - resultMode 'onlyResponse' returns response for HTTP errors", 
 	using ignoredMockFetch = createFetchMock();
 	mockFetchError(mockHTTPError, 404);
 
-	const result = await callApi("https://api.example.com/users/999", {
+	const result = await callTestApi("https://api.example.com/users/999", {
 		resultMode: "onlyResponse",
 	});
 
@@ -178,7 +178,7 @@ test("ResultMode - resultMode 'fetchApi' returns raw response for HTTP errors", 
 	const response = createMockErrorResponse(mockHTTPError, 404);
 	mockFetch.mockResolvedValue(response);
 
-	const result = await callApi("https://api.example.com/users/999", {
+	const result = await callTestApi("https://api.example.com/users/999", {
 		resultMode: "fetchApi",
 	});
 
@@ -190,7 +190,7 @@ test("ResultMode - resultMode 'withoutResponse' returns error without response",
 	using ignoredMockFetch = createFetchMock();
 	mockFetchError(mockHTTPError, 404);
 
-	const result = await callApi("https://api.example.com/users/999", {
+	const result = await callTestApi("https://api.example.com/users/999", {
 		resultMode: "withoutResponse",
 	});
 
@@ -209,7 +209,7 @@ test("ResultMode - resultMode 'all' with throwOnError true returns data structur
 	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	const result = await callApi("https://api.example.com/users/1", {
+	const result = await callTestApi("https://api.example.com/users/1", {
 		resultMode: "all",
 		throwOnError: true,
 	});
@@ -225,7 +225,7 @@ test("ResultMode - resultMode 'onlyData' with throwOnError true returns only dat
 	using ignoredMockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	const result = await callApi("https://api.example.com/users/1", {
+	const result = await callTestApi("https://api.example.com/users/1", {
 		resultMode: "onlyData",
 		throwOnError: true,
 	});
@@ -238,7 +238,7 @@ test("ResultMode - throwOnError true throws HTTPError instead of returning", asy
 	mockFetchError(mockHTTPError, 404);
 
 	await expect(
-		callApi("https://api.example.com/users/999", {
+		callTestApi("https://api.example.com/users/999", {
 			resultMode: "onlyData",
 			throwOnError: true,
 		})

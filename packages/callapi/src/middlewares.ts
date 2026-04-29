@@ -1,6 +1,6 @@
 import type { RequestContext } from "./hooks";
-import type { CallApiContext } from "./types/common";
 import type { DefaultCallApiContext } from "./types/default-types";
+import type { CallApiContext } from "./types/options-types";
 import type { Awaitable, UnmaskType } from "./types/type-helpers";
 
 export type FetchImpl = UnmaskType<

@@ -11,8 +11,8 @@ import {
 	getMiddlewareRegistriesAndKeys,
 	type Middlewares,
 } from "./middlewares";
-import type { CallApiContext, CallApiRequestOptions, OverrideCallApiContext } from "./types/common";
 import type { DefaultCallApiContext, DefaultDataType } from "./types/default-types";
+import type { CallApiContext, CallApiRequestOptions, OverrideCallApiContext } from "./types/options-types";
 import type { AnyFunction, Awaitable, UnionToIntersection } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
 import { isArray, isFunction, isString } from "./utils/guards";
@@ -134,7 +134,7 @@ export const getResolvedPlugins = (context: Pick<RequestContext, "baseConfig" | 
 	return resolvedPlugins;
 };
 
-export const initializePlugins = async (setupContext: PluginSetupContext) => {
+export const initializePluginsAndHooks = async (setupContext: PluginSetupContext) => {
 	const { baseConfig, config, currentRouteSchemaKey, mainInitURL, options, request } = setupContext;
 
 	const {
@@ -151,47 +151,49 @@ export const initializePlugins = async (setupContext: PluginSetupContext) => {
 	const resolvedOptions = options;
 	const resolvedRequest = request;
 
-	const executePluginSetupFn = async (pluginSetup: CallApiPlugin["setup"]) => {
-		if (!pluginSetup) return;
-
-		const initResult = await pluginSetup(setupContext);
-
-		if (!initResult) return;
-
-		const urlString = initResult.initURL?.toString();
-
-		if (isString(urlString)) {
-			const newURLResult = getCurrentRouteSchemaKeyAndMainInitURL({
-				baseExtraOptions: baseConfig,
-				extraOptions: config,
-				initURL: urlString,
-			});
-
-			resolvedCurrentRouteSchemaKey = newURLResult.currentRouteSchemaKey;
-			resolvedInitURL = newURLResult.mainInitURL;
-		}
-
-		if (initResult.request) {
-			Object.assign(resolvedRequest, initResult.request, initResult.request.extraFetchOptions);
-		}
-
-		if (initResult.options) {
-			Object.assign(resolvedOptions, initResult.options);
-		}
-	};
-
 	const resolvedPlugins = getResolvedPlugins({ baseConfig, options });
 
-	for (const plugin of resolvedPlugins) {
-		// eslint-disable-next-line no-await-in-loop -- Await is necessary in this case.
-		const [, pluginHooks, pluginMiddlewares] = await Promise.all([
-			executePluginSetupFn(plugin.setup),
-			isFunction(plugin.hooks) ? plugin.hooks(setupContext) : plugin.hooks,
-			isFunction(plugin.middlewares) ? plugin.middlewares(setupContext) : plugin.middlewares,
-		]);
+	if (resolvedPlugins.length > 0) {
+		const executePluginSetupFn = async (pluginSetup: CallApiPlugin["setup"]) => {
+			if (!pluginSetup) return;
 
-		pluginHooks && addPluginHooks(pluginHooks);
-		pluginMiddlewares && addPluginMiddlewares(pluginMiddlewares);
+			const initResult = await pluginSetup(setupContext);
+
+			if (!initResult) return;
+
+			const urlString = initResult.initURL?.toString();
+
+			if (isString(urlString)) {
+				const newURLResult = getCurrentRouteSchemaKeyAndMainInitURL({
+					baseExtraOptions: baseConfig,
+					extraOptions: config,
+					initURL: urlString,
+				});
+
+				resolvedCurrentRouteSchemaKey = newURLResult.currentRouteSchemaKey;
+				resolvedInitURL = newURLResult.mainInitURL;
+			}
+
+			if (initResult.request) {
+				Object.assign(resolvedRequest, initResult.request, initResult.request.extraFetchOptions);
+			}
+
+			if (initResult.options) {
+				Object.assign(resolvedOptions, initResult.options);
+			}
+		};
+
+		for (const plugin of resolvedPlugins) {
+			// eslint-disable-next-line no-await-in-loop -- Await is necessary in this case.
+			const [, pluginHooks, pluginMiddlewares] = await Promise.all([
+				executePluginSetupFn(plugin.setup),
+				isFunction(plugin.hooks) ? plugin.hooks(setupContext) : plugin.hooks,
+				isFunction(plugin.middlewares) ? plugin.middlewares(setupContext) : plugin.middlewares,
+			]);
+
+			pluginHooks && addPluginHooks(pluginHooks);
+			pluginMiddlewares && addPluginMiddlewares(pluginMiddlewares);
+		}
 	}
 
 	addMainHooks();
@@ -268,7 +270,9 @@ const setupHooksAndMiddlewares = (
 	const getResolvedHooks = () => {
 		const resolvedHooks: Hooks = {};
 
-		for (const [hookName, hookRegistry] of Object.entries(hookRegistries)) {
+		for (const hookName of hookRegistryKeys) {
+			const hookRegistry = hookRegistries[hookName];
+
 			if (hookRegistry.size === 0) continue;
 
 			// == Flatten the hook registry to remove any nested arrays, incase an array of hooks is passed to any of the hooks
@@ -276,11 +280,16 @@ const setupHooksAndMiddlewares = (
 
 			if (flattenedHookArray.length === 0) continue;
 
+			if (flattenedHookArray.length === 1) {
+				resolvedHooks[hookName] = flattenedHookArray[0] as never;
+				continue;
+			}
+
 			const hooksExecutionMode = options.hooksExecutionMode ?? extraOptionDefaults.hooksExecutionMode;
 
 			const composedHook = composeHooksFromArray(flattenedHookArray, hooksExecutionMode);
 
-			resolvedHooks[hookName as keyof Hooks] = composedHook;
+			resolvedHooks[hookName] = composedHook;
 		}
 
 		return resolvedHooks;
@@ -289,7 +298,9 @@ const setupHooksAndMiddlewares = (
 	const getResolvedMiddlewares = () => {
 		const resolvedMiddlewares: Middlewares = {};
 
-		for (const [middlewareName, middlewareRegistry] of Object.entries(middlewareRegistries)) {
+		for (const middlewareName of middlewareRegistryKeys) {
+			const middlewareRegistry = middlewareRegistries[middlewareName];
+
 			if (middlewareRegistry.size === 0) continue;
 
 			const middlewareArray = [...middlewareRegistry];
@@ -298,7 +309,7 @@ const setupHooksAndMiddlewares = (
 
 			const composedMiddleware = composeMiddlewaresFromArray(middlewareArray);
 
-			resolvedMiddlewares[middlewareName as keyof Middlewares] = composedMiddleware;
+			resolvedMiddlewares[middlewareName] = composedMiddleware;
 		}
 
 		return resolvedMiddlewares;

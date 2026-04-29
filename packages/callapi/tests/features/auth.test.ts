@@ -4,8 +4,8 @@
  */
 
 import { expect, test } from "vitest";
-import { callApi, createFetchClient } from "../../src/createFetchClient";
 import { expectSuccessResult } from "../test-setup/assertions";
+import { callTestApi, createTestFetchClient } from "../test-setup/callapi-setup";
 import { createFetchMock, getHeadersFromCall, mockFetchSuccess } from "../test-setup/fetch-mock";
 import { mockAuthToken, mockBasicAuth, mockCustomAuth, mockUser } from "../test-setup/fixtures";
 
@@ -13,7 +13,7 @@ test("Bearer token as string sets Authorization header correctly", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://api.example.com/users/1", { auth: mockAuthToken });
+	await callTestApi("https://api.example.com/users/1", { auth: mockAuthToken });
 
 	const headers = getHeadersFromCall(mockFetch);
 	expect(headers).toEqual(expect.objectContaining({ Authorization: `Bearer ${mockAuthToken}` }));
@@ -23,7 +23,7 @@ test("Bearer token with auth object sets Authorization header correctly", async 
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		auth: { value: mockAuthToken, type: "Bearer" },
 	});
 
@@ -35,7 +35,7 @@ test("Bearer token with function value resolves and sets header", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		auth: { value: () => mockAuthToken, type: "Bearer" },
 	});
 
@@ -52,7 +52,7 @@ test("Bearer token with async function resolves and sets header", async () => {
 		return mockAuthToken;
 	};
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		auth: { value: getTokenAsync, type: "Bearer" },
 	});
 
@@ -64,7 +64,7 @@ test("Bearer token with undefined value does not set Authorization header", asyn
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		auth: { value: undefined, type: "Bearer" },
 	});
 
@@ -77,7 +77,7 @@ test("Basic auth with username and password encodes correctly", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		auth: {
 			password: mockBasicAuth.password,
 			type: "Basic",
@@ -97,7 +97,7 @@ test("Basic auth with function values resolves and encodes correctly", async () 
 	const getUsername = () => mockBasicAuth.username;
 	const getPassword = () => mockBasicAuth.password;
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		auth: {
 			password: getPassword,
 			type: "Basic",
@@ -124,7 +124,7 @@ test("Basic auth with async functions resolves and encodes correctly", async () 
 		return mockBasicAuth.password;
 	};
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		auth: {
 			password: getPasswordAsync,
 			type: "Basic",
@@ -141,7 +141,7 @@ test("Basic auth with empty username encodes correctly", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		auth: {
 			password: "password",
 			type: "Basic",
@@ -158,7 +158,7 @@ test("Token auth with value sets Authorization header correctly", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		auth: { type: "Token", value: mockAuthToken },
 	});
 
@@ -170,7 +170,7 @@ test("Token auth with function value resolves and sets header", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		auth: { type: "Token", value: () => mockAuthToken },
 	});
 
@@ -187,7 +187,7 @@ test("Token auth with async function resolves and sets header", async () => {
 		return mockAuthToken;
 	};
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		auth: {
 			type: "Token",
 			value: getTokenAsync,
@@ -202,7 +202,7 @@ test("Token auth with undefined value does not set Authorization header", async 
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		auth: {
 			type: "Token",
 			value: undefined,
@@ -218,7 +218,7 @@ test("Custom auth with prefix and value sets Authorization header correctly", as
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		auth: {
 			prefix: mockCustomAuth.prefix,
 			type: "Custom",
@@ -239,7 +239,7 @@ test("Custom auth with function values resolves and sets header", async () => {
 	const getPrefix = () => mockCustomAuth.prefix;
 	const getValue = () => mockCustomAuth.value;
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		auth: {
 			prefix: getPrefix,
 			type: "Custom",
@@ -267,7 +267,7 @@ test("Custom auth with async functions resolves and sets header", async () => {
 		return mockCustomAuth.value;
 	};
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		auth: {
 			prefix: getPrefixAsync,
 			type: "Custom",
@@ -285,7 +285,7 @@ test("Custom auth with different prefix formats works correctly", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		auth: {
 			prefix: "X-API-Key",
 			type: "Custom",
@@ -301,7 +301,7 @@ test("createFetchClient inherits auth from base config", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
 		auth: {
 			value: mockAuthToken,
 			type: "Bearer",
@@ -320,7 +320,7 @@ test("instance auth overrides base auth in createFetchClient", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
 		auth: {
 			value: "base-token",
 			type: "Bearer",
@@ -343,7 +343,7 @@ test("instance auth can use different type than base auth", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
 		auth: {
 			value: mockAuthToken,
 			type: "Bearer",
@@ -373,7 +373,7 @@ test("async auth function that throws propagates error", async () => {
 	};
 
 	await expect(
-		callApi("https://api.example.com/users/1", {
+		callTestApi("https://api.example.com/users/1", {
 			auth: {
 				value: getTokenWithError,
 				type: "Bearer",
@@ -389,7 +389,7 @@ test("Basic auth with special characters in password encodes correctly", async (
 
 	const specialPassword = "p@ssw0rd!#$%";
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		auth: {
 			password: specialPassword,
 			type: "Basic",
@@ -408,7 +408,7 @@ test("Custom auth with special characters in value works correctly", async () =>
 
 	const specialValue = "key-with-special-chars!@#$%^&*()";
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		auth: {
 			prefix: "X-Special",
 			type: "Custom",

@@ -5,9 +5,9 @@
 
 import { expect, test } from "vitest";
 import type { RequestContext } from "../../src";
-import { callApi, createFetchClient } from "../../src/createFetchClient";
 import type { CallApiPlugin } from "../../src/plugins";
 import { waitFor } from "../../src/utils/common";
+import { callTestApi, createTestFetchClient } from "../test-setup/callapi-setup";
 import { createCallTracker, mockNetworkError } from "../test-setup/common";
 import {
 	createFetchMock,
@@ -23,7 +23,7 @@ test("Hook Composition - multiple hooks of the same type compose in sequential m
 
 	const executionOrder: string[] = [];
 
-	await callApi("/test", {
+	await callTestApi("/test", {
 		hooksExecutionMode: "sequential",
 		onRequest: [
 			() => executionOrder.push("hook1"),
@@ -57,7 +57,7 @@ test("Hook Composition - hooks from plugins and main hooks compose together", as
 		name: "Plugin 2",
 	};
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
 		hooksExecutionMode: "sequential",
 		onRequest: () => executionOrder.push("base"),
 		plugins: [plugin1, plugin2],
@@ -78,7 +78,7 @@ test("Hook Composition - hooks execute in correct lifecycle order for successful
 
 	const executionOrder: string[] = [];
 
-	await callApi("/test", {
+	await callTestApi("/test", {
 		hooksExecutionMode: "sequential",
 		onRequest: () => executionOrder.push("onRequest"),
 		onResponse: () => executionOrder.push("onResponse"),
@@ -97,7 +97,7 @@ test("Hook Composition - hooks execute in correct lifecycle order for error requ
 
 	const executionOrder: string[] = [];
 
-	const { error } = await callApi("/test", {
+	const { error } = await callTestApi("/test", {
 		hooksExecutionMode: "sequential",
 		onRequest: () => executionOrder.push("onRequest"),
 		onResponse: () => executionOrder.push("onResponse"),
@@ -118,7 +118,7 @@ test("Hook Composition - nested hook arrays are flattened correctly", async () =
 
 	const executionOrder: string[] = [];
 
-	const client = createFetchClient({
+	const client = createTestFetchClient({
 		hooksExecutionMode: "sequential",
 		onRequest: [() => executionOrder.push("base1"), () => executionOrder.push("base2")],
 	});
@@ -136,7 +136,7 @@ test("Hook Composition - hooks can modify request context", async () => {
 
 	let capturedContext: RequestContext | undefined;
 
-	await callApi("/test", {
+	await callTestApi("/test", {
 		onRequest: (context) => {
 			capturedContext = context;
 			context.request.headers["X-Modified"] = "true";
@@ -156,7 +156,7 @@ test("Execution Modes - hooks execute in parallel mode by default", async () => 
 	const tracker = createCallTracker();
 	const startTime = Date.now();
 
-	await callApi("/test", {
+	await callTestApi("/test", {
 		hooksExecutionMode: "parallel",
 		onRequest: [
 			async () => {
@@ -189,7 +189,7 @@ test("Execution Modes - hooks execute in sequential mode one after another", asy
 	const tracker = createCallTracker();
 	const startTime = Date.now();
 
-	await callApi("/test", {
+	await callTestApi("/test", {
 		hooksExecutionMode: "sequential",
 		onRequest: [
 			async () => {
@@ -224,7 +224,7 @@ test("Execution Modes - async hooks execute in parallel mode with fastest finish
 
 	const results: string[] = [];
 
-	await callApi("/test", {
+	await callTestApi("/test", {
 		hooksExecutionMode: "parallel",
 		onRequest: [
 			async () => {
@@ -251,7 +251,7 @@ test("Hook Types - onRequestReady hook executes with correct context", async () 
 	const tracker = createCallTracker();
 	mockFetchSuccess({ success: true });
 
-	await callApi("/test", {
+	await callTestApi("/test", {
 		onRequestReady: (context) => {
 			tracker.track("onRequestReady", context.options.fullURL);
 		},
@@ -266,7 +266,7 @@ test("Hook Types - onResponse hook executes for successful responses", async () 
 	const tracker = createCallTracker();
 	mockFetchSuccess({ success: true });
 
-	await callApi("/test", {
+	await callTestApi("/test", {
 		onResponse: (context) => tracker.track("onResponse", context.response.status),
 	});
 
@@ -279,7 +279,7 @@ test("Hook Types - onSuccess hook executes for successful responses with data", 
 	const tracker = createCallTracker();
 	mockFetchSuccess({ id: 1, name: "test" });
 
-	await callApi("/test", {
+	await callTestApi("/test", {
 		onSuccess: (context) => tracker.track("onSuccess", context.data),
 	});
 
@@ -292,7 +292,7 @@ test("Hook Types - onError hook executes for any error", async () => {
 	const tracker = createCallTracker();
 	mockFetch.mockRejectedValue(mockNetworkError("Network failure"));
 
-	const { error } = await callApi("/test", {
+	const { error } = await callTestApi("/test", {
 		onError: (context) => tracker.track("onError", context.error.message),
 		resultMode: "all",
 	});
@@ -306,7 +306,7 @@ test("Hook Types - onResponseError hook executes for HTTP error responses", asyn
 	const tracker = createCallTracker();
 	mockFetchError({ error: "Not found" }, 404);
 
-	const { error } = await callApi("/test", {
+	const { error } = await callTestApi("/test", {
 		onResponseError: (context) => tracker.track("onResponseError", context.response.status),
 		resultMode: "all",
 	});
@@ -322,7 +322,7 @@ test("Hook Types - onRetry hook executes during retry attempts", async () => {
 		.mockResolvedValueOnce(createMockErrorResponse({ error: "Server error" }, 500))
 		.mockResolvedValueOnce(createMockResponse({ success: true }));
 
-	await callApi("/test", {
+	await callTestApi("/test", {
 		onRetry: (context) => tracker.track("onRetry", context.retryAttemptCount),
 		retryAttempts: 2,
 		retryDelay: 10,
@@ -336,7 +336,7 @@ test("Hook Types - onValidationError hook executes for validation failures", asy
 	const tracker = createCallTracker();
 	mockFetchSuccess({ invalid: "data" });
 
-	const { error } = await callApi("/test", {
+	const { error } = await callTestApi("/test", {
 		onValidationError: (context) => tracker.track("onValidationError", context.error.message),
 		resultMode: "all",
 		schema: {

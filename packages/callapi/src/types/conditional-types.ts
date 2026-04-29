@@ -11,7 +11,7 @@ import type {
 	RouteKeyMethods,
 	RouteKeyMethodsURLUnion,
 } from "../validation";
-import type { CallApiContext } from "./common";
+import type { CallApiContext } from "./options-types";
 import type {
 	AnyString,
 	CommonAuthorizationHeaders,

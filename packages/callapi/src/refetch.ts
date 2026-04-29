@@ -1,6 +1,6 @@
 import { extraOptionDefaults } from "./constants/defaults";
 import type { CallApiImpl } from "./retry";
-import type { CallApiConfig, CallApiExtraOptions, CallApiResultLoose } from "./types/common";
+import type { CallApiConfig, CallApiExtraOptions, CallApiResultLoose } from "./types/options-types";
 import type { InitURLOrURLObject } from "./url";
 
 export interface RefetchOptions {

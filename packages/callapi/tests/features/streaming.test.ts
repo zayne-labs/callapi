@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import { callApi } from "../../src/createFetchClient";
 import type { StreamProgressEvent } from "../../src/stream";
+import { callTestApi } from "../test-setup/callapi-setup";
 import { createCallTracker } from "../test-setup/common";
 import { createFetchMock } from "../test-setup/fetch-mock";
 
@@ -36,7 +36,7 @@ test("onResponseStream - tracks download progress from ReadableStream response",
 
 	const tracker = createCallTracker();
 
-	await callApi("https://api.example.com/stream-down", {
+	await callTestApi("https://api.example.com/stream-down", {
 		onResponseStream: (context) => {
 			tracker.track("progress", context.event);
 		},
@@ -74,7 +74,7 @@ test("onResponseStream - handles response without Content-Length", async () => {
 
 	const tracker = createCallTracker();
 
-	await callApi("https://api.example.com/stream-down-unknown", {
+	await callTestApi("https://api.example.com/stream-down-unknown", {
 		onResponseStream: (context) => {
 			tracker.track("progress", context.event);
 		},
@@ -108,7 +108,7 @@ test("onResponseStream - progress never reaches 100% until completion (epsilon c
 
 	const tracker = createCallTracker();
 
-	await callApi("https://api.example.com/stream", {
+	await callTestApi("https://api.example.com/stream", {
 		onResponseStream: (context) => {
 			tracker.track("progress", context.event);
 		},
@@ -150,7 +150,7 @@ test("onRequestStream - tracks upload progress for ReadableStream body", async (
 
 	const tracker = createCallTracker();
 
-	await callApi("https://api.example.com/stream-up", {
+	await callTestApi("https://api.example.com/stream-up", {
 		body: stream,
 		method: "POST",
 		onRequestStream: (context) => {
@@ -192,7 +192,7 @@ test("onRequestStream - propagates stream errors", async () => {
 	const tracker = createCallTracker();
 
 	await expect(
-		callApi("https://api.example.com/stream-error", {
+		callTestApi("https://api.example.com/stream-error", {
 			body: stream,
 			method: "POST",
 			onRequestStream: (context) => {

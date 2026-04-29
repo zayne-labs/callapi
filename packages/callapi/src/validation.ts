@@ -1,12 +1,12 @@
 import type { AuthOption } from "./auth";
 import { fallBackRouteSchemaKey, type FallBackRouteSchemaKey } from "./constants/validation";
+import type { Body, HeadersOption, MethodUnion } from "./types/conditional-types";
 import type {
 	BaseCallApiExtraOptions,
 	CallApiExtraOptions,
 	CallApiRequestOptions,
 	GlobalMeta,
-} from "./types/common";
-import type { Body, HeadersOption, MethodUnion } from "./types/conditional-types";
+} from "./types/options-types";
 import type { StandardSchemaV1 } from "./types/standard-schema";
 import {
 	defineEnum,
@@ -371,6 +371,15 @@ export const handleConfigValidation = async (
 			issues: [{ message: `Strict Mode - No schema found for route '${currentRouteSchemaKey}' ` }],
 			response: null,
 		});
+	}
+
+	if (!resolvedSchema) {
+		return {
+			extraOptionsValidationResult: {} as Awaited<ReturnType<typeof handleOptionsValidation>>,
+			requestOptionsValidationResult: {} as Awaited<ReturnType<typeof handleOptionsValidation>>,
+			resolvedSchema,
+			resolvedSchemaConfig,
+		};
 	}
 
 	const [extraOptionsValidationResult, requestOptionsValidationResult] = await Promise.all([

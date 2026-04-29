@@ -1,4 +1,4 @@
-import type { CallApiExtraOptions } from "./types/common";
+import type { CallApiExtraOptions } from "./types/options-types";
 import type { AnyString, UnmaskType } from "./types/type-helpers";
 import { isArray } from "./utils/guards";
 import { routeKeyMethods, type RouteKeyMethodsURLUnion } from "./validation";
@@ -130,13 +130,9 @@ export const normalizeURL = (initURL: string, options: NormalizeURLOptions = {})
 };
 
 type GetFullURLOptions = {
-	/** Base URL to prepend to relative URLs */
 	baseURL: string | undefined;
-	/** Initial URL pattern that may contain parameters and method modifiers */
 	initURL: string;
-	/** Parameters to substitute into the URL path */
 	params: CallApiExtraOptions["params"];
-	/** Query parameters to append to the URL */
 	query: CallApiExtraOptions["query"];
 };
 
@@ -150,8 +146,12 @@ const getFullURL = (initURL: string, baseURL: string | undefined) => {
 	return shouldAddSlash ? `${baseURL}/${initURL}` : `${baseURL}${initURL}`;
 };
 
-export const getFullAndNormalizedURL = (options: GetFullURLOptions) => {
-	const { baseURL, initURL, params, query } = options;
+export const getFullAndNormalizedURL = (
+	options: GetFullURLOptions & {
+		debugMode: CallApiExtraOptions["debugMode"];
+	}
+) => {
+	const { baseURL, debugMode, initURL, params, query } = options;
 
 	const normalizedInitURL = normalizeURL(initURL);
 
@@ -161,7 +161,7 @@ export const getFullAndNormalizedURL = (options: GetFullURLOptions) => {
 
 	const fullURL = getFullURL(initURLWithParamsAndQuery, baseURL);
 
-	if (!URL.canParse(fullURL)) {
+	if (debugMode && !URL.canParse(fullURL)) {
 		const errorMessage =
 			!baseURL ?
 				`Invalid URL '${initURL}'. Are you passing a relative url to CallApi without setting the 'baseURL' option?`

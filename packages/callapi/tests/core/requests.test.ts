@@ -4,16 +4,16 @@
  */
 
 import { expect, test } from "vitest";
-import { callApi } from "../../src/createFetchClient";
 import { expectSuccessResult } from "../test-setup/assertions";
+import { callTestApi } from "../test-setup/callapi-setup";
 import { createFetchMock, getHeadersFromCall, mockFetchSuccess } from "../test-setup/fetch-mock";
 import { mockUser, mockUsers } from "../test-setup/fixtures";
 
-test("Basic Requests - callApi makes GET request by default", async () => {
+test("Basic Requests - callTestApi makes GET request by default", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	const result = await callApi("https://api.example.com/users/1");
+	const result = await callTestApi("https://api.example.com/users/1");
 
 	expect(mockFetch).toHaveBeenCalledWith(
 		"https://api.example.com/users/1",
@@ -26,11 +26,11 @@ test("Basic Requests - callApi makes GET request by default", async () => {
 	expect(result.data).toEqual(mockUser);
 });
 
-test("Basic Requests - callApi makes requests with different HTTP methods", async () => {
+test("Basic Requests - callTestApi makes requests with different HTTP methods", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser, 201);
 
-	const result = await callApi("https://api.example.com/users", {
+	const result = await callTestApi("https://api.example.com/users", {
 		body: { email: "john@example.com", name: "John" },
 		method: "POST",
 	});
@@ -50,14 +50,14 @@ test("Basic Requests - callApi makes requests with different HTTP methods", asyn
 	expect(result.data).toEqual(mockUser);
 });
 
-test("Basic Requests - callApi handles request body serialization correctly", async () => {
+test("Basic Requests - callTestApi handles request body serialization correctly", async () => {
 	using mockFetch = createFetchMock();
 
 	mockFetchSuccess(mockUser, 201);
 
 	const requestData = { email: "john@example.com", name: "John" };
 
-	await callApi("https://api.example.com/users", {
+	await callTestApi("https://api.example.com/users", {
 		body: requestData,
 		method: "POST",
 	});
@@ -74,11 +74,11 @@ test("Basic Requests - callApi handles request body serialization correctly", as
 	expect(headers).toEqual(expect.objectContaining({ "Content-Type": "application/json" }));
 });
 
-test("Basic Requests - callApi handles custom headers correctly", async () => {
+test("Basic Requests - callTestApi handles custom headers correctly", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://api.example.com/users/1", {
+	await callTestApi("https://api.example.com/users/1", {
 		headers: {
 			Authorization: "Bearer token123",
 			"X-Custom-Header": "custom-value",
@@ -94,11 +94,11 @@ test("Basic Requests - callApi handles custom headers correctly", async () => {
 	);
 });
 
-test("Basic Requests - callApi extracts method from URL prefix", async () => {
+test("Basic Requests - callTestApi extracts method from URL prefix", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser, 201);
 
-	await callApi("@post/https://api.example.com/users", {
+	await callTestApi("@post/https://api.example.com/users", {
 		body: { name: "John" },
 	});
 
@@ -113,7 +113,7 @@ test("Basic Requests - callApi extracts method from URL prefix", async () => {
 	expect(actualUrl).toContain("api.example.com/users");
 });
 
-test("Basic Requests - callApi handles different method prefixes correctly", async () => {
+test("Basic Requests - callTestApi handles different method prefixes correctly", async () => {
 	const methods = [
 		{ method: "GET", prefix: "@get" },
 		{ method: "POST", prefix: "@post" },
@@ -126,7 +126,7 @@ test("Basic Requests - callApi handles different method prefixes correctly", asy
 		using mockFetch = createFetchMock();
 		mockFetchSuccess(mockUser);
 
-		await callApi(`${prefix}/https://api.example.com/users`);
+		await callTestApi(`${prefix}/https://api.example.com/users`);
 
 		const callArgs = mockFetch.mock.calls[0]?.[1] as RequestInit;
 		expect(callArgs.method).toBe(method);
@@ -136,11 +136,11 @@ test("Basic Requests - callApi handles different method prefixes correctly", asy
 	}
 });
 
-test("Basic Requests - callApi prioritizes explicit method over URL prefix", async () => {
+test("Basic Requests - callTestApi prioritizes explicit method over URL prefix", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("@post/https://api.example.com/users", {
+	await callTestApi("@post/https://api.example.com/users", {
 		// @ts-expect-error -- It's a test, so the error is expected
 		method: "PUT",
 	});
@@ -161,7 +161,7 @@ test("URL Handling - should handle URL objects", async () => {
 	mockFetchSuccess(mockUsers);
 
 	const url = new URL("https://api.example.com/users");
-	const result = await callApi(url);
+	const result = await callTestApi(url);
 
 	expectSuccessResult(result);
 	expect(result.data).toEqual(mockUsers);
@@ -177,7 +177,7 @@ test("URL Handling - should handle query parameters", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUsers);
 
-	const result = await callApi("https://api.example.com/users", {
+	const result = await callTestApi("https://api.example.com/users", {
 		query: {
 			limit: 10,
 			page: 1,
@@ -199,7 +199,7 @@ test("URL Handling - should handle URL parameters with object syntax", async () 
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://api.example.com/users/:id", {
+	await callTestApi("https://api.example.com/users/:id", {
 		params: { id: "123" },
 	});
 
@@ -215,7 +215,7 @@ test("URL Handling - should handle URL parameters with curly brace syntax", asyn
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://api.example.com/users/{userId}/posts/{postId}", {
+	await callTestApi("https://api.example.com/users/{userId}/posts/{postId}", {
 		params: { postId: "456", userId: "123" },
 	});
 
@@ -231,7 +231,7 @@ test("URL Handling - should handle URL parameters with array syntax", async () =
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://api.example.com/users/:id/posts/:postId", {
+	await callTestApi("https://api.example.com/users/:id/posts/:postId", {
 		params: ["123", "456"],
 	});
 
@@ -247,7 +247,7 @@ test("URL Handling - should combine params and query parameters", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://api.example.com/users/:id", {
+	await callTestApi("https://api.example.com/users/:id", {
 		params: { id: "123" },
 		query: { include: "profile" },
 	});
@@ -264,7 +264,7 @@ test("URL Handling - should handle relative URLs with baseURL", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("/users/1", {
+	await callTestApi("/users/1", {
 		baseURL: "https://api.example.com",
 	});
 
@@ -280,7 +280,7 @@ test("URL Handling - should prioritize absolute URLs over baseURL", async () => 
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://other-api.com/users/1", {
+	await callTestApi("https://other-api.com/users/1", {
 		baseURL: "https://api.example.com",
 	});
 
@@ -296,7 +296,7 @@ test("URL Handling - should handle baseURL with trailing slash and relative URL 
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("/users/1", {
+	await callTestApi("/users/1", {
 		baseURL: "https://api.example.com/",
 	});
 
@@ -308,7 +308,7 @@ test("URL Handling - should handle baseURL without trailing slash and relative U
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("users/1", {
+	await callTestApi("users/1", {
 		baseURL: "https://api.example.com",
 	});
 
@@ -324,7 +324,7 @@ test("URL Handling - should handle query parameters with special characters", as
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUsers);
 
-	await callApi("https://api.example.com/users", {
+	await callTestApi("https://api.example.com/users", {
 		query: {
 			search: "john doe",
 			filter: "name=John&age>25",
@@ -342,7 +342,7 @@ test("URL Handling - should handle query parameters with arrays", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUsers);
 
-	await callApi("https://api.example.com/users", {
+	await callTestApi("https://api.example.com/users", {
 		query: {
 			tags: "javascript,typescript,react",
 			ids: "1,2,3",
@@ -358,7 +358,7 @@ test("URL Handling - should handle null and undefined query parameter values", a
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUsers);
 
-	await callApi("https://api.example.com/users", {
+	await callTestApi("https://api.example.com/users", {
 		query: {
 			active: true,
 			name: "john",
@@ -374,7 +374,7 @@ test("URL Handling - should handle URL parameters with special characters", asyn
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://api.example.com/users/:id", {
+	await callTestApi("https://api.example.com/users/:id", {
 		params: { id: "user@example.com" },
 	});
 
@@ -390,7 +390,7 @@ test("URL Handling - should handle multiple parameter substitutions in same URL 
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
 
-	await callApi("https://api.example.com/:version/users/:id", {
+	await callTestApi("https://api.example.com/:version/users/:id", {
 		params: { version: "v1", id: "123" },
 	});
 

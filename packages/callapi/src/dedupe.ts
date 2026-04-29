@@ -6,7 +6,7 @@ import { waitFor } from "./utils/common";
 import { isFunction } from "./utils/guards";
 
 type RequestInfo = {
-	controller: AbortController;
+	controller: AbortController | null;
 	responsePromise: Awaitable<Response>;
 };
 
@@ -62,7 +62,7 @@ export type GlobalRequestInfoCache = Map<DedupeOptions["dedupeCacheScopeKey"], R
 type DedupeContext = RequestContext & {
 	$GlobalRequestInfoCache: GlobalRequestInfoCache;
 	$LocalRequestInfoCache: RequestInfoCache;
-	newFetchController: AbortController;
+	newFetchController: AbortController | null;
 };
 
 export const createDedupeStrategy = async (context: DedupeContext) => {
@@ -79,14 +79,9 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 	const resolvedDedupeStrategy = isFunction(dedupeStrategy) ? dedupeStrategy(context) : dedupeStrategy;
 
+	const shouldDisableDedupe = resolvedDedupeStrategy === "none";
+
 	const getDedupeKey = () => {
-		const shouldHaveDedupeKey =
-			resolvedDedupeStrategy === "cancel" || resolvedDedupeStrategy === "defer";
-
-		if (!shouldHaveDedupeKey) {
-			return null;
-		}
-
 		const dedupeKey = globalOptions.dedupeKey ?? extraOptionDefaults.dedupeKey;
 
 		const resolvedDedupeKey = isFunction(dedupeKey) ? dedupeKey(context) : dedupeKey;
@@ -94,29 +89,25 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 		return resolvedDedupeKey;
 	};
 
-	const getDedupeCacheScopeKey = () => {
+	const dedupeKey = shouldDisableDedupe ? null : getDedupeKey();
+
+	const getRequestInfoCache = () => {
+		if (dedupeKey == null) return;
+
+		const dedupeCacheScope = globalOptions.dedupeCacheScope ?? extraOptionDefaults.dedupeCacheScope;
+
 		const dedupeCacheScopeKey =
 			globalOptions.dedupeCacheScopeKey ?? extraOptionDefaults.dedupeCacheScopeKey;
 
 		const resolvedDedupeCacheScopeKey =
 			isFunction(dedupeCacheScopeKey) ? dedupeCacheScopeKey(context) : dedupeCacheScopeKey;
 
-		return resolvedDedupeCacheScopeKey;
-	};
-
-	const dedupeKey = getDedupeKey();
-
-	const getRequestInfoCache = () => {
-		if (!dedupeKey) return;
-
-		const dedupeCacheScope = globalOptions.dedupeCacheScope ?? extraOptionDefaults.dedupeCacheScope;
-
-		const dedupeCacheScopeKey = getDedupeCacheScopeKey();
-
 		const $RequestInfoCache =
 			dedupeCacheScope === "global" ?
-				($GlobalRequestInfoCache.get(dedupeCacheScopeKey)
-				?? $GlobalRequestInfoCache.set(dedupeCacheScopeKey, new Map()).get(dedupeCacheScopeKey))
+				($GlobalRequestInfoCache.get(resolvedDedupeCacheScopeKey)
+				?? $GlobalRequestInfoCache
+					.set(resolvedDedupeCacheScopeKey, new Map())
+					.get(resolvedDedupeCacheScopeKey))
 			:	$LocalRequestInfoCache;
 
 		return {
@@ -152,22 +143,23 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 	 * simultaneously (same problem as microtasks). Any non-zero value (even 0.0000000001) forces
 	 * proper sequential task queue scheduling, ensuring each request gets its own task slot.
 	 */
-	if (dedupeKey !== null) {
+	if (!shouldDisableDedupe) {
 		await waitFor(0.01);
 	}
 
 	const prevRequestInfo = $RequestInfoCache?.get();
 
 	const getAbortErrorMessage = () => {
-		if (globalOptions.dedupeKey) {
-			return `Duplicate request detected - Aborted previous request with key '${dedupeKey}'`;
-		}
+		if (shouldDisableDedupe) return;
 
-		return `Duplicate request detected - Aborted previous request to '${globalOptions.fullURL}'`;
+		return globalOptions.dedupeKey != null ?
+				`Duplicate request detected - Aborted previous request with key '${dedupeKey}'`
+			:	`Duplicate request detected - Aborted previous request to '${globalOptions.fullURL}'`;
 	};
 
 	const handleRequestCancelStrategy = () => {
-		const shouldCancelRequest = prevRequestInfo && resolvedDedupeStrategy === "cancel";
+		const shouldCancelRequest =
+			!shouldDisableDedupe && prevRequestInfo && resolvedDedupeStrategy === "cancel";
 
 		if (!shouldCancelRequest) return;
 
@@ -175,7 +167,7 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 
 		const reason = new DOMException(message, "AbortError");
 
-		prevRequestInfo.controller.abort(reason);
+		prevRequestInfo.controller?.abort(reason);
 	};
 
 	const handleRequestDeferStrategy = async (deferContext: {
@@ -186,7 +178,8 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 		// == Local options and request are needed so that transformations are applied can be applied to both from call site
 		const { fetchApi, options: localOptions, request: localRequest } = deferContext;
 
-		const shouldUsePromiseFromCache = prevRequestInfo && resolvedDedupeStrategy === "defer";
+		const shouldDeferPromise =
+			!shouldDisableDedupe && prevRequestInfo && resolvedDedupeStrategy === "defer";
 
 		const streamContext = {
 			baseConfig,
@@ -196,7 +189,7 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 		} satisfies RequestContext;
 
 		const responsePromise =
-			shouldUsePromiseFromCache ?
+			shouldDeferPromise ?
 				prevRequestInfo.responsePromise
 			:	fetchApi(
 					localOptions.fullURL as NonNullable<typeof localOptions.fullURL>,

@@ -9,14 +9,14 @@ import {
 	type PossibleValidationError,
 } from "./result";
 import type { StreamProgressEvent } from "./stream";
+import type { DefaultCallApiContext } from "./types/default-types";
 import type {
 	BaseCallApiConfig,
 	CallApiConfig,
 	CallApiContext,
 	CallApiExtraOptions,
 	CallApiRequestOptions,
-} from "./types/common";
-import type { DefaultCallApiContext } from "./types/default-types";
+} from "./types/options-types";
 import type {
 	AnyFunction,
 	Awaitable,
@@ -342,7 +342,11 @@ export const composeHooksFromArray = (
 };
 
 export const executeHooks = async (...hookResultsOrPromise: Array<Awaitable<unknown>>) => {
-	await Promise.all(hookResultsOrPromise);
+	const validHooks = hookResultsOrPromise.filter(Boolean);
+
+	if (validHooks.length === 0) return;
+
+	await Promise.all(validHooks);
 };
 
 export type ExecuteHookInfo = {

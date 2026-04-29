@@ -1,4 +1,4 @@
-import type { CallApiConfig, CallApiExtraOptions } from "../types/common";
+import type { CallApiConfig, CallApiExtraOptions } from "../types/options-types";
 import { defineEnum } from "../types/type-helpers";
 import { deterministicHashFn } from "../utils/common";
 
@@ -6,6 +6,7 @@ export const extraOptionDefaults = Object.freeze(
 	defineEnum({
 		// Common defaults
 		bodySerializer: JSON.stringify,
+		debugMode: true,
 		defaultHTTPErrorMessage: "Request failed unexpectedly",
 
 		// Dedupe defaults
