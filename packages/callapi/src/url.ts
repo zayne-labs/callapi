@@ -1,3 +1,4 @@
+import { extraOptionDefaults } from "./constants";
 import type { CallApiExtraOptions } from "./types/options-types";
 import type { AnyString, UnmaskType } from "./types/type-helpers";
 import { isArray } from "./utils/guards";
@@ -155,13 +156,12 @@ export const getFullAndNormalizedURL = (
 
 	const normalizedInitURL = normalizeURL(initURL);
 
-	const initURLWithParams = mergeUrlWithParams(normalizedInitURL, params);
+	const fullURL = getFullURL(
+		mergeUrlWithQuery(mergeUrlWithParams(normalizedInitURL, params), query),
+		baseURL
+	);
 
-	const initURLWithParamsAndQuery = mergeUrlWithQuery(initURLWithParams, query);
-
-	const fullURL = getFullURL(initURLWithParamsAndQuery, baseURL);
-
-	if (debugMode && !URL.canParse(fullURL)) {
+	if ((debugMode ?? extraOptionDefaults.debugMode) && !URL.canParse(fullURL)) {
 		const errorMessage =
 			!baseURL ?
 				`Invalid URL '${initURL}'. Are you passing a relative url to CallApi without setting the 'baseURL' option?`

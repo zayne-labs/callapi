@@ -1,4 +1,3 @@
-import { extraOptionDefaults } from "./constants";
 import { createDedupeStrategy, type GlobalRequestInfoCache, type RequestInfoCache } from "./dedupe";
 import {
 	executeHooks,
@@ -214,7 +213,7 @@ export const createFetchClientWithContext = <
 
 			const { fullURL, normalizedInitURL } = getFullAndNormalizedURL({
 				baseURL: resolvedOptions.baseURL,
-				debugMode: resolvedOptions.debugMode ?? extraOptionDefaults.debugMode,
+				debugMode: resolvedOptions.debugMode,
 				initURL: resolvedInitURL,
 				params: resolvedOptions.params,
 				query: resolvedOptions.query,
