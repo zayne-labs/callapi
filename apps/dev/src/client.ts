@@ -8,7 +8,7 @@ import {
 	type SuccessContext,
 } from "@zayne-labs/callapi";
 import { loggerPlugin } from "@zayne-labs/callapi-plugins";
-import { definePlugin, defineSchema } from "@zayne-labs/callapi/utils";
+import { definePlugin, defineSchema, defineSchemaRoutes } from "@zayne-labs/callapi/utils";
 import * as z from "zod";
 
 const newOptionSchema1 = z.object({
@@ -89,35 +89,38 @@ const pluginTwo = definePlugin({
 	},
 });
 
-const apiSchema = defineSchema(
-	{
-		"@default": {
-			// data: z.object({ random: z.number() }),
-			// params: z.object({ per_page: z.number() }).optional(),
-		},
+const stringWithNumberValidation = () => {
+	return z.preprocess((value: string) => Number(value), z.int().positive());
+};
 
-		"@delete/products/:id": {
-			data: z.object({ id: z.number() }),
-			// auth: z.object({ type: z.literal("Basic"), username: z.string(), password: z.string() }),
-			// headers: z.object({ Authorization: z.string() }).optional(),
-		},
-
-		"/products/:id": {
-			data: z.object({ id: z.number(), price: z.number(), title: z.string() }),
-		},
-
-		"/products/{id}": {
-			data: z.object({ id: z.number(), price: z.number(), title: z.string() }),
-		},
-
-		"https://api.github.com/repos/zayne-labs/ui/commits": {
-			// body: z.object({ flow: z.string() }),
-			// data: z.array(z.object({ version: z.string() })),
-			query: z.object({ per_page: z.number() }),
-		},
+const apiSchemaRoutes = defineSchemaRoutes({
+	"@default": {
+		// data: z.object({ random: z.number() }),
+		// params: z.object({ per_page: z.number() }).optional(),
 	},
-	{ strict: true }
-);
+
+	"@delete/products/:id": {
+		data: z.object({ id: z.number() }),
+		// auth: z.object({ type: z.literal("Basic"), username: z.string(), password: z.string() }),
+		// headers: z.object({ Authorization: z.string() }).optional(),
+	},
+
+	"/products/:id": {
+		data: z.object({ id: z.number(), price: z.number(), title: z.string() }),
+	},
+
+	"/products/{id}": {
+		data: z.object({ id: z.number(), price: z.number(), title: z.string() }),
+	},
+
+	"https://api.github.com/repos/zayne-labs/ui/commits": {
+		// body: z.object({ flow: z.string() }),
+		// data: z.array(z.object({ version: z.string() })),
+		query: z.object({ per_page: stringWithNumberValidation() }),
+	},
+});
+
+const apiSchema = defineSchema(apiSchemaRoutes, { strict: true });
 
 const callMainApi = createFetchClient({
 	baseURL: "https://dummyjson.com",

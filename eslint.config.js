@@ -26,6 +26,13 @@ export default zayne(
 		},
 	},
 	{
+		files: ["packages/callapi/src/types/standard-schema.ts"],
+		rules: {
+			"ts-eslint/no-namespace": "off",
+			"ts-eslint/no-empty-object-type": "off",
+		},
+	},
+	{
 		files: ["packages/callapi/src/**/*.ts"],
 		rules: {
 			"ts-eslint/consistent-type-definitions": "off",

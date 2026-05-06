@@ -1,10 +1,3 @@
-/* eslint-disable ts-eslint/no-namespace -- Allow */
-
-/**
- * The Standard Schema interface.
- * @see https://github.com/standard-schema/standard-schema
- */
-
 // #########################
 // ###   Standard Typed  ###
 // #########################
@@ -102,7 +95,7 @@ export declare namespace StandardSchemaV1 {
 	}
 
 	/** The Standard types interface. */
-	export type Types<Input = unknown, Output = Input> = StandardTypedV1.Types<Input, Output>;
+	export interface Types<Input = unknown, Output = Input> extends StandardTypedV1.Types<Input, Output> {}
 
 	/** Infers the input type of a Standard. */
 	export type InferInput<Schema extends StandardTypedV1> = StandardTypedV1.InferInput<Schema>;
@@ -160,7 +153,7 @@ export declare namespace StandardJSONSchemaV1 {
 	}
 
 	/** The Standard types interface. */
-	export type Types<Input = unknown, Output = Input> = StandardTypedV1.Types<Input, Output>;
+	export interface Types<Input = unknown, Output = Input> extends StandardTypedV1.Types<Input, Output> {}
 
 	/** Infers the input type of a Standard. */
 	export type InferInput<Schema extends StandardTypedV1> = StandardTypedV1.InferInput<Schema>;
