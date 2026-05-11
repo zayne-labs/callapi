@@ -90,7 +90,8 @@ const pluginTwo = definePlugin({
 });
 
 const stringWithNumberValidation = () => {
-	return z.preprocess((value: string) => Number(value), z.int().positive());
+	// return z.preprocess((value: string) => Number(value), z.int().positive());
+	return z.int().positive();
 };
 
 const apiSchemaRoutes = defineSchemaRoutes({

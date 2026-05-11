@@ -15,69 +15,37 @@ import {
 	mockFetchSuccess,
 } from "../test-setup/fetch-mock";
 
-test("Refetch - refetch function is available in onError hook", async () => {
+test("Refetch - refetch function is available in all error hooks", async () => {
 	using ignoredMockFetch = createFetchMock();
+
+	// Test onResponseError
 	mockFetchError({ error: "Server error" }, 500);
-
-	let refetchFunction: RefetchFn | undefined;
-
-	const { error } = await callTestApi("/test", {
-		onError: (context) => {
-			refetchFunction = context.options.refetch;
-		},
-		resultMode: "all",
-	});
-
-	expect(error).toBeDefined();
-	expect(refetchFunction).toBeDefined();
-	expect(typeof refetchFunction).toBe("function");
-});
-
-test("Refetch - refetch function is available in onResponseError hook", async () => {
-	using ignoredMockFetch = createFetchMock();
-	mockFetchError({ error: "Not found" }, 404);
-
-	let refetchFunction: RefetchFn | undefined;
-
-	const { error } = await callTestApi("/test", {
+	let refetchFn: RefetchFn | undefined;
+	await callTestApi("/test", {
 		onResponseError: (context) => {
-			refetchFunction = context.options.refetch;
+			refetchFn = context.options.refetch;
 		},
 		resultMode: "all",
 	});
+	expect(refetchFn).toBeDefined();
+	expect(typeof refetchFn).toBe("function");
 
-	expect(error).toBeDefined();
-	expect(refetchFunction).toBeDefined();
-	expect(typeof refetchFunction).toBe("function");
-});
-
-test("Refetch - refetch function is available in onRequestError hook", async () => {
-	using mockFetch = createFetchMock();
-	mockFetch.mockRejectedValue(mockNetworkError("Network failure"));
-
-	let refetchFunction: RefetchFn | undefined;
-
-	const { error } = await callTestApi("/test", {
+	// Test onRequestError
+	using mockFetch2 = createFetchMock();
+	mockFetch2.mockRejectedValue(mockNetworkError("Network failure"));
+	await callTestApi("/test", {
 		onRequestError: (context) => {
-			refetchFunction = context.options.refetch;
+			refetchFn = context.options.refetch;
 		},
 		resultMode: "all",
 	});
+	expect(refetchFn).toBeDefined();
 
-	expect(error).toBeDefined();
-	expect(refetchFunction).toBeDefined();
-	expect(typeof refetchFunction).toBe("function");
-});
-
-test("Refetch - refetch function is available in onValidationError hook", async () => {
-	using ignoredMockFetch = createFetchMock();
+	// Test onValidationError
 	mockFetchSuccess({ invalid: "data" });
-
-	let refetchFunction: RefetchFn | undefined;
-
-	const { error } = await callTestApi("/test", {
+	await callTestApi("/test", {
 		onValidationError: (context) => {
-			refetchFunction = context.options.refetch;
+			refetchFn = context.options.refetch;
 		},
 		resultMode: "all",
 		schema: {
@@ -89,122 +57,78 @@ test("Refetch - refetch function is available in onValidationError hook", async 
 			},
 		},
 	});
-
-	expect(error).toBeDefined();
-	expect(refetchFunction).toBeDefined();
-	expect(typeof refetchFunction).toBe("function");
+	expect(refetchFn).toBeDefined();
 });
 
 test("Refetch - calling refetch retries the same request", async () => {
 	using mockFetch = createFetchMock();
 	const tracker = createCallTracker();
 
-	// First call fails, second succeeds
 	mockFetch
 		.mockResolvedValueOnce(createMockErrorResponse({ error: "Server error" }, 500))
 		.mockResolvedValueOnce(createMockResponse({ success: true }));
 
-	let refetchResult: Awaited<ReturnType<RefetchFn>> | undefined;
-
-	const { error } = await callTestApi("/test", {
-		onResponseError: async (context) => {
+	const result = await callTestApi("/test", {
+		onResponseError: (context) => {
 			tracker.track("error", context.response.status);
-			// Call refetch to retry
-			refetchResult = await context.options.refetch();
+			context.options.refetch();
 		},
 		resultMode: "all",
 	});
 
-	expect(error).toBeDefined();
 	expect(tracker.getCallCount()).toBe(1);
-	expect(refetchResult).toBeDefined();
-	expect(refetchResult?.data).toEqual({ success: true });
-	expect(refetchResult?.error).toBeNull();
-});
-
-test("Refetch - refetch uses the same URL and options", async () => {
-	using mockFetch = createFetchMock();
-
-	mockFetch
-		.mockResolvedValueOnce(createMockErrorResponse({ error: "Server error" }, 500))
-		.mockResolvedValueOnce(createMockResponse({ success: true }));
-
-	await callTestApi("/test-endpoint", {
-		body: { key: "value" },
-		headers: { "X-Custom": "header" },
-		method: "POST",
-		onResponseError: async (context) => {
-			await context.options.refetch();
-		},
-		resultMode: "all",
-	});
-
-	// Verify both calls were made
+	expect(result.data).toEqual({ success: true });
+	expect(result.error).toBeNull();
 	expect(mockFetch).toHaveBeenCalledTimes(2);
 });
 
-test("Refetch - refetch can be called multiple times", async () => {
+test("Refetch - multiple refetch calls only trigger one refetch", async () => {
 	using mockFetch = createFetchMock();
-	const tracker = createCallTracker();
 
 	mockFetch
 		.mockResolvedValueOnce(createMockErrorResponse({ error: "Error 1" }, 500))
-		.mockResolvedValueOnce(createMockErrorResponse({ error: "Error 2" }, 500))
 		.mockResolvedValueOnce(createMockResponse({ success: true }));
 
-	let refetchCount = 0;
-
-	const { error } = await callTestApi("/test", {
-		onResponseError: async (context) => {
-			tracker.track("attempt", context.response.status);
-			refetchCount++;
-
-			if (refetchCount < 2) {
-				await context.options.refetch();
-			}
+	const result = await callTestApi("/test", {
+		onResponseError: (context) => {
+			// Call refetch multiple times - should only trigger once
+			context.options.refetch();
+			context.options.refetch();
+			context.options.refetch();
 		},
 		resultMode: "all",
 	});
 
-	expect(error).toBeDefined();
-	expect(tracker.getCallCount()).toBe(2);
 	expect(mockFetch).toHaveBeenCalledTimes(2);
+	expect(result.data).toEqual({ success: true });
 });
 
-test("Refetch - refetch works after network error", async () => {
+test("Refetch - works after network and validation errors", async () => {
 	using mockFetch = createFetchMock();
 
+	// Network error
 	mockFetch
 		.mockRejectedValueOnce(mockNetworkError("Network failure"))
 		.mockResolvedValueOnce(createMockResponse({ success: true }));
 
-	let refetchResult: Awaited<ReturnType<RefetchFn>> | undefined;
-
-	const { error } = await callTestApi("/test", {
-		onRequestError: async (context) => {
-			refetchResult = await context.options.refetch();
+	let result = await callTestApi("/test", {
+		onRequestError: (context) => {
+			context.options.refetch();
 		},
 		resultMode: "all",
 	});
 
-	expect(error).toBeDefined();
-	expect(refetchResult).toBeDefined();
-	expect(refetchResult?.data).toEqual({ success: true });
-	expect(refetchResult?.error).toBeNull();
-});
+	expect(result.data).toEqual({ success: true });
+	expect(mockFetch).toHaveBeenCalledTimes(2);
 
-test("Refetch - refetch works after validation error", async () => {
-	using mockFetch = createFetchMock();
-
+	// Validation error
 	mockFetch
 		.mockResolvedValueOnce(createMockResponse({ invalid: "data" }))
 		.mockResolvedValueOnce(createMockResponse({ valid: "data" }));
 
-	let refetchResult: Awaited<ReturnType<RefetchFn>> | undefined;
-
-	const { error } = await callTestApi("/test", {
-		onValidationError: async (context) => {
-			refetchResult = await context.options.refetch();
+	result = await callTestApi("/test", {
+		onValidationError: (context) => {
+			context.options.refetch();
 		},
 		resultMode: "all",
 		schema: {
@@ -217,108 +141,37 @@ test("Refetch - refetch works after validation error", async () => {
 		},
 	});
 
-	expect(error).toBeDefined();
-	expect(refetchResult).toBeDefined();
-	expect(refetchResult?.data).toEqual({ valid: "data" });
+	expect(result.data).toEqual({ valid: "data" });
+	expect(mockFetch).toHaveBeenCalledTimes(4); // 2 from network + 2 from validation
 });
 
-test("Refetch - refetch works with createFetchClient", async () => {
-	using mockFetch = createFetchMock();
-
-	mockFetch
-		.mockResolvedValueOnce(createMockErrorResponse({ error: "Server error" }, 500))
-		.mockResolvedValueOnce(createMockResponse({ success: true }));
-
-	const client = createTestFetchClient({
-		baseURL: "https://api.example.com",
-	});
-
-	let refetchResult: Awaited<ReturnType<RefetchFn>> | undefined;
-
-	const { error } = await client("/test", {
-		onResponseError: async (context) => {
-			refetchResult = await context.options.refetch();
-		},
-		resultMode: "all",
-	});
-
-	expect(error).toBeDefined();
-	expect(refetchResult).toBeDefined();
-	expect(refetchResult?.data).toEqual({ success: true });
-});
-
-test("Refetch - refetch preserves base client configuration", async () => {
-	using mockFetch = createFetchMock();
-
-	mockFetch
-		.mockResolvedValueOnce(createMockErrorResponse({ error: "Unauthorized" }, 401))
-		.mockResolvedValueOnce(createMockResponse({ success: true }));
-
-	const client = createTestFetchClient({
-		baseURL: "https://api.example.com",
-		headers: {
-			"X-Base-Header": "base-value",
-		},
-	});
-
-	await client("/test", {
-		headers: {
-			"X-Instance-Header": "instance-value",
-		},
-		onResponseError: async (context) => {
-			await context.options.refetch();
-		},
-		resultMode: "all",
-	});
-
-	expect(mockFetch).toHaveBeenCalledTimes(2);
-});
-
-test("Refetch - refetch returns result object with data and error", async () => {
-	using mockFetch = createFetchMock();
-
-	mockFetch
-		.mockResolvedValueOnce(createMockErrorResponse({ error: "Server error" }, 500))
-		.mockResolvedValueOnce(createMockResponse({ id: 123, name: "test" }));
-
-	let refetchResult: Awaited<ReturnType<RefetchFn>> | undefined;
-
-	await callTestApi("/test", {
-		onResponseError: async (context) => {
-			refetchResult = await context.options.refetch();
-		},
-		resultMode: "all",
-	});
-
-	expect(refetchResult).toBeDefined();
-	expect(refetchResult?.data).toEqual({ id: 123, name: "test" });
-	expect(refetchResult?.error).toBeNull();
-	expect(refetchResult?.response).toBeDefined();
-});
-
-test("Refetch - refetch returns error if retry also fails", async () => {
+test("Refetch - returns error if refetch also fails", async () => {
 	using mockFetch = createFetchMock();
 
 	mockFetch
 		.mockResolvedValueOnce(createMockErrorResponse({ error: "Error 1" }, 500))
 		.mockResolvedValueOnce(createMockErrorResponse({ error: "Error 2" }, 503));
 
-	let refetchResult: Awaited<ReturnType<RefetchFn>> | undefined;
+	let refetchCount = 0;
 
-	await callTestApi("/test", {
-		onResponseError: async (context) => {
-			refetchResult = await context.options.refetch();
+	const result = await callTestApi("/test", {
+		onResponseError: (context) => {
+			if (refetchCount === 0) {
+				refetchCount++;
+				context.options.refetch();
+			}
 		},
 		resultMode: "all",
+		retryAttempts: 0,
 	});
 
-	expect(refetchResult).toBeDefined();
-	expect(refetchResult?.data).toBeNull();
-	expect(refetchResult?.error).toBeDefined();
-	expect(refetchResult?.error?.name).toBe("HTTPError");
+	expect(result.data).toBeNull();
+	expect(result.error).toBeDefined();
+	expect(mockFetch).toHaveBeenCalledTimes(2);
+	expect(result.response?.status).toBe(503);
 });
 
-test("Refetch - refetch triggers hooks on retry", async () => {
+test("Refetch - triggers hooks correctly on refetch", async () => {
 	using mockFetch = createFetchMock();
 	const tracker = createCallTracker();
 
@@ -328,20 +181,23 @@ test("Refetch - refetch triggers hooks on retry", async () => {
 
 	await callTestApi("/test", {
 		onRequest: () => tracker.track("onRequest"),
-		onResponseError: async (context) => {
-			await context.options.refetch();
+		onResponseError: (context) => {
+			context.options.refetch();
 		},
 		onSuccess: () => tracker.track("onSuccess"),
 		resultMode: "all",
 	});
 
-	// onRequest should be called twice (original + refetch)
-	// onSuccess should be called once (after successful refetch)
-	expect(tracker.getCallCount()).toBeGreaterThanOrEqual(2);
-	expect(tracker.getCalls().some((call) => call.args[0] === "onSuccess")).toBe(true);
+	// onRequest called twice (original + refetch)
+	const requestCalls = tracker.getCalls().filter((call) => call.args[0] === "onRequest");
+	expect(requestCalls).toHaveLength(2);
+
+	// onSuccess called once (after successful refetch)
+	const successCalls = tracker.getCalls().filter((call) => call.args[0] === "onSuccess");
+	expect(successCalls).toHaveLength(1);
 });
 
-test("Refetch - refetch does not trigger onRetry hook", async () => {
+test("Refetch - does not trigger onRetry hook", async () => {
 	using mockFetch = createFetchMock();
 	const tracker = createCallTracker();
 
@@ -350,64 +206,73 @@ test("Refetch - refetch does not trigger onRetry hook", async () => {
 		.mockResolvedValueOnce(createMockResponse({ success: true }));
 
 	await callTestApi("/test", {
-		onResponseError: async (context) => {
-			await context.options.refetch();
+		onResponseError: (context) => {
+			context.options.refetch();
 		},
 		onRetry: () => tracker.track("onRetry"),
 		resultMode: "all",
-		retryAttempts: 0, // Disable automatic retries
+		retryAttempts: 0,
 	});
 
-	// onRetry should not be called since refetch is manual, not automatic retry
 	const retryCalls = tracker.getCalls().filter((call) => call.args[0] === "onRetry");
 	expect(retryCalls).toHaveLength(0);
 });
 
-test("Refetch - refetch respects resultMode from original call", async () => {
+test("Refetch - clears dedupe cache before refetch (defer strategy)", async () => {
 	using mockFetch = createFetchMock();
 
 	mockFetch
 		.mockResolvedValueOnce(createMockErrorResponse({ error: "Server error" }, 500))
 		.mockResolvedValueOnce(createMockResponse({ success: true }));
 
-	let refetchResult: Awaited<ReturnType<RefetchFn>> | undefined;
-
-	await callTestApi("/test", {
-		onResponseError: async (context) => {
-			refetchResult = await context.options.refetch();
-		},
-		resultMode: "onlyData",
+	const client = createTestFetchClient({
+		baseURL: "https://api.example.com",
+		dedupeStrategy: "defer",
+		dedupeKey: "test-request",
 	});
 
-	// With resultMode: "onlyData", refetch should return just the data
-	expect(refetchResult).toEqual({ success: true });
-});
-
-test("Refetch Edge cases - refetch can be stored and called later", async () => {
-	using mockFetch = createFetchMock();
-
-	mockFetch
-		.mockResolvedValueOnce(createMockErrorResponse({ error: "Server error" }, 500))
-		.mockResolvedValueOnce(createMockResponse({ success: true }));
-
-	let refetchFunction: RefetchFn | undefined;
-
-	const { error } = await callTestApi("/test", {
+	const result = await client("/test", {
 		onResponseError: (context) => {
-			// Store refetch for later use
-			refetchFunction = context.options.refetch;
+			context.options.refetch();
 		},
 		resultMode: "all",
 	});
 
-	expect(error).toBeDefined();
-	expect(refetchFunction).toBeDefined();
+	// Refetch should make a new request, not reuse the failed one
+	expect(result.data).toEqual({ success: true });
+	expect(result.error).toBeNull();
+	expect(mockFetch).toHaveBeenCalledTimes(2);
+});
 
-	// Call refetch later
-	const refetchResult = await refetchFunction?.();
+test("Refetch - does not interfere with retry logic", async () => {
+	using mockFetch = createFetchMock();
+	const tracker = createCallTracker();
 
-	expect(refetchResult?.data).toEqual({ success: true });
-	expect(refetchResult?.error).toBeNull();
+	mockFetch
+		.mockResolvedValueOnce(createMockErrorResponse({ error: "Error 1" }, 500))
+		.mockResolvedValueOnce(createMockErrorResponse({ error: "Error 2" }, 500))
+		.mockResolvedValueOnce(createMockResponse({ success: true }));
+
+	const result = await callTestApi("/test", {
+		onResponseError: (context) => {
+			tracker.track("error", context.response.status);
+			// Call refetch on first error only
+			if (tracker.getCallCount() === 1) {
+				context.options.refetch();
+			}
+		},
+		resultMode: "all",
+		retryAttempts: 1,
+		retryDelay: 10,
+		retryStatusCodes: [500],
+	});
+
+	// First error triggers refetch (2nd call)
+	// Second error triggers retry (3rd call)
+	// Third call succeeds
+	expect(mockFetch).toHaveBeenCalledTimes(3);
+	expect(result.data).toEqual({ success: true });
+	expect(tracker.getCallCount()).toBe(2);
 });
 
 test("Refetch Edge cases - refetch works with throwOnError option", async () => {
@@ -417,50 +282,20 @@ test("Refetch Edge cases - refetch works with throwOnError option", async () => 
 		.mockResolvedValueOnce(createMockErrorResponse({ error: "Server error" }, 500))
 		.mockResolvedValueOnce(createMockResponse({ success: true }));
 
-	let refetchResult: Awaited<ReturnType<RefetchFn>> | undefined;
-	let caughtError: unknown;
+	let didRefetch = false;
 
-	try {
-		await callTestApi("/test", {
-			onResponseError: async (context) => {
-				refetchResult = await context.options.refetch();
-			},
-			throwOnError: true,
-		});
-	} catch (error) {
-		caughtError = error;
-	}
-
-	expect(caughtError).toBeDefined();
-	expect(refetchResult).toBeDefined();
-	expect(refetchResult?.data).toEqual({ success: true });
-});
-
-test("Refetch Edge cases - multiple error hooks can access refetch independently", async () => {
-	using mockFetch = createFetchMock();
-	const tracker = createCallTracker();
-
-	mockFetch
-		.mockResolvedValueOnce(createMockErrorResponse({ error: "Server error" }, 500))
-		.mockResolvedValueOnce(createMockResponse({ success: true }));
-
-	await callTestApi("/test", {
-		hooksExecutionMode: "sequential",
-		onError: (context) => {
-			tracker.track("onError", typeof context.options.refetch);
-		},
-		onResponseError: async (context) => {
-			tracker.track("onResponseError", typeof context.options.refetch);
-			await context.options.refetch();
+	const result = await callTestApi("/test", {
+		onResponseError: (context) => {
+			didRefetch = true;
+			context.options.refetch();
 		},
 		resultMode: "all",
+		throwOnError: false, // Don't throw so we can check the result
 	});
 
-	const calls = tracker.getCalls();
-	expect(calls.some((call) => call.args[0] === "onError" && call.args[1] === "function")).toBe(true);
-	expect(calls.some((call) => call.args[0] === "onResponseError" && call.args[1] === "function")).toBe(
-		true
-	);
+	expect(didRefetch).toBe(true);
+	expect(result.data).toEqual({ success: true });
+	expect(result.error).toBeNull();
 });
 
 test("Refetch Edge cases - refetch can be called from onRetry hook", async () => {
@@ -472,16 +307,53 @@ test("Refetch Edge cases - refetch can be called from onRetry hook", async () =>
 		.mockResolvedValueOnce(createMockErrorResponse({ error: "Error 2" }, 500))
 		.mockResolvedValueOnce(createMockResponse({ success: true }));
 
-	await callTestApi("/test", {
-		onRetry: async (context) => {
+	const result = await callTestApi("/test", {
+		onRetry: (context) => {
 			tracker.track("retry", context.retryAttemptCount);
 
 			if (context.retryAttemptCount === 1) {
-				const result = await context.options.refetch();
-				tracker.track("refetch-result", result?.data);
+				// Call refetch to signal manual retry
+				context.options.refetch();
+				tracker.track("refetch-called", true);
 			}
 		},
+		resultMode: "all",
 		retryAttempts: 2,
 		retryDelay: 10,
 	});
+
+	// Should have retried and eventually succeeded
+	expect(result.data).toEqual({ success: true });
+	expect(tracker.getCalls().some((call) => call.args[0] === "refetch-called")).toBe(true);
+});
+
+test("Refetch Edge cases - refetch can be called from onSuccess hook", async () => {
+	using mockFetch = createFetchMock();
+	const tracker = createCallTracker();
+
+	mockFetch
+		.mockResolvedValueOnce(createMockResponse({ data: "first" }))
+		.mockResolvedValueOnce(createMockResponse({ data: "second" }));
+
+	let callCount = 0;
+
+	const result = await callTestApi("/test", {
+		onSuccess: (context) => {
+			callCount++;
+			tracker.track("success", callCount);
+
+			// Only refetch on first success to avoid infinite loop
+			if (callCount === 1) {
+				context.options.refetch();
+			}
+		},
+		resultMode: "all",
+	});
+
+	// Should have made two requests
+	expect(mockFetch).toHaveBeenCalledTimes(2);
+	// Should return the second response
+	expect(result.data).toEqual({ data: "second" });
+	// onSuccess should be called twice
+	expect(callCount).toBe(2);
 });

@@ -63,9 +63,10 @@ type DedupeContext = RequestContext & {
 	$GlobalRequestInfoCache: GlobalRequestInfoCache;
 	$LocalRequestInfoCache: RequestInfoCache;
 	newFetchController: AbortController | null;
+	resolvedDedupeStrategy: Extract<DedupeOptions["dedupeStrategy"], string>;
 };
 
-export const createDedupeStrategy = async (context: DedupeContext) => {
+export const createDedupeManager = async (context: DedupeContext) => {
 	const {
 		$GlobalRequestInfoCache,
 		$LocalRequestInfoCache,
@@ -73,11 +74,8 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 		config,
 		newFetchController,
 		options: globalOptions,
+		resolvedDedupeStrategy,
 	} = context;
-
-	const dedupeStrategy = globalOptions.dedupeStrategy ?? extraOptionDefaults.dedupeStrategy;
-
-	const resolvedDedupeStrategy = isFunction(dedupeStrategy) ? dedupeStrategy(context) : dedupeStrategy;
 
 	const shouldDisableDedupe = resolvedDedupeStrategy === "none";
 
@@ -150,8 +148,6 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 	const prevRequestInfo = $RequestInfoCache?.get();
 
 	const getAbortErrorMessage = () => {
-		if (shouldDisableDedupe) return;
-
 		return globalOptions.dedupeKey != null ?
 				`Duplicate request detected - Aborted previous request with key '${dedupeKey}'`
 			:	`Duplicate request detected - Aborted previous request to '${globalOptions.fullURL}'`;
@@ -201,16 +197,11 @@ export const createDedupeStrategy = async (context: DedupeContext) => {
 		return toStreamableResponse({ ...streamContext, response: await responsePromise });
 	};
 
-	const removeDedupeKeyFromCache = () => {
-		$RequestInfoCache?.delete();
-	};
-
 	return {
 		getAbortErrorMessage,
 		handleRequestCancelStrategy,
 		handleRequestDeferStrategy,
-		removeDedupeKeyFromCache,
-		resolvedDedupeStrategy,
+		removeDedupeCacheEntry: () => $RequestInfoCache?.delete(),
 	};
 };
 

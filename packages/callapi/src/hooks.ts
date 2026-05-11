@@ -3,7 +3,7 @@ import {
 	resolveErrorResult,
 	type CallApiResultErrorVariant,
 	type CallApiResultSuccessVariant,
-	type ErrorInfo,
+	type ErrorInfoOptions,
 	type PossibleHTTPError,
 	type PossibleJavaScriptError,
 	type PossibleValidationError,
@@ -30,7 +30,7 @@ export type CallApiRequestOptionsForHooks = Omit<CallApiRequestOptions, "headers
 };
 
 export type CallApiExtraOptionsForHooks<TCallApiContext extends CallApiContext = DefaultCallApiContext> =
-	Hooks & Omit<CallApiExtraOptions<TCallApiContext>, keyof Hooks> & RefetchFnOption;
+	Hooks & Omit<CallApiExtraOptions<TCallApiContext>, keyof Hooks> & Pick<RefetchFnOption, "refetch">;
 
 export interface Hooks<TCallApiContext extends CallApiContext = DefaultCallApiContext> {
 	/**
@@ -350,7 +350,7 @@ export const executeHooks = async (...hookResultsOrPromise: Array<Awaitable<unkn
 };
 
 export type ExecuteHookInfo = {
-	errorInfo: ErrorInfo;
+	errorInfoOptions: ErrorInfoOptions;
 	shouldThrowOnError: boolean | undefined;
 };
 
@@ -358,7 +358,7 @@ export const executeHooksInCatchBlock = async (
 	hookResultsOrPromise: Array<Awaitable<unknown>>,
 	hookInfo: ExecuteHookInfo
 ) => {
-	const { errorInfo, shouldThrowOnError } = hookInfo;
+	const { errorInfoOptions, shouldThrowOnError } = hookInfo;
 
 	try {
 		await Promise.all(hookResultsOrPromise);
@@ -369,7 +369,7 @@ export const executeHooksInCatchBlock = async (
 			throw hookError;
 		}
 
-		const { errorResult } = resolveErrorResult(hookError, errorInfo);
+		const { errorResult } = resolveErrorResult(hookError, errorInfoOptions);
 
 		return errorResult;
 	}

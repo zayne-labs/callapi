@@ -406,3 +406,36 @@ test("Retry Strategies - exponential retry strategy respects maximum delay limit
 
 	vi.useRealTimers();
 });
+
+test("Retry with defer deduplication clears cache before retry", async () => {
+	using _ignoredMockFetch = createFetchMock();
+
+	vi.useFakeTimers({ shouldAdvanceTime: true });
+
+	const client = createTestFetchClient({
+		baseURL: "https://api.example.com",
+		debugMode: false,
+		dedupeKey: "test-request",
+		dedupeStrategy: "defer",
+		retryAttempts: 2,
+		retryDelay: 10,
+		retryStatusCodes: [500],
+	});
+
+	mockFetchSequence([
+		{ data: { error: "Server error" }, status: 500 },
+		{ data: { error: "Server error" }, status: 500 },
+		{ data: { success: true }, status: 200 },
+	]);
+
+	const promise = client("/test", { resultMode: "all" });
+	await vi.runAllTimersAsync();
+	const result = await promise;
+
+	// Retry should make new requests, not reuse the failed ones
+	expect(result.data).toEqual({ success: true });
+	expect(result.error).toBeNull();
+	expectFetchCallCount(3);
+
+	vi.useRealTimers();
+});

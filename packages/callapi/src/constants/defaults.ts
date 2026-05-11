@@ -21,9 +21,6 @@ export const extraOptionDefaults = Object.freeze(
 		// Hook defaults
 		hooksExecutionMode: "parallel",
 
-		// Refetch defaults
-		refetchAttempts: 1,
-
 		// Response defaults
 		responseParser: JSON.parse,
 		responseType: "json",
@@ -37,7 +34,7 @@ export const extraOptionDefaults = Object.freeze(
 		retryMethods: ["GET", "POST"],
 		retryStatusCodes: [],
 		retryStrategy: "linear",
-	} satisfies CallApiExtraOptions)
+	} as const satisfies CallApiExtraOptions)
 );
 
 export const requestOptionDefaults = Object.freeze(
