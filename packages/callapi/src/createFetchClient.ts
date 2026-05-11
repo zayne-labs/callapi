@@ -1,4 +1,5 @@
-import { createDedupeStrategy, type GlobalRequestInfoCache, type RequestInfoCache } from "./dedupe";
+import { extraOptionDefaults } from "./constants";
+import { createDedupeManager, type GlobalRequestInfoCache, type RequestInfoCache } from "./dedupe";
 import {
 	executeHooks,
 	executeHooksInCatchBlock,
@@ -13,11 +14,9 @@ import {
 import { initializePluginsAndHooks, type CallApiPlugin } from "./plugins";
 import { createRefetchManager } from "./refetch";
 import {
-	getCustomizedErrorResult,
 	resolveErrorResult,
 	resolveResponseData,
 	resolveSuccessResult,
-	type ErrorInfo,
 	type GetResponseType,
 	type ResponseTypeType,
 	type ResultModeType,
@@ -228,15 +227,14 @@ export const createFetchClientWithContext = <
 				initURLNormalized: normalizedInitURL,
 			} satisfies CallApiExtraOptions;
 
-			const refetchFnResult = createRefetchManager({
-				callApi,
-				callApiArgs: { config, initURL },
-				options,
-			});
+			const dedupeStrategy = options.dedupeStrategy ?? extraOptionDefaults.dedupeStrategy;
 
-			Object.assign(options, refetchFnResult);
+			const resolvedDedupeStrategy =
+				isFunction(dedupeStrategy) ?
+					dedupeStrategy({ baseConfig, config, options, request: resolvedRequest })
+				:	dedupeStrategy;
 
-			const newFetchController = options.dedupeStrategy === "none" ? null : new AbortController();
+			const newFetchController = resolvedDedupeStrategy === "none" ? null : new AbortController();
 
 			const timeoutSignal = createTimeoutSignal(options.timeout);
 
@@ -255,9 +253,8 @@ export const createFetchClientWithContext = <
 				getAbortErrorMessage,
 				handleRequestCancelStrategy,
 				handleRequestDeferStrategy,
-				removeDedupeKeyFromCache,
-				resolvedDedupeStrategy,
-			} = await createDedupeStrategy({
+				removeDedupeCacheEntry,
+			} = await createDedupeManager({
 				$GlobalRequestInfoCache,
 				$LocalRequestInfoCache,
 				baseConfig,
@@ -265,12 +262,24 @@ export const createFetchClientWithContext = <
 				newFetchController,
 				options,
 				request,
+				resolvedDedupeStrategy,
 			});
+
+			const { handleRefetch, refetch } = createRefetchManager({
+				callApi,
+				callApiArgs: { config, initURL },
+				options,
+				removeDedupeCacheEntry,
+			});
+
+			options.refetch = refetch;
 
 			try {
 				handleRequestCancelStrategy();
 
-				await executeHooks(options.onRequest?.({ baseConfig, config, options, request }));
+				if (options.onRequest) {
+					await executeHooks(options.onRequest({ baseConfig, config, options, request }));
+				}
 
 				const {
 					extraOptionsValidationResult,
@@ -286,10 +295,10 @@ export const createFetchClientWithContext = <
 				});
 
 				// == Apply Schema Output for Extra Options
-
 				Object.assign(options, extraOptionsValidationResult);
 
-				const modifiedRequestOptionsValidationResult = {
+				// == Apply Schema Output for Request Options
+				Object.assign(request, {
 					body: getBody({
 						body: requestOptionsValidationResult.body,
 						bodySerializer: options.bodySerializer,
@@ -304,10 +313,7 @@ export const createFetchClientWithContext = <
 						initURL: resolvedInitURL,
 						method: requestOptionsValidationResult.method,
 					}),
-				} satisfies CallApiRequestOptionsForHooks;
-
-				// == Apply Schema Output for Request Options
-				Object.assign(request, modifiedRequestOptionsValidationResult);
+				} satisfies CallApiRequestOptionsForHooks);
 
 				const readyRequestContext = {
 					baseConfig,
@@ -316,7 +322,9 @@ export const createFetchClientWithContext = <
 					request,
 				} satisfies RequestContext;
 
-				await executeHooks(options.onRequestReady?.(readyRequestContext));
+				if (options.onRequestReady) {
+					await executeHooks(options.onRequestReady(readyRequestContext));
+				}
 
 				const fetchApi = getFetchImpl({
 					customFetchImpl: options.customFetchImpl,
@@ -373,26 +381,23 @@ export const createFetchClientWithContext = <
 					response,
 				} satisfies SuccessContext;
 
-				await executeHooks(
-					options.onSuccess?.(successContext),
-					options.onResponse?.({ ...successContext, error: null })
-				);
+				if (options.onSuccess || options.onResponse) {
+					await executeHooks(
+						options.onSuccess?.(successContext),
+						options.onResponse?.({ ...successContext, error: null })
+					);
+				}
 
 				const successResult = resolveSuccessResult(successContext.data, {
 					response: successContext.response,
 					resultMode: options.resultMode,
 				});
 
-				return successResult as never;
+				return ((await handleRefetch()) ?? successResult) as never;
 
 				// == Exhaustive Error handling
 			} catch (error) {
-				const errorInfo = {
-					cloneResponse: options.cloneResponse,
-					resultMode: options.resultMode,
-				} satisfies ErrorInfo;
-
-				const { errorDetails, errorResult } = resolveErrorResult(error, errorInfo);
+				const { errorDetails, errorResult } = resolveErrorResult(error, options);
 
 				const errorContext = {
 					baseConfig,
@@ -408,77 +413,92 @@ export const createFetchClientWithContext = <
 				);
 
 				const hookInfo = {
-					errorInfo,
+					errorInfoOptions: options,
 					shouldThrowOnError,
 				} satisfies ExecuteHookInfo;
 
-				const { handleRetryOrGetErrorResult } = createRetryManager({
+				const { handleRetry } = createRetryManager({
 					callApi,
 					callApiArgs: { config, initURL },
 					error,
 					errorContext,
-					errorResult,
 					hookInfo,
+					removeDedupeCacheEntry,
 				});
+
+				// eslint-disable-next-line unicorn/consistent-function-scoping -- Ignore
+				const handleRefetchThenRetryOrGetResult = async () => {
+					return (await handleRefetch()) ?? (await handleRetry()) ?? errorResult;
+				};
 
 				const responseContext: ResponseContext | null =
 					(errorContext.response as Response | null) ? { ...errorContext, data: null } : null;
 
 				if (isValidationErrorInstance(error)) {
-					const hookError = await executeHooksInCatchBlock(
-						[
-							responseContext && options.onResponse?.(responseContext),
-							options.onValidationError?.(errorContext),
-							options.onError?.(errorContext),
-						],
-						hookInfo
-					);
+					const hookError =
+						(responseContext && options.onResponse) || options.onValidationError || options.onError ?
+							await executeHooksInCatchBlock(
+								[
+									responseContext && options.onResponse?.(responseContext),
+									options.onValidationError?.(errorContext),
+									options.onError?.(errorContext),
+								],
+								hookInfo
+							)
+						:	null;
 
-					return (hookError ?? (await handleRetryOrGetErrorResult())) as never;
+					return (hookError ?? (await handleRefetchThenRetryOrGetResult())) as never;
 				}
 
 				if (isHTTPErrorInstance<TErrorData>(error)) {
-					const hookError = await executeHooksInCatchBlock(
-						[
-							responseContext && options.onResponse?.(responseContext),
-							options.onResponseError?.(errorContext),
-							options.onError?.(errorContext),
-						],
-						hookInfo
-					);
+					const hookError =
+						(responseContext && options.onResponse) || options.onResponseError || options.onError ?
+							await executeHooksInCatchBlock(
+								[
+									responseContext && options.onResponse?.(responseContext),
+									options.onResponseError?.(errorContext),
+									options.onError?.(errorContext),
+								],
+								hookInfo
+							)
+						:	null;
 
-					return (hookError ?? (await handleRetryOrGetErrorResult())) as never;
+					return (hookError ?? (await handleRefetchThenRetryOrGetResult())) as never;
 				}
 
-				let message = (error as Error | undefined)?.message;
-
 				if (error instanceof DOMException && error.name === "AbortError") {
-					message = getAbortErrorMessage();
+					const message = getAbortErrorMessage();
+
+					errorResult && (errorResult.error.message = message);
 
 					!shouldThrowOnError && console.error(`${error.name}:`, message);
 				}
 
 				if (error instanceof DOMException && error.name === "TimeoutError") {
-					message = `Request timed out after ${options.timeout}ms`;
+					const message = `Request timed out after ${options.timeout}ms`;
+
+					errorResult && (errorResult.error.message = message);
 
 					!shouldThrowOnError && console.error(`${error.name}:`, message);
 				}
 
-				const hookError = await executeHooksInCatchBlock(
-					[
-						responseContext && options.onResponse?.(responseContext),
-						options.onRequestError?.(errorContext),
-						options.onError?.(errorContext),
-					],
-					hookInfo
-				);
+				const hookError =
+					(responseContext && options.onResponse) || options.onRequestError || options.onError ?
+						await executeHooksInCatchBlock(
+							[
+								responseContext && options.onResponse?.(responseContext),
+								options.onRequestError?.(errorContext),
+								options.onError?.(errorContext),
+							],
+							hookInfo
+						)
+					:	null;
 
-				return (hookError
-					?? getCustomizedErrorResult(await handleRetryOrGetErrorResult(), { message })) as never;
+				return (hookError ?? (await handleRefetchThenRetryOrGetResult())) as never;
 
 				// == Removing the now unneeded AbortController from store
 			} finally {
-				removeDedupeKeyFromCache();
+				removeDedupeCacheEntry();
 			}
 		};
 

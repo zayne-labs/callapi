@@ -8,6 +8,10 @@ const config: NextConfig = {
 		position: "bottom-left",
 	},
 
+	experimental: {
+		typedEnv: true,
+	},
+
 	logging: {
 		fetches: {
 			fullUrl: true,
@@ -26,6 +30,8 @@ const config: NextConfig = {
 	},
 
 	serverExternalPackages: ["typescript", "twoslash", "shiki", "@takumi-rs/image-response"],
+
+	typedRoutes: true,
 
 	typescript: {
 		ignoreBuildErrors: true,

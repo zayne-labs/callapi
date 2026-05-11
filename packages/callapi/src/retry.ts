@@ -1,17 +1,11 @@
 import { extraOptionDefaults } from "./constants/defaults";
-import {
-	executeHooksInCatchBlock,
-	type ErrorContext,
-	type ExecuteHookInfo,
-	type RetryContext,
-} from "./hooks";
-import type { CallApiResultErrorVariant } from "./result";
+import { executeHooksInCatchBlock, type ErrorContext, type ExecuteHookInfo } from "./hooks";
 import type { MethodUnion } from "./types/conditional-types";
 import type { CallApiConfig, CallApiResultLoose } from "./types/options-types";
 import { defineEnum, type AnyNumber, type Awaitable, type UnmaskType } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
 import { waitFor } from "./utils/common";
-import { isBoolean, isFunction, isString } from "./utils/guards";
+import { isFunction } from "./utils/guards";
 
 // eslint-disable-next-line ts-eslint/no-unused-vars -- Ignore
 const defaultRetryStatusCodesLookup = () =>
@@ -30,9 +24,16 @@ type RetryStatusCodes = UnmaskType<AnyNumber | keyof ReturnType<typeof defaultRe
 
 type RetryCondition<TErrorData> = (context: ErrorContext<{ ErrorData: TErrorData }>) => Awaitable<boolean>;
 
+export const retryAttemptCountSymbol = Symbol("retryAttemptCount");
+
+export type CallApiLooseImpl = (
+	initURL: InitURLOrURLObject,
+	init?: CallApiConfig
+) => Promise<CallApiResultLoose<unknown, unknown>>;
+
 export interface RetryOptions<TErrorData> {
 	/**
-	 * Keeps track of the number of times the request has already been retried internally
+	 * Tracks the number of times the request has already been retried internally
 	 * @internal
 	 * @deprecated **WARNING**: This property is used internally to track retries. Please abstain from reading or modifying it.
 	 */
@@ -79,55 +80,82 @@ export interface RetryOptions<TErrorData> {
 	retryStrategy?: "exponential" | "linear";
 }
 
-const getLinearDelay = (currentAttemptCount: number, options: RetryOptions<unknown>) => {
-	const retryDelay = options.retryDelay ?? extraOptionDefaults.retryDelay;
-
-	const resolveRetryDelay = isFunction(retryDelay) ? retryDelay(currentAttemptCount) : retryDelay;
-
-	return resolveRetryDelay;
-};
-
-const getExponentialDelay = (currentAttemptCount: number, options: RetryOptions<unknown>) => {
-	const retryDelay = options.retryDelay ?? extraOptionDefaults.retryDelay;
-
-	const resolvedRetryDelay = isFunction(retryDelay) ? retryDelay(currentAttemptCount) : retryDelay;
-
-	const maxDelay = options.retryMaxDelay ?? extraOptionDefaults.retryMaxDelay;
-
-	const exponentialDelay = resolvedRetryDelay * 2 ** currentAttemptCount;
-
-	return Math.min(exponentialDelay, maxDelay);
-};
-
-export type CallApiImpl = (
-	initURL: never,
-	init?: CallApiConfig
-) => Promise<CallApiResultLoose<unknown, unknown>>;
-
-export const createRetryManager = <TCallApi extends CallApiImpl>(ctx: {
-	callApi: TCallApi;
-	callApiArgs: { config: CallApiConfig; initURL: InitURLOrURLObject };
+export type RetryManagerContext = {
+	callApi: CallApiLooseImpl;
+	callApiArgs: {
+		config: CallApiConfig;
+		initURL: InitURLOrURLObject;
+	};
 	error: unknown;
 	errorContext: ErrorContext;
-	errorResult: CallApiResultErrorVariant<unknown> | null;
 	hookInfo: ExecuteHookInfo;
-}) => {
-	const { callApi, callApiArgs, error, errorContext, errorResult, hookInfo } = ctx;
+	removeDedupeCacheEntry: () => void;
+};
+
+export const createRetryManager = (ctx: RetryManagerContext) => {
+	const { callApi, callApiArgs, error, errorContext, hookInfo, removeDedupeCacheEntry } = ctx;
 
 	const { options, request } = errorContext;
 
 	// eslint-disable-next-line ts-eslint/no-deprecated -- Allowed for internal use
-	const currentAttemptCount = options["~retryAttemptCount"] ?? 1;
+	const currentRetryAttemptCount = options["~retryAttemptCount"] ?? 1;
 
-	const retryStrategy = options.retryStrategy ?? extraOptionDefaults.retryStrategy;
+	const shouldAttemptRetry = async () => {
+		if (request.signal?.aborted) {
+			return false;
+		}
+
+		const maxRetryAttempts = options.retryAttempts ?? extraOptionDefaults.retryAttempts;
+
+		const retryCondition = options.retryCondition ?? extraOptionDefaults.retryCondition;
+
+		const baseShouldAttemptRetry =
+			currentRetryAttemptCount <= maxRetryAttempts && (await retryCondition(errorContext));
+
+		if (!baseShouldAttemptRetry) {
+			return false;
+		}
+
+		const retryMethods = options.retryMethods ?? extraOptionDefaults.retryMethods;
+
+		const includesMethod =
+			request.method != null && retryMethods.length > 0 ? retryMethods.includes(request.method) : true;
+
+		const retryStatusCodes = options.retryStatusCodes ?? extraOptionDefaults.retryStatusCodes;
+
+		const includesStatusCodes =
+			errorContext.response != null && retryStatusCodes.length > 0 ?
+				retryStatusCodes.includes(errorContext.response.status)
+			:	true;
+
+		const finalShouldAttemptRetry = includesMethod && includesStatusCodes;
+
+		return finalShouldAttemptRetry;
+	};
 
 	const getDelay = () => {
+		const retryStrategy = options.retryStrategy ?? extraOptionDefaults.retryStrategy;
+
 		switch (retryStrategy) {
 			case "exponential": {
-				return getExponentialDelay(currentAttemptCount, options);
+				const retryDelay = options.retryDelay ?? extraOptionDefaults.retryDelay;
+
+				const resolvedRetryDelay =
+					isFunction(retryDelay) ? retryDelay(currentRetryAttemptCount) : retryDelay;
+
+				const maxDelay = options.retryMaxDelay ?? extraOptionDefaults.retryMaxDelay;
+
+				const exponentialDelay = resolvedRetryDelay * 2 ** (currentRetryAttemptCount - 1);
+
+				return Math.min(exponentialDelay, maxDelay);
 			}
 			case "linear": {
-				return getLinearDelay(currentAttemptCount, options);
+				const retryDelay = options.retryDelay ?? extraOptionDefaults.retryDelay;
+
+				const resolveRetryDelay =
+					isFunction(retryDelay) ? retryDelay(currentRetryAttemptCount) : retryDelay;
+
+				return resolveRetryDelay;
 			}
 			default: {
 				throw new Error(`Invalid retry strategy: ${String(retryStrategy)}`);
@@ -135,77 +163,35 @@ export const createRetryManager = <TCallApi extends CallApiImpl>(ctx: {
 		}
 	};
 
-	const shouldAttemptRetry = async () => {
-		if (isBoolean(request.signal) && request.signal.aborted) {
-			return false;
-		}
-
-		const retryCondition = options.retryCondition ?? extraOptionDefaults.retryCondition;
-
-		const maxRetryAttempts = options.retryAttempts ?? extraOptionDefaults.retryAttempts;
-
-		const customRetryCondition = await retryCondition(errorContext);
-
-		const baseShouldRetry = currentAttemptCount <= maxRetryAttempts && customRetryCondition;
-
-		if (!baseShouldRetry) {
-			return false;
-		}
-
-		const retryMethods = new Set(options.retryMethods ?? extraOptionDefaults.retryMethods);
-
-		const includesMethod =
-			isString(request.method) && retryMethods.size > 0 ? retryMethods.has(request.method) : true;
-
-		const retryStatusCodes = new Set(options.retryStatusCodes ?? extraOptionDefaults.retryStatusCodes);
-
-		const includesStatusCodes =
-			errorContext.response != null && retryStatusCodes.size > 0 ?
-				retryStatusCodes.has(errorContext.response.status)
-			:	true;
-
-		const shouldRetry = includesMethod && includesStatusCodes;
-
-		return shouldRetry;
-	};
-
 	const handleRetry = async () => {
-		const retryContext = {
-			...errorContext,
-			retryAttemptCount: currentAttemptCount,
-		} satisfies RetryContext<{ ErrorData: unknown }>;
+		if (await shouldAttemptRetry()) {
+			const hookError = await executeHooksInCatchBlock(
+				[options.onRetry?.({ ...errorContext, retryAttemptCount: currentRetryAttemptCount })],
+				hookInfo
+			);
 
-		const hookError = await executeHooksInCatchBlock([options.onRetry?.(retryContext)], hookInfo);
+			if (hookError) {
+				return hookError;
+			}
 
-		if (hookError) {
-			return hookError;
-		}
+			await waitFor(getDelay());
 
-		await waitFor(getDelay());
+			removeDedupeCacheEntry();
 
-		const updatedConfig = {
-			...callApiArgs.config,
-			"~retryAttemptCount": currentAttemptCount + 1,
-		} satisfies CallApiConfig;
-
-		return callApi(callApiArgs.initURL as never, updatedConfig);
-	};
-
-	const handleRetryOrGetErrorResult = async () => {
-		const shouldRetry = await shouldAttemptRetry();
-
-		if (shouldRetry) {
-			return handleRetry() as never;
+			return callApi(callApiArgs.initURL, {
+				...callApiArgs.config,
+				"~retryAttemptCount": currentRetryAttemptCount + 1,
+			});
 		}
 
 		if (hookInfo.shouldThrowOnError) {
 			throw error;
 		}
 
-		return errorResult;
+		return null;
 	};
 
 	return {
-		handleRetryOrGetErrorResult,
+		handleRetry,
 	};
 };

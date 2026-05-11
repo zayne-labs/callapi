@@ -220,11 +220,12 @@ const getResultModeMap = (details: ResultModeMap["all"]): LazyResultModeMap => {
 	};
 };
 
-type SuccessResult = CallApiResultSuccessVariant<unknown> | null;
-
 // The return statement is casted due to a design limitation in ts.
 // LINK - See https://www.zhenghao.io/posts/type-functions for more info
-export const resolveSuccessResult = (data: unknown, info: SuccessInfo): SuccessResult => {
+export const resolveSuccessResult = (
+	data: unknown,
+	info: SuccessInfo
+): CallApiResultSuccessVariant<unknown> | null => {
 	const { response, resultMode } = info;
 
 	const details = {
@@ -237,21 +238,20 @@ export const resolveSuccessResult = (data: unknown, info: SuccessInfo): SuccessR
 
 	const successResult = resultModeMap[resultMode ?? "all"]();
 
-	return successResult as SuccessResult;
+	return successResult as never;
 };
 
-export type ErrorInfo = Omit<SuccessInfo, "response">
-	& Pick<CallApiExtraOptions, "cloneResponse"> & {
-		message?: string;
-	};
+export type ErrorInfoOptions = Pick<CallApiExtraOptions, "cloneResponse" | "resultMode"> & {
+	message?: string;
+};
 
 export type ErrorResult = {
 	errorDetails: CallApiResultErrorVariant<unknown>;
 	errorResult: CallApiResultErrorVariant<unknown> | null;
 };
 
-export const resolveErrorResult = (error: unknown, info: ErrorInfo): ErrorResult => {
-	const { cloneResponse, message: customErrorMessage, resultMode } = info;
+export const resolveErrorResult = (error: unknown, infoOptions: ErrorInfoOptions): ErrorResult => {
+	const { cloneResponse, message: customErrorMessage, resultMode } = infoOptions;
 
 	let errorDetails = {
 		data: null,
@@ -295,23 +295,4 @@ export const resolveErrorResult = (error: unknown, info: ErrorInfo): ErrorResult
 	const errorResult = resultModeMap[resultMode ?? "all"]() as never;
 
 	return { errorDetails, errorResult };
-};
-
-export const getCustomizedErrorResult = (
-	errorResult: ErrorResult["errorResult"],
-	customErrorInfo: { message: string | undefined }
-): ErrorResult["errorResult"] => {
-	if (!errorResult) {
-		return null;
-	}
-
-	const { message = errorResult.error.message } = customErrorInfo;
-
-	return {
-		...errorResult,
-		error: {
-			...errorResult.error,
-			message,
-		} satisfies NonNullable<ErrorResult["errorResult"]>["error"] as never,
-	};
 };

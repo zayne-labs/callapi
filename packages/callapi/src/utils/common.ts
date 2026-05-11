@@ -197,13 +197,18 @@ export const waitFor = (ms: number) => {
 };
 
 export const createCombinedSignal = (...signals: Array<AbortSignal | null | undefined>) => {
-	const combinedSignal = AbortSignal.any(signals.filter((signal) => signal != null));
+	const validSignals = signals.filter((signal) => signal != null);
 
-	return combinedSignal;
+	if (validSignals.length === 0) return;
+	if (validSignals.length === 1) {
+		return validSignals[0];
+	}
+
+	return AbortSignal.any(validSignals);
 };
 
 export const createTimeoutSignal = (ms: number | undefined) => {
-	if (ms == null) return;
+	if (ms === undefined || ms === Infinity) return;
 
 	return AbortSignal.timeout(ms);
 };

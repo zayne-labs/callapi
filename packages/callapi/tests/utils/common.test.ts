@@ -99,7 +99,7 @@ test("Signals utils - createCombinedSignal combines multiple signals", () => {
 	const combined = createCombinedSignal(c1.signal);
 	expect(combined).toBeInstanceOf(AbortSignal);
 	c1.abort();
-	expect(combined.aborted).toBe(true);
+	expect(combined?.aborted).toBe(true);
 });
 
 test("Signals utils - createTimeoutSignal creates a signal that times out", () => {
