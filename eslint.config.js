@@ -15,7 +15,7 @@ export default zayne(
 			settings: { entryPoint: "apps/docs/tailwind.css" },
 		},
 		typescript: {
-			tsconfigPath: ["tsconfig.json", "packages/*/tsconfig.json", "apps/*/tsconfig.json"],
+			tsconfigPath: ["packages/*/tsconfig.json", "apps/*/tsconfig.json"],
 			// tsconfigPath: ["**/tsconfig.json"],
 		},
 	},
