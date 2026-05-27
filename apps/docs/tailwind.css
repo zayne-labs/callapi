@@ -7,54 +7,67 @@
 
 @import "@zayne-labs/ui-react/css/preset.css";
 
+/* ------------------*/
+/* Fonts             */
+/*-------------------*/
 @theme inline {
-	--font-geist-sans: var(--font-geist-sans);
-	--font-geist-mono: var(--font-geist-mono);
-	--font-jetbrains-mono: var(--font-jetbrains-mono);
+	/* --font-geist-sans: var(--font-geist-sans);
+	--font-jetbrains-mono: var(--font-jetbrains-mono); */
+	--default-font-family: var(--font-geist-sans);
+	--default-mono-font-family: var(--font-jetbrains-mono);
 }
 
+/* ------------------*/
+/* App Theme         */
+/*-------------------*/
 @theme {
-	--color-fd-background: hsl(0, 0%, 99%);
-	--color-fd-foreground: hsl(246, 20%, 10%);
+	--color-fd-background: hsl(270, 24%, 98%);
+	--color-fd-foreground: hsl(260, 18%, 12%);
 	--color-fd-card: hsl(0, 0%, 100%);
-	--color-fd-card-foreground: hsl(246, 20%, 10%);
+	--color-fd-card-foreground: hsl(260, 18%, 12%);
 	--color-fd-popover: hsl(0, 0%, 100%);
-	--color-fd-popover-foreground: hsl(246, 20%, 10%);
-	--color-fd-primary: hsl(246, 72%, 58%);
+	--color-fd-popover-foreground: hsl(260, 18%, 12%);
+	--color-fd-primary: hsl(262, 76%, 58%);
 	--color-fd-primary-foreground: hsl(0, 0%, 100%);
-	--color-fd-secondary: hsl(246, 20%, 95%);
-	--color-fd-secondary-foreground: hsl(246, 20%, 20%);
-	--color-fd-muted: hsl(246, 15%, 93%);
-	--color-fd-muted-foreground: hsl(246, 10%, 46%);
-	--color-fd-accent: hsl(246, 20%, 95%);
-	--color-fd-accent-foreground: hsl(246, 72%, 45%);
-	--color-fd-border: hsl(246, 20%, 90%);
-	--color-fd-input: hsl(246, 20%, 90%);
-	--color-fd-ring: hsl(246, 72%, 58%);
+	--color-fd-secondary: hsl(262, 28%, 94%);
+	--color-fd-secondary-foreground: hsl(260, 16%, 21%);
+	--color-fd-muted: hsl(264, 22%, 93%);
+	--color-fd-muted-foreground: hsl(260, 9%, 43%);
+	--color-fd-accent: hsl(263, 40%, 93%);
+	--color-fd-accent-foreground: hsl(263, 72%, 42%);
+	--color-fd-border: hsl(264, 21%, 88%);
+	--color-fd-input: hsl(264, 21%, 88%);
+	--color-fd-ring: hsl(262, 76%, 58%);
 	--color-fd-destructive: hsl(0, 84%, 60%);
 	--color-fd-destructive-foreground: hsl(0, 0%, 100%);
 }
 
 .dark {
-	--color-fd-background: hsl(246, 18%, 7%);
-	--color-fd-foreground: hsl(246, 10%, 92%);
-	--color-fd-card: hsl(246, 20%, 10%);
-	--color-fd-card-foreground: hsl(246, 10%, 92%);
-	--color-fd-popover: hsl(246, 22%, 12%);
-	--color-fd-popover-foreground: hsl(246, 10%, 92%);
-	--color-fd-primary: hsl(246, 85%, 73%);
-	--color-fd-primary-foreground: hsl(246, 18%, 7%);
-	--color-fd-secondary: hsl(246, 20%, 15%);
-	--color-fd-secondary-foreground: hsl(246, 10%, 92%);
-	--color-fd-muted: hsl(246, 18%, 14%);
-	--color-fd-muted-foreground: hsl(246, 10%, 58%);
-	--color-fd-accent: hsl(246, 20%, 16%);
-	--color-fd-accent-foreground: hsl(246, 85%, 78%);
-	--color-fd-border: hsl(246, 20%, 19%);
-	--color-fd-input: hsl(246, 20%, 17%);
-	--color-fd-ring: hsl(246, 85%, 73%);
+	--color-fd-background: hsl(268, 23%, 5%);
+	--color-fd-foreground: hsl(260, 20%, 94%);
+	--color-fd-card: hsl(264, 21%, 8%);
+	--color-fd-card-foreground: hsl(260, 18%, 93%);
+	--color-fd-popover: hsl(264, 22%, 9%);
+	--color-fd-popover-foreground: hsl(260, 18%, 93%);
+	--color-fd-primary: hsl(263, 92%, 76%);
+	--color-fd-primary-foreground: hsl(268, 28%, 7%);
+	--color-fd-secondary: hsl(263, 18%, 13%);
+	--color-fd-secondary-foreground: hsl(260, 18%, 91%);
+	--color-fd-muted: hsl(263, 16%, 12%);
+	--color-fd-muted-foreground: hsl(261, 12%, 67%);
+	--color-fd-accent: hsl(263, 26%, 16%);
+	--color-fd-accent-foreground: hsl(263, 92%, 82%);
+	--color-fd-border: hsl(263, 15%, 18%);
+	--color-fd-input: hsl(263, 18%, 15%);
+	--color-fd-ring: hsl(263, 92%, 76%);
 	--color-fd-destructive: hsl(0, 90%, 65%);
 	--color-fd-destructive-foreground: hsl(0, 0%, 100%);
+}
+
+/* ------------------*/
+/* Custom Properties */
+/*-------------------*/
+@layer base {
 }
 
 @theme {
@@ -129,15 +142,16 @@
 		outline: transparent;
 	}
 
+	/*
 	code,
 	kbd,
 	samp,
 	pre {
 		font-family: var(--font-jetbrains-mono);
-	}
+	} */
 
-	body {
+	/* body {
 		font-family: var(--font-geist-sans);
 		line-height: 1.5;
-	}
+	} */
 }

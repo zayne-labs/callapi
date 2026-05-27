@@ -35,7 +35,6 @@ declare namespace __next_route_internal_types__ {
     | `/`
     | `/api/chat`
     | `/api/search`
-    | `/docs/[[...path]].mdx`
     | `/llms-full.txt`
     | `/llms.txt`
   type DynamicRoutes<T extends string = string> = 

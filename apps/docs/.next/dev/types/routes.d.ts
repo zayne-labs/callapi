@@ -6,7 +6,7 @@ type AppRouteHandlerRoutes = "/api/chat" | "/api/search" | "/llms-full.txt" | "/
 type PageRoutes = never
 type LayoutRoutes = "/" | "/docs"
 type RedirectRoutes = never
-type RewriteRoutes = "/docs/[[...path]].mdx"
+type RewriteRoutes = never
 type Routes = AppRoutes | PageRoutes | LayoutRoutes | RedirectRoutes | RewriteRoutes | AppRouteHandlerRoutes
 
 
@@ -15,7 +15,6 @@ interface ParamMap {
   "/api/chat": {}
   "/api/search": {}
   "/docs": {}
-  "/docs/[[...path]].mdx": {}
   "/docs/[[...slug]]": { "slug"?: string[]; }
   "/llms-full.txt": {}
   "/llms.mdx/docs/[[...slug]]": { "slug"?: string[]; }

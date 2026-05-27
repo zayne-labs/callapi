@@ -20,14 +20,14 @@ const config: NextConfig = {
 
 	reactStrictMode: true,
 
-	rewrites: () => {
-		return [
-			{
-				destination: "/llms.mdx/:path*",
-				source: "/docs/:path*.mdx",
-			},
-		];
-	},
+	// rewrites: () => {
+	// 	return [
+	// 		{
+	// 			destination: "/llms.mdx/docs/:path*",
+	// 			source: "/docs/:path*.mdx",
+	// 		},
+	// 	];
+	// },
 
 	serverExternalPackages: ["typescript", "twoslash", "shiki", "@takumi-rs/image-response"],
 

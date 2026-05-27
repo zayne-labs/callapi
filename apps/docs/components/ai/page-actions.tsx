@@ -9,13 +9,13 @@ import { Check, ChevronDown, Copy, ExternalLinkIcon, MessageCircleIcon, TextIcon
 import { useMemo, useState } from "react";
 import { Button } from "../ui/button";
 
-const cache = new Map<string, string>();
+const cache = new Map<string, Promise<string>>();
 
 type CopyBtnProps = {
 	markdownURL: string;
 };
 
-export function LLMCopyButton(props: CopyBtnProps) {
+export function MarkdownCopyButton(props: CopyBtnProps) {
 	const { markdownURL } = props;
 
 	const [isLoading, setIsLoading] = useState(false);
@@ -24,26 +24,32 @@ export function LLMCopyButton(props: CopyBtnProps) {
 		const cached = cache.get(markdownURL);
 
 		if (cached) {
-			await navigator.clipboard.writeText(cached);
+			await navigator.clipboard.writeText(await cached);
 			return;
 		}
 
-		const markDownPromise = callApi(markdownURL, {
-			responseType: "text",
-		}).then((result) => {
-			if (result.error || !result.data) {
-				return "";
-			}
-
-			cache.set(markdownURL, result.data);
-
-			return result.data;
-		});
-
-		const clipboardItem = new ClipboardItem({ "text/plain": markDownPromise });
-
 		setIsLoading(true);
-		await navigator.clipboard.write([clipboardItem]).finally(() => setIsLoading(false));
+
+		try {
+			const markDownPromise = callApi(markdownURL, {
+				baseURL: globalThis.location.origin,
+				responseType: "text",
+				resultMode: "onlyData",
+				throwOnError: true,
+			});
+
+			cache.set(markdownURL, markDownPromise);
+
+			await navigator.clipboard.write([
+				new ClipboardItem({
+					"text/plain": markDownPromise,
+				}),
+			]);
+		} catch (error) {
+			console.error(new Error("Failed to copy Markdown", { cause: error }));
+		}
+
+		setIsLoading(false);
 	});
 
 	return (
@@ -73,7 +79,7 @@ type ViewOptionsProps = {
 	markdownURL: string;
 };
 
-export function ViewOptions(props: ViewOptionsProps) {
+export function ViewOptionsPopover(props: ViewOptionsProps) {
 	const { githubURL, markdownURL } = props;
 
 	const pathname = usePathname();
