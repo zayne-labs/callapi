@@ -82,7 +82,6 @@ export function createMetadata(overrides?: Metadata): Metadata {
 		...overrides,
 
 		alternates: {
-			canonical: overrides?.alternates?.canonical ?? baseURL,
 			...overrides?.alternates,
 		},
 

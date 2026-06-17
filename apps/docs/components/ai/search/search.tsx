@@ -8,15 +8,7 @@ import { Presence } from "@zayne-labs/ui-react/common/presence";
 import { DefaultChatTransport, type Tool, type UIToolInvocation } from "ai";
 import Link from "fumadocs-core/link";
 import { Loader2, MessageCircleIcon, RefreshCw, SearchIcon, Send, X } from "lucide-react";
-import {
-	useEffect,
-	useEffectEvent,
-	useInsertionEffect,
-	useMemo,
-	useRef,
-	useState,
-	type ComponentProps,
-} from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState, type ComponentProps } from "react";
 import { toast } from "sonner";
 import { cn } from "tailwind-variants";
 import { z } from "zod";
@@ -168,15 +160,18 @@ export function AISearchInput(props: InferProps<"form">) {
 
 	const isLoading = status === "streaming" || status === "submitted";
 
-	const onStart = (event: React.SyntheticEvent) => {
-		event.preventDefault();
-		void sendMessage({ text: input });
-		setInput("");
-	};
+	const onStart = (event?: React.SyntheticEvent) => {
+		event?.preventDefault();
+		const message = input.trim();
+		if (message.length === 0) return;
 
-	useInsertionEffect(() => {
-		localStorage.setItem(StorageKeyInput, input);
-	}, [input]);
+		void sendMessage({
+			parts: [{ text: message, type: "text" }],
+			role: "user",
+		});
+		setInput("");
+		localStorage.removeItem(StorageKeyInput);
+	};
 
 	useEffect(() => {
 		if (isLoading) {
@@ -204,7 +199,6 @@ export function AISearchInput(props: InferProps<"form">) {
 
 			{isLoading ?
 				<button
-					key="bn"
 					type="button"
 					className={buttonVariants({
 						className: "mt-2 gap-2 rounded-full transition-all",
@@ -216,7 +210,6 @@ export function AISearchInput(props: InferProps<"form">) {
 					<p>Abort Answer</p>
 				</button>
 			:	<button
-					key="bn"
 					type="submit"
 					className={buttonVariants({
 						className: "mt-2 rounded-full transition-all",
@@ -231,7 +224,6 @@ export function AISearchInput(props: InferProps<"form">) {
 	);
 }
 
-// eslint-disable-next-line ts-eslint/no-unused-vars
 function AISearchMessagePrimitiveWithLinksTool(props: InferProps<"div"> & { message: UIMessage }) {
 	const { message, ...restOfProps } = props;
 
@@ -285,6 +277,7 @@ function AISearchMessagePrimitiveWithLinksTool(props: InferProps<"div"> & { mess
 	);
 }
 
+// eslint-disable-next-line ts-eslint/no-unused-vars
 function AISearchMessagePrimitiveWithSearchTool(props: InferProps<"div"> & { message: UIMessage }) {
 	const { message, ...restOfProps } = props;
 
@@ -303,7 +296,10 @@ function AISearchMessagePrimitiveWithSearchTool(props: InferProps<"div"> & { mes
 			const toolName = part.type.slice("tool-".length);
 			const castedPart = part as UIToolInvocation<Tool>;
 
-			(toolName !== "search" || !castedPart.toolCallId) && searchCalls.push(castedPart);
+			// eslint-disable-next-line max-depth
+			if (toolName !== "search" || !castedPart.toolCallId) continue;
+
+			searchCalls.push(castedPart);
 		}
 	}
 
@@ -461,7 +457,7 @@ export function AISearchPanelList({ className, style, ...props }: ComponentProps
 				</div>
 			:	<div className="flex flex-col gap-4 px-3">
 					{messages.map((item) => (
-						<AISearchMessagePrimitiveWithSearchTool key={item.id} message={item} />
+						<AISearchMessagePrimitiveWithLinksTool key={item.id} message={item} />
 					))}
 				</div>
 			}

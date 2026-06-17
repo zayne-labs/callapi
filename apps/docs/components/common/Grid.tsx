@@ -69,7 +69,7 @@ export function Grid(props: GridProps) {
 	useEffect(() => {
 		// eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler
 		if (dimensions.width && dimensions.height) {
-			// eslint-disable-next-line react-you-might-not-need-an-effect/no-derived-state, react/set-state-in-effect
+			// eslint-disable-next-line react-you-might-not-need-an-effect/no-chain-state-updates, react-you-might-not-need-an-effect/no-adjust-state-on-prop-change, react/set-state-in-effect
 			setSquares(generateSquares(numSquares));
 		}
 		// eslint-disable-next-line react/exhaustive-deps

@@ -113,16 +113,21 @@ export async function generateMetadata({ params }: PageProps<"/docs/[[...slug]]"
 
 	const description = page.data.description ?? defaultDescription;
 
-	const imageURL = getPageImage(page).url;
+	const image = {
+		height: 630,
+		url: getPageImage(page).url,
+		width: 1200,
+	};
 
 	return createMetadata({
 		description,
 		openGraph: {
-			url: imageURL,
+			images: [image],
+			url: `/docs/${page.slugs.join("/")}`,
 		},
 		title: page.data.title,
 		twitter: {
-			images: [{ height: 630, url: imageURL, width: 1200 }],
+			images: [image],
 		},
 	});
 }

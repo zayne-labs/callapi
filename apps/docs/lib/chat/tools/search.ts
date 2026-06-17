@@ -41,7 +41,7 @@ const createSearchServer = async () => {
 			}
 
 			return {
-				content: await page.data.getText("raw"),
+				content: await page.data.getText("processed"),
 				description: page.data.description,
 				title: page.data.title,
 				url: page.url,
@@ -50,9 +50,9 @@ const createSearchServer = async () => {
 	);
 
 	for (const doc of docs) {
-		if (!doc) continue;
-
-		search.add(doc);
+		if (doc) {
+			search.add(doc);
+		}
 	}
 
 	return search;
