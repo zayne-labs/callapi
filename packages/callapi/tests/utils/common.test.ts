@@ -67,9 +67,9 @@ test("Method utils - getMethod returns uppercase method and prioritizes explicit
 
 test("Body utils - getBody serializes body correctly and respects custom serializers", () => {
 	const body = { a: 1 };
-	expect(getBody({ body, bodySerializer: undefined, bodyTransformer: undefined, resolvedHeaders: {} })).toBe(
-		JSON.stringify(body)
-	);
+	expect(
+		getBody({ body, bodySerializer: undefined, bodyTransformer: undefined, resolvedHeaders: {} })
+	).toBe(JSON.stringify(body));
 
 	const custom = vi.fn().mockReturnValue("serialized");
 	expect(getBody({ body, bodySerializer: custom, bodyTransformer: undefined, resolvedHeaders: {} })).toBe(

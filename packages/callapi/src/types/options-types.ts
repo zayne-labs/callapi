@@ -274,8 +274,7 @@ export type SharedExtraOptions<
 		 * ```
 		 */
 		defaultHTTPErrorMessage?:
-			| string
-			| ((context: Pick<HTTPError<TErrorData>, "errorData" | "response">) => string);
+			string | ((context: Pick<HTTPError<TErrorData>, "errorData" | "response">) => string);
 
 		/**
 		 * Optional metadata field for associating additional information with requests.
@@ -687,8 +686,7 @@ export type CallApiExtraOptions<
 	 *
 	 */
 	schemaConfig?:
-		| TSchemaConfig
-		| ((context: GetExtendSchemaConfigContext<TBaseSchemaConfig>) => TSchemaConfig);
+		TSchemaConfig | ((context: GetExtendSchemaConfigContext<TBaseSchemaConfig>) => TSchemaConfig);
 };
 
 export type InstanceContext = {

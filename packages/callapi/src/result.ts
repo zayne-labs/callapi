@@ -144,8 +144,7 @@ export type CallApiResultErrorVariant<TErrorData> =
 	  };
 
 export type CallApiResultSuccessOrErrorVariant<TData, TError> =
-	| CallApiResultErrorVariant<TError>
-	| CallApiResultSuccessVariant<TData>;
+	CallApiResultErrorVariant<TError> | CallApiResultSuccessVariant<TData>;
 
 type GetCallApiResult<
 	TThrowOnError extends ThrowOnErrorBoolean,

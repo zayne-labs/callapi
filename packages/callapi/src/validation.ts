@@ -156,8 +156,7 @@ export interface CallApiSchemaConfig {
 }
 
 export type CallApiSchemaType<TInput> =
-	| StandardSchemaV1<TInput | undefined>
-	| ((value: TInput) => Awaitable<TInput | undefined>);
+	StandardSchemaV1<TInput | undefined> | ((value: TInput) => Awaitable<TInput | undefined>);
 
 export interface CallApiSchema {
 	auth?: CallApiSchemaType<AuthOption>;

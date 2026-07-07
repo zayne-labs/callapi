@@ -107,8 +107,7 @@ type JsonPrimitive = boolean | number | string | null | undefined;
 export type SerializableObject = Record<PropertyKey, unknown>;
 
 export type SerializableArray =
-	| Array<JsonPrimitive | SerializableObject>
-	| ReadonlyArray<JsonPrimitive | SerializableObject>;
+	Array<JsonPrimitive | SerializableObject> | ReadonlyArray<JsonPrimitive | SerializableObject>;
 
 export type Body = UnmaskType<
 	Exclude<RequestInit["body"], undefined> | SerializableArray | SerializableObject
@@ -386,8 +385,7 @@ export type ResultModeOption<TErrorData, TResultMode extends ResultModeType> =
 export type ThrowOnErrorBoolean = boolean;
 
 export type ThrowOnErrorType<TErrorData, TThrowOnError extends ThrowOnErrorBoolean> =
-	| TThrowOnError
-	| ((context: ErrorContext<{ ErrorData: TErrorData }>) => TThrowOnError);
+	TThrowOnError | ((context: ErrorContext<{ ErrorData: TErrorData }>) => TThrowOnError);
 
 export type ThrowOnErrorOption<TErrorData, TThrowOnError extends ThrowOnErrorBoolean> =
 	TErrorData extends false ? { throwOnError: true }
