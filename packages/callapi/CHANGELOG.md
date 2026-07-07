@@ -1,5 +1,14 @@
 # @zayne-labs/callapi
 
+## 1.14.0
+
+### Minor Changes
+
+- 47bc462: ✨ feat(callapi): add bodyTransformer option for custom body transformation
+  📝 docs: update documentation for bodyTransformer
+  🧪 test: add tests for bodyTransformer functionality
+  ⬆️ deps: update dependencies
+
 ## 1.13.0
 
 ### Minor Changes
