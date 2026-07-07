@@ -67,10 +67,23 @@ test("Method utils - getMethod returns uppercase method and prioritizes explicit
 
 test("Body utils - getBody serializes body correctly and respects custom serializers", () => {
 	const body = { a: 1 };
-	expect(getBody({ body, bodySerializer: undefined, resolvedHeaders: {} })).toBe(JSON.stringify(body));
+	expect(getBody({ body, bodySerializer: undefined, bodyTransformer: undefined, resolvedHeaders: {} })).toBe(
+		JSON.stringify(body)
+	);
 
 	const custom = vi.fn().mockReturnValue("serialized");
-	expect(getBody({ body, bodySerializer: custom, resolvedHeaders: {} })).toBe("serialized");
+	expect(getBody({ body, bodySerializer: custom, bodyTransformer: undefined, resolvedHeaders: {} })).toBe(
+		"serialized"
+	);
+});
+
+test("Body utils - getBody prioritizes bodyTransformer over bodySerializer", () => {
+	const body = { a: 1 };
+	const bodySerializer = vi.fn().mockReturnValue("serialized");
+	const bodyTransformer = vi.fn().mockReturnValue("transformed");
+
+	expect(getBody({ body, bodySerializer, bodyTransformer, resolvedHeaders: {} })).toBe("transformed");
+	expect(bodySerializer).not.toHaveBeenCalled();
 });
 
 test("Fetch utils - getInitFetchImpl returns provided or global fetch", () => {

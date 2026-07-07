@@ -23,6 +23,7 @@ import {
 } from "./result";
 import { createRetryManager } from "./retry";
 import type {
+	Body,
 	GetCurrentRouteSchema,
 	GetCurrentRouteSchemaKey,
 	InferInitURL,
@@ -121,6 +122,7 @@ export const createFetchClientWithContext = <
 				TComputedBaseSchemaRoutes,
 				TCurrentRouteSchemaKey
 			>,
+			TBody extends InferSchemaOutput<TSchema["body"], Body> = InferSchemaOutput<TSchema["body"], Body>,
 			const TPluginArray extends CallApiPlugin[] = TBasePluginArray,
 			TComputedData = InferSchemaOutput<TSchema["data"], GetResponseType<TData, TResponseType>>,
 			TComputedErrorData = InferSchemaOutput<
@@ -143,6 +145,7 @@ export const createFetchClientWithContext = <
 				TSchemaConfig,
 				TInitURL,
 				TCurrentRouteSchemaKey,
+				TBody,
 				TBasePluginArray,
 				TPluginArray
 			> = {} as never
@@ -297,16 +300,19 @@ export const createFetchClientWithContext = <
 				// == Apply Schema Output for Extra Options
 				Object.assign(options, extraOptionsValidationResult);
 
+				const resolvedBody = getBody({
+					body: requestOptionsValidationResult.body,
+					bodySerializer: options.bodySerializer,
+					bodyTransformer: options.bodyTransformer,
+					resolvedHeaders: requestOptionsValidationResult.headers,
+				});
+
 				// == Apply Schema Output for Request Options
 				Object.assign(request, {
-					body: getBody({
-						body: requestOptionsValidationResult.body,
-						bodySerializer: options.bodySerializer,
-						resolvedHeaders: requestOptionsValidationResult.headers,
-					}),
+					body: resolvedBody,
 					headers: await getHeaders({
 						auth: options.auth,
-						body: requestOptionsValidationResult.body,
+						body: resolvedBody,
 						resolvedHeaders: requestOptionsValidationResult.headers,
 					}),
 					method: getMethod({

@@ -4,311 +4,244 @@ description: How is CallApi different from other existing fetching libraries?
 icon: GitCompareArrows
 ---
 
-CallApi is a modern fetch wrapper designed to solve real problems. Here's how it compares to other popular libraries.
+CallApi is not a React Query, SWR, Apollo, or framework loader replacement. Those handle caching and server state.
+
+CallApi sits lower. It is for the HTTP call itself which covers:
+
+- Building the URL
+- Sending the request
+- Parsing the response
+- Handling errors
+- Retrying
+- Dedupe
+- Validating
+- Running hooks, etc
 
 ## Philosophy
 
-CallApi is built on four core principles:
+CallApi is built around four core principles:
 
 1. **Lightweight:** Under 6KB. Zero dependencies. Pure ESM.
+2. **Simple:** Based on Fetch API, and close enough to `fetch` that it does not feel like learning another client from scratch.
+3. **Type-safe:** Types can come from schemas, validators, or manual generics.
+4. **Extensible:** Hooks and plugins are there when the base client is not enough.
 
-2. **Simple:** Based on Fetch API, mirrors its interface 1-to-1. Only adds useful features with sensible defaults.
+## Pain Points CallApi Covers
 
-3. **Type-safe:** Full TypeScript support with type inference via schemas, validators, and manual generics.
+These are the things that usually make a small fetch helper keep growing.
 
-4. **Extensible:** Plugins and hooks let you add or modify features without changing core code.
+| Problem                                                         | What usually happens                                                                 | What CallApi gives you                                     |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| Repeated `try/catch`, `response.ok`, and `response.json()` code | Every API file grows its own version                                                 | `{ data, error, response }` by default                     |
+| Different error conventions                                     | Fetch does not throw for HTTP errors, Axios/Ky/Ofetch do                             | Return errors by default, throw when you ask for it        |
+| Request dedupe added late                                       | You add maps, abort controllers, cache keys, or custom request registries            | Built-in request dedupe                                    |
+| Validation separated from fetching                              | You fetch first, then manually parse with Zod/Valibot/etc.                           | Schema validation on the request, with inferred data types |
+| Messy URL building                                              | Template strings and `URLSearchParams` spread around the app                         | `params`, `query`, and method prefixes                     |
+| Auth/defaults drift                                             | Different helpers set headers in slightly different ways                             | Base client options, auth helpers, hooks, and plugins      |
+| Wrapper code keeps growing                                      | Retries, timeouts, parsing, hooks, validation, and error shaping get rebuilt per app | Those pieces are already in the client                     |
 
-## CallApi vs Axios
+## Comparison Table
 
-### Overview
+Approximate minified + gzipped sizes.
 
-Axios has been fundamental to web development for years. However, modern web development has evolved, and CallApi addresses many of Axios's limitations.
+| Feature                             | Raw fetch          | Axios              | Ky                      | Ofetch                 | CallApi                        |
+| ----------------------------------- | ------------------ | ------------------ | ----------------------- | ---------------------- | ------------------------------ |
+| Size                                | 0KB                | ~13KB              | ~5KB                    | ~8KB                   | &lt;6KB                        |
+| API style                           | Platform primitive | Custom HTTP client | Chainable fetch wrapper | `$fetch` style wrapper | Fetch-like client              |
+| Fetch-based                         | Yes                | No                 | Yes                     | Yes                    | Yes                            |
+| Default result shape                | Response           | Throws/response    | Throws/body helpers     | Throws/body            | `{ data, error, response }`    |
+| Content-type aware response parsing | Manual             | Partial            | Yes                     | Yes                    | Yes                            |
+| Request timeout                     | Manual             | Yes                | Yes                     | Yes                    | Yes                            |
+| Retries                             | Manual             | No                 | Yes                     | Yes                    | Yes                            |
+| Request dedupe                      | Manual             | No                 | No                      | No                     | Yes                            |
+| Schema validation                   | Manual             | No                 | No                      | No                     | Yes                            |
+| Type inference from schemas         | Manual             | No                 | No                      | No                     | Yes                            |
+| Hooks/interceptors                  | Manual             | Yes                | Yes                     | Yes                    | Yes                            |
+| Plugin system                       | Manual             | No                 | No                      | No                     | Yes                            |
+| URL params/query helpers            | Manual             | Params only        | Prefix/query helpers    | Query helpers          | Params, query, method prefixes |
 
-### Key Differences
+## Raw Fetch
 
-<Tabs items={["API Design", "Features", "Bundle Size"]}>
-<Tab value="API Design">
+Raw fetch is fine until the same request code starts showing up everywhere.
 
-**Axios:**
+```ts
+const baseURL = process.env.NEXT_PUBLIC_API_URL;
 
-- Based on XMLHttpRequest (legacy API)
-- Custom API design
-- Verbose configuration for some use cases
-- Requires adapters for different environments
+const response = await fetch(`${baseURL}/api/users`);
 
-**CallApi:**
+if (!response.ok) {
+	const errorData = await response.json();
+	throw new Error(errorData.message);
+}
 
-- Based on modern Fetch API
-- Drop-in replacement for fetch
-- Concise, intuitive API
-- Works everywhere (browsers, Node 18+, Deno, Bun, Workers)
+const users = await response.json();
+```
 
-</Tab>
-<Tab value="Features">
+With CallApi:
 
-**Features Comparison:**
+```ts
+import { callApi } from "@zayne-labs/callapi";
 
-| Feature                       | Axios | CallApi                      |
-| ----------------------------- | ----- | ---------------------------- |
-| Request/Response Interceptors | ✅    | ✅ (Hooks & Plugins)         |
-| Automatic JSON Parsing        | ✅    | ✅ (Content-Type aware)      |
-| Timeout Support               | ✅    | ✅                           |
-| Request Cancellation          | ✅    | ✅ (Built-in)                |
-| Progress Events               | ✅    | ✅ (Streaming)               |
-| Retry Logic                   | ❌    | ✅ (Exponential backoff)     |
-| Request Deduplication         | ❌    | ✅                           |
-| Schema Validation             | ❌    | ✅ (Any Standard Schema)     |
-| TypeScript Type Inference     | ❌    | ✅                           |
-| Plugin System                 | ❌    | ✅                           |
-| URL Helpers                   | ❌    | ✅ (Params, query, prefixes) |
+const { data: users, error } = await callApi("/api/users", {
+	baseURL: process.env.NEXT_PUBLIC_API_URL,
+});
 
-</Tab>
-<Tab value="Bundle Size">
+if (error) {
+	console.error(error.message, error.errorData);
+}
+```
 
-**Size Comparison:**
+Keep raw fetch if the wrapper stays tiny. Use CallApi when that wrapper starts growing retries, parsing, validation, auth, dedupe, and shared error handling.
 
-- **Axios**: ~13KB minified + gzipped
-- **CallApi**: &lt;6KB minified + gzipped
+## Axios
 
-CallApi is over 50% smaller while providing more features.
+Axios is still fine. It just has its own request and response model, while CallApi stays closer to fetch.
 
-</Tab>
-</Tabs>
+### What CallApi Adds Here
 
-### Migration Example
+- Retry logic and dedupe live in the client instead of wrapper code.
+- Schema validation can live on the request instead of after the request.
+- `params`, `query`, and method prefixes reduce URL string building.
+- The default result object lets you handle expected API errors without wrapping every call in `try/catch`.
 
-<Tabs items={["Before (Axios)", "After (CallApi)"]}>
-<Tab value="Before (Axios)">
+### API Mapping
+
+| Axios                         | CallApi                                                  |
+| ----------------------------- | -------------------------------------------------------- |
+| `axios.create({ baseURL })`   | `createFetchClient({ baseURL })`                         |
+| `axios.get("/users")`         | `callApi("/users")` or `callApi("@get/users")`           |
+| `axios.post("/users", body)`  | `callApi("@post/users", { body })`                       |
+| `response.data`               | `result.data`                                            |
+| `AxiosError`                  | `result.error` or thrown `HTTPError` with `throwOnError` |
+| Request/response interceptors | Lifecycle hooks and plugins                              |
+
+<Tabs items={["Axios", "CallApi"]}>
+<Tab value="Axios">
 
 ```ts
 import axios from "axios";
 
 const api = axios.create({
 	baseURL: "https://api.example.com",
-	timeout: 10000,
-	headers: {
-		"Content-Type": "application/json",
-	},
+	timeout: 10_000,
 });
 
-// Add auth token
 api.interceptors.request.use((config) => {
 	config.headers.Authorization = `Bearer ${getToken()}`;
 	return config;
 });
 
-// Handle errors
-api.interceptors.response.use(
-	(response) => response,
-	(error) => {
-		if (error.response?.status === 401) {
-			redirectToLogin();
-		}
-		return Promise.reject(error);
-	}
-);
+const response = await api.post("/users", {
+	name: "Ada",
+});
 
-try {
-	const response = await api.get("/users");
-	const users = response.data;
-} catch (error) {
-	if (axios.isAxiosError(error)) {
-		console.error(error.response?.data);
-	}
-}
+const user = response.data;
 ```
 
 </Tab>
-<Tab value="After (CallApi)">
+<Tab value="CallApi">
 
 ```ts
 import { createFetchClient } from "@zayne-labs/callapi";
 
-const api = createFetchClient({
+const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
-	timeout: 10000,
-
-	// Add auth token
-	onRequest: ({ request }) => {
-		options.auth = getToken(); // Or request.headers["Authorization"] = `Bearer ${getToken()}`;
-	},
-
-	// Handle errors
-	onError: ({ error, response }) => {
-		if (response?.status === 401) {
-			redirectToLogin();
-		}
+	timeout: 10_000,
+	onRequest: ({ options }) => {
+		options.auth = getToken();
 	},
 });
 
-const { data: users, error } = await api("/users");
-
-if (error) {
-	console.error(error.errorData);
-}
+const { data: user, error } = await callApi("@post/users", {
+	body: { name: "Ada" },
+});
 ```
 
 </Tab>
 </Tabs>
 
-### When to Choose Axios
+Stick with Axios if the app is deeply built around it. CallApi makes more sense when you want fetch plus the request-layer pieces you would otherwise add yourself.
 
-- You need IE11 support
-- Your team is deeply familiar with Axios and migration cost is high
-- You rely on Axios-specific ecosystem packages
+## Ky
 
-### When to Choose CallApi
+Ky is the closest comparison if you only care about size and fetch support. It is also a smaller mental model: chain the request, call `.json<T>()`, move on.
 
-- You want modern, fetch-based API
-- Bundle size matters
-- You need TypeScript type inference
-- You want built-in retries and deduplication
-- You need schema validation
-- You're starting a new project
+### What CallApi Adds Here
 
-## CallApi vs Ky
+- Ky's `.json<T>()` is a type assertion. CallApi can infer from a schema and validate at runtime.
+- Request dedupe, plugins, URL params, and result modes are in CallApi.
+- CallApi fits better when the request layer needs shared behavior, not just nicer syntax.
 
-### Overview
-
-Ky is a popular modern fetch wrapper with a focus on simplicity and developer experience.
-
-### Key Differences
-
-<Tabs items={["Core Features", "Advanced Features", "Developer Experience"]}>
-<Tab value="Core Features">
-
-| Feature         | Ky   | CallApi                 |
-| --------------- | ---- | ----------------------- |
-| Fetch-based     | ✅   | ✅                      |
-| Timeout Support | ✅   | ✅                      |
-| Retry Logic     | ✅   | ✅ (More flexible)      |
-| Hooks           | ✅   | ✅ (More comprehensive) |
-| JSON Handling   | ✅   | ✅ (Content-Type aware) |
-| Bundle Size     | ~5KB | &lt;6KB                 |
-
-</Tab>
-<Tab value="Advanced Features">
-
-| Feature               | Ky         | CallApi           |
-| --------------------- | ---------- | ----------------- |
-| Request Deduplication | ❌         | ✅ (3 strategies) |
-| Schema Validation     | ❌         | ✅                |
-| Type Inference        | ⚠️ Limited | ✅ Full           |
-| Plugin System         | ❌         | ✅                |
-| Streaming Progress    | ❌         | ✅                |
-| URL Helpers           | ❌         | ✅                |
-| Method Prefixes       | ❌         | ✅                |
-
-</Tab>
-<Tab value="Developer Experience">
-
-**Ky:**
+<Tabs items={["Ky", "CallApi"]}>
+<Tab value="Ky">
 
 ```ts
 import ky from "ky";
 
-type User = { id: number; name: string };
+const api = ky.create({
+	prefixUrl: "https://api.example.com",
+	retry: 2,
+});
 
-const user = await ky.get("api/users/1").json<User>();
+const user = await api.get("users/1").json<User>();
 ```
 
-**CallApi:**
+</Tab>
+<Tab value="CallApi">
 
 ```ts
-import { callApi } from "@zayne-labs/callapi";
+import { createFetchClient } from "@zayne-labs/callapi";
 import { z } from "zod";
 
-const userSchema = z.object({
-	id: z.number(),
-	name: z.string(),
+const callApi = createFetchClient({
+	baseURL: "https://api.example.com",
+	retryAttempts: 2,
 });
 
-const { data: user } = await callApi("api/users/1", {
-	schema: { data: userSchema },
-	// Type automatically inferred!
+const { data: user } = await callApi("/users/:id", {
+	params: { id: 1 },
+	schema: {
+		data: z.object({
+			id: z.number(),
+			name: z.string(),
+		}),
+	},
 });
 ```
 
 </Tab>
 </Tabs>
 
-### When to Choose Ky
+Use Ky when you want the smaller tool. Use CallApi when you want the request lifecycle handled in one place.
 
-- You want a minimal API with no extra features
-- You don't need schema validation or type inference
-- You prefer chaining API style
+## Ofetch
 
-### When to Choose CallApi
+Ofetch and CallApi are close. Ofetch fits especially well if you already use Nuxt or other UnJS tools.
 
-- You need request deduplication
-- You want schema validation with type inference
-- You need a plugin system for extensibility
-- You want URL helpers and parameter substitution
-- You need streaming progress tracking
+### What CallApi Adds Here
 
-## CallApi vs Ofetch
+- Validation, dedupe, and plugin-style extension are not the main things Ofetch is solving.
+- Ofetch throws by default. CallApi defaults to a result object, which is easier for expected API errors like validation failures.
+- CallApi puts params, query, schemas, hooks, result modes, and request defaults on the same request model.
 
-### Overview
+| Area                    | Ofetch             | CallApi                                     |
+| ----------------------- | ------------------ | ------------------------------------------- |
+| Basic fetch wrapper     | Yes                | Yes                                         |
+| Nuxt/UnJS ecosystem fit | Strong             | Neutral                                     |
+| Default error behavior  | Throws             | Returns structured result unless configured |
+| Schema validation       | Manual             | Built in                                    |
+| Dedupe                  | Manual             | Built in                                    |
+| Plugins                 | Manual composition | Plugin API                                  |
 
-CallApi is highly inspired by Ofetch. Both share similar philosophies and design patterns.
-
-### Key Differences
-
-<Tabs items={["Similarities", "Unique to CallApi", "Bundle Size"]}>
-<Tab value="Similarities">
-
-**Both libraries share:**
-
-- Fetch API foundation
-- Automatic JSON handling
-- Retry support with exponential backoff
-- Lifecycle hooks/interceptors
-- Object literal request body support
-- Timeout support
-- TypeScript-first design
-
-</Tab>
-<Tab value="Unique to CallApi">
-
-**CallApi adds:**
-
-| Feature                 | Ofetch     | CallApi                              |
-| ----------------------- | ---------- | ------------------------------------ |
-| Request Deduplication   | ❌         | ✅ (3 strategies)                    |
-| Schema Validation       | ❌         | ✅ (Standard Schema)                 |
-| Type Inference          | ⚠️ Limited | ✅ Full                              |
-| Plugin System           | ❌         | ✅                                   |
-| Streaming Progress      | ❌         | ✅                                   |
-| URL Params Substitution | ❌         | ✅                                   |
-| Method Prefixes         | ❌         | ✅ (@get, @post, etc.)               |
-| Result Modes            | ❌         | ✅ (onlyData, onlyError, etc.)       |
-| Structured Errors       | ⚠️ Basic   | ✅ Full (HTTPError, ValidationError) |
-
-</Tab>
-<Tab value="Bundle Size">
-
-**Size Comparison:**
-
-- **Ofetch**: ~8KB minified + gzipped
-- **CallApi**: &lt;6KB minified + gzipped
-
-CallApi is smaller while providing more features.
-
-</Tab>
-</Tabs>
-
-### Code Comparison
-
-<Tabs items={["Basic Usage", "With Validation", "With Plugins"]}>
-<Tab value="Basic Usage">
-
-**Ofetch:**
+<Tabs items={["Ofetch", "CallApi"]}>
+<Tab value="Ofetch">
 
 ```ts
 import { ofetch } from "ofetch";
 
 const api = ofetch.create({
 	baseURL: "https://api.example.com",
+	retry: 2,
 	onRequest: ({ options }) => {
 		options.headers = {
 			...options.headers,
@@ -320,175 +253,22 @@ const api = ofetch.create({
 const users = await api("/users");
 ```
 
-**CallApi:**
+</Tab>
+<Tab value="CallApi">
 
 ```ts
 import { createFetchClient } from "@zayne-labs/callapi";
 
-const api = createFetchClient({
+const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
-	onRequest: ({ request, options }) => {
-		options.auth = token; // Or request.headers["Authorization"] = `Bearer ${token}`;
+	retryAttempts: 2,
+	onRequest: ({ options }) => {
+		options.auth = token;
 	},
 });
 
-const { data: users } = await api("/users");
-```
-
-</Tab>
-<Tab value="With Validation">
-
-**Ofetch:**
-
-```ts
-import { ofetch } from "ofetch";
-import { z } from "zod";
-
-const userSchema = z.object({
-	id: z.number(),
-	name: z.string(),
-});
-
-// Manual validation required
-const data = await ofetch("/users/1");
-const user = userSchema.parse(data);
-```
-
-**CallApi:**
-
-```ts
-import { callApi } from "@zayne-labs/callapi";
-import { z } from "zod";
-
-const userSchema = z.object({
-	id: z.number(),
-	name: z.string(),
-});
-
-// Automatic validation + type inference
-const { data: user } = await callApi("/users/1", {
-	schema: { data: userSchema },
-});
-// Type inferred as z.infer<typeof userSchema>
-```
-
-</Tab>
-<Tab value="With Plugins">
-
-**Ofetch:**
-
-```ts
-// No built-in plugin system
-// Need to manually compose functionality
-```
-
-**CallApi:**
-
-```ts
-import { createFetchClient } from "@zayne-labs/callapi";
-import { definePlugin } from "@zayne-labs/callapi/utils";
-
-const metricsPlugin = definePlugin({
-	id: "metrics",
-	name: "Metrics Plugin",
-
-	setup: ({ options }) => ({
-		options: {
-			...options,
-			meta: { startTime: Date.now() },
-		},
-	}),
-
-	hooks: {
-		onSuccess: ({ options }) => {
-			const duration = Date.now() - options.meta.startTime;
-			console.log(`Request took ${duration}ms`);
-		},
-	},
-});
-
-const api = createFetchClient({
-	plugins: [metricsPlugin],
-});
+const { data: users } = await callApi("/users");
 ```
 
 </Tab>
 </Tabs>
-
-### When to Choose Ofetch
-
-- You need a proven, battle-tested library
-- You're already using it and don't need extra features
-- You prefer a slightly simpler API
-
-### When to Choose CallApi
-
-- You need request deduplication
-- You want built-in schema validation and type inference
-- You need a plugin system
-- You want streaming progress tracking
-- You need URL parameter substitution
-- You want method prefixes (@get, @post)
-- Smaller bundle size matters
-
-## Feature Matrix
-
-Comprehensive comparison of all libraries:
-
-| Feature                  | Axios | Ky  | Ofetch | CallApi |
-| ------------------------ | ----- | --- | ------ | ------- |
-| **Core**                 |
-| Fetch-based              | ❌    | ✅  | ✅     | ✅      |
-| Zero Dependencies        | ❌    | ✅  | ✅     | ✅      |
-| Bundle Size              | 13KB  | 5KB | 8KB    | &lt;6KB |
-| **Request Features**     |
-| Timeout                  | ✅    | ✅  | ✅     | ✅      |
-| Retry Logic              | ❌    | ✅  | ✅     | ✅      |
-| Exponential Backoff      | ❌    | ⚠️  | ✅     | ✅      |
-| Request Cancellation     | ✅    | ✅  | ✅     | ✅      |
-| Request Deduplication    | ❌    | ❌  | ❌     | ✅      |
-| URL Param Substitution   | ❌    | ❌  | ❌     | ✅      |
-| Method Prefixes          | ❌    | ❌  | ❌     | ✅      |
-| **Response Features**    |
-| Auto JSON Parsing        | ✅    | ✅  | ✅     | ✅      |
-| Content-Type Detection   | ⚠️    | ✅  | ✅     | ✅      |
-| Schema Validation        | ❌    | ❌  | ❌     | ✅      |
-| Streaming Progress       | ✅    | ❌  | ❌     | ✅      |
-| **Developer Experience** |
-| TypeScript Support       | ⚠️    | ✅  | ✅     | ✅      |
-| Type Inference           | ❌    | ⚠️  | ⚠️     | ✅      |
-| Hooks/Interceptors       | ✅    | ✅  | ✅     | ✅      |
-| Plugin System            | ❌    | ❌  | ❌     | ✅      |
-| Error Handling           | ⚠️    | ✅  | ✅     | ✅      |
-
-✅ = Full support | ⚠️ = Partial support | ❌ = Not supported
-
-## Migration Paths
-
-For detailed migration guides from each library, see:
-
-- [Migration from Axios](/docs/migration-guide#from-axios)
-- [Migration from Ky](/docs/migration-guide#from-ky)
-- [Migration from Ofetch](/docs/migration-guide#from-ofetch)
-
-## Summary
-
-CallApi is designed for modern web development:
-
-**Choose CallApi if you want:**
-
-- Modern, fetch-based API
-- Built-in schema validation with type inference
-- Request deduplication for performance
-- Extensible plugin system
-- Comprehensive TypeScript support
-- Small bundle size (&lt;6KB)
-- All the convenience features you need
-
-**Choose other libraries if:**
-
-- **Axios**: You need IE11 support or have heavy Axios investment
-- **Ky**: You want absolute minimal API surface
-- **Ofetch**: You're already using it and satisfied
-
-CallApi provides the best balance of features, bundle size, and developer experience for modern applications.

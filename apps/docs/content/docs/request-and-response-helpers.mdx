@@ -152,7 +152,7 @@ await callApi("/api/user", {
 
 ### Custom Body Serializer
 
-Override the default JSON serialization:
+Override the default object-to-string serialization:
 
 ```ts title="custom-serializer.ts"
 import { callApi } from "@zayne-labs/callapi";
@@ -161,6 +161,28 @@ await callApi("/api/data", {
 	method: "POST",
 	body: { name: "John", age: 30 },
 	bodySerializer: (body) => customSerialize(body),
+});
+```
+
+### Custom Body Transformer
+
+Transform the request body into another Fetch-compatible body type:
+
+```ts title="custom-transformer.ts"
+import { callApi } from "@zayne-labs/callapi";
+
+await callApi("/api/upload", {
+	method: "POST",
+	body: { avatar: imageFile, name: "John" },
+	bodyTransformer: ({ body }) => {
+		const formData = new FormData();
+
+		Object.entries(body).forEach(([key, value]) => {
+			formData.append(key, value);
+		});
+
+		return formData;
+	},
 });
 ```
 

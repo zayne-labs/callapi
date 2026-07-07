@@ -44,7 +44,7 @@
 		"consola": "3.x.x"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "0.18.3",
+		"@arethetypeswrong/cli": "0.18.4",
 		"@size-limit/esbuild-why": "12.1.0",
 		"@size-limit/preset-small-lib": "12.1.0",
 		"@total-typescript/ts-reset": "0.6.1",
@@ -58,7 +58,7 @@
 		"size-limit": "12.1.0",
 		"tsdown": "0.22.3",
 		"typescript": "6.0.3",
-		"vitest": "^4.1.9"
+		"vitest": "^4.1.10"
 	},
 	"publishConfig": {
 		"access": "public",

@@ -1,168 +1,158 @@
 ---
 title: Migration Guide
-description: Migrate to CallApi from other fetch libraries
+description: Migrate to CallApi from Axios, Ky, Ofetch, or raw fetch
 icon: Move
 ---
 
-This guide helps you migrate from other popular fetch libraries to CallApi with step-by-step instructions and code examples.
+Most migrations are mechanical. The main thing is deciding how you want errors to work.
 
-## From Axios
+- Axios, Ky, and Ofetch usually throw for HTTP errors.
+- Raw fetch does not throw for HTTP errors.
+- CallApi returns `{ data, error, response }` by default.
+- If you want throwing behavior, use `throwOnError: true`.
 
-### Installation
-
-First, install CallApi alongside or instead of Axios:
+## Install
 
 ```package-install
 @zayne-labs/callapi
 ```
 
-### Basic Request
+## What Usually Changes
 
-<Tabs items={["Before (Axios)", "After (CallApi)"]}>
-<Tab value="Before (Axios)">
+| Before                                                      | CallApi                                                         |
+| ----------------------------------------------------------- | --------------------------------------------------------------- |
+| `axios.create(...)`, `ky.create(...)`, `ofetch.create(...)` | `createFetchClient(...)`                                        |
+| `.get("/users")`                                            | `callApi("/users")` or `callApi("@get/users")`                  |
+| `.post("/users", body)`                                     | `callApi("@post/users", { body })`                              |
+| `response.data`                                             | `result.data`                                                   |
+| `.json<T>()`                                                | `schema` or manual generic                                      |
+| `try/catch` for HTTP errors                                 | `result.error` by default                                       |
+| Interceptors/hooks                                          | `onRequest`, `onSuccess`, `onResponseError`, `onError`, plugins |
+| Manual path interpolation                                   | `params`                                                        |
+| Manual query strings                                        | `query`                                                         |
 
-```ts
-import axios from "axios";
+## Before You Touch Every Call
 
-// GET request
-const responseOne = await axios.get("https://api.example.com/users");
-const users = responseOne.data;
-
-// POST request
-const responseTwo = await axios.post("https://api.example.com/users", {
-	name: "John Doe",
-	email: "john@example.com",
-});
-const user = responseTwo.data;
-```
-
-</Tab>
-
-<Tab value="After (CallApi)">
-
-```ts
-import { callApi } from "@zayne-labs/callapi";
-
-// GET request
-const { data: users } = await callApi("https://api.example.com/users");
-
-// POST request
-const { data: user } = await callApi("@post/https://api.example.com/users", {
-	body: {
-		name: "John Doe",
-		email: "john@example.com",
-	},
-});
-```
-
-</Tab>
-</Tabs>
-
-### Creating an Instance
-
-<Tabs items={["Before (Axios)", "After (CallApi)"]}>
-<Tab value="Before (Axios)">
-
-```ts
-import axios from "axios";
-
-const api = axios.create({
-	baseURL: "https://api.example.com",
-	timeout: 10000,
-	headers: {
-		"Content-Type": "application/json",
-	},
-});
-
-const response = await api.get("/users");
-```
-
-</Tab>
-<Tab value="After (CallApi)">
+Set up a base client first. Move the shared bits there: `baseURL`, timeout, retries, headers, auth, and hooks.
 
 ```ts
 import { createFetchClient } from "@zayne-labs/callapi";
 
-const api = createFetchClient({
+export const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
-	timeout: 10000,
-	headers: {
-		"Content-Type": "application/json",
+	timeout: 10_000,
+	retryAttempts: 2,
+	onRequest: ({ options }) => {
+		options.auth = getToken();
 	},
 });
+```
 
-const { data } = await api("/users");
+After that, most call sites should only care about the path, body, params, query, and schema.
+
+## From Axios
+
+Axios migration mostly means replacing method helpers and deciding whether you want result objects or thrown errors.
+
+### Client Setup
+
+<Tabs items={["Axios", "CallApi"]}>
+<Tab value="Axios">
+
+```ts
+import axios from "axios";
+
+export const api = axios.create({
+	baseURL: "https://api.example.com",
+	timeout: 10_000,
+	headers: {
+		"X-App": "dashboard",
+	},
+});
+```
+
+</Tab>
+<Tab value="CallApi">
+
+```ts
+import { createFetchClient } from "@zayne-labs/callapi";
+
+export const callApi = createFetchClient({
+	baseURL: "https://api.example.com",
+	timeout: 10_000,
+	headers: {
+		"X-App": "dashboard",
+	},
+});
 ```
 
 </Tab>
 </Tabs>
 
-### Interceptors → Hooks
+### Requests
 
-<Tabs items={["Before (Axios)", "After (CallApi)"]}>
-<Tab value="Before (Axios)">
+<Tabs items={["Axios", "CallApi"]}>
+<Tab value="Axios">
 
 ```ts
-import axios from "axios";
+const usersResponse = await api.get("/users");
+const users = usersResponse.data;
 
-const api = axios.create({
-	baseURL: "https://api.example.com",
+const userResponse = await api.post("/users", {
+	name: "Ada",
+});
+const user = userResponse.data;
+```
+
+</Tab>
+<Tab value="CallApi">
+
+```ts
+const { data: users } = await callApi("/users");
+
+const { data: user } = await callApi("@post/users", {
+	body: { name: "Ada" },
+});
+```
+
+</Tab>
+</Tabs>
+
+### Interceptors to Hooks
+
+<Tabs items={["Axios", "CallApi"]}>
+<Tab value="Axios">
+
+```ts
+api.interceptors.request.use((config) => {
+	config.headers.Authorization = `Bearer ${getToken()}`;
+	return config;
 });
 
-// Request interceptor
-api.interceptors.request.use(
-	(config) => {
-		const token = localStorage.getItem("token");
-		if (token) {
-			config.headers.Authorization = `Bearer ${token}`;
-		}
-		return config;
-	},
-	(error) => Promise.reject(error)
-);
-
-// Response interceptor
 api.interceptors.response.use(
-	(response) => {
-		console.log("Response:", response.status);
-		return response;
-	},
+	(response) => response,
 	(error) => {
 		if (error.response?.status === 401) {
-			// Redirect to login
+			redirectToLogin();
 		}
+
 		return Promise.reject(error);
 	}
 );
 ```
 
 </Tab>
-<Tab value="After (CallApi)">
+<Tab value="CallApi">
 
 ```ts
-import { createFetchClient } from "@zayne-labs/callapi";
-
-const api = createFetchClient({
+export const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
-
-	// Request hook
-	onRequest: ({ request, options }) => {
-		const token = localStorage.getItem("token");
-
-		if (token) {
-			options.auth = token; // Or request.headers["Authorization"] = `Bearer ${token}`;
-		}
+	onRequest: ({ options }) => {
+		options.auth = getToken();
 	},
-
-	// Success hook
-	onSuccess: ({ response }) => {
-		console.log("Response:", response.status);
-	},
-
-	// Error hook
-	onError: ({ response }) => {
-		if (response?.status === 401) {
-			// Redirect to login
+	onResponseError: ({ response }) => {
+		if (response.status === 401) {
+			redirectToLogin();
 		}
 	},
 });
@@ -173,135 +163,53 @@ const api = createFetchClient({
 
 ### Error Handling
 
-<Tabs items={["Before (Axios)", "After (CallApi)"]}>
-<Tab value="Before (Axios)">
+<Tabs items={["Axios", "CallApi Result", "CallApi Throwing"]}>
+<Tab value="Axios">
 
 ```ts
-import axios from "axios";
-
-try {
-	const response = await axios.get("/users");
-	const users = response.data;
-} catch (error) {
-	if (axios.isAxiosError(error)) {
-		console.error("Status:", error.response?.status);
-		console.error("Data:", error.response?.data);
-		console.error("Message:", error.message);
-	} else {
-		console.error("Unexpected error:", error);
+const getUsers = async () => {
+	try {
+		const response = await api.get("/users");
+		return response.data;
+	} catch (error) {
+		if (axios.isAxiosError(error)) {
+			console.error(error.response?.data);
+		}
 	}
-}
-```
-
-</Tab>
-<Tab value="After (CallApi)">
-
-```ts
-import { callApi } from "@zayne-labs/callapi";
-import { isHTTPError } from "@zayne-labs/callapi/utils";
-
-const { data: users, error } = await callApi("/users");
-
-if (error) {
-	if (isHTTPError(error)) {
-		console.error("Status:", error.response?.status);
-		console.error("Data:", error.errorData);
-		console.error("Message:", error.message);
-	} else {
-		console.error("Network error:", error.message);
-	}
-}
-```
-
-</Tab>
-</Tabs>
-
-### Request Cancellation
-
-<Tabs items={["Before (Axios)", "After (CallApi)"]}>
-<Tab value="Before (Axios)">
-
-```ts
-import axios from "axios";
-
-const controller = new AbortController();
-
-try {
-	const response = await axios.get("/users", {
-		signal: controller.signal,
-	});
-} catch (error) {
-	if (axios.isCancel(error)) {
-		console.log("Request cancelled");
-	}
-}
-
-// Cancel the request
-controller.abort();
-```
-
-</Tab>
-<Tab value="After (CallApi)">
-
-```ts
-import { callApi } from "@zayne-labs/callapi";
-
-const controller = new AbortController();
-
-const { data, error } = await callApi("/users", {
-	signal: controller.signal,
-});
-
-if (error?.name === "AbortError") {
-	console.log("Request cancelled");
-}
-
-// Cancel the request
-controller.abort();
-```
-
-</Tab>
-</Tabs>
-
-### TypeScript Support
-
-<Tabs items={["Before (Axios)", "After (CallApi)"]}>
-<Tab value="Before (Axios)">
-
-```ts
-import axios from "axios";
-
-type User = {
-	email: string;
-	id: number;
-	name: string;
 };
-
-// Manual typing
-const response = await axios.get<User>("/users/1");
-const user = response.data; // Type: User
-
-// No runtime validation
 ```
 
 </Tab>
-<Tab value="After (CallApi)">
+<Tab value="CallApi Result">
 
 ```ts
-import { callApi } from "@zayne-labs/callapi";
-import { z } from "zod";
+const getUsers = async () => {
+	const { data, error } = await callApi("/users");
 
-const userSchema = z.object({
-	id: z.number(),
-	name: z.string(),
-	email: z.string(),
-});
+	if (error) {
+		console.error(error.errorData);
+	}
 
-// Automatic type inference + runtime validation
-const { data: user } = await callApi("/users/1", {
-	schema: { data: userSchema },
-});
-// Type automatically inferred from schema!
+	return data;
+};
+```
+
+</Tab>
+<Tab value="CallApi Throwing">
+
+```ts
+const getUsers = async () => {
+	try {
+		const data = await callApi("/users", {
+			resultMode: "onlyData",
+			throwOnError: true,
+		});
+
+		return data;
+	} catch (error) {
+		console.error(error);
+	}
+};
 ```
 
 </Tab>
@@ -309,100 +217,53 @@ const { data: user } = await callApi("/users/1", {
 
 ## From Ky
 
-### Installation
+Ky is already fetch-based. The main change is moving away from chains like `.json()` and into CallApi's result object.
 
-First, install CallApi alongside or instead of Ky:
-
-```package-install
-@zayne-labs/callapi
-```
-
-### Basic Usage
-
-<Tabs items={["Before (Ky)", "After (CallApi)"]}>
-<Tab value="Before (Ky)">
-
-```ts
-import ky from "ky";
-
-// GET request
-const users = await ky.get("https://api.example.com/users").json();
-
-// POST request
-const user = await ky
-	.post("https://api.example.com/users", {
-		json: {
-			name: "John Doe",
-			email: "john@example.com",
-		},
-	})
-	.json();
-```
-
-</Tab>
-<Tab value="After (CallApi)">
-
-```ts
-import { callApi } from "@zayne-labs/callapi";
-
-// GET request
-const { data: users } = await callApi("https://api.example.com/users");
-
-// POST request
-const { data: user } = await callApi("@post/https://api.example.com/users", {
-	body: {
-		name: "John Doe",
-		email: "john@example.com",
-	},
-});
-```
-
-</Tab>
-</Tabs>
-
-### Creating an Instance
-
-<Tabs items={["Before (Ky)", "After (CallApi)"]}>
-<Tab value="Before (Ky)">
+<Tabs items={["Ky", "CallApi"]}>
+<Tab value="Ky">
 
 ```ts
 import ky from "ky";
 
 const api = ky.create({
 	prefixUrl: "https://api.example.com",
-	timeout: 10000,
 	retry: 2,
+	timeout: 10_000,
 });
 
-const users = await api.get("users").json();
+const user = await api
+	.post("users", {
+		json: { name: "Ada" },
+	})
+	.json<User>();
 ```
 
 </Tab>
-<Tab value="After (CallApi)">
+<Tab value="CallApi">
 
 ```ts
 import { createFetchClient } from "@zayne-labs/callapi";
 
-const api = createFetchClient({
+const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
-	timeout: 10000,
 	retryAttempts: 2,
+	timeout: 10_000,
 });
 
-const { data: users } = await api("/users");
+const { data: user } = await callApi<Users>("@post/users", {
+	body: { name: "Ada" },
+});
 ```
 
 </Tab>
 </Tabs>
 
-### Hooks
+### Ky Hooks
 
-<Tabs items={["Before (Ky)", "After (CallApi)"]}>
-<Tab value="Before (Ky)">
+<Tabs items={["Ky", "CallApi"]}>
+<Tab value="Ky">
 
 ```ts
-import ky from "ky";
-
 const api = ky.create({
 	hooks: {
 		beforeRequest: [
@@ -411,8 +272,8 @@ const api = ky.create({
 			},
 		],
 		afterResponse: [
-			(request, options, response) => {
-				console.log("Response:", response.status);
+			(_request, _options, response) => {
+				console.log(response.status);
 			},
 		],
 	},
@@ -420,56 +281,17 @@ const api = ky.create({
 ```
 
 </Tab>
-<Tab value="After (CallApi)">
+<Tab value="CallApi">
 
 ```ts
-import { createFetchClient } from "@zayne-labs/callapi";
-
-const api = createFetchClient({
-	onRequest: ({ request, options }) => {
-		options.auth = token; // Or request.headers["Authorization"] = `Bearer ${token}`;
+const callApi = createFetchClient({
+	onRequest: ({ options }) => {
+		options.auth = token;
 	},
 	onSuccess: ({ response }) => {
-		console.log("Response:", response.status);
+		console.log(response.status);
 	},
 });
-```
-
-</Tab>
-</Tabs>
-
-### Error Handling
-
-<Tabs items={["Before (Ky)", "After (CallApi)"]}>
-<Tab value="Before (Ky)">
-
-```ts
-import ky from "ky";
-
-try {
-	const users = await ky.get("api/users").json();
-} catch (error) {
-	if (error instanceof ky.HTTPError) {
-		console.error("Status:", error.response.status);
-		const errorData = await error.response.json();
-		console.error("Error data:", errorData);
-	}
-}
-```
-
-</Tab>
-<Tab value="After (CallApi)">
-
-```ts
-import { callApi } from "@zayne-labs/callapi";
-import { isHTTPError } from "@zayne-labs/callapi/utils";
-
-const { data: users, error } = await callApi("api/users");
-
-if (isHTTPError(error)) {
-	console.error("Status:", error.response?.status);
-	console.error("Error data:", error.errorData); // Already parsed!
-}
 ```
 
 </Tab>
@@ -477,60 +299,10 @@ if (isHTTPError(error)) {
 
 ## From Ofetch
 
-### Installation
+Ofetch is close to CallApi. The biggest difference is that Ofetch throws by default, while CallApi returns a result object by default.
 
-First, install CallApi alongside or instead of Ofetch:
-
-```package-install
-@zayne-labs/callapi
-```
-
-### Basic Usage
-
-<Tabs items={["Before (Ofetch)", "After (CallApi)"]}>
-<Tab value="Before (Ofetch)">
-
-```ts
-import { ofetch } from "ofetch";
-
-// GET request
-const users = await ofetch("https://api.example.com/users");
-
-// POST request
-const user = await ofetch("https://api.example.com/users", {
-	method: "POST",
-	body: {
-		name: "John Doe",
-		email: "john@example.com",
-	},
-});
-```
-
-</Tab>
-<Tab value="After (CallApi)">
-
-```ts
-import { callApi } from "@zayne-labs/callapi";
-
-// GET request
-const { data: users } = await callApi("https://api.example.com/users");
-
-// POST request
-const { data: user } = await callApi("@post/https://api.example.com/users", {
-	body: {
-		name: "John Doe",
-		email: "john@example.com",
-	},
-});
-```
-
-</Tab>
-</Tabs>
-
-### Creating an Instance
-
-<Tabs items={["Before (Ofetch)", "After (CallApi)"]}>
-<Tab value="Before (Ofetch)">
+<Tabs items={["Ofetch", "CallApi"]}>
+<Tab value="Ofetch">
 
 ```ts
 import { ofetch } from "ofetch";
@@ -541,177 +313,42 @@ const api = ofetch.create({
 	retryDelay: 1000,
 });
 
-const users = await api("/users");
+const user = await api("/users/1");
 ```
 
 </Tab>
-<Tab value="After (CallApi)">
+<Tab value="CallApi">
 
 ```ts
 import { createFetchClient } from "@zayne-labs/callapi";
 
-const api = createFetchClient({
+const callApi = createFetchClient({
 	baseURL: "https://api.example.com",
 	retryAttempts: 2,
 	retryDelay: 1000,
 });
 
-const { data: users } = await api("/users");
+const { data: user } = await callApi("/users/1");
 ```
 
 </Tab>
 </Tabs>
 
-### Interceptors → Hooks
+### Ofetch Hooks
 
-<Tabs items={["Before (Ofetch)", "After (CallApi)"]}>
-<Tab value="Before (Ofetch)">
+<Tabs items={["Ofetch", "CallApi"]}>
+<Tab value="Ofetch">
 
 ```ts
-import { ofetch } from "ofetch";
-
 const api = ofetch.create({
-	baseURL: "https://api.example.com",
-
 	onRequest: ({ options }) => {
 		options.headers = {
 			...options.headers,
 			Authorization: `Bearer ${token}`,
 		};
 	},
-
-	onResponse: ({ response }) => {
-		console.log("Response:", response.status);
-	},
-
 	onResponseError: ({ response }) => {
-		console.error("Error:", response.status);
-	},
-});
-```
-
-</Tab>
-<Tab value="After (CallApi)">
-
-```ts
-import { createFetchClient } from "@zayne-labs/callapi";
-
-const api = createFetchClient({
-	baseURL: "https://api.example.com",
-
-	onRequest: ({ request, options }) => {
-		options.auth = token; // Or request.headers["Authorization"] = `Bearer ${token}`;
-	},
-
-	onSuccess: ({ response }) => {
-		console.log("Response:", response.status);
-	},
-
-	onError: ({ response }) => {
-		console.error("Error:", response?.status);
-	},
-});
-```
-
-</Tab>
-</Tabs>
-
-### Error Handling
-
-<Tabs items={["Before (Ofetch)", "After (CallApi)"]}>
-<Tab value="Before (Ofetch)">
-
-```ts
-import { ofetch } from "ofetch";
-
-try {
-	const users = await ofetch("/users");
-} catch (error) {
-	console.error("Error:", error.data);
-	console.error("Status:", error.statusCode);
-}
-```
-
-</Tab>
-<Tab value="After (CallApi)">
-
-```ts
-import { callApi } from "@zayne-labs/callapi";
-import { isHTTPError } from "@zayne-labs/callapi/utils";
-
-const { data: users, error } = await callApi("/users");
-
-if (isHTTPError(error)) {
-	console.error("Error:", error.errorData);
-	console.error("Status:", error.response?.status);
-}
-```
-
-</Tab>
-</Tabs>
-
-## Common Patterns
-
-### Authentication
-
-<Tabs items={["Axios/Ky/Ofetch", "CallApi"]}>
-<Tab value="Axios/Ky/Ofetch">
-
-```ts
-// Various approaches depending on library
-// Usually involves interceptors or hooks
-```
-
-</Tab>
-
-<Tab value="CallApi">
-
-```ts
-import { createFetchClient } from "@zayne-labs/callapi";
-
-const api = createFetchClient({
-	baseURL: "https://api.example.com",
-
-	onRequest: ({ request, options }) => {
-		const token = localStorage.getItem("token");
-
-		if (token) {
-			options.auth = token;
-		}
-	},
-
-	onError: async ({ error, response, options }) => {
-		// Refresh token on 401
-		if (response?.status === 401) {
-			const newToken = await refreshToken();
-
-			localStorage.setItem("token", newToken);
-
-			// Retry request with new token
-			options.refetch();
-		}
-	},
-});
-```
-
-</Tab>
-</Tabs>
-
-### File Upload with Progress
-
-<Tabs items={["Axios", "CallApi"]}>
-<Tab value="Axios">
-
-```ts
-import axios from "axios";
-
-const formData = new FormData();
-formData.append("file", file);
-
-const response = await axios.post("/upload", formData, {
-	onUploadProgress: (progressEvent) => {
-		const progress = (progressEvent.loaded / progressEvent.total) * 100;
-		console.log(`Upload progress: ${progress}%`);
+		console.error(response.status);
 	},
 });
 ```
@@ -720,89 +357,130 @@ const response = await axios.post("/upload", formData, {
 <Tab value="CallApi">
 
 ```ts
-import { callApi } from "@zayne-labs/callapi";
-
-const formData = new FormData();
-formData.append("file", file);
-
-const { data } = await callApi("@post/upload", {
-	body: formData,
-	onRequestStream: ({ event }) => {
-		console.log(`Upload progress: ${event.progress}%`);
-		console.log(`Transferred: ${event.transferredBytes} / ${event.totalBytes} bytes`);
+const callApi = createFetchClient({
+	onRequest: ({ options }) => {
+		options.auth = token;
+	},
+	onResponseError: ({ response }) => {
+		console.error(response.status);
 	},
 });
 ```
 
 </Tab>
 </Tabs>
+
+## From Raw Fetch
+
+Raw fetch migration is mostly deleting the wrapper code you keep repeating.
+
+<Tabs items={["Fetch", "CallApi"]}>
+<Tab value="Fetch">
+
+```ts
+const createUser = async () => {
+	const response = await fetch("/api/users", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({ name: "Ada" }),
+	});
+
+	const payload = await response.json();
+
+	if (!response.ok) {
+		return { data: null, error: payload };
+	}
+
+	return { data: payload, error: null };
+};
+```
+
+</Tab>
+<Tab value="CallApi">
+
+```ts
+import { callApi } from "@zayne-labs/callapi";
+
+const createUser = async () => {
+	const result = await callApi("/api/users", {
+		method: "POST",
+		body: { name: "Ada" },
+	});
+
+	return result;
+};
+```
+
+</Tab>
+</Tabs>
+
+## Add Validation Where It Matters
+
+Do not add schemas everywhere on day one. Start with places where bad data is actually painful: auth, permissions, payments, user profiles, and shared API clients.
+
+```ts
+import { z } from "zod";
+
+const userSchema = z.object({
+	id: z.number(),
+	name: z.string(),
+	email: z.string().email(),
+});
+
+const { data: user, error } = await callApi("/users/:id", {
+	params: { id: 1 },
+	schema: {
+		data: userSchema,
+	},
+});
+```
+
+## Common Refactors
 
 ### Query Parameters
 
-<Tabs items={["Other Libraries", "CallApi"]}>
-<Tab value="Other Libraries">
-
 ```ts
-// Manual URL construction
-const responseOne = await api.get("/users?role=admin&status=active");
-
-// Or using params option (varies by library)
-const responseTwo = await api.get("/users", {
-	params: { role: "admin", status: "active" },
+const { data } = await callApi("/users", {
+	query: {
+		role: "admin",
+		active: true,
+	},
 });
 ```
-
-</Tab>
-<Tab value="CallApi">
-
-```ts
-import { callApi } from "@zayne-labs/callapi";
-
-// Built-in query helper
-const { data: users } = await callApi("/users", {
-	query: { role: "admin", status: "active" },
-});
-// Automatically constructs: /users?role=admin&status=active
-```
-
-</Tab>
-</Tabs>
 
 ### URL Parameters
 
-<Tabs items={["Other Libraries", "CallApi"]}>
-<Tab value="Other Libraries">
-
 ```ts
-// Manual URL construction
-const userId = 123;
-const response = await api.get(`/users/${userId}`);
-```
-
-</Tab>
-<Tab value="CallApi">
-
-```ts
-import { callApi } from "@zayne-labs/callapi";
-
-// Built-in param substitution
-const { data: user } = await callApi("/users/:id", {
-	params: { id: 123 },
+const { data } = await callApi("/users/:id/posts/:postId", {
+	params: {
+		id: 1,
+		postId: 10,
+	},
 });
-// Automatically constructs: /users/123
 ```
 
-</Tab>
-</Tabs>
+### File Uploads
 
-## Migration Checklist
+```ts
+const formData = new FormData();
+formData.append("avatar", file);
 
-- Install `@zayne-labs/callapi`
-- Update imports from `axios`/`ky`/`ofetch` to `@zayne-labs/callapi`
-- Replace `axios.create()`, `ky.create()`, or `ofetch.create()` with `createFetchClient()`
-- Update HTTP method calls to use `@method/path` syntax or the `method` option
-- Convert interceptors to hooks (`onRequest`, `onSuccess`, `onError`, `onRequestError`, `onResponseError`)
-- Update error handling to use result destructuring and `isHTTPError()` utility
-- Replace `.json()` calls with automatic data extraction from the `data` property
-- Update retry configuration (`retryAttempts`, `retryDelay` instead of `retry`)
-- For React Query, see the [React Query Integration](/docs/integrations/react-query) guide
+const { data } = await callApi("@post/users/:id/avatar", {
+	body: formData,
+	params: { id: 1 },
+});
+```
+
+## Final Considerations/Checklist
+
+- [ ] Replace imports.
+- [ ] Replace client creation.
+- [ ] Replace method helpers.
+- [ ] Convert interceptors/hooks.
+- [ ] Decide if each call should return `{ data, error }` or throw.
+- [ ] Add `baseURL` when using relative URLs outside browser-native contexts.
+- [ ] Add schemas where runtime validation is worth it.
+- [ ] Use `params` and `query` instead of manual string building.
+- [ ] Keep server-state caching in TanStack Query, SWR, or your framework. Use CallApi underneath as the request client.

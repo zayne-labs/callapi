@@ -114,13 +114,16 @@ export type Body = UnmaskType<
 	Exclude<RequestInit["body"], undefined> | SerializableArray | SerializableObject
 >;
 
-type InferBodyOption<TSchema extends CallApiSchema> = MakeSchemaOptionRequiredIfDefined<
+type InferBodyOption<
+	TSchema extends CallApiSchema,
+	TBody = InferSchemaOutput<TSchema["body"], Body>,
+> = MakeSchemaOptionRequiredIfDefined<
 	TSchema["body"],
 	{
 		/**
 		 * Body of the request, can be a object or any other supported body type.
 		 */
-		body?: InferSchemaOutput<TSchema["body"], Body>;
+		body?: TBody;
 	}
 >;
 
@@ -174,7 +177,8 @@ export type InferHeadersOption<TSchema extends CallApiSchema> = MakeSchemaOption
 export type InferRequestOptions<
 	TSchema extends CallApiSchema,
 	TInitURL extends InferInitURL<BaseCallApiSchemaRoutes, CallApiSchemaConfig>,
-> = InferBodyOption<TSchema> & InferHeadersOption<TSchema> & InferMethodOption<TSchema, TInitURL>;
+	TBody = InferSchemaOutput<TSchema["body"], Body>,
+> = InferBodyOption<TSchema, TBody> & InferHeadersOption<TSchema> & InferMethodOption<TSchema, TInitURL>;
 
 type InferMetaOption<
 	TSchema extends CallApiSchema,

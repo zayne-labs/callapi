@@ -1,5 +1,5 @@
 import { google } from "@ai-sdk/google";
-import { convertToModelMessages, streamText } from "ai";
+import { convertToModelMessages, streamText, toUIMessageStream } from "ai";
 import { getDocumentationContext, getSourceCodeContext } from "../context/context-builder";
 import { provideLinksTool } from "../tools/provideLinks";
 
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 			},
 		});
 
-		return result.toUIMessageStreamResponse();
+		return toUIMessageStream(result);
 	} catch (error) {
 		console.error("Chat API Error:", error);
 

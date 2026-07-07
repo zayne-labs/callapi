@@ -111,19 +111,32 @@ With `skipAutoMergeFor: "options"`:
 
 ## Body Serialization
 
-Customize how request body objects are serialized.
+Customize how plain object request bodies are serialized into strings.
 
 ```ts title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
 
 const callApi = createFetchClient({
-	bodySerializer: (data) => {
-		// Convert object to URL-encoded form data
-		const formData = new URLSearchParams();
-		Object.entries(data).forEach(([key, value]) => {
+	bodySerializer: (body) => JSON.stringify(body, null, 2),
+});
+```
+
+## Body Transformation
+
+Transform request bodies into another Fetch-compatible body type. `bodyTransformer` takes precedence over `bodySerializer`.
+
+```ts title="api.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+const callApi = createFetchClient({
+	bodyTransformer: ({ body }) => {
+		const formData = new FormData();
+
+		Object.entries(body).forEach(([key, value]) => {
 			formData.append(key, String(value));
 		});
-		return formData.toString();
+
+		return formData;
 	},
 });
 ```

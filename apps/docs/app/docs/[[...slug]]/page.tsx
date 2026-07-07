@@ -18,7 +18,7 @@ import { repoName, repoOwner } from "@/lib/github";
 import { createMetadata, defaultDescription } from "@/lib/metadata";
 import { getPageImage, source } from "@/lib/source";
 
-export const revalidate = 86400;
+export const revalidate = false;
 
 async function Page({ params }: PageProps<"/docs/[[...slug]]">) {
 	const { slug } = await params;

@@ -186,8 +186,7 @@ test("should handle custom body serializer with XML format", async () => {
 	await callTestApi("https://api.example.com/users", {
 		method: "POST",
 		body: { name: "John", email: "john@example.com" },
-		bodySerializer: (body) =>
-			`<user><name>${body.name as string}</name><email>${body.email as string}</email></user>`,
+		bodySerializer: (body) => `<user><name>${body.name}</name><email>${body.email}</email></user>`,
 	});
 
 	expect(mockFetch).toHaveBeenCalledWith(
@@ -220,6 +219,34 @@ test("should handle FormData body serialization", async () => {
 			body: formData,
 		})
 	);
+});
+
+test("should transform plain object bodies to FormData without JSON content type", async () => {
+	using mockFetch = createFetchMock();
+
+	mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }, 201));
+
+	await callTestApi("https://api.example.com/users", {
+		body: {
+			email: "john@example.com",
+			name: "John",
+		},
+		bodyTransformer: ({ body }) => {
+			const formData = new FormData();
+
+			for (const [key, value] of Object.entries(body)) {
+				formData.append(key, value);
+			}
+
+			return formData;
+		},
+		method: "POST",
+	});
+
+	const callArgs = mockFetch.mock.calls[0]?.[1] as RequestInit;
+
+	expect(callArgs.body).toBeInstanceOf(FormData);
+	expect(callArgs.headers).not.toEqual(expect.objectContaining({ "Content-Type": "application/json" }));
 });
 
 test("should handle URLSearchParams body serialization", async () => {

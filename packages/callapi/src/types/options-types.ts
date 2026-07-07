@@ -75,11 +75,11 @@ export type ModifiedRequestInit = RequestInit & {
 	extraFetchOptions?: RequestInit;
 };
 
-export type CallApiRequestOptions = {
+export type CallApiRequestOptions<TBody = Body> = {
 	/**
 	 * Body of the request, can be a object or any other supported body type.
 	 */
-	body?: Body;
+	body?: TBody;
 	/**
 	 * Headers to be used in the request.
 	 */
@@ -100,6 +100,7 @@ export type SharedExtraOptions<
 	TThrowOnError extends ThrowOnErrorBoolean = DefaultThrowOnError,
 	TResponseType extends ResponseTypeType = ResponseTypeType,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
+	TBody = Body,
 	TComputedMergedPluginExtraOptions = Partial<
 		InferPluginExtraOptions<TPluginArray>
 			& InferSchemaOutput<
@@ -140,32 +141,46 @@ export type SharedExtraOptions<
 		/**
 		 * Custom function to serialize request body objects into strings.
 		 *
-		 * Useful for custom serialization formats or when the default JSON
+		 * Useful for custom string serialization formats or when the default JSON
 		 * serialization doesn't meet your needs.
 		 *
 		 * @example
 		 * ```ts
-		 * // Custom form data serialization
-		 * bodySerializer: (data) => {
-		 *   const formData = new FormData();
-		 *   Object.entries(data).forEach(([key, value]) => {
-		 *     formData.append(key, String(value));
-		 *   });
-		 *   return formData.toString();
-		 * }
-		 *
 		 * // XML serialization
-		 * bodySerializer: (data) => {
-		 *   return `<request>${Object.entries(data)
+		 * bodySerializer: (body) => {
+		 *   return `<request>${Object.entries(body)
 		 *     .map(([key, value]) => `<${key}>${value}</${key}>`)
 		 *     .join('')}</request>`;
 		 * }
 		 *
 		 * // Custom JSON with specific formatting
-		 * bodySerializer: (data) => JSON.stringify(data, null, 2)
+		 * bodySerializer: (body) => JSON.stringify(body, null, 2)
 		 * ```
 		 */
-		bodySerializer?: (bodyData: SerializableObject) => string;
+		bodySerializer?: (body: TBody extends SerializableObject ? TBody : SerializableObject) => string;
+
+		/**
+		 * Custom function to transform the request body before it is passed to fetch.
+		 *
+		 * Useful for converting plain objects into formats like `FormData`,
+		 * `URLSearchParams`, `Blob`, or other Fetch-compatible body values.
+		 *
+		 * Takes precedence over `bodySerializer`.
+		 *
+		 * @example
+		 * ```ts
+		 * bodyTransformer: ({ body }) => {
+		 *   const formData = new FormData();
+		 *
+		 *   Object.entries(body).forEach(([key, value]) => {
+		 *     formData.append(key, String(value));
+		 *   });
+		 *
+		 *   return formData;
+		 * }
+		 * ```
+		 */
+		bodyTransformer?: (context: { body: TBody; headers: Headers }) => Body;
 
 		/**
 		 * Whether to clone the response so it can be read multiple times.
@@ -631,6 +646,7 @@ export type CallApiExtraOptions<
 	TBaseSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
 	TSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
 	TCurrentRouteSchemaKey extends string = string,
+	TBody extends InferSchemaOutput<TSchema["body"], Body> = InferSchemaOutput<TSchema["body"], Body>,
 > = SharedExtraOptions<
 	TCallApiContext,
 	TData,
@@ -638,7 +654,8 @@ export type CallApiExtraOptions<
 	TResultMode,
 	TThrowOnError,
 	TResponseType,
-	TPluginArray
+	TPluginArray,
+	TBody
 > & {
 	/**
 	 * Array of instance-specific CallApi plugins or a function to configure plugins.
@@ -716,10 +733,11 @@ export type CallApiConfig<
 	TSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
 	TInitURL extends InitURLOrURLObject = InitURLOrURLObject,
 	TCurrentRouteSchemaKey extends string = string,
+	TBody extends InferSchemaOutput<TSchema["body"], Body> = InferSchemaOutput<TSchema["body"], Body>,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
 > = InferExtraOptions<TSchema, TBaseSchemaRoutes, TCurrentRouteSchemaKey, TCallApiContext>
-	& InferRequestOptions<TSchema, TInitURL>
+	& InferRequestOptions<TSchema, TInitURL, TBody>
 	& Omit<
 		CallApiExtraOptions<
 			TCallApiContext,
@@ -734,11 +752,12 @@ export type CallApiConfig<
 			TSchema,
 			TBaseSchemaConfig,
 			TSchemaConfig,
-			TCurrentRouteSchemaKey
+			TCurrentRouteSchemaKey,
+			TBody
 		>,
 		keyof InferExtraOptions<CallApiSchema, BaseCallApiSchemaRoutes, string, CallApiContext>
 	>
-	& Omit<CallApiRequestOptions, keyof InferRequestOptions<CallApiSchema, string>>;
+	& Omit<CallApiRequestOptions<TBody>, keyof InferRequestOptions<CallApiSchema, string, TBody>>;
 
 export type CallApiParameters<
 	TData = DefaultDataType,
@@ -755,6 +774,7 @@ export type CallApiParameters<
 	TCurrentRouteSchemaKey extends string = string,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
+	TBody extends InferSchemaOutput<TSchema["body"], Body> = InferSchemaOutput<TSchema["body"], Body>,
 > = [
 	initURL: TInitURL,
 	config?: CallApiConfig<
@@ -770,6 +790,7 @@ export type CallApiParameters<
 		TSchemaConfig,
 		TInitURL,
 		TCurrentRouteSchemaKey,
+		TBody,
 		TBasePluginArray,
 		TPluginArray
 	>,

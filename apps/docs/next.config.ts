@@ -18,8 +18,6 @@ const config: NextConfig = {
 		},
 	},
 
-	reactStrictMode: true,
-
 	// rewrites: () => {
 	// 	return [
 	// 		{
@@ -28,6 +26,8 @@ const config: NextConfig = {
 	// 		},
 	// 	];
 	// },
+
+	reactStrictMode: true,
 
 	serverExternalPackages: ["typescript", "twoslash", "shiki", "@takumi-rs/image-response"],
 

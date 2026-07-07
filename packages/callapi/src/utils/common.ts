@@ -139,12 +139,17 @@ export const getMethod = (ctx: GetMethodContext) => {
 
 export type GetBodyOptions = Pick<GetHeadersOptions, "body" | "resolvedHeaders"> & {
 	bodySerializer: CallApiExtraOptions["bodySerializer"];
+	bodyTransformer: CallApiExtraOptions["bodyTransformer"];
 };
 
 export const getBody = (options: GetBodyOptions) => {
-	const { body, bodySerializer, resolvedHeaders } = options;
+	const { body, bodySerializer, bodyTransformer, resolvedHeaders } = options;
 
 	const headers = new Headers(resolvedHeaders as Record<string, string>);
+
+	if (body !== undefined && bodyTransformer) {
+		return bodyTransformer({ body, headers });
+	}
 
 	const existingContentType = headers.get("content-type");
 

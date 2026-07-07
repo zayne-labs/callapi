@@ -1,4 +1,4 @@
-import { convertToModelMessages, stepCountIs, streamText } from "ai";
+import { convertToModelMessages, stepCountIs, streamText, toUIMessageStream } from "ai";
 import { searchTool } from "../tools/search";
 import { google } from "./sdk";
 
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 			},
 		});
 
-		return result.toUIMessageStreamResponse();
+		return toUIMessageStream(result);
 	} catch (error) {
 		console.error("Chat API Error:", error);
 
