@@ -1,5 +1,14 @@
 # @zayne-labs/callapi
 
+## 1.14.1
+
+### Patch Changes
+
+- a6770b1: 🧪 test(callapi): add plugin & hooks type-level tests
+  🧪 test(callapi): add result type inference tests for all result modes
+  🧪 test(callapi): add schema routing & strict mode type tests
+  📦 deps: update pnpm lockfile
+
 ## 1.14.0
 
 ### Minor Changes
