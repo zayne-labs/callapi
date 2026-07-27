@@ -1,10 +1,3 @@
-/**
- * Response Handling Tests
- *
- * Tests for response processing, parsing, and serialization functionality.
- * Following flat test structure - each test is self-contained with inline setup.
- */
-
 import { expect, test } from "vitest";
 import { expectSuccessResult } from "../test-setup/assertions";
 import { callTestApi } from "../test-setup/callapi-setup";

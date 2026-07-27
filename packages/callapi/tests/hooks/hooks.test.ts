@@ -1,8 +1,3 @@
-/**
- * Hook functionality tests - consolidated from hook-composition, hook-execution-modes, and hook-types
- * Tests hook lifecycle, composition, execution modes, and specific hook types
- */
-
 import { expect, test } from "vitest";
 import type { RequestContext } from "../../src";
 import type { CallApiPlugin } from "../../src/plugins";

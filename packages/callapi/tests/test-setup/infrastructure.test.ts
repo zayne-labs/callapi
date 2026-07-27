@@ -1,7 +1,3 @@
-/**
- * Test to verify that our test infrastructure is working correctly - flat structure
- */
-
 import { expect, test, vi } from "vitest";
 import { waitFor } from "../../src/utils/common";
 import { HTTPError, ValidationError } from "../../src/utils/external/error";

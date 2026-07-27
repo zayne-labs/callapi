@@ -1,8 +1,3 @@
-/**
- * Validation functionality tests - consolidated from validation-basic and validation-advanced
- * Tests request/response validation, schemas, and advanced validation logic
- */
-
 import { expect, test, vi } from "vitest";
 import { createFetchClient } from "../../src";
 import type { StandardSchemaV1 } from "../../src/types/standard-schema";
@@ -220,8 +215,8 @@ test("Advanced Validation - supports async validator functions", async () => {
 	});
 
 	const body = { name: "John" };
-	// @ts-expect-error -- ts(2345)
 
+	// @ts-expect-error -- ts(2345)
 	await client("@post/users", { method: "POST", body });
 
 	expect(asyncValidator).toHaveBeenCalledWith(body);
@@ -323,6 +318,7 @@ test("Advanced Validation - disables runtime validation transform when configure
 	});
 
 	const body = { name: "John" };
+
 	// @ts-expect-error -- ts(2345)
 	await client("@post/users", { method: "POST", body });
 

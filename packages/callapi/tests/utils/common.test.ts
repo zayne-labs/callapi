@@ -86,6 +86,33 @@ test("Body utils - getBody prioritizes bodyTransformer over bodySerializer", () 
 	expect(bodySerializer).not.toHaveBeenCalled();
 });
 
+test("Body utils - getBody skips bodyTransformer when body is undefined", () => {
+	const bodyTransformer = vi.fn();
+
+	expect(
+		getBody({
+			body: undefined,
+			bodySerializer: undefined,
+			bodyTransformer,
+			resolvedHeaders: {},
+		})
+	).toBeUndefined();
+	expect(bodyTransformer).not.toHaveBeenCalled();
+});
+
+test("Body utils - getBody passes normalized headers to bodyTransformer", () => {
+	const bodyTransformer = vi.fn(({ headers }: { headers: Headers }) => headers.get("content-type"));
+
+	expect(
+		getBody({
+			body: { a: 1 },
+			bodySerializer: undefined,
+			bodyTransformer,
+			resolvedHeaders: { "Content-Type": "application/custom" },
+		})
+	).toBe("application/custom");
+});
+
 test("Fetch utils - getInitFetchImpl returns provided or global fetch", () => {
 	const custom = vi.fn();
 	expect(getInitFetchImpl(custom)).toBe(custom);

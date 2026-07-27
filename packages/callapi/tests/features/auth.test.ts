@@ -1,8 +1,3 @@
-/**
- * Authentication tests - flat structure without nested describe blocks
- * Tests Bearer, Basic, Token, and Custom auth types with sync/async values
- */
-
 import { expect, test } from "vitest";
 import { expectSuccessResult } from "../test-setup/assertions";
 import { callTestApi, createTestFetchClient } from "../test-setup/callapi-setup";

@@ -1,8 +1,3 @@
-/**
- * Common assertion helpers and test utilities
- * Centralized from helpers.ts and test-helpers.ts
- */
-
 import { expect } from "vitest";
 import type {
 	CallApiResultErrorVariant,

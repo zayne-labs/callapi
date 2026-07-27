@@ -1,8 +1,3 @@
-/**
- * Refetch functionality tests
- * Tests the refetch function available in error contexts
- */
-
 import { expect, test } from "vitest";
 import type { RefetchFn } from "../../src/refetch";
 import { callTestApi, createTestFetchClient } from "../test-setup/callapi-setup";

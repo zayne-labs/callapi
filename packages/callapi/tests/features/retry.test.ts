@@ -1,8 +1,3 @@
-/**
- * Retry functionality tests - consolidated from retry-conditions, retry-filtering, and retry-strategies
- * Tests retry conditions, filtering triggers, and delay strategies
- */
-
 import { expect, test, vi } from "vitest";
 import { createTestFetchClient } from "../test-setup/callapi-setup";
 import {

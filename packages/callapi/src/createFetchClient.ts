@@ -40,6 +40,7 @@ import type {
 	CallApiConfig,
 	CallApiContext,
 	CallApiExtraOptions,
+	CallApiParameters,
 	CallApiRequestOptions,
 	CallApiResult,
 	GetBaseSchemaConfig,
@@ -131,12 +132,11 @@ export const createFetchClientWithContext = <
 			>,
 			TComputedResult = CallApiResult<TComputedData, TComputedErrorData, TResultMode, TThrowOnError>,
 		>(
-			initURL: TInitURL,
-			initConfig: CallApiConfig<
-				TCallApiContext,
+			...[initURL, initConfig = {} as never]: CallApiParameters<
 				TComputedData,
 				TComputedErrorData,
 				TResultMode,
+				TCallApiContext,
 				TThrowOnError,
 				TResponseType,
 				TComputedBaseSchemaRoutes,
@@ -148,7 +148,7 @@ export const createFetchClientWithContext = <
 				TBody,
 				TBasePluginArray,
 				TPluginArray
-			> = {} as never
+			>
 		): Promise<TComputedResult> => {
 			const [fetchOptions, extraOptions] = splitConfig<CallApiExtraOptions>(initConfig);
 

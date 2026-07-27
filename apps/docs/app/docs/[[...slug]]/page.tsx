@@ -1,4 +1,4 @@
-import Link from "fumadocs-core/link";
+import { Link } from "fumadocs-core/link";
 import { PathUtils } from "fumadocs-core/source";
 import * as Twoslash from "fumadocs-twoslash/ui";
 import {

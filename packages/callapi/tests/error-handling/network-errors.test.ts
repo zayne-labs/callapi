@@ -1,8 +1,3 @@
-/**
- * Network error tests - flat structure without nested describe blocks
- * Tests network errors, timeouts, AbortError, and malformed response handling
- */
-
 import { expect, test } from "vitest";
 import { expectErrorResult } from "../test-setup/assertions";
 import { callTestApi } from "../test-setup/callapi-setup";

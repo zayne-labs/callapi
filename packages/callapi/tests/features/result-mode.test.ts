@@ -1,8 +1,3 @@
-/**
- * Result mode tests - flat structure without nested describe blocks
- * Tests all result mode behaviors: all, onlyData, onlyResponse, fetchApi, withoutResponse
- */
-
 import { expect, test, vi } from "vitest";
 import { HTTPError } from "../../src/utils/external/error";
 import { expectErrorResult, expectSuccessResult } from "../test-setup/assertions";

@@ -1,7 +1,3 @@
-/**
- * Test fixtures with common mock data
- */
-
 import type { HooksOrHooksArray } from "../../src";
 import { defineBaseConfig, definePlugin } from "../../src/utils/external";
 

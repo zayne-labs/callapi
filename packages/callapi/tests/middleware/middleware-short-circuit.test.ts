@@ -1,8 +1,3 @@
-/**
- * Middleware short-circuiting tests - flat structure without nested describe blocks
- * Tests middleware ability to return responses without calling fetchImpl
- */
-
 import { expect, test } from "vitest";
 import { createFetchClient } from "../../src/createFetchClient";
 import type { Middlewares } from "../../src/middlewares";

@@ -1,8 +1,3 @@
-/**
- * Simple fetch mocking utilities
- * Provides easy-to-use functions for common mocking scenarios
- */
-
 import { expect } from "vitest";
 import type { CallApiRequestOptionsForHooks } from "../../src";
 import { mockFetch } from "./setup";

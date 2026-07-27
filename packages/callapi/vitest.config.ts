@@ -4,6 +4,7 @@ export default defineConfig({
 	test: {
 		coverage: {
 			exclude: ["node_modules/", "dist/", "tests/", "**/*.d.ts", "**/*.config.*"],
+			include: ["src/**/*.ts"],
 			provider: "v8",
 			reporter: ["json", "html"],
 			thresholds: {
@@ -19,6 +20,6 @@ export default defineConfig({
 
 		globals: true,
 		setupFiles: ["./tests/test-setup/setup.ts"],
-		// typecheck: { enabled: true },
+		typecheck: { enabled: true },
 	},
 });

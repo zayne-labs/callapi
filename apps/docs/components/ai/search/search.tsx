@@ -6,7 +6,7 @@ import { createCustomContext } from "@zayne-labs/toolkit-react";
 import type { InferProps } from "@zayne-labs/toolkit-react/utils";
 import { Presence } from "@zayne-labs/ui-react/common/presence";
 import { DefaultChatTransport, type Tool, type UIToolInvocation } from "ai";
-import Link from "fumadocs-core/link";
+import { Link } from "fumadocs-core/link";
 import { Loader2, MessageCircleIcon, RefreshCw, SearchIcon, Send, X } from "lucide-react";
 import { useEffect, useEffectEvent, useMemo, useRef, useState, type ComponentProps } from "react";
 import { toast } from "sonner";

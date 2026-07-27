@@ -1,8 +1,3 @@
-/**
- * Client creation tests - flat structure without nested describe blocks
- * Tests createFetchClient instantiation and basic configuration
- */
-
 import { expect, test } from "vitest";
 import { createFetchClient } from "../../src/createFetchClient";
 import { definePlugin } from "../../src/utils/external";

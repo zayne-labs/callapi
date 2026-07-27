@@ -1,8 +1,3 @@
-/**
- * Request functionality tests - consolidated from basic-requests and url-handling
- * Tests basic functionality, URL processing, parameter handling, and HTTP methods
- */
-
 import { expect, test } from "vitest";
 import { expectSuccessResult } from "../test-setup/assertions";
 import { callTestApi } from "../test-setup/callapi-setup";

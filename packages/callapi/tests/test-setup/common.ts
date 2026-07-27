@@ -1,9 +1,4 @@
 /**
- * Common test utilities
- * Centralized from helpers.ts and test-helpers.ts
- */
-
-/**
  * @description Helper to create a promise that can be resolved/rejected externally
  */
 export const createDeferredPromise = <T>() => {

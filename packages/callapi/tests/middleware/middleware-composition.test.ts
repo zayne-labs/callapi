@@ -1,8 +1,3 @@
-/**
- * Middleware composition tests - flat structure without nested describe blocks
- * Tests middleware composition order, plugin middleware, and execution flow
- */
-
 import { expect, test } from "vitest";
 import { createFetchClient } from "../../src/createFetchClient";
 import type { FetchImpl, Middlewares } from "../../src/middlewares";

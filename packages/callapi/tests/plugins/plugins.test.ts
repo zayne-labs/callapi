@@ -1,8 +1,3 @@
-/**
- * Plugin functionality tests - consolidated from plugin-composition, plugin-hooks, plugin-initialization, and plugin-middleware
- * Tests plugin registration, setup, hooks, and middleware
- */
-
 import { expect, test, vi } from "vitest";
 import { createFetchClient } from "../../src/createFetchClient";
 import type { CallApiPlugin } from "../../src/plugins";

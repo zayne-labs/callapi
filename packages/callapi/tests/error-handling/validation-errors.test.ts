@@ -1,8 +1,3 @@
-/**
- * Validation error tests - flat structure without nested describe blocks
- * Tests ValidationError creation, formatting, and issue handling
- */
-
 import { expect, test } from "vitest";
 import type { StandardSchemaV1 } from "../../src/types/standard-schema";
 import { HTTPError, ValidationError } from "../../src/utils/external/error";

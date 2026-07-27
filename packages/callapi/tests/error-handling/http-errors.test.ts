@@ -1,8 +1,3 @@
-/**
- * HTTP error tests - flat structure without nested describe blocks
- * Tests HTTPError creation, properties, and HTTP status code handling
- */
-
 import { expect, test, vi } from "vitest";
 import { HTTPError } from "../../src/utils/external/error";
 import { expectErrorResult, expectHTTPError } from "../test-setup/assertions";

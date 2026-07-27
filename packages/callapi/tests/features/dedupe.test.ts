@@ -1,8 +1,3 @@
-/**
- * Deduplication functionality tests - consolidated from dedupe-keys, dedupe-scopes, and dedupe-strategies
- * Tests deduplication keys, cache scopes, and strategies
- */
-
 import { expect, test } from "vitest";
 import { createFetchClient } from "../../src";
 import { waitFor } from "../../src/utils/common";

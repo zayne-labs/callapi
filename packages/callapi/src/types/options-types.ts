@@ -770,12 +770,10 @@ export type CallApiParameters<
 	TSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
 	TInitURL extends InitURLOrURLObject = InitURLOrURLObject,
 	TCurrentRouteSchemaKey extends string = string,
+	TBody extends InferSchemaOutput<TSchema["body"], Body> = InferSchemaOutput<TSchema["body"], Body>,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
-	TBody extends InferSchemaOutput<TSchema["body"], Body> = InferSchemaOutput<TSchema["body"], Body>,
-> = [
-	initURL: TInitURL,
-	config?: CallApiConfig<
+	TComputedConfig = CallApiConfig<
 		TCallApiContext,
 		TData,
 		TErrorData,
@@ -792,7 +790,16 @@ export type CallApiParameters<
 		TBasePluginArray,
 		TPluginArray
 	>,
-];
+	TComputedRequiredOptions = InferExtraOptions<
+		TSchema,
+		TBaseSchemaRoutes,
+		TCurrentRouteSchemaKey,
+		TCallApiContext
+	>
+		& InferRequestOptions<TSchema, TInitURL, TBody>,
+> =
+	NonNullable<unknown> extends TComputedRequiredOptions ? [initURL: TInitURL, config?: TComputedConfig]
+	:	[initURL: TInitURL, config: TComputedConfig];
 
 export type CallApiResult<
 	TData,
