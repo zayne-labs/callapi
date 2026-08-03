@@ -68,7 +68,7 @@
 		"@zayne-labs/tsconfig": "0.13.14",
 		"concurrently": "^10.0.4",
 		"cross-env": "^10.1.0",
-		"hono": "^4.10.7",
+		"hono": "^4.12.34",
 		"playwright": "^1.62.0",
 		"publint": "^0.3.22",
 		"size-limit": "13.0.1",
