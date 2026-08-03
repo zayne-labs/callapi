@@ -12,7 +12,7 @@ export const docs = defineDocs({
 		async: true,
 		compiler: "satteri",
 
-		lastModified:true,
+		lastModified: true,
 
 		postprocess: {
 			extractLinkReferences: true,
