@@ -1,5 +1,16 @@
 # @zayne-labs/callapi-plugins
 
+## 7.1.0
+
+### Minor Changes
+
+- bfd60e1: ✨ feat(callapi-plugins): improve logger output with method-aware prefixes, status text, durations, better error formatting, and a new Vitest logger test suite
+
+### Patch Changes
+
+- Updated dependencies [bfd60e1]
+   - @zayne-labs/callapi@1.14.2
+
 ## 7.0.1
 
 ### Patch Changes
