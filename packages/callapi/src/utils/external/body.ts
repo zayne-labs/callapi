@@ -23,6 +23,10 @@ export const toSearchParams = <TSchema extends CallApiSchemaType<BodyType>>(
 		});
 	}
 
+	if (result.value instanceof URLSearchParams) {
+		return new URLSearchParams(result.value);
+	}
+
 	const searchParams = new URLSearchParams();
 
 	for (const [key, value] of Object.entries(result.value as Record<string, unknown>)) {

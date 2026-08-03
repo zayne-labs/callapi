@@ -17,6 +17,7 @@
 		"@ai-sdk/google": "^4.0.25",
 		"@ai-sdk/react": "^4.0.41",
 		"@bprogress/next": "^3.2.12",
+		"@fumadocs/satteri": "^0.3.1",
 		"@iconify/react": "^6.0.2",
 		"@shikijs/twoslash": "4.3.1",
 		"@takumi-rs/image-response": "^2.5.2",

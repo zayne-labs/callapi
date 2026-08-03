@@ -19,17 +19,25 @@ const { data } = await callBackendApi("/users/123/posts");
 // @annotate: The resolved URL will be: "https://api.example.com/users/123/posts"
 ```
 
+CallApi handles the joining slash. Absolute URLs ignore `baseURL`.
+
+<Callout type="warn">Set an absolute `baseURL` for requests that can run on the server.</Callout>
+
 ## Dynamic Parameters
 
 Many URLs contain dynamic parts representing specific resources, like an ID. For example, `/users/123` fetches user 123, and `/posts/456` fetches post 456.
 
-Instead of manually building strings like `"/users/" + userId` or using template literals, CallApi allows you to use dynamic parameter placeholders with a `:` prefix (e.g., `/users/:userId`). This makes your code cleaner and more maintainable.
+Instead of building the URL yourself, use `:param` or `{param}` placeholders. For example,
+`/users/:userId` and `/users/{userId}` both accept a `userId` value from `params`.
 
-Provide actual values for these placeholders using the `params` option. CallApi automatically replaces the placeholders with the provided values.
+Provide values for these placeholders using the `params` option. CallApi replaces each placeholder
+with its matching value.
 
 The `params` option accepts either an object or an array:
 
-- **Object**: The keys should match the parameter names (without the `:`). For example, if your URL is `/users/:userId/posts/:postId`, passing `params: { userId: 123, postId: 456 }` will result in `/users/123/posts/456`.
+- **Object**: Keys match the parameter names without `:` or braces. For example,
+  `/users/:userId/posts/{postId}` with `params: { userId: 123, postId: 456 }` resolves to
+  `/users/123/posts/456`.
 - **Array**: The values replace the parameters in the order they appear in the URL. For example, if your URL is `/users/:userId/posts/:postId`, passing `params: ['123', '456']` will result in `/users/123/posts/456`.
 
 <Callout type="info">
@@ -39,7 +47,7 @@ The `params` option accepts either an object or an array:
 ```ts twoslash title="api.ts"
 import { callApi } from "@zayne-labs/callapi";
 
-const { data } = await callApi("https://api.example.com/users/:userId/posts/:postId", {
+const { data } = await callApi("https://api.example.com/users/:userId/posts/{postId}", {
 	params: {
 		userId: 123,
 		postId: 456,
@@ -53,6 +61,9 @@ const { data: userData } = await callApi("https://api.example.com/users/:userId/
 // @annotate: The resolved URL for both cases will be: "https://api.example.com/users/123/posts/456"
 ```
 
+Parameter values are URL-encoded before being inserted. `.` and `..` are rejected because they are
+reserved path segments.
+
 ## Query Parameters
 
 Include query parameters in the URL using the `query` option:
@@ -65,11 +76,16 @@ const { data } = await callApi("https://api.example.com/users/123/posts", {
 		page: 1,
 		limit: 10,
 		sort: "latest",
+		tag: ["typescript", "fetch"],
+		filter: { published: true },
 	},
 });
 
-// @annotate: The resolved URL will be: "https://api.example.com/users/123/posts?page=1&limit=10&sort=latest"
+// @annotate: Arrays become repeated keys and objects are JSON-stringified.
 ```
+
+Top-level nullish values are omitted. `URLSearchParams` is also accepted. `query` replaces matching
+keys already in the URL.
 
 ## Method Prefixes
 

@@ -36,7 +36,9 @@
 		"lint:size": "size-limit",
 		"lint:type-check": "tsc --pretty  -p tsconfig.json",
 		"release": "pnpm publish --no-git-checks",
-		"release:test": "pnpx pkg-pr-new publish"
+		"release:test": "pnpx pkg-pr-new publish",
+		"test": "vitest run",
+		"test:dev": "vitest dev"
 	},
 	"peerDependencies": {
 		"@zayne-labs/callapi": "workspace:*",
@@ -68,7 +70,7 @@
 	"size-limit": [
 		{
 			"path": "./src/index.ts",
-			"limit": "1.5 kb"
+			"limit": "2 kb"
 		}
 	]
 }

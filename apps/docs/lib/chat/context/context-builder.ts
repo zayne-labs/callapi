@@ -1,4 +1,5 @@
-import { getLLMText, source } from "@/lib/source";
+import { getLLMText } from "@/lib/get-llm-text";
+import { source } from "@/lib/source";
 import { assembleContext, getLocalSourceContext, getRemoteSourceContext } from "./utils";
 
 export const getDocumentationContext = async () => {

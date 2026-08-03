@@ -1,6 +1,7 @@
 import { ImageResponse } from "@takumi-rs/image-response";
 import { notFound } from "next/navigation";
-import { getPageImage, source } from "@/lib/source";
+import { getPageImage } from "@/lib/metadata";
+import { source } from "@/lib/source";
 import { getImageResponseOptions, generate as MetadataImage } from "./generate";
 
 export const revalidate = false;

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { Page } from "./source";
 
 const VERCEL_PROJECT_PRODUCTION_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL;
 const NETLIFY_PRODUCTION_URL = process.env.URL;
@@ -120,3 +121,12 @@ export function createMetadata(overrides?: Metadata): Metadata {
 		},
 	};
 }
+
+export const getPageImage = (page: Page) => {
+	const segments = [...page.slugs, "image.webp"];
+
+	return {
+		segments,
+		url: `/og/docs/${segments.join("/")}`,
+	};
+};

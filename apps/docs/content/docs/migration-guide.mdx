@@ -446,20 +446,26 @@ const { data } = await callApi("/users", {
 	query: {
 		role: "admin",
 		active: true,
+		status: ["active", "invited"],
 	},
 });
 ```
 
+Arrays become repeated keys. Objects are JSON-stringified. `URLSearchParams` is also accepted.
+
 ### URL Parameters
 
 ```ts
-const { data } = await callApi("/users/:id/posts/:postId", {
+const { data } = await callApi("/users/:id/posts/{postId}", {
 	params: {
 		id: 1,
 		postId: 10,
 	},
 });
 ```
+
+Both `:param` and `{param}` placeholders work. CallApi URL-encodes each value before adding it to the
+path.
 
 ### File Uploads
 
@@ -480,7 +486,7 @@ const { data } = await callApi("@post/users/:id/avatar", {
 - [ ] Replace method helpers.
 - [ ] Convert interceptors/hooks.
 - [ ] Decide if each call should return `{ data, error }` or throw.
-- [ ] Add `baseURL` when using relative URLs outside browser-native contexts.
+- [ ] Set an absolute `baseURL` for relative requests that can run during SSR or in Node.js.
 - [ ] Add schemas where runtime validation is worth it.
 - [ ] Use `params` and `query` instead of manual string building.
 - [ ] Keep server-state caching in TanStack Query, SWR, or your framework. Use CallApi underneath as the request client.

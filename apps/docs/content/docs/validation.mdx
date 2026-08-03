@@ -540,9 +540,11 @@ const callApi = createFetchClient({
 });
 
 // This will use the fallback schema (requires x-api-key header)
+// @errors: 2554
 await callApi("/posts");
 
 // This will use both the fallback and specific schema
+// @errors: 2554
 await callApi("/users");
 ```
 

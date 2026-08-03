@@ -2,7 +2,7 @@
 	"name": "@zayne-labs/callapi-root",
 	"type": "module",
 	"version": "0.0.0",
-	"packageManager": "pnpm@10.33.4",
+	"packageManager": "pnpm@11.18.0",
 	"license": "MIT",
 	"repository": {
 		"type": "git",

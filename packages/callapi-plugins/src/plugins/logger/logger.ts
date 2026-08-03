@@ -1,14 +1,11 @@
+import type { CallApiConfig, ErrorContext } from "@zayne-labs/callapi";
 import { definePlugin } from "@zayne-labs/callapi/utils";
 import { isBoolean, type AnyFunction } from "@zayne-labs/toolkit-type-helpers";
 import { createConsola } from "consola";
 import { getStatusText } from "./utils";
-// Do this so tsdown can bundle without erroring out due to TS `error TS2883`
-// FIXME Should remove when no longer a problem
-// eslint-disable-next-line unicorn/require-module-specifiers -- Ignore
-import type {} from "@zayne-labs/callapi";
 
 type ConsoleLikeObject = {
-	error: AnyFunction<void>;
+	error?: AnyFunction<void>;
 	fail?: AnyFunction<void>;
 	log: AnyFunction<void>;
 	success?: AnyFunction<void>;
@@ -52,6 +49,33 @@ export type LoggerOptions = {
 	mode?: "basic" | "verbose";
 };
 
+const formatPrefix = (requestOptions: Pick<CallApiConfig, "fullURL" | "method">) => {
+	const { fullURL, method } = requestOptions;
+
+	return `[${method?.toUpperCase()}] '${fullURL}'`;
+};
+
+const formatDuration = (startTime: number | undefined) => {
+	if (startTime === undefined) {
+		return "";
+	}
+
+	const durationMs = Date.now() - startTime;
+
+	return `(${durationMs}ms)`;
+};
+
+const formatErrorReason = (error: Pick<ErrorContext["error"], "message" | "name">) => {
+	return `"${error.name}: ${error.message}"`;
+};
+
+const getStatusAndStatusText = (response: Response) => {
+	const status = response.status;
+	const statusText = response.statusText || getStatusText(status);
+
+	return { status, statusText };
+};
+
 /* eslint-disable ts-eslint/no-unsafe-argument -- Ignore for now */
 export const defaultConsoleObject: ConsoleLikeObject = {
 	error: (...args) => consola.error("", ...args),
@@ -65,6 +89,8 @@ export const defaultConsoleObject: ConsoleLikeObject = {
 export const loggerPlugin = (options?: LoggerOptions) => {
 	const { consoleObject = defaultConsoleObject, enabled = true, mode = "basic" } = options ?? {};
 
+	const startTimes = new WeakMap<object, number>();
+
 	const isBasicMode = mode === "basic";
 	const isVerboseMode = mode === "verbose";
 
@@ -72,7 +98,6 @@ export const loggerPlugin = (options?: LoggerOptions) => {
 
 	const successLog = consoleObject.success ?? consoleObject.log;
 
-	// eslint-disable-next-line ts-eslint/no-unnecessary-condition -- Ignore
 	const errorLog = consoleObject.error ?? consoleObject.fail ?? consoleObject.log;
 
 	return definePlugin({
@@ -88,7 +113,9 @@ export const loggerPlugin = (options?: LoggerOptions) => {
 
 				if (!isEnabled) return;
 
-				consoleObject.log(`Request being sent to: ${ctx.options.fullURL}`);
+				startTimes.set(ctx, Date.now());
+
+				consoleObject.log(formatPrefix({ fullURL: ctx.options.fullURL, method: ctx.request.method }));
 			},
 
 			onRequestError: (ctx) => {
@@ -98,8 +125,8 @@ export const loggerPlugin = (options?: LoggerOptions) => {
 				if (!isEnabled) return;
 
 				const message = [
-					`${ctx.request.method} to '${ctx.options.fullURL}' failed!`,
-					`Reason = ${ctx.error.name}: ${ctx.error.message}`,
+					`${formatPrefix({ fullURL: ctx.options.fullURL, method: ctx.request.method })} - Request failed!`,
+					`Reason = ${formatErrorReason(ctx.error)}`,
 				].join(lineBreak);
 
 				errorLog(message);
@@ -111,16 +138,20 @@ export const loggerPlugin = (options?: LoggerOptions) => {
 
 				if (!isEnabled) return;
 
+				const duration = formatDuration(startTimes.get(ctx.request));
+
+				const { status, statusText } = getStatusAndStatusText(ctx.response);
+
 				const message = [
-					`${ctx.request.method} request to '${ctx.options.fullURL}' failed with status: ${ctx.response.status} (${ctx.response.statusText || getStatusText(ctx.response.status)})`,
-					`Reason = "${ctx.error.name}: ${ctx.error.message}"`,
+					`${formatPrefix({ fullURL: ctx.options.fullURL, method: ctx.request.method })} - Failed with status: ${status} (${statusText}) ${duration}`,
+					`Reason = ${formatErrorReason(ctx.error)}`,
 				].join(lineBreak);
 
 				isBasicMode && errorLog(message);
 
 				const verboseMessage = [message, "ErrorData: "].join(lineBreak);
 
-				isVerboseMode && consoleObject.error(verboseMessage, ctx.error.errorData);
+				isVerboseMode && errorLog(verboseMessage, ctx.error.errorData);
 			},
 
 			onRetry: (ctx) => {
@@ -130,7 +161,9 @@ export const loggerPlugin = (options?: LoggerOptions) => {
 
 				const log = consoleObject.warn ?? consoleObject.log;
 
-				log(`Retrying request... Attempt: `, ctx.retryAttemptCount);
+				log(
+					`${formatPrefix({ fullURL: ctx.options.fullURL, method: ctx.request.method })} — Retry attempt #${ctx.retryAttemptCount}`
+				);
 			},
 
 			onSuccess: (ctx) => {
@@ -138,7 +171,13 @@ export const loggerPlugin = (options?: LoggerOptions) => {
 
 				if (!isEnabled) return;
 
-				successLog("Request succeeded!", ctx.data);
+				const { status, statusText } = getStatusAndStatusText(ctx.response);
+
+				const duration = formatDuration(startTimes.get(ctx.request));
+
+				successLog(
+					`${formatPrefix({ fullURL: ctx.options.fullURL, method: ctx.request.method })} - Request completed with status: ${status} (${statusText}) ${duration}`
+				);
 			},
 
 			onValidationError: (ctx) => {
@@ -154,16 +193,16 @@ export const loggerPlugin = (options?: LoggerOptions) => {
 						:	`${ctx.error.message.slice(0, limit).trimEnd()}${ctx.error.message.length > limit ? "..." : ""}`;
 
 					return [
-						`(${ctx.error.issueCause.toUpperCase()}) Validation for request to '${ctx.options.fullURL}' failed!`,
-						`${ctx.error.name}: ${errorMessage}`,
+						`(${ctx.error.issueCause.toUpperCase()}) ${formatPrefix({ fullURL: ctx.options.fullURL, method: ctx.request.method })} validation failed`,
+						`Reason = ${formatErrorReason({ message: errorMessage, name: ctx.error.name })}`,
 					].join(lineBreak);
 				};
 
-				isBasicMode && errorLog(getMessage(150));
+				isBasicMode && errorLog(getMessage());
 
 				const verboseMessage = [getMessage(), "Issues: "].join(lineBreak);
 
-				isVerboseMode && consoleObject.error(verboseMessage, ctx.error.errorData);
+				isVerboseMode && errorLog(verboseMessage, ctx.error.errorData);
 			},
 		},
 	});

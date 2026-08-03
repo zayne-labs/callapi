@@ -12,6 +12,6 @@
 		// "checkMdx": true
 	},
 
-	"include": ["**/*.ts", "content/**/*.mdx", "**/*.tsx", ".next/dev/types/**/*.ts"],
+	"include": ["**/*.ts", "content/**/*.mdx", "**/*.tsx", ".next/dev/types/**/*.d.ts"],
 	"exclude": ["node_modules"]
 }

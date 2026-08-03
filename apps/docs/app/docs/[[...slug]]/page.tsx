@@ -10,16 +10,19 @@ import {
 } from "fumadocs-ui/layouts/notebook/page";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { MarkdownCopyButton, ViewOptionsPopover } from "@/components/ai/page-actions";
+import {
+	MarkdownCopyButton,
+	MarkdownURLCopyButton,
+	ViewOptionsPopover,
+} from "@/components/ai/page-actions";
 import { EditOnGithub } from "@/components/common/EditOnGithub";
 import { getMDXComponents } from "@/components/common/MdxComponents";
 import { HoverCard } from "@/components/ui";
 import { repoName, repoOwner } from "@/lib/github";
-import { createMetadata, defaultDescription } from "@/lib/metadata";
-import { getPageImage, source } from "@/lib/source";
+import { createMetadata, defaultDescription, getPageImage } from "@/lib/metadata";
+import { source } from "@/lib/source";
 
 export const revalidate = false;
-
 async function Page({ params }: PageProps<"/docs/[[...slug]]">) {
 	const { slug } = await params;
 
@@ -47,6 +50,7 @@ async function Page({ params }: PageProps<"/docs/[[...slug]]">) {
 
 			<div className="flex flex-row items-center gap-2 border-b pt-2 pb-6">
 				<MarkdownCopyButton markdownURL={markdownURL} />
+				<MarkdownURLCopyButton markdownURL={markdownURL} />
 				<ViewOptionsPopover markdownURL={markdownURL} githubURL={githubURL} />
 			</div>
 

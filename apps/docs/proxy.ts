@@ -15,7 +15,9 @@ export function proxy(request: NextRequest) {
 		const llmResult = llmMethods.rewrite(request.nextUrl.pathname);
 
 		if (llmResult) {
-			return NextResponse.rewrite(new URL(llmResult, request.nextUrl));
+			return NextResponse.rewrite(new URL(llmResult, request.nextUrl), {
+				headers: { Vary: "Accept" },
+			});
 		}
 	}
 

@@ -1,51 +1,87 @@
 import { extraOptionDefaults } from "./constants";
 import type { CallApiExtraOptions } from "./types/options-types";
 import type { AnyString, UnmaskType } from "./types/type-helpers";
+import { toSearchParams } from "./utils/external";
 import { isArray } from "./utils/guards";
 import { routeKeyMethods, type RouteKeyMethodsURLUnion } from "./validation";
 
+const isReservedPathSegment = (value: string) => value === "." || value === "..";
+
+const encodeParamValue = (value: unknown) => {
+	const stringValue = String(value);
+
+	if (isReservedPathSegment(stringValue)) {
+		throw new TypeError("Path parameters cannot be reserved path segments");
+	}
+
+	return encodeURIComponent(stringValue);
+};
+
+const isColonPathParam = (segment: string | undefined) => Boolean(segment?.startsWith(":"));
+
+const isBracePathParam = (segment: string | undefined) => {
+	return Boolean(segment?.startsWith("{") && segment.endsWith("}"));
+};
+
 const handleArrayParams = (url: string, params: Extract<CallApiExtraOptions["params"], unknown[]>) => {
-	let newUrl = url;
+	const placeholders: string[] = [];
 
-	const urlParts = newUrl.split("/");
+	const urlSegments = url.split("/");
 
-	// == Find all parameters in order (both :param and {param} patterns)
-	const matchedParamsArray: string[] = [];
+	for (const segment of urlSegments) {
+		if (!isColonPathParam(segment) && !isBracePathParam(segment)) continue;
 
-	for (const part of urlParts) {
-		const isMatch = part.startsWith(":") || (part.startsWith("{") && part.endsWith("}"));
-
-		if (!isMatch) continue;
-
-		matchedParamsArray.push(part);
+		placeholders.push(segment);
 	}
 
-	for (const [paramIndex, matchedParam] of matchedParamsArray.entries()) {
-		const stringParamValue = String(params[paramIndex]);
-		newUrl = newUrl.replace(matchedParam, stringParamValue);
+	let resolvedURL = url;
+
+	for (const index of placeholders.keys()) {
+		const placeholder = placeholders[index];
+
+		if (placeholder === undefined) continue;
+
+		const paramValue = params[index];
+
+		resolvedURL = resolvedURL.replace(placeholder, encodeParamValue(paramValue));
 	}
 
-	return newUrl;
+	return resolvedURL;
+};
+
+const getPathParamKey = (segment: string) => {
+	if (isColonPathParam(segment)) {
+		return segment.slice(1);
+	}
+
+	if (isBracePathParam(segment)) {
+		return segment.slice(1, -1);
+	}
+
+	return null;
 };
 
 const handleObjectParams = (
 	url: string,
 	params: Extract<CallApiExtraOptions["params"], Record<string, unknown>>
 ) => {
-	let newUrl = url;
+	const urlSegments = url.split("/");
 
-	for (const [paramKey, paramValue] of Object.entries(params)) {
-		// == Replace both :param and {param} patterns
-		const colonPattern = `:${paramKey}` as const;
-		const bracePattern = `{${paramKey}}` as const;
+	for (const segmentIndex of urlSegments.keys()) {
+		const segment = urlSegments[segmentIndex];
 
-		const stringValue = String(paramValue);
+		if (segment === undefined) continue;
 
-		newUrl = newUrl.replace(colonPattern, stringValue);
-		newUrl = newUrl.replace(bracePattern, stringValue);
+		const paramKey = getPathParamKey(segment);
+
+		if (paramKey === null || !Object.hasOwn(params, paramKey)) continue;
+
+		const paramValue = params[paramKey];
+
+		urlSegments[segmentIndex] = encodeParamValue(paramValue);
 	}
 
-	return newUrl;
+	return urlSegments.join("/");
 };
 
 const mergeUrlWithParams = (url: string, params: CallApiExtraOptions["params"]) => {
@@ -63,21 +99,33 @@ const mergeUrlWithQuery = (url: string, query: CallApiExtraOptions["query"]): st
 		return url;
 	}
 
-	const queryString = new URLSearchParams(query as Record<string, string> | URLSearchParams).toString();
+	const incomingSearchParams = toSearchParams(query);
 
-	if (queryString.length === 0) {
+	if (incomingSearchParams.size === 0) {
 		return url;
 	}
 
+	if (!url.includes("?")) {
+		return `${url}?${incomingSearchParams}`;
+	}
+
 	if (url.endsWith("?")) {
-		return `${url}${queryString}`;
+		return `${url}${incomingSearchParams}`;
 	}
 
-	if (url.includes("?")) {
-		return `${url}&${queryString}`;
+	const [mainUrl, existingQueryString] = url.split("?");
+
+	const searchParams = new URLSearchParams(existingQueryString);
+
+	for (const key of incomingSearchParams.keys()) {
+		searchParams.delete(key);
 	}
 
-	return `${url}?${queryString}`;
+	for (const entry of incomingSearchParams) {
+		searchParams.append(...entry);
+	}
+
+	return `${mainUrl}?${searchParams}`;
 };
 
 /**
@@ -106,6 +154,10 @@ export const extractMethodFromURL = (initURL: string | undefined) => {
 	return methodFromURL;
 };
 
+const isAbsoluteHTTPURL = (value: string) => {
+	return value.startsWith("http://") || value.startsWith("https://");
+};
+
 type NormalizeURLOptions = {
 	retainLeadingSlashForRelativeURLs?: boolean;
 };
@@ -122,10 +174,12 @@ export const normalizeURL = (initURL: string, options: NormalizeURLOptions = {})
 		return initURL;
 	}
 
+	const initURLWithoutMethod = initURL.replace(`@${methodFromURL}/`, "");
+
 	const normalizedURL =
-		retainLeadingSlashForRelativeURLs && !initURL.includes("http") ?
-			initURL.replace(`@${methodFromURL}`, "")
-		:	initURL.replace(`@${methodFromURL}/`, "");
+		retainLeadingSlashForRelativeURLs && !isAbsoluteHTTPURL(initURLWithoutMethod) ?
+			`/${initURLWithoutMethod}`
+		:	initURLWithoutMethod;
 
 	return normalizedURL;
 };
@@ -138,13 +192,16 @@ type GetFullURLOptions = {
 };
 
 const getFullURL = (initURL: string, baseURL: string | undefined) => {
-	if (!baseURL || initURL.startsWith("http")) {
+	if (!baseURL || isAbsoluteHTTPURL(initURL)) {
 		return initURL;
 	}
 
-	const shouldAddSlash = initURL.length > 0 && !initURL.startsWith("/") && !baseURL.endsWith("/");
+	// Remove all trailing slashes from the base URL.
+	const normalizedBaseURL = baseURL.replace(/\/+$/, "");
+	// Remove all leading slashes from the request URL.
+	const normalizedInitURL = initURL.replace(/^\/+/, "");
 
-	return shouldAddSlash ? `${baseURL}/${initURL}` : `${baseURL}${initURL}`;
+	return normalizedInitURL ? `${normalizedBaseURL}/${normalizedInitURL}` : normalizedBaseURL;
 };
 
 export const getFullAndNormalizedURL = (
@@ -161,13 +218,14 @@ export const getFullAndNormalizedURL = (
 		baseURL
 	);
 
-	if ((debugMode ?? extraOptionDefaults.debugMode) && !URL.canParse(fullURL)) {
-		const errorMessage =
-			!baseURL ?
-				`Invalid URL '${initURL}'. Are you passing a relative url to CallApi without setting the 'baseURL' option?`
-			:	`Invalid URL '${fullURL}'. Please validate that you are passing the correct url.`;
-
-		console.error(errorMessage);
+	if (
+		(debugMode ?? extraOptionDefaults.debugMode)
+		&& !isAbsoluteHTTPURL(fullURL)
+		&& !URL.canParse(fullURL)
+	) {
+		console.error(
+			`Relative URL '${fullURL}' may fail during SSR. Set an absolute 'baseURL' for server-side requests.`
+		);
 	}
 
 	return {
@@ -184,7 +242,11 @@ export type TupleStyleParams = UnmaskType<AllowedQueryParamValues[]>;
 
 export type Params = UnmaskType<RecordStyleParams | TupleStyleParams>;
 
-export type Query = UnmaskType<Record<string, AllowedQueryParamValues> | URLSearchParams>;
+type StructuredQueryValues = Record<string, unknown> | unknown[] | null | undefined;
+
+export type Query = UnmaskType<
+	Record<string, AllowedQueryParamValues | StructuredQueryValues> | URLSearchParams
+>;
 
 export type InitURLOrURLObject = AnyString | RouteKeyMethodsURLUnion | URL;
 

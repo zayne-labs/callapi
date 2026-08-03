@@ -85,15 +85,15 @@
 	"size-limit": [
 		{
 			"path": "./src/index.ts",
-			"limit": "7 kb"
+			"limit": "8 kb"
 		},
 		{
 			"path": "./src/utils/external/index.ts",
-			"limit": "1.5 kb"
+			"limit": "2 kb"
 		},
 		{
 			"path": "./src/constants/index.ts",
-			"limit": "1 kb"
+			"limit": "1.5 kb"
 		}
 	]
 }

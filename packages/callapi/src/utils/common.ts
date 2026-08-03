@@ -82,11 +82,16 @@ export const getResolvedHeaders = (options: GetResolvedHeadersOptions) => {
 
 const detectContentTypeHeader = (body: CallApiRequestOptions["body"]) => {
 	if (isQueryString(body)) {
-		return { "Content-Type": "application/x-www-form-urlencoded" };
+		return {
+			"Content-Type": "application/x-www-form-urlencoded",
+		};
 	}
 
 	if (isSerializableObject(body) || isValidJsonString(body)) {
-		return { Accept: "application/json", "Content-Type": "application/json" };
+		return {
+			Accept: "application/json",
+			"Content-Type": "application/json",
+		};
 	}
 
 	return null;
@@ -101,23 +106,19 @@ export type GetHeadersOptions = {
 export const getHeaders = async (options: GetHeadersOptions) => {
 	const { auth, body, resolvedHeaders } = options;
 
-	const authHeaderObject = await getAuthHeader(auth);
-
 	const resolvedHeadersObject = objectifyHeaders(resolvedHeaders);
 
-	const hasExistingContentType =
-		Object.hasOwn(resolvedHeadersObject, "Content-Type")
-		|| Object.hasOwn(resolvedHeadersObject, "content-type");
+	const headersObject: Record<string, string> = {
+		...(await getAuthHeader(auth)),
+		...resolvedHeadersObject,
+	};
+
+	const hasExistingContentType = new Headers(headersObject).has("Content-Type");
 
 	if (!hasExistingContentType) {
 		const contentTypeHeader = detectContentTypeHeader(body);
-		contentTypeHeader && Object.assign(resolvedHeadersObject, contentTypeHeader);
+		contentTypeHeader && Object.assign(headersObject, contentTypeHeader);
 	}
-
-	const headersObject: Record<string, string> = {
-		...authHeaderObject,
-		...resolvedHeadersObject,
-	};
 
 	return headersObject;
 };

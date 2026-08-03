@@ -68,6 +68,39 @@ export function MarkdownCopyButton(props: CopyBtnProps) {
 	);
 }
 
+export function MarkdownURLCopyButton(props: CopyBtnProps) {
+	const { markdownURL } = props;
+
+	const [isLoading, setIsLoading] = useState(false);
+
+	const [checked, onClick] = useCopyButton(async () => {
+		setIsLoading(true);
+
+		try {
+			await navigator.clipboard.writeText(`${globalThis.location.origin}${markdownURL}`);
+		} catch (error) {
+			console.error(new Error("Failed to copy Markdown URL", { cause: error }));
+		}
+
+		setIsLoading(false);
+	});
+
+	return (
+		<Button
+			disabled={isLoading}
+			theme="secondary"
+			size="sm"
+			className="gap-2 [&_svg]:size-3.5 [&_svg]:text-fd-muted-foreground"
+			onClick={onClick}
+		>
+			{checked ?
+				<Check />
+			:	<Copy />}
+			Copy Markdown Link
+		</Button>
+	);
+}
+
 type ViewOptionsProps = {
 	/**
 	 * Source file URL on GitHub

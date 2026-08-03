@@ -190,6 +190,71 @@ test("URL Handling - should handle query parameters", async () => {
 	expect(actualUrl).toContain("sort=name");
 });
 
+test("URL Handling - should serialize structured plain-object query values", async () => {
+	using mockFetch = createFetchMock();
+	mockFetchSuccess(mockUsers);
+
+	await callTestApi("https://api.example.com/users", {
+		query: {
+			filters: { active: true, role: "admin" },
+			ignored: null,
+			roles: ["admin", "user"],
+		},
+	});
+
+	expect(mockFetch).toHaveBeenCalledWith(
+		"https://api.example.com/users?filters=%7B%22active%22%3Atrue%2C%22role%22%3A%22admin%22%7D&roles=admin&roles=user",
+		expect.any(Object)
+	);
+});
+
+test("URL Handling - should preserve repeated URLSearchParams query values", async () => {
+	using mockFetch = createFetchMock();
+	mockFetchSuccess(mockUsers);
+
+	const query = new URLSearchParams();
+	query.append("role", "admin");
+	query.append("role", "user");
+
+	await callTestApi("https://api.example.com/users", { query });
+
+	expect(mockFetch).toHaveBeenCalledWith(
+		"https://api.example.com/users?role=admin&role=user",
+		expect.any(Object)
+	);
+});
+
+test("URL Handling - should replace duplicate scalar query values", async () => {
+	using mockFetch = createFetchMock();
+	mockFetchSuccess(mockUsers);
+
+	await callTestApi("https://api.example.com/users?page=1&sort=name", {
+		query: { page: 2 },
+	});
+
+	const actualURL = new URL(mockFetch.mock.calls[0]?.[0] as string);
+
+	expect(actualURL.searchParams.get("page")).toBe("2");
+	expect(actualURL.searchParams.get("sort")).toBe("name");
+	expect(actualURL.searchParams.getAll("page")).toHaveLength(1);
+});
+
+test("URL Handling - should replace existing values while preserving incoming repeated values", async () => {
+	using mockFetch = createFetchMock();
+	mockFetchSuccess(mockUsers);
+
+	const query = new URLSearchParams();
+	query.append("role", "admin");
+	query.append("role", "user");
+
+	await callTestApi("https://api.example.com/users?role=guest", { query });
+
+	expect(mockFetch).toHaveBeenCalledWith(
+		"https://api.example.com/users?role=admin&role=user",
+		expect.any(Object)
+	);
+});
+
 test("URL Handling - should handle URL parameters with object syntax", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);
@@ -295,8 +360,18 @@ test("URL Handling - should handle baseURL with trailing slash and relative URL 
 		baseURL: "https://api.example.com/",
 	});
 
-	const actualUrl = mockFetch.mock.calls[0]?.[0] as string;
-	expect(actualUrl).toMatch(/https:\/\/api\.example\.com\/?\/users\/1/);
+	expect(mockFetch).toHaveBeenCalledWith("https://api.example.com/users/1", expect.any(Object));
+});
+
+test("URL Handling - should normalize repeated slashes when joining baseURL and URL", async () => {
+	using mockFetch = createFetchMock();
+	mockFetchSuccess(mockUser);
+
+	await callTestApi("///users/1", {
+		baseURL: "https://api.example.com///",
+	});
+
+	expect(mockFetch).toHaveBeenCalledWith("https://api.example.com/users/1", expect.any(Object));
 });
 
 test("URL Handling - should handle baseURL without trailing slash and relative URL without leading slash", async () => {
@@ -374,10 +449,38 @@ test("URL Handling - should handle URL parameters with special characters", asyn
 	});
 
 	expect(mockFetch).toHaveBeenCalledWith(
-		"https://api.example.com/users/user@example.com",
+		"https://api.example.com/users/user%40example.com",
 		expect.objectContaining({
 			method: "GET",
 		})
+	);
+});
+
+test("URL Handling - should encode URL parameters as single path segments", async () => {
+	using mockFetch = createFetchMock();
+	mockFetchSuccess(mockUser);
+
+	await callTestApi("https://api.example.com/users/:id", {
+		params: { id: "teams/engineering" },
+	});
+
+	expect(mockFetch).toHaveBeenCalledWith(
+		"https://api.example.com/users/teams%2Fengineering",
+		expect.any(Object)
+	);
+});
+
+test("URL Handling - should resolve repeated and similarly named URL parameters", async () => {
+	using mockFetch = createFetchMock();
+	mockFetchSuccess(mockUser);
+
+	await callTestApi("https://api.example.com/users/:id2/related/:id/:id", {
+		params: { id: "primary", id2: "secondary" },
+	});
+
+	expect(mockFetch).toHaveBeenCalledWith(
+		"https://api.example.com/users/secondary/related/primary/primary",
+		expect.any(Object)
 	);
 });
 
