@@ -67,7 +67,7 @@
 		"@zayne-labs/tsconfig": "0.13.14",
 		"autoprefixer": "^10.5.4",
 		"cross-env": "^10.1.0",
-		"postcss": "^8.5.23",
+		"postcss": "^8.5.24",
 		"prettier": "3.9.6",
 		"prettier-plugin-classnames": "^0.10.4",
 		"prettier-plugin-merge": "^0.10.1",
