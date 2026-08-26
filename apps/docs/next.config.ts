@@ -29,7 +29,7 @@ const config: NextConfig = {
 
 	reactStrictMode: true,
 
-	serverExternalPackages: ["typescript", "twoslash", "shiki", "@takumi-rs/image-response"],
+	serverExternalPackages: ["typescript", "twoslash", "shiki", "@takumi-rs/core"],
 
 	typedRoutes: true,
 

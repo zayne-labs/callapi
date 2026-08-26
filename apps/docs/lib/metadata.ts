@@ -78,7 +78,7 @@ export const defaultSiteName = "CallApi";
 export const defaultDescription =
 	"A lightweight, type-safe Fetch API wrapper with dozens of convenience features.";
 
-export function createMetadata(overrides?: Metadata): Metadata {
+export const createMetadata = (overrides?: Metadata): Metadata => {
 	return {
 		...overrides,
 
@@ -120,7 +120,7 @@ export function createMetadata(overrides?: Metadata): Metadata {
 			...overrides?.twitter,
 		},
 	};
-}
+};
 
 export const getPageImage = (page: Page) => {
 	const segments = [...page.slugs, "image.webp"];
