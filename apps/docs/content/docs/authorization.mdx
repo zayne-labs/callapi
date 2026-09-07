@@ -149,7 +149,7 @@ fetch("http://localhost:3000/users/123", {
 
 A common use case for `auth` is combining it with error hooks to implement automatic session recovery or token refreshing.
 
-Since the `auth` function is called right before every request, and manual `refetch()` preservation is built-in, you can handle `401 Unauthorized` errors seamlessly:
+Since the `auth` function is called right before every request, and manual `refetch()` preservation is built-in, you can handle `401 Unauthorized` errors easily:
 
 ```ts title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
