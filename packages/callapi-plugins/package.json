@@ -58,9 +58,9 @@
 		"cross-env": "^10.1.0",
 		"publint": "^0.3.24",
 		"size-limit": "13.0.3",
-		"tsdown": "0.22.14",
+		"tsdown": "0.23.0",
 		"typescript": "6.0.3",
-		"vitest": "^4.1.11"
+		"vitest": "^5.0.0"
 	},
 	"publishConfig": {
 		"access": "public",
