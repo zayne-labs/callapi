@@ -7,25 +7,26 @@ export const extraOptionDefaults = Object.freeze(
 		// Common defaults
 		bodySerializer: JSON.stringify,
 		debugMode: true,
-		defaultHTTPErrorMessage: "Request failed unexpectedly",
+		dedupeCacheScope: "local",
 
 		// Dedupe defaults
-		/* eslint-disable perfectionist/sort-objects -- Allow */
-		dedupeCacheScope: "local",
+
+		dedupeCacheScopeKey: "default",
 		dedupeKey: (ctx) =>
 			`${ctx.options.fullURL}-${deterministicHashFn({ options: ctx.options, request: ctx.request })}`,
-		dedupeCacheScopeKey: "default",
 		dedupeStrategy: "cancel",
-		/* eslint-enable perfectionist/sort-objects -- Allow */
+		defaultHTTPErrorMessage: "Request failed unexpectedly",
 
 		// Hook defaults
 		hooksExecutionMode: "parallel",
 
+		respectRetryAfter: false,
+
 		// Response defaults
 		responseParser: JSON.parse,
 		responseType: "json",
-		resultMode: "all",
 
+		resultMode: "all",
 		// Retry Defaults
 		retryAttempts: 0,
 		retryCondition: () => true,

@@ -402,6 +402,59 @@ test("Retry Strategies - exponential retry strategy respects maximum delay limit
 	vi.useRealTimers();
 });
 
+test("Retry Delay - respects Retry-After seconds", async () => {
+	using ignoredMockFetch = createFetchMock();
+	vi.useFakeTimers({ shouldAdvanceTime: true });
+
+	const client = createTestFetchClient({
+		debugMode: false,
+		respectRetryAfter: true,
+		retryAttempts: 1,
+		retryDelay: 100,
+		retryStatusCodes: [429],
+	});
+
+	mockFetchSequence([
+		{ data: { error: "Rate limited" }, headers: { "Retry-After": "2" }, status: 429 },
+		{ data: { success: true }, status: 200 },
+	]);
+
+	const startTime = Date.now();
+	const promise = client("/test");
+	await vi.runAllTimersAsync();
+	await promise;
+
+	expect(Date.now() - startTime).toBeGreaterThanOrEqual(2000);
+	expectFetchCallCount(2);
+	vi.useRealTimers();
+});
+
+test("Retry Delay - ignores Retry-After by default", async () => {
+	using ignoredMockFetch = createFetchMock();
+	vi.useFakeTimers({ shouldAdvanceTime: true });
+
+	const client = createTestFetchClient({
+		debugMode: false,
+		retryAttempts: 1,
+		retryDelay: 100,
+		retryStatusCodes: [429],
+	});
+
+	mockFetchSequence([
+		{ data: { error: "Rate limited" }, headers: { "Retry-After": "2" }, status: 429 },
+		{ data: { success: true }, status: 200 },
+	]);
+
+	const startTime = Date.now();
+	const promise = client("/test");
+	await vi.runAllTimersAsync();
+	await promise;
+
+	expect(Date.now() - startTime).toBe(100);
+	expectFetchCallCount(2);
+	vi.useRealTimers();
+});
+
 test("Retry with defer deduplication clears cache before retry", async () => {
 	using _ignoredMockFetch = createFetchMock();
 

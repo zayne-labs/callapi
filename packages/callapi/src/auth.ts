@@ -62,6 +62,8 @@ export type AuthOption = PossibleAuthValueOrGetter | BearerAuth | TokenAuth | Ba
 
 const resolveAuthValue = (value: PossibleAuthValueOrGetter) => (isFunction(value) ? value() : value);
 
+const isMissingAuthValue = (value: PossibleAuthValue) => value == null;
+
 type AuthHeaderObject = { Authorization: string };
 
 export const getAuthHeader = async (
@@ -72,7 +74,7 @@ export const getAuthHeader = async (
 	if (isPromise(auth) || isFunction(auth) || !isObject(auth)) {
 		const authValue = await resolveAuthValue(auth);
 
-		if (authValue === undefined) return;
+		if (isMissingAuthValue(authValue)) return;
 
 		return {
 			Authorization: `Bearer ${authValue}`,
@@ -86,7 +88,7 @@ export const getAuthHeader = async (
 				resolveAuthValue(auth.password),
 			]);
 
-			if (username === undefined || password === undefined) return;
+			if (isMissingAuthValue(username) || isMissingAuthValue(password)) return;
 
 			return {
 				Authorization: `Basic ${globalThis.btoa(`${username}:${password}`)}`,
@@ -95,7 +97,7 @@ export const getAuthHeader = async (
 		case "Bearer": {
 			const value = await resolveAuthValue(auth.value);
 
-			if (value === undefined) return;
+			if (isMissingAuthValue(value)) return;
 
 			return {
 				Authorization: `Bearer ${value}`,
@@ -107,7 +109,7 @@ export const getAuthHeader = async (
 				resolveAuthValue(auth.value),
 			]);
 
-			if (value === undefined) return;
+			if (isMissingAuthValue(prefix) || isMissingAuthValue(value)) return;
 
 			return {
 				Authorization: `${prefix} ${value}`,
@@ -117,7 +119,7 @@ export const getAuthHeader = async (
 		case "Token": {
 			const value = await resolveAuthValue(auth.value);
 
-			if (value === undefined) return;
+			if (isMissingAuthValue(value)) return;
 
 			return {
 				Authorization: `Token ${value}`,

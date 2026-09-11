@@ -9,30 +9,47 @@ import {
 } from "../test-setup/fetch-mock";
 import { mockUser } from "../test-setup/fixtures";
 
+const mockPendingFetchSuccess = (mockFetch: ReturnType<typeof createFetchMock>) => {
+	let releaseFetch: () => void = () => {};
+
+	const pendingFetch = new Promise<void>((resolve) => {
+		releaseFetch = resolve;
+	});
+
+	mockFetch.mockImplementation(async () => {
+		await pendingFetch;
+
+		return Response.json(mockUser);
+	});
+
+	return releaseFetch;
+};
+
 test("Dedupe Keys - uses custom string dedupe key to deduplicate different endpoints", async () => {
-	using ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	const client = createFetchClient({
 		baseURL: "https://api.example.com",
 		dedupeKey: "shared-key",
 		dedupeStrategy: "defer",
 	});
 
-	mockFetchSuccess(mockUser);
-	mockFetchSuccess(mockUser);
-	mockFetchSuccess(mockUser);
+	const releaseFetch = mockPendingFetchSuccess(mockFetch);
 
-	const requests = [client("/users/1"), client("/users/2"), client("/config")];
+	const resultsPromise = Promise.all([client("/users/1"), client("/users/2"), client("/config")]);
 
-	const results = await Promise.all(requests);
+	await waitFor(10);
+	expect(getFetchCallCount()).toBe(1);
+
+	releaseFetch();
+	const results = await resultsPromise;
 
 	results.forEach((result) => {
 		expect(result.data).toBeDefined();
 	});
-	expect(getFetchCallCount()).toBeGreaterThanOrEqual(1);
 });
 
 test("Dedupe Keys - uses custom function dedupe key for granular control", async () => {
-	using ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	const client = createFetchClient({
 		baseURL: "https://api.example.com",
 		dedupeKey: (context) => {
@@ -42,35 +59,39 @@ test("Dedupe Keys - uses custom function dedupe key for granular control", async
 		dedupeStrategy: "defer",
 	});
 
-	mockFetchSuccess(mockUser);
-	mockFetchSuccess(mockUser);
+	const releaseFetch = mockPendingFetchSuccess(mockFetch);
 
-	const requests = [client("/users/1?a=1"), client("/users/1?b=2")];
+	const resultsPromise = Promise.all([client("/users/1?a=1"), client("/users/1?b=2")]);
 
-	const results = await Promise.all(requests);
+	await waitFor(10);
+	expect(getFetchCallCount()).toBe(1);
+
+	releaseFetch();
+	const results = await resultsPromise;
 
 	expect(results).toHaveLength(2);
-	expect(getFetchCallCount()).toBeGreaterThanOrEqual(1);
 });
 
 test("Dedupe Keys - handles empty string dedupe key correctly", async () => {
-	using ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	const client = createFetchClient({
 		baseURL: "https://api.example.com",
 		dedupeKey: () => "",
 		dedupeStrategy: "defer",
 	});
 
-	mockFetchSuccess(mockUser);
-	mockFetchSuccess(mockUser);
+	const releaseFetch = mockPendingFetchSuccess(mockFetch);
 
-	const requests = [client("/users/1"), client("/users/2")];
+	const resultsPromise = Promise.all([client("/users/1"), client("/users/2")]);
 
-	const results = await Promise.all(requests);
+	await waitFor(10);
+	expect(getFetchCallCount()).toBe(1);
 
-	expect(results[0]?.data).toBeDefined();
-	expect(results[1]?.data).toBeDefined();
-	expect(getFetchCallCount()).toBeGreaterThanOrEqual(1);
+	releaseFetch();
+	const results = await resultsPromise;
+
+	expect(results[0].data).toBeDefined();
+	expect(results[1].data).toBeDefined();
 });
 
 test("Dedupe Keys - disables deduplication when dedupe key function returns null", async () => {
@@ -118,7 +139,7 @@ test("Dedupe Scopes - isolates deduplication between different clients with loca
 });
 
 test("Dedupe Scopes - shares deduplication between clients with same global cache scope key", async () => {
-	using ignoredMockFetch = createFetchMock();
+	using mockFetch = createFetchMock();
 	const client1 = createFetchClient({
 		baseURL: "https://api.example.com",
 		dedupeCacheScope: "global",
@@ -133,14 +154,18 @@ test("Dedupe Scopes - shares deduplication between clients with same global cach
 		dedupeStrategy: "defer",
 	});
 
-	mockFetchSuccess(mockUser);
-	mockFetchSuccess(mockUser);
+	const releaseFetch = mockPendingFetchSuccess(mockFetch);
 
-	const [result1, result2] = await Promise.all([client1("/users/1"), client2("/users/1")]);
+	const resultsPromise = Promise.all([client1("/users/1"), client2("/users/1")]);
+
+	await waitFor(10);
+	expect(getFetchCallCount()).toBe(1);
+
+	releaseFetch();
+	const [result1, result2] = await resultsPromise;
 
 	expect(result1.data).toBeDefined();
 	expect(result2.data).toBeDefined();
-	expect(getFetchCallCount()).toBeGreaterThanOrEqual(1);
 });
 
 test("Dedupe Scopes - isolates deduplication between different global cache scope keys", async () => {

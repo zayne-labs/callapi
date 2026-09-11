@@ -40,6 +40,12 @@ export interface RetryOptions<TErrorData> {
 	readonly ["~retryAttemptCount"]?: number;
 
 	/**
+	 * Use a valid `Retry-After` response header instead of the configured retry delay
+	 * @default false
+	 */
+	respectRetryAfter?: boolean;
+
+	/**
 	 * Number of allowed retry attempts on HTTP errors
 	 * @default 0
 	 */
@@ -92,6 +98,24 @@ export type RetryManagerContext = {
 	removeDedupeCacheEntry: () => void;
 };
 
+const getRetryAfterDelay = (retryAfter: string | null | undefined) => {
+	const normalizedRetryAfter = retryAfter?.trim();
+
+	if (!normalizedRetryAfter) return;
+
+	const retryAfterSeconds = Number(normalizedRetryAfter);
+
+	if (Number.isInteger(retryAfterSeconds) && retryAfterSeconds >= 0) {
+		return retryAfterSeconds * 1000;
+	}
+
+	const retryAt = Date.parse(normalizedRetryAfter);
+
+	if (Number.isNaN(retryAt)) return;
+
+	return Math.max(0, retryAt - Date.now());
+};
+
 export const createRetryManager = (ctx: RetryManagerContext) => {
 	const { callApi, callApiArgs, error, errorContext, hookInfo, removeDedupeCacheEntry } = ctx;
 
@@ -134,6 +158,17 @@ export const createRetryManager = (ctx: RetryManagerContext) => {
 	};
 
 	const getDelay = () => {
+		const shouldRespectRetryAfter = options.respectRetryAfter ?? extraOptionDefaults.respectRetryAfter;
+
+		const retryAfterDelay =
+			shouldRespectRetryAfter ?
+				getRetryAfterDelay(errorContext.response?.headers.get("retry-after"))
+			:	null;
+
+		if (retryAfterDelay != null) {
+			return retryAfterDelay;
+		}
+
 		const retryStrategy = options.retryStrategy ?? extraOptionDefaults.retryStrategy;
 
 		switch (retryStrategy) {

@@ -94,6 +94,16 @@ const mergeUrlWithParams = (url: string, params: CallApiExtraOptions["params"]) 
 	return newUrl;
 };
 
+const splitURLFragment = (url: string) => {
+	const fragmentIndex = url.indexOf("#");
+
+	if (fragmentIndex === -1) {
+		return [url, ""] as const;
+	}
+
+	return [url.slice(0, fragmentIndex), url.slice(fragmentIndex)] as const;
+};
+
 const mergeUrlWithQuery = (url: string, query: CallApiExtraOptions["query"]): string => {
 	if (!query) {
 		return url;
@@ -105,15 +115,17 @@ const mergeUrlWithQuery = (url: string, query: CallApiExtraOptions["query"]): st
 		return url;
 	}
 
-	if (!url.includes("?")) {
-		return `${url}?${incomingSearchParams}`;
+	const [urlWithoutFragment, fragment] = splitURLFragment(url);
+
+	if (!urlWithoutFragment.includes("?")) {
+		return `${urlWithoutFragment}?${incomingSearchParams}${fragment}`;
 	}
 
-	if (url.endsWith("?")) {
-		return `${url}${incomingSearchParams}`;
+	if (urlWithoutFragment.endsWith("?")) {
+		return `${urlWithoutFragment}${incomingSearchParams}${fragment}`;
 	}
 
-	const [mainUrl, existingQueryString] = url.split("?");
+	const [mainUrl, existingQueryString] = urlWithoutFragment.split("?");
 
 	const searchParams = new URLSearchParams(existingQueryString);
 
@@ -125,7 +137,7 @@ const mergeUrlWithQuery = (url: string, query: CallApiExtraOptions["query"]): st
 		searchParams.append(...entry);
 	}
 
-	return `${mainUrl}?${searchParams}`;
+	return `${mainUrl}?${searchParams}${fragment}`;
 };
 
 /**

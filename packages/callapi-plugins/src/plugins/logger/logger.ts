@@ -47,12 +47,22 @@ export type LoggerOptions = {
 	 * Enable or disable verbose mode
 	 */
 	mode?: "basic" | "verbose";
+	/**
+	 * Redact sensitive values before verbose error data is logged
+	 */
+	redact?: (value: unknown) => unknown;
 };
 
-const formatPrefix = (requestOptions: Pick<CallApiConfig, "fullURL" | "method">) => {
+const formatMethod = (method: CallApiConfig["method"]) => {
+	return `[${method?.toUpperCase()}]`;
+};
+
+const formatURL = (url: string | undefined) => `'${url}'`;
+
+const formatRequest = (requestOptions: Pick<CallApiConfig, "fullURL" | "method">) => {
 	const { fullURL, method } = requestOptions;
 
-	return `[${method?.toUpperCase()}] '${fullURL}'`;
+	return `${formatMethod(method)} ${formatURL(fullURL)}`;
 };
 
 const formatDuration = (startTime: number | undefined) => {
@@ -66,7 +76,7 @@ const formatDuration = (startTime: number | undefined) => {
 };
 
 const formatErrorReason = (error: Pick<ErrorContext["error"], "message" | "name">) => {
-	return `"${error.name}: ${error.message}"`;
+	return `${error.name}: ${error.message}`;
 };
 
 const getStatusAndStatusText = (response: Response) => {
@@ -87,7 +97,12 @@ export const defaultConsoleObject: ConsoleLikeObject = {
 /* eslint-enable ts-eslint/no-unsafe-argument -- Ignore for now */
 
 export const loggerPlugin = (options?: LoggerOptions) => {
-	const { consoleObject = defaultConsoleObject, enabled = true, mode = "basic" } = options ?? {};
+	const {
+		consoleObject = defaultConsoleObject,
+		enabled = true,
+		mode = "basic",
+		redact = (value: unknown) => value,
+	} = options ?? {};
 
 	const startTimes = new WeakMap<object, number>();
 
@@ -113,9 +128,9 @@ export const loggerPlugin = (options?: LoggerOptions) => {
 
 				if (!isEnabled) return;
 
-				startTimes.set(ctx, Date.now());
+				startTimes.set(ctx.request, Date.now());
 
-				consoleObject.log(formatPrefix({ fullURL: ctx.options.fullURL, method: ctx.request.method }));
+				consoleObject.log(formatRequest({ fullURL: ctx.options.fullURL, method: ctx.request.method }));
 			},
 
 			onRequestError: (ctx) => {
@@ -125,8 +140,8 @@ export const loggerPlugin = (options?: LoggerOptions) => {
 				if (!isEnabled) return;
 
 				const message = [
-					`${formatPrefix({ fullURL: ctx.options.fullURL, method: ctx.request.method })} - Request failed!`,
-					`Reason = ${formatErrorReason(ctx.error)}`,
+					`${formatMethod(ctx.request.method)} Request failed ${formatURL(ctx.options.fullURL)}`,
+					`Reason: ${formatErrorReason(ctx.error)}`,
 				].join(lineBreak);
 
 				errorLog(message);
@@ -134,7 +149,9 @@ export const loggerPlugin = (options?: LoggerOptions) => {
 
 			onResponseError: (ctx) => {
 				const isEnabled =
-					isBoolean(enabled) ? enabled : enabled.onResponseError === true || enabled.onError;
+					isBoolean(enabled) ? enabled : (
+						enabled.onResponse === true || enabled.onResponseError === true || enabled.onError
+					);
 
 				if (!isEnabled) return;
 
@@ -143,15 +160,15 @@ export const loggerPlugin = (options?: LoggerOptions) => {
 				const { status, statusText } = getStatusAndStatusText(ctx.response);
 
 				const message = [
-					`${formatPrefix({ fullURL: ctx.options.fullURL, method: ctx.request.method })} - Failed with status: ${status} (${statusText}) ${duration}`,
-					`Reason = ${formatErrorReason(ctx.error)}`,
+					`${formatMethod(ctx.request.method)} ${status} (${statusText}) ${formatURL(ctx.options.fullURL)} ${duration}`,
+					`Reason: ${formatErrorReason(ctx.error)}`,
 				].join(lineBreak);
 
 				isBasicMode && errorLog(message);
 
 				const verboseMessage = [message, "ErrorData: "].join(lineBreak);
 
-				isVerboseMode && errorLog(verboseMessage, ctx.error.errorData);
+				isVerboseMode && errorLog(verboseMessage, redact(ctx.error.errorData));
 			},
 
 			onRetry: (ctx) => {
@@ -162,12 +179,13 @@ export const loggerPlugin = (options?: LoggerOptions) => {
 				const log = consoleObject.warn ?? consoleObject.log;
 
 				log(
-					`${formatPrefix({ fullURL: ctx.options.fullURL, method: ctx.request.method })} — Retry attempt #${ctx.retryAttemptCount}`
+					`${formatMethod(ctx.request.method)} Retry attempt #${ctx.retryAttemptCount} ${formatURL(ctx.options.fullURL)}`
 				);
 			},
 
 			onSuccess: (ctx) => {
-				const isEnabled = isBoolean(enabled) ? enabled : enabled.onSuccess === true;
+				const isEnabled =
+					isBoolean(enabled) ? enabled : enabled.onResponse === true || enabled.onSuccess === true;
 
 				if (!isEnabled) return;
 
@@ -176,7 +194,7 @@ export const loggerPlugin = (options?: LoggerOptions) => {
 				const duration = formatDuration(startTimes.get(ctx.request));
 
 				successLog(
-					`${formatPrefix({ fullURL: ctx.options.fullURL, method: ctx.request.method })} - Request completed with status: ${status} (${statusText}) ${duration}`
+					`${formatMethod(ctx.request.method)} ${status} (${statusText}) ${formatURL(ctx.options.fullURL)} ${duration}`
 				);
 			},
 
@@ -193,8 +211,8 @@ export const loggerPlugin = (options?: LoggerOptions) => {
 						:	`${ctx.error.message.slice(0, limit).trimEnd()}${ctx.error.message.length > limit ? "..." : ""}`;
 
 					return [
-						`(${ctx.error.issueCause.toUpperCase()}) ${formatPrefix({ fullURL: ctx.options.fullURL, method: ctx.request.method })} validation failed`,
-						`Reason = ${formatErrorReason({ message: errorMessage, name: ctx.error.name })}`,
+						`${formatMethod(ctx.request.method)} Validation failed (${ctx.error.issueCause.toUpperCase()}) ${formatURL(ctx.options.fullURL)}`,
+						`Reason: ${formatErrorReason({ message: errorMessage, name: ctx.error.name })}`,
 					].join(lineBreak);
 				};
 
@@ -202,7 +220,7 @@ export const loggerPlugin = (options?: LoggerOptions) => {
 
 				const verboseMessage = [getMessage(), "Issues: "].join(lineBreak);
 
-				isVerboseMode && errorLog(verboseMessage, ctx.error.errorData);
+				isVerboseMode && errorLog(verboseMessage, redact(ctx.error.errorData));
 			},
 		},
 	});

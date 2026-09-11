@@ -68,6 +68,45 @@ test("Bearer token with undefined value does not set Authorization header", asyn
 	expect(headers.Authorization).toBeUndefined();
 });
 
+test("Null auth does not set Authorization header", async () => {
+	using mockFetch = createFetchMock();
+	mockFetchSuccess(mockUser);
+
+	await callTestApi("https://api.example.com/users/1", { auth: null });
+
+	const headers = getHeadersFromCall(mockFetch);
+	expect(headers.Authorization).toBeUndefined();
+});
+
+test("Structured auth with a null value does not set Authorization header", async () => {
+	using mockFetch = createFetchMock();
+
+	for (const auth of [
+		{ type: "Bearer", value: null },
+		{ type: "Token", value: null },
+		{ prefix: null, type: "Custom", value: "secret" },
+		{ password: "secret", type: "Basic", username: null },
+	] as const) {
+		mockFetchSuccess(mockUser);
+		await callTestApi("https://api.example.com/users/1", { auth });
+	}
+
+	for (const call of mockFetch.mock.calls) {
+		const headers = call[1]?.headers as Record<string, string>;
+		expect(headers.Authorization).toBeUndefined();
+	}
+});
+
+test("Empty auth values remain valid supplied values", async () => {
+	using mockFetch = createFetchMock();
+	mockFetchSuccess(mockUser);
+
+	await callTestApi("https://api.example.com/users/1", { auth: "" });
+
+	const headers = getHeadersFromCall(mockFetch);
+	expect(headers.Authorization).toBe("Bearer ");
+});
+
 test("Basic auth with username and password encodes correctly", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);

@@ -100,11 +100,10 @@ test("Logger Plugin - onSuccess hook logs successful response with status and du
 
 	await client("/users/1");
 
-	const successMessage = successSpy.mock.calls.find((call) =>
-		call[0]?.toString().includes("Request completed with status: 200")
-	);
+	const successMessage = successSpy.mock.calls.find((call) => call[0]?.toString().includes("200 (OK)"));
 	expect(successMessage).toBeDefined();
 	expect(successMessage?.[0]).toContain("(OK)");
+	expect(successMessage?.[0]).toMatch(/\(\d+ms\)$/);
 });
 
 test("Logger Plugin - onResponseError hook logs HTTP errors in basic mode", async () => {
@@ -123,8 +122,8 @@ test("Logger Plugin - onResponseError hook logs HTTP errors in basic mode", asyn
 
 	await client("/users/1");
 
-	expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("Failed with status: 404"));
-	expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("Reason ="));
+	expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("404 (Error)"));
+	expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("Reason:"));
 });
 
 test("Logger Plugin - onResponseError hook logs HTTP errors in verbose mode", async () => {
@@ -148,6 +147,44 @@ test("Logger Plugin - onResponseError hook logs HTTP errors in verbose mode", as
 	expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("ErrorData:"), errorData);
 });
 
+test("Logger Plugin - onResponse enables success and response error logs", async () => {
+	using ignoredMockFetch = createFetchMock();
+	const successSpy = vi.fn();
+	const errorSpy = vi.fn();
+	const plugin = loggerPlugin({
+		consoleObject: { error: errorSpy, log: vi.fn(), success: successSpy },
+		enabled: { onResponse: true },
+	});
+	const client = createFetchClient({ baseURL: "https://api.example.com", plugins: [plugin] });
+
+	mockFetchSuccess(mockUser);
+	await client("/users/1");
+
+	mockFetchError({ error: "Not found" }, 404);
+	await client("/users/2");
+
+	expect(successSpy).toHaveBeenCalledTimes(1);
+	expect(errorSpy).toHaveBeenCalledTimes(1);
+});
+
+test("Logger Plugin - redacts verbose error data", async () => {
+	using ignoredMockFetch = createFetchMock();
+	const errorSpy = vi.fn();
+	const plugin = loggerPlugin({
+		consoleObject: { error: errorSpy, log: vi.fn() },
+		mode: "verbose",
+		redact: () => ({ token: "[REDACTED]" }),
+	});
+	const client = createFetchClient({ baseURL: "https://api.example.com", plugins: [plugin] });
+
+	mockFetchError({ token: "secret" }, 401);
+	await client("/users/1");
+
+	expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("ErrorData:"), {
+		token: "[REDACTED]",
+	});
+});
+
 test("Logger Plugin - onRequestError hook logs network errors", async () => {
 	using ignoredMockFetch = createFetchMock();
 	const errorSpy = vi.fn();
@@ -164,8 +201,8 @@ test("Logger Plugin - onRequestError hook logs network errors", async () => {
 
 	await client("/users/1").catch(() => {});
 
-	expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("Request failed!"));
-	expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("Reason ="));
+	expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("Request failed"));
+	expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("Reason:"));
 });
 
 test("Logger Plugin - onRetry hook logs retry attempts", async () => {
@@ -215,7 +252,7 @@ test("Logger Plugin - onValidationError hook logs validation errors in basic mod
 		},
 	});
 
-	expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("validation failed"));
+	expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("Validation failed"));
 });
 
 test("Logger Plugin - onValidationError hook logs validation errors in verbose mode", async () => {
@@ -384,9 +421,7 @@ test("Logger Plugin - formats duration correctly", async () => {
 
 	await client("/users/1");
 
-	const successMessage = successSpy.mock.calls.find((call) =>
-		call[0]?.toString().includes("Request completed with status: 200")
-	);
+	const successMessage = successSpy.mock.calls.find((call) => call[0]?.toString().includes("200 (OK)"));
 	expect(successMessage).toBeDefined();
 	expect(successMessage?.[0]).toContain("(OK)");
 });
@@ -454,7 +489,7 @@ test("Logger Plugin - produces one distinguishable log per parallel request", as
 	await Promise.all([client("/slow"), client("/fast")]);
 
 	const successMessages = successSpy.mock.calls.filter((call) =>
-		call[0]?.toString().includes("Request completed with status: 200")
+		call[0]?.toString().includes("200 (OK)")
 	);
 	expect(successMessages).toHaveLength(2);
 	expect(successMessages.filter((call) => call[0]?.toString().includes("/slow"))).toHaveLength(1);

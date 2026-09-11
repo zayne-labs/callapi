@@ -39,13 +39,13 @@ export type RequestInfoCache = Map<string | null, RequestInfo>;
  *
  * **Cache Lifecycle:**
  * - Caches are created on-demand when first accessed
- * - Automatic cleanup occurs when no references remain
+ * - Empty global scope caches are removed after their requests settle
  * - Each scope key maintains independent deduplication state
  *
  * **Memory Considerations:**
  * - Each scope key creates a separate cache instance
  * - Consider the number of different scope keys in your application
- * - Caches are cleaned up automatically when clients are garbage collected
+ * - Request entries and empty global scope caches are cleaned up after requests settle
  *
  * @example
  * ```ts
@@ -109,7 +109,13 @@ export const createDedupeManager = async (context: DedupeContext) => {
 			:	$LocalRequestInfoCache;
 
 		return {
-			delete: () => $RequestInfoCache?.delete(dedupeKey),
+			delete: () => {
+				$RequestInfoCache?.delete(dedupeKey);
+
+				dedupeCacheScope === "global"
+					&& $RequestInfoCache?.size === 0
+					&& $GlobalRequestInfoCache.delete(resolvedDedupeCacheScopeKey);
+			},
 			get: () => $RequestInfoCache?.get(dedupeKey),
 			set: (value: RequestInfo) => $RequestInfoCache?.set(dedupeKey, value),
 		};

@@ -113,6 +113,32 @@ test("Body utils - getBody passes normalized headers to bodyTransformer", () => 
 	).toBe("application/custom");
 });
 
+test("Body utils - getBody handles form content types with casing and parameters", () => {
+	const body = { name: "Ryan Zayne", role: "admin" };
+
+	expect(
+		getBody({
+			body,
+			bodySerializer: undefined,
+			bodyTransformer: undefined,
+			resolvedHeaders: { "Content-Type": "Application/X-Www-Form-Urlencoded; charset=UTF-8" },
+		})
+	).toBe("name=Ryan+Zayne&role=admin");
+});
+
+test("Body utils - getBody handles JSON content types with casing and parameters", () => {
+	const body = { name: "Ryan" };
+
+	expect(
+		getBody({
+			body,
+			bodySerializer: undefined,
+			bodyTransformer: undefined,
+			resolvedHeaders: { "Content-Type": "Application/JSON; charset=UTF-8" },
+		})
+	).toBe(JSON.stringify(body));
+});
+
 test("Fetch utils - getInitFetchImpl returns provided or global fetch", () => {
 	const custom = vi.fn();
 	expect(getInitFetchImpl(custom)).toBe(custom);

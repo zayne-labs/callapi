@@ -43,6 +43,7 @@ Type: `boolean | { onError?: boolean; onRequest?: boolean; onRequestError?: bool
 Default: `true`
 
 Toggle logging on/off. Can be a boolean for all logging, or an object for granular control over specific events.
+`onResponse` enables both successful response and response error logs.
 
 ```ts
 // Simple boolean toggle
@@ -131,6 +132,21 @@ Controls the verbosity of logging output:
 ```ts
 export const client = createFetchClient({
 	plugins: [loggerPlugin({ mode: "verbose" })],
+});
+```
+
+### `redact`
+
+Use `redact` to remove sensitive values before verbose error data is logged:
+
+```ts title="api.ts"
+const client = createFetchClient({
+	plugins: [
+		loggerPlugin({
+			mode: "verbose",
+			redact: (errorData) => redactSecrets(errorData),
+		}),
+	],
 });
 ```
 

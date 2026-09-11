@@ -76,6 +76,18 @@ const result = await callApi("/api/data", {
 });
 ```
 
+### Retry-After
+
+Set `respectRetryAfter: true` to use a valid `Retry-After` response header instead of `retryDelay`. Both delay seconds and HTTP dates are supported.
+
+```ts title="api.ts"
+const result = await callApi("/api/data", {
+	retryAttempts: 3,
+	retryStatusCodes: [429, 503],
+	respectRetryAfter: true,
+});
+```
+
 ### Retry Methods and Status Codes
 
 Customize when to retry a request with `retryMethods` and `retryStatusCodes`:

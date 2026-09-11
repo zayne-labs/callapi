@@ -1,3 +1,4 @@
+import { fallBackRouteSchemaKey } from "../../constants";
 import type { CallApiPlugin } from "../../plugins";
 import type { BaseCallApiConfig, CallApiConfig } from "../../types/options-types";
 import type { AnyFunction, Satisfies, Writeable } from "../../types/type-helpers";
@@ -16,8 +17,9 @@ export const defineSchema = <
 	config?: Satisfies<TSchemaConfig, CallApiSchemaConfig>
 ) => {
 	return {
-		config: defineSchemaConfig(config as NonNullable<typeof config>),
 		routes: defineSchemaRoutes(routes),
+		// eslint-disable-next-line perfectionist/sort-objects -- I need routes to be first
+		config: defineSchemaConfig(config as NonNullable<typeof config>),
 	} satisfies BaseCallApiSchemaAndConfig;
 };
 
@@ -66,4 +68,10 @@ export const defineInstanceConfig = <const TInstanceConfig extends CallApiConfig
 	config: TInstanceConfig
 ) => {
 	return config as Writeable<typeof config, "deep">;
+};
+
+export const defineFallbackRouteSchema = <const TSchema extends CallApiSchema>(schema: TSchema) => {
+	return defineSchemaRoutes({
+		[fallBackRouteSchemaKey]: schema,
+	});
 };

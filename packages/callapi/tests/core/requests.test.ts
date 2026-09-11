@@ -255,6 +255,34 @@ test("URL Handling - should replace existing values while preserving incoming re
 	);
 });
 
+test("URL Handling - should place query parameters before URL fragments", async () => {
+	using mockFetch = createFetchMock();
+	mockFetchSuccess(mockUsers);
+
+	await callTestApi("https://api.example.com/users?sort=name#results", {
+		query: { page: 2 },
+	});
+
+	expect(mockFetch).toHaveBeenCalledWith(
+		"https://api.example.com/users?sort=name&page=2#results",
+		expect.any(Object)
+	);
+});
+
+test("URL Handling - should handle URL fragments without an existing query", async () => {
+	using mockFetch = createFetchMock();
+	mockFetchSuccess(mockUsers);
+
+	await callTestApi("https://api.example.com/users#results", {
+		query: { page: 2 },
+	});
+
+	expect(mockFetch).toHaveBeenCalledWith(
+		"https://api.example.com/users?page=2#results",
+		expect.any(Object)
+	);
+});
+
 test("URL Handling - should handle URL parameters with object syntax", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUser);

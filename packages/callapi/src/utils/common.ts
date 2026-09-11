@@ -143,6 +143,10 @@ export type GetBodyOptions = Pick<GetHeadersOptions, "body" | "resolvedHeaders">
 	bodyTransformer: CallApiExtraOptions["bodyTransformer"];
 };
 
+const getMediaType = (contentType: string) => {
+	return contentType.split(";", 1)[0]?.trim().toLowerCase();
+};
+
 export const getBody = (options: GetBodyOptions) => {
 	const { body, bodySerializer, bodyTransformer, resolvedHeaders } = options;
 
@@ -152,15 +156,16 @@ export const getBody = (options: GetBodyOptions) => {
 		return bodyTransformer({ body, headers });
 	}
 
-	const existingContentType = headers.get("content-type");
+	const contentTypeHeader = headers.get("content-type");
+	const existingMediaType = contentTypeHeader ? getMediaType(contentTypeHeader) : null;
 
-	if (!existingContentType && isSerializableObject(body)) {
+	if ((!existingMediaType || existingMediaType === "application/json") && isSerializableObject(body)) {
 		const selectedBodySerializer = bodySerializer ?? extraOptionDefaults.bodySerializer;
 
 		return selectedBodySerializer(body);
 	}
 
-	if (existingContentType === "application/x-www-form-urlencoded" && isSerializableObject(body)) {
+	if (existingMediaType === "application/x-www-form-urlencoded" && isSerializableObject(body)) {
 		return new URLSearchParams(body as Record<string, string>).toString();
 	}
 
