@@ -26,19 +26,17 @@ function RippleImpl(props: RippleProps) {
 						key={index}
 						className="absolute top-1/2 left-1/2 -translate-1/2 animate-ripple border
 							bg-fd-foreground/25 shadow-xl"
-						style={
-							{
-								"--i": index,
-								animationDelay,
-								borderColor: `rgba(var(--foreground-rgb), ${borderOpacity / 100})`,
-								borderRadius: "50%",
-								borderStyle,
-								borderWidth: "1px",
-								height: `${size}px`,
-								opacity,
-								width: `${size}px`,
-							} as React.CSSProperties
-						}
+						style={{
+							"--i": index,
+							animationDelay,
+							borderColor: `rgba(var(--foreground-rgb), ${borderOpacity / 100})`,
+							borderRadius: "50%",
+							borderStyle,
+							borderWidth: "1px",
+							height: `${size}px`,
+							opacity,
+							width: `${size}px`,
+						}}
 					/>
 				);
 			})}

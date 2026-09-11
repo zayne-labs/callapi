@@ -550,10 +550,12 @@ const result = await callBackendApi("/data", {
 All hooks can be async or return a Promise. When this is the case, the hook will be awaited internally:
 
 ```ts
-onRequest: async ({ request }) => {
-	const token = await getAuthToken();
-	request.headers.Authorization = `Bearer ${token}`;
-};
+callApi("/session", {
+	onRequest: async ({ request }) => {
+		const token = await getAuthToken();
+		request.headers.Authorization = `Bearer ${token}`;
+	},
+});
 ```
 
 ## Type Safety

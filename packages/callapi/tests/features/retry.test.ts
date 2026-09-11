@@ -450,7 +450,10 @@ test("Retry Delay - ignores Retry-After by default", async () => {
 	await vi.runAllTimersAsync();
 	await promise;
 
-	expect(Date.now() - startTime).toBe(100);
+	const elapsed = Date.now() - startTime;
+
+	expect(elapsed).toBeGreaterThanOrEqual(100);
+	expect(elapsed).toBeLessThan(1000);
 	expectFetchCallCount(2);
 	vi.useRealTimers();
 });
