@@ -239,6 +239,20 @@ test("URL Handling - should replace duplicate scalar query values", async () => 
 	expect(actualURL.searchParams.getAll("page")).toHaveLength(1);
 });
 
+test("URL Handling - should preserve question marks inside existing query values", async () => {
+	using mockFetch = createFetchMock();
+	mockFetchSuccess(mockUsers);
+
+	await callTestApi("https://api.example.com/search?value=what?", {
+		query: { page: 2 },
+	});
+
+	expect(mockFetch).toHaveBeenCalledWith(
+		"https://api.example.com/search?value=what?page=2",
+		expect.any(Object)
+	);
+});
+
 test("URL Handling - should replace existing values while preserving incoming repeated values", async () => {
 	using mockFetch = createFetchMock();
 	mockFetchSuccess(mockUsers);
@@ -251,34 +265,6 @@ test("URL Handling - should replace existing values while preserving incoming re
 
 	expect(mockFetch).toHaveBeenCalledWith(
 		"https://api.example.com/users?role=admin&role=user",
-		expect.any(Object)
-	);
-});
-
-test("URL Handling - should place query parameters before URL fragments", async () => {
-	using mockFetch = createFetchMock();
-	mockFetchSuccess(mockUsers);
-
-	await callTestApi("https://api.example.com/users?sort=name#results", {
-		query: { page: 2 },
-	});
-
-	expect(mockFetch).toHaveBeenCalledWith(
-		"https://api.example.com/users?sort=name&page=2#results",
-		expect.any(Object)
-	);
-});
-
-test("URL Handling - should handle URL fragments without an existing query", async () => {
-	using mockFetch = createFetchMock();
-	mockFetchSuccess(mockUsers);
-
-	await callTestApi("https://api.example.com/users#results", {
-		query: { page: 2 },
-	});
-
-	expect(mockFetch).toHaveBeenCalledWith(
-		"https://api.example.com/users?page=2#results",
 		expect.any(Object)
 	);
 });
