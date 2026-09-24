@@ -13,10 +13,12 @@ test("Performance - CallApi fast path is similar to fetch speed", async () => {
 
 	// == Warmup to ensure JIT compiling and network mocks are primed
 	await Promise.all(
-		[...Array(100).keys()].map(async () => {
-			await fetch(TEST_URL);
-			await callTestApi(TEST_URL);
-		})
+		Array(100)
+			.keys()
+			.map(async () => {
+				await fetch(TEST_URL);
+				await callTestApi(TEST_URL);
+			})
 	);
 
 	const measurePerformance = async (requestFn: () => Promise<unknown>) => {

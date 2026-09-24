@@ -5,9 +5,7 @@ import { createCallTracker } from "../test-setup/common";
 import { createFetchMock } from "../test-setup/fetch-mock";
 
 async function consumeStreamBody(body: unknown): Promise<void> {
-	if (!body || typeof body !== "object") return;
-
-	if (!("getReader" in body)) return;
+	if (!body || typeof body !== "object" || !("getReader" in body)) return;
 
 	const reader = (body as ReadableStream).getReader();
 	let done = false;

@@ -211,6 +211,7 @@ export const createCombinedSignal = (...signals: Array<AbortSignal | null | unde
 	const validSignals = signals.filter((signal) => signal != null);
 
 	if (validSignals.length === 0) return;
+
 	if (validSignals.length === 1) {
 		return validSignals[0];
 	}

@@ -8,22 +8,20 @@ import {
 	type SuccessContext,
 } from "@zayne-labs/callapi";
 import { loggerPlugin } from "@zayne-labs/callapi-plugins";
-import { definePlugin, defineSchema, defineSchemaRoutes } from "@zayne-labs/callapi/utils";
+import {
+	definePlugin,
+	defineSchema,
+	defineSchemaRoutes,
+	extraOptionsHelper,
+} from "@zayne-labs/callapi/utils";
 import * as z from "zod";
 
-const newOptionSchema1 = z.object({
-	onUpload: z.function({
-		input: [
-			z.object({
-				loaded: z.number(),
-				total: z.number(),
-			}),
-		],
-	}),
-});
+type UploadOptions = {
+	onUpload: (progress: { loaded: number; total: number }) => void;
+};
 
 const pluginOne = definePlugin({
-	defineExtraOptions: () => newOptionSchema1,
+	extraOptionsDef: extraOptionsHelper<UploadOptions>(),
 
 	hooks: {
 		onRequest: () => console.info("OnRequest - PLUGIN1"),
@@ -39,21 +37,14 @@ const pluginOne = definePlugin({
 			total: 0,
 		});
 	},
-} satisfies CallApiPlugin<{ InferredExtraOptions: typeof newOptionSchema1 }>);
+} satisfies CallApiPlugin<{ InferredExtraOptions: UploadOptions }>);
 
-const newOptionSchema2 = z.object({
-	onUploadSuccess: z.function({
-		input: [
-			z.object({
-				load: z.number(),
-				tots: z.number(),
-			}),
-		],
-	}),
-});
+type UploadSuccessOptions = {
+	onUploadSuccess: (progress: { load: number; tots: number }) => void;
+};
 
 const pluginTwo = definePlugin({
-	defineExtraOptions: () => newOptionSchema2,
+	extraOptionsDef: extraOptionsHelper<UploadSuccessOptions>(),
 
 	hooks: {
 		onRequest: () => console.info("OnRequest - PLUGIN2"),
@@ -61,17 +52,14 @@ const pluginTwo = definePlugin({
 		onSuccess: (_ctx: SuccessContext<{ Data: { foo: string } }>) => console.info("OnSuccess - PLUGIN2"),
 	} satisfies PluginHooks<{
 		ErrorData: { trash: string };
-		InferredExtraOptions: typeof newOptionSchema2;
+		InferredExtraOptions: UploadSuccessOptions;
 	}>,
 
 	id: "2",
 
 	name: "plugin",
 
-	setup: ({
-		options,
-		request,
-	}: PluginSetupContext<{ InferredExtraOptions: typeof newOptionSchema2 }>) => {
+	setup: ({ options, request }: PluginSetupContext<{ InferredExtraOptions: UploadSuccessOptions }>) => {
 		options.onUploadSuccess?.({
 			load: 0,
 			tots: 0,
@@ -128,7 +116,7 @@ const callMainApi = createFetchClient({
 	onRequest: [() => console.info("OnRequest1 - BASE"), () => console.info("OnRequest2 - BASE")],
 	onUpload: (_progress) => {},
 	onUploadSuccess: (_progress) => {},
-	plugins: [pluginOne, pluginTwo, loggerPlugin({}) as never],
+	plugins: [pluginOne, pluginTwo, loggerPlugin({})],
 	schema: apiSchema,
 });
 
@@ -153,6 +141,7 @@ const stream = new ReadableStream({
 const [result1, result2, result3, result4, result5, result6, result7] = await Promise.all([
 	callMainApi<{ price: number }>("/products/:id", {
 		onRequest: () => console.info("OnRequest - INSTANCE"),
+		onUpload: (_progress) => {},
 		params: { id: 1 },
 	}),
 

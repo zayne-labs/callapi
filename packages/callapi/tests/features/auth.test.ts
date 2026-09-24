@@ -119,7 +119,7 @@ test("Basic auth with username and password encodes correctly", async () => {
 		},
 	});
 
-	const expectedEncoded = globalThis.btoa(`${mockBasicAuth.username}:${mockBasicAuth.password}`);
+	const expectedEncoded = btoa(`${mockBasicAuth.username}:${mockBasicAuth.password}`);
 	const headers = getHeadersFromCall(mockFetch);
 	expect(headers).toEqual(expect.objectContaining({ Authorization: `Basic ${expectedEncoded}` }));
 });
@@ -139,7 +139,7 @@ test("Basic auth with function values resolves and encodes correctly", async () 
 		},
 	});
 
-	const expectedEncoded = globalThis.btoa(`${mockBasicAuth.username}:${mockBasicAuth.password}`);
+	const expectedEncoded = btoa(`${mockBasicAuth.username}:${mockBasicAuth.password}`);
 	const headers = getHeadersFromCall(mockFetch);
 	expect(headers).toEqual(expect.objectContaining({ Authorization: `Basic ${expectedEncoded}` }));
 });
@@ -166,7 +166,7 @@ test("Basic auth with async functions resolves and encodes correctly", async () 
 		},
 	});
 
-	const expectedEncoded = globalThis.btoa(`${mockBasicAuth.username}:${mockBasicAuth.password}`);
+	const expectedEncoded = btoa(`${mockBasicAuth.username}:${mockBasicAuth.password}`);
 	const headers = getHeadersFromCall(mockFetch);
 	expect(headers).toEqual(expect.objectContaining({ Authorization: `Basic ${expectedEncoded}` }));
 });
@@ -183,7 +183,7 @@ test("Basic auth with empty username encodes correctly", async () => {
 		},
 	});
 
-	const expectedEncoded = globalThis.btoa(":password");
+	const expectedEncoded = btoa(":password");
 	const headers = getHeadersFromCall(mockFetch);
 	expect(headers).toEqual(expect.objectContaining({ Authorization: `Basic ${expectedEncoded}` }));
 });
@@ -393,7 +393,7 @@ test("instance auth can use different type than base auth", async () => {
 		},
 	});
 
-	const expectedEncoded = globalThis.btoa(`${mockBasicAuth.username}:${mockBasicAuth.password}`);
+	const expectedEncoded = btoa(`${mockBasicAuth.username}:${mockBasicAuth.password}`);
 	const headers = getHeadersFromCall(mockFetch);
 	expect(headers).toEqual(expect.objectContaining({ Authorization: `Basic ${expectedEncoded}` }));
 });
@@ -431,7 +431,7 @@ test("Basic auth with special characters in password encodes correctly", async (
 		},
 	});
 
-	const expectedEncoded = globalThis.btoa(`user:${specialPassword}`);
+	const expectedEncoded = btoa(`user:${specialPassword}`);
 	const headers = getHeadersFromCall(mockFetch);
 	expect(headers).toEqual(expect.objectContaining({ Authorization: `Basic ${expectedEncoded}` }));
 });

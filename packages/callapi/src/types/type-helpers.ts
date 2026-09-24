@@ -1,7 +1,10 @@
+// eslint-disable-next-line ts-eslint/no-generated-empty-object-type -- Ignore
+export type NonNullableUnknown = NonNullable<unknown>;
+
 // == These two types allows for adding arbitrary literal types, while still provided autocomplete for defaults.
 // == Usually intersection with "{}" or "NonNullable<unknown>" would make it work fine, but the placeholder with never type is added to make the AnyWhatever type appear last in a given union.
-export type AnyString = string & NonNullable<unknown>;
-export type AnyNumber = number & NonNullable<unknown>;
+export type AnyString = string & NonNullableUnknown;
+export type AnyNumber = number & NonNullableUnknown;
 
 // eslint-disable-next-line ts-eslint/no-explicit-any -- Any is fine here
 export type AnyObject = Record<keyof any, any>;
@@ -12,6 +15,8 @@ export type AnyFunction<TResult = unknown> = (...args: any[]) => TResult;
 export type Prettify<TObject> = NonNullable<unknown> & { [Key in keyof TObject]: TObject[Key] };
 
 type WriteableLevel = "deep" | "shallow";
+
+export type IsEmptyObject<TObject> = keyof TObject extends never ? true : false;
 
 /**
  * Makes all properties in an object type writeable (removes readonly modifiers).
@@ -114,7 +119,7 @@ type AllowOnlyFirst<TFirstType, TSecondType, TErrorMessages extends ErrorMessage
  * @template TArrayOfTypes Array of types to merge
  * @template TAccumulator Accumulator for the resulting merged type
  */
-type MergeTypes<TArrayOfTypes extends unknown[], TAccumulator = NonNullable<unknown>> =
+type MergeTypes<TArrayOfTypes extends unknown[], TAccumulator = NonNullableUnknown> =
 	TArrayOfTypes extends [infer TFirstType, ...infer TRestOfTypes] ?
 		MergeTypes<
 			TRestOfTypes,

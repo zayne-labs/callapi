@@ -94,7 +94,7 @@ export function AISearchInputActions() {
 		return null;
 	}
 
-	const shouldShowRetry = (!isLoading && messages.at(-1)?.role === "assistant") || errorMessage;
+	const shouldShowRetry = (!isLoading && messages.at(-1)?.role === "assistant") || Boolean(errorMessage);
 
 	return (
 		<>
@@ -231,7 +231,7 @@ function AISearchMessagePrimitiveWithLinksTool(props: InferProps<"div"> & { mess
 
 	let links: z.infer<typeof ProvideLinksToolSchema>["links"] = [];
 
-	// eslint-disable-next-line ts-eslint/no-unnecessary-condition
+	// eslint-disable-next-line ts-eslint/no-unnecessary-condition, unicorn/no-unreadable-for-of-expression
 	for (const part of message.parts ?? []) {
 		if (part.type === "text") {
 			markdown += part.text;
@@ -285,7 +285,7 @@ function AISearchMessagePrimitiveWithSearchTool(props: InferProps<"div"> & { mes
 
 	const searchCalls: Array<UIToolInvocation<SearchToolType>> = [];
 
-	// eslint-disable-next-line ts-eslint/no-unnecessary-condition
+	// eslint-disable-next-line ts-eslint/no-unnecessary-condition, unicorn/no-unreadable-for-of-expression
 	for (const part of message.parts ?? []) {
 		if (part.type === "text") {
 			markdown += part.text;

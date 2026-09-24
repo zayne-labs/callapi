@@ -3,7 +3,7 @@ import type { fetchSpecificKeys } from "../constants/common";
 import type { DedupeOptions } from "../dedupe";
 import type { HookConfigOptions, HooksOrHooksArray } from "../hooks";
 import type { FetchImpl, Middlewares } from "../middlewares";
-import type { CallApiPlugin, InferPluginExtraOptions } from "../plugins";
+import type { CallApiPlugin } from "../plugins";
 import type { RefetchOptions } from "../refetch";
 import type { InferCallApiResult, ResponseParser, ResponseTypeType, ResultModeType } from "../result";
 import type { RetryOptions } from "../retry";
@@ -16,12 +16,13 @@ import type {
 	CallApiSchemaConfig,
 	InferSchemaOutput,
 } from "../validation";
+import type { CallApiContext } from "./callapi-context";
 import type {
 	Body,
 	GetCurrentRouteSchema,
 	HeadersOption,
-	InferExtraOptions,
 	InferRequestOptions,
+	InferRequiredExtraOptions,
 	MethodUnion,
 	ResultModeOption,
 	SerializableObject,
@@ -36,7 +37,7 @@ import type {
 	DefaultPluginArray,
 	DefaultThrowOnError,
 } from "./default-types";
-import type { NoInferUnMasked, Writeable } from "./type-helpers";
+import type { NoInferUnMasked, NonNullableUnknown, Writeable } from "./type-helpers";
 
 // eslint-disable-next-line ts-eslint/no-empty-object-type -- This needs to be empty to allow users to register their own meta
 export interface Register {
@@ -45,23 +46,6 @@ export interface Register {
 
 export type GlobalMeta =
 	Register extends { meta?: infer TMeta extends DefaultMetaObject } ? TMeta : DefaultMetaObject;
-
-export interface CallApiContext {
-	Data?: DefaultDataType;
-	ErrorData?: DefaultDataType;
-	InferredExtraOptions?: unknown;
-	Meta?: DefaultMetaObject;
-	ResultMode?: ResultModeType;
-}
-
-export type GetCallApiContext<TCallApiContext extends CallApiContext> = TCallApiContext;
-
-export type GetCallApiContextRequired<TCallApiContext extends Required<CallApiContext>> = TCallApiContext;
-
-export type OverrideCallApiContext<
-	TFullCallApiContext extends CallApiContext,
-	TOverrideCallApiContext extends CallApiContext,
-> = Omit<TFullCallApiContext, keyof TOverrideCallApiContext> & TOverrideCallApiContext;
 
 type FetchSpecificKeysUnion = Exclude<(typeof fetchSpecificKeys)[number], "body" | "headers" | "method">;
 
@@ -99,32 +83,15 @@ export type SharedExtraOptions<
 	TResultMode extends ResultModeType = ResultModeType,
 	TThrowOnError extends ThrowOnErrorBoolean = DefaultThrowOnError,
 	TResponseType extends ResponseTypeType = ResponseTypeType,
-	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TBody = Body,
-	TComputedMergedPluginExtraOptions = Partial<
-		InferPluginExtraOptions<TPluginArray>
-			& InferSchemaOutput<
-				TCallApiContext["InferredExtraOptions"],
-				TCallApiContext["InferredExtraOptions"]
-			>
-	>,
-	TComputedCallApiContext extends CallApiContext = OverrideCallApiContext<
-		TCallApiContext,
-		{
-			Data: TData;
-			ErrorData: TErrorData;
-			InferredExtraOptions: TComputedMergedPluginExtraOptions;
-			ResultMode: TResultMode;
-		}
-	>,
 > = DedupeOptions
 	& HookConfigOptions
-	& HooksOrHooksArray<NoInferUnMasked<TComputedCallApiContext>>
-	& Middlewares<NoInferUnMasked<TComputedCallApiContext>>
+	& HooksOrHooksArray<NoInferUnMasked<TCallApiContext>>
+	& Middlewares<NoInferUnMasked<TCallApiContext>>
 	& RefetchOptions
 	& ResultModeOption<TErrorData, TResultMode>
 	& RetryOptions<TErrorData>
-	& TComputedMergedPluginExtraOptions
+	& Partial<TCallApiContext["InferredExtraOptions"]>
 	& ThrowOnErrorOption<TErrorData, TThrowOnError>
 	& URLOptions & {
 		/**
@@ -275,51 +242,6 @@ export type SharedExtraOptions<
 		 */
 		defaultHTTPErrorMessage?:
 			string | ((context: Pick<HTTPError<TErrorData>, "errorData" | "response">) => string);
-
-		/**
-		 * Optional metadata field for associating additional information with requests.
-		 *
-		 * Useful for logging, tracing, or handling specific cases in shared interceptors.
-		 * The meta object is passed through to all hooks and can be accessed in error handlers.
-		 *
-		 * @example
-		 * ```ts
-		 * const callMainApi = callApi.create({
-		 * 	baseURL: "https://main-api.com",
-		 * 	onResponseError: ({ response, options }) => {
-		 * 		if (options.meta?.userId) {
-		 * 			console.error(`User ${options.meta.userId} made an error`);
-		 * 		}
-		 * 	},
-		 * });
-		 *
-		 * const response = await callMainApi({
-		 * 	url: "https://example.com/api/data",
-		 * 	meta: { userId: "123" },
-		 * });
-		 *
-		 * // Use case: Request tracking
-		 * const result = await callMainApi({
-		 *   url: "https://example.com/api/data",
-		 *   meta: {
-		 *     requestId: generateId(),
-		 *     source: "user-dashboard",
-		 *     priority: "high"
-		 *   }
-		 * });
-		 *
-		 * // Use case: Feature flags
-		 * const client = callApi.create({
-		 *   baseURL: "https://api.example.com",
-		 *   meta: {
-		 *     features: ["newUI", "betaFeature"],
-		 *     experiment: "variantA"
-		 *   }
-		 * });
-		 * ```
-		 */
-		meta?: TCallApiContext["Meta"] extends DefaultMetaObject ? TCallApiContext["Meta"]
-		:	DefaultCallApiContext["Meta"];
 
 		/**
 		 * Custom function to parse response strings into actual value instead of the default response.json().
@@ -493,6 +415,7 @@ export type BaseCallApiExtraOptions<
 	TBaseResultMode extends ResultModeType = ResultModeType,
 	TBaseThrowOnError extends ThrowOnErrorBoolean = DefaultThrowOnError,
 	TBaseResponseType extends ResponseTypeType = ResponseTypeType,
+	TBaseMeta extends DefaultMetaObject = DefaultMetaObject,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
 > = SharedExtraOptions<
@@ -501,9 +424,9 @@ export type BaseCallApiExtraOptions<
 	TBaseErrorData,
 	TBaseResultMode,
 	TBaseThrowOnError,
-	TBaseResponseType,
-	TBasePluginArray
+	TBaseResponseType
 > & {
+	meta?: TBaseMeta;
 	/**
 	 * Array of base CallApi plugins to extend library functionality.
 	 *
@@ -646,48 +569,51 @@ export type CallApiExtraOptions<
 	TSchemaConfig extends CallApiSchemaConfig = CallApiSchemaConfig,
 	TCurrentRouteSchemaKey extends string = string,
 	TBody extends InferSchemaOutput<TSchema["body"], Body> = InferSchemaOutput<TSchema["body"], Body>,
-> = SharedExtraOptions<
-	TCallApiContext,
-	TData,
-	TErrorData,
-	TResultMode,
-	TThrowOnError,
-	TResponseType,
-	TPluginArray,
-	TBody
-> & {
-	/**
-	 * Array of instance-specific CallApi plugins or a function to configure plugins.
-	 *
-	 * Instance plugins are added to the base plugins and provide functionality
-	 * specific to this particular API instance. Can be a static array or a function
-	 * that receives base plugins and returns the instance plugins.
-	 *
-	 */
-	plugins?: TPluginArray | ((context: InferExtendPluginContext<TBasePluginArray>) => TPluginArray);
+> = InferRequiredExtraOptions<TSchema, TBaseSchemaRoutes, TCurrentRouteSchemaKey, TCallApiContext>
+	& Omit<
+		SharedExtraOptions<
+			TCallApiContext,
+			TData,
+			TErrorData,
+			TResultMode,
+			TThrowOnError,
+			TResponseType,
+			TBody
+		>,
+		keyof InferRequiredExtraOptions<CallApiSchema, BaseCallApiSchemaRoutes, string, CallApiContext>
+	> & {
+		/**
+		 * Array of instance-specific CallApi plugins or a function to configure plugins.
+		 *
+		 * Instance plugins are added to the base plugins and provide functionality
+		 * specific to this particular API instance. Can be a static array or a function
+		 * that receives base plugins and returns the instance plugins.
+		 *
+		 */
+		plugins?: TPluginArray | ((context: InferExtendPluginContext<TBasePluginArray>) => TPluginArray);
 
-	/**
-	 * For instance-specific validation schemas
-	 *
-	 * Defines validation rules specific to this API instance, extending or overriding the base schema.
-	 *
-	 * Can be a static schema object or a function that receives base schema context and returns instance schemas.
-	 *
-	 */
-	schema?:
-		| TSchema
-		| ((context: InferExtendSchemaContext<TBaseSchemaRoutes, TCurrentRouteSchemaKey>) => TSchema);
+		/**
+		 * For instance-specific validation schemas
+		 *
+		 * Defines validation rules specific to this API instance, extending or overriding the base schema.
+		 *
+		 * Can be a static schema object or a function that receives base schema context and returns instance schemas.
+		 *
+		 */
+		schema?:
+			| TSchema
+			| ((context: InferExtendSchemaContext<TBaseSchemaRoutes, TCurrentRouteSchemaKey>) => TSchema);
 
-	/**
-	 * Instance-specific schema configuration or a function to configure schema behavior.
-	 *
-	 * Controls how validation schemas are applied and behave for this specific API instance.
-	 * Can override base schema configuration or extend it with instance-specific validation rules.
-	 *
-	 */
-	schemaConfig?:
-		TSchemaConfig | ((context: GetExtendSchemaConfigContext<TBaseSchemaConfig>) => TSchemaConfig);
-};
+		/**
+		 * Instance-specific schema configuration or a function to configure schema behavior.
+		 *
+		 * Controls how validation schemas are applied and behave for this specific API instance.
+		 * Can override base schema configuration or extend it with instance-specific validation rules.
+		 *
+		 */
+		schemaConfig?:
+			TSchemaConfig | ((context: GetExtendSchemaConfigContext<TBaseSchemaConfig>) => TSchemaConfig);
+	};
 
 export type InstanceContext = {
 	initURL: string;
@@ -702,21 +628,23 @@ export type BaseCallApiConfig<
 	TBaseResultMode extends ResultModeType = ResultModeType,
 	TBaseThrowOnError extends ThrowOnErrorBoolean = DefaultThrowOnError,
 	TBaseResponseType extends ResponseTypeType = ResponseTypeType,
+	TBaseMeta extends DefaultMetaObject = DefaultMetaObject,
 	TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig = BaseCallApiSchemaAndConfig,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
-	TComputedBaseConfig = BaseCallApiExtraOptions<
+	TComputedBaseExtraOptions = BaseCallApiExtraOptions<
 		TBaseCallApiContext,
 		TBaseData,
 		TBaseErrorData,
 		TBaseResultMode,
 		TBaseThrowOnError,
 		TBaseResponseType,
+		TBaseMeta,
 		TBasePluginArray,
 		TBaseSchemaAndConfig
 	>,
 > =
-	| (CallApiRequestOptions & TComputedBaseConfig)
-	| ((context: InstanceContext) => CallApiRequestOptions & TComputedBaseConfig);
+	| (CallApiRequestOptions & TComputedBaseExtraOptions)
+	| ((context: InstanceContext) => CallApiRequestOptions & TComputedBaseExtraOptions);
 
 export type CallApiConfig<
 	TCallApiContext extends CallApiContext = DefaultCallApiContext,
@@ -734,28 +662,24 @@ export type CallApiConfig<
 	TBody extends InferSchemaOutput<TSchema["body"], Body> = InferSchemaOutput<TSchema["body"], Body>,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
-> = InferExtraOptions<TSchema, TBaseSchemaRoutes, TCurrentRouteSchemaKey, TCallApiContext>
+> = CallApiExtraOptions<
+	TCallApiContext,
+	TData,
+	TErrorData,
+	TResultMode,
+	TThrowOnError,
+	TResponseType,
+	TBasePluginArray,
+	TPluginArray,
+	TBaseSchemaRoutes,
+	TSchema,
+	TBaseSchemaConfig,
+	TSchemaConfig,
+	TCurrentRouteSchemaKey,
+	TBody
+>
 	& InferRequestOptions<TSchema, TInitURL, TBody>
-	& Omit<
-		CallApiExtraOptions<
-			TCallApiContext,
-			TData,
-			TErrorData,
-			TResultMode,
-			TThrowOnError,
-			TResponseType,
-			TBasePluginArray,
-			TPluginArray,
-			TBaseSchemaRoutes,
-			TSchema,
-			TBaseSchemaConfig,
-			TSchemaConfig,
-			TCurrentRouteSchemaKey,
-			TBody
-		>,
-		keyof InferExtraOptions<CallApiSchema, BaseCallApiSchemaRoutes, string, CallApiContext>
-	>
-	& Omit<CallApiRequestOptions<TBody>, keyof InferRequestOptions<CallApiSchema, string, TBody>>;
+	& Omit<CallApiRequestOptions<TBody>, keyof InferRequestOptions<CallApiSchema, string>>;
 
 export type CallApiParameters<
 	TData = DefaultDataType,
@@ -773,6 +697,8 @@ export type CallApiParameters<
 	TBody extends InferSchemaOutput<TSchema["body"], Body> = InferSchemaOutput<TSchema["body"], Body>,
 	TBasePluginArray extends CallApiPlugin[] = DefaultPluginArray,
 	TPluginArray extends CallApiPlugin[] = DefaultPluginArray,
+	TComputedRequiredOptions = InferRequestOptions<TSchema, TInitURL, TBody>
+		& InferRequiredExtraOptions<TSchema, TBaseSchemaRoutes, TCurrentRouteSchemaKey, TCallApiContext>,
 	TComputedConfig = CallApiConfig<
 		TCallApiContext,
 		TData,
@@ -790,15 +716,8 @@ export type CallApiParameters<
 		TBasePluginArray,
 		TPluginArray
 	>,
-	TComputedRequiredOptions = InferExtraOptions<
-		TSchema,
-		TBaseSchemaRoutes,
-		TCurrentRouteSchemaKey,
-		TCallApiContext
-	>
-		& InferRequestOptions<TSchema, TInitURL, TBody>,
 > =
-	NonNullable<unknown> extends TComputedRequiredOptions ? [initURL: TInitURL, config?: TComputedConfig]
+	NonNullableUnknown extends TComputedRequiredOptions ? [initURL: TInitURL, config?: TComputedConfig]
 	:	[initURL: TInitURL, config: TComputedConfig];
 
 export type CallApiResult<

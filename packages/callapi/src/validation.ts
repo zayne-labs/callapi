@@ -55,6 +55,7 @@ const handleValidatorFunction = <TInput>(
 	validator: AnyFunction,
 	inputData: TInput
 ): Promise<StandardSchemaV1.Result<TInput>> => {
+	// eslint-disable-next-line unicorn/prefer-promise-try -- Will do in the future once it is widely available
 	const result = new Promise((resolve) => resolve(validator(inputData as never)))
 		.then((value) => ({ issues: undefined, value: value as never }))
 		.catch((error) => ({ issues: (isArray(error) ? error : [error]) as never, value: undefined }));
@@ -481,7 +482,7 @@ export const getCurrentRouteSchemaKeyAndMainInitURL = (
 
 		const pathWithReplacedPrefix = pathWithoutMethod.replace(
 			prefixWithoutLeadingSlash,
-			schemaConfig.baseURL ?? ""
+			() => schemaConfig.baseURL ?? ""
 		);
 
 		mainInitURL = mergeURLParts({ method: methodFromURL, path: pathWithReplacedPrefix });

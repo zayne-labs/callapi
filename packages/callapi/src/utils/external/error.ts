@@ -51,7 +51,7 @@ export class HTTPError<TErrorData = Record<string, unknown>> extends Error {
 			return false;
 		}
 
-		if (error instanceof HTTPError) {
+		if (error instanceof this) {
 			return true;
 		}
 
@@ -144,7 +144,7 @@ export class ValidationError extends Error {
 			return false;
 		}
 
-		if (error instanceof ValidationError) {
+		if (error instanceof this) {
 			return true;
 		}
 

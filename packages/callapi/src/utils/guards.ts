@@ -36,6 +36,7 @@ export const isPlainObject = <TPlainObject extends Record<string, unknown>>(
 	if (!hasObjectPrototype(prototype)) {
 		return false;
 	}
+	/* eslint-disable unicorn/prefer-combined-guards -- Ignore */
 
 	// If constructor does not have an Object-specific method
 	if (!Object.hasOwn(prototype, "isPrototypeOf")) {
@@ -46,6 +47,8 @@ export const isPlainObject = <TPlainObject extends Record<string, unknown>>(
 	if (Object.getPrototypeOf(value) !== Object.prototype) {
 		return false;
 	}
+
+	/* eslint-enable unicorn/prefer-combined-guards -- Ignore */
 
 	// It's probably a plain object at this point
 	return true;

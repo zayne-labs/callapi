@@ -1,7 +1,7 @@
 import type { RetryManagerContext } from "./retry";
 import type { CallApiExtraOptions, CallApiResultLoose } from "./types/options-types";
 
-const shouldAttemptRefetchSymbol = Symbol("shouldAttemptRefetch");
+const refetchAttemptTrackerSymbol = Symbol("refetchAttemptTracker");
 
 export interface RefetchOptions {
 	/**
@@ -9,7 +9,7 @@ export interface RefetchOptions {
 	 * @internal
 	 * @deprecated **WARNING**: This property is used internally to track retries. Please abstain from reading or modifying it.
 	 */
-	[shouldAttemptRefetchSymbol]?: boolean;
+	[refetchAttemptTrackerSymbol]?: boolean;
 }
 
 export type RefetchFn = () => void;
@@ -27,13 +27,13 @@ export const createRefetchManager = (
 	const { callApi, callApiArgs, options, removeDedupeCacheEntry } = ctx;
 
 	const shouldAttemptRefetch = () => {
-		const baseShouldRefetch = options[shouldAttemptRefetchSymbol] ?? false;
+		const baseShouldRefetch = options[refetchAttemptTrackerSymbol] ?? false;
 
 		return baseShouldRefetch;
 	};
 
 	const refetch: RefetchManagerResult["refetch"] = () => {
-		options[shouldAttemptRefetchSymbol] = true;
+		options[refetchAttemptTrackerSymbol] = true;
 	};
 
 	const handleRefetch: RefetchManagerResult["handleRefetch"] = () => {
@@ -42,7 +42,7 @@ export const createRefetchManager = (
 
 			return callApi(callApiArgs.initURL, {
 				...callApiArgs.config,
-				[shouldAttemptRefetchSymbol]: false,
+				[refetchAttemptTrackerSymbol]: false,
 			});
 		}
 

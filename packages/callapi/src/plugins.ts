@@ -11,16 +11,25 @@ import {
 	getMiddlewareRegistriesAndKeys,
 	type Middlewares,
 } from "./middlewares";
-import type { DefaultCallApiContext, DefaultDataType } from "./types/default-types";
-import type { CallApiContext, CallApiRequestOptions, OverrideCallApiContext } from "./types/options-types";
-import type { AnyFunction, Awaitable, UnionToIntersection } from "./types/type-helpers";
+import type {
+	CallApiContext,
+	ExtraOptionsWithContextTag,
+	InferExtraOptionsFromTag,
+	InferMetaFromTag,
+	MetaWithContextTag,
+	OverrideCallApiContext,
+} from "./types/callapi-context";
+import type {
+	DefaultCallApiContext,
+	DefaultDataType,
+	DefaultInferredExtraOptions,
+	DefaultMetaObject,
+} from "./types/default-types";
+import type { CallApiRequestOptions } from "./types/options-types";
+import type { Awaitable, UnionToIntersection } from "./types/type-helpers";
 import type { InitURLOrURLObject } from "./url";
 import { isArray, isFunction, isString } from "./utils/guards";
-import {
-	getCurrentRouteSchemaKeyAndMainInitURL,
-	type BaseCallApiSchemaAndConfig,
-	type InferSchemaOutput,
-} from "./validation";
+import { getCurrentRouteSchemaKeyAndMainInitURL, type BaseCallApiSchemaAndConfig } from "./validation";
 
 export type PluginSetupContext<TCallApiContext extends CallApiContext = DefaultCallApiContext> =
 	RequestContext<TCallApiContext> & ReturnType<typeof getCurrentRouteSchemaKeyAndMainInitURL>;
@@ -58,14 +67,14 @@ export type PluginMiddlewares<TCallApiContext extends CallApiContext = DefaultCa
 
 export interface CallApiPlugin<TCallApiContext extends CallApiContext = DefaultCallApiContext> {
 	/**
-	 * Defines additional options that can be passed to callApi
-	 */
-	defineExtraOptions?: () => TCallApiContext["InferredExtraOptions"];
-
-	/**
 	 * A description for the plugin
 	 */
 	description?: string;
+
+	/**
+	 * Defines additional options that can be passed to callApi
+	 */
+	extraOptionsDef?: ExtraOptionsWithContextTag<DefaultInferredExtraOptions>;
 
 	/**
 	 * Hooks for the plugin
@@ -80,6 +89,11 @@ export interface CallApiPlugin<TCallApiContext extends CallApiContext = DefaultC
 	 *  A unique id for the plugin
 	 */
 	id: string;
+
+	/**
+	 * Defines metadata that can be passed to callApi
+	 */
+	metaDef?: MetaWithContextTag<DefaultMetaObject>;
 
 	/**
 	 * Middlewares that for the plugin
@@ -113,15 +127,28 @@ export interface CallApiPlugin<TCallApiContext extends CallApiContext = DefaultC
 	version?: string;
 }
 
-export type InferPluginExtraOptions<TPluginArray extends CallApiPlugin[]> = UnionToIntersection<
-	TPluginArray extends Array<infer TPlugin> ?
-		TPlugin extends CallApiPlugin ?
-			TPlugin["defineExtraOptions"] extends AnyFunction<infer TResult> ?
-				InferSchemaOutput<TResult, TResult>
-			:	never
-		:	never
-	:	never
->;
+type InferPluginMeta<TPlugin extends CallApiPlugin> =
+	TPlugin extends CallApiPlugin ?
+		| (TPlugin["metaDef"] extends MetaWithContextTag<infer TMeta> ? TMeta : never)
+		| InferMetaFromTag<TPlugin>
+	:	never;
+
+export type InferPluginArrayMetaFromTag<
+	TPluginArray extends readonly CallApiPlugin[],
+	TPlugin extends CallApiPlugin = TPluginArray[number],
+> = UnionToIntersection<InferPluginMeta<TPlugin>>;
+
+type InferPluginExtraOptions<TPlugin extends CallApiPlugin> =
+	TPlugin extends CallApiPlugin ?
+		| (TPlugin["extraOptionsDef"] extends ExtraOptionsWithContextTag<infer TExtraOptions> ? TExtraOptions
+		  :	never)
+		| InferExtraOptionsFromTag<TPlugin>
+	:	never;
+
+export type InferPluginArrayExtraOptions<
+	TPluginArray extends readonly CallApiPlugin[],
+	TPlugin extends CallApiPlugin = TPluginArray[number],
+> = UnionToIntersection<InferPluginExtraOptions<TPlugin>>;
 
 export const getResolvedPlugins = (context: Pick<RequestContext, "baseConfig" | "options">) => {
 	const { baseConfig, options } = context;

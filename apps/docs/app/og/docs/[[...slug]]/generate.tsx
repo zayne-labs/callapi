@@ -10,7 +10,6 @@ export type GenerateProps = {
 
 const font = fsPromises
 	.readFile(new URL("../../../../lib/og/JetBrainsMono-Regular.ttf", import.meta.url))
-	// eslint-disable-next-line unicorn/prefer-top-level-await
 	.then(
 		(data) =>
 			({
@@ -22,7 +21,6 @@ const font = fsPromises
 
 const fontBold = fsPromises
 	.readFile(new URL("../../../../lib/og/JetBrainsMono-Bold.ttf", import.meta.url))
-	// eslint-disable-next-line unicorn/prefer-top-level-await
 	.then(
 		(data) =>
 			({
@@ -51,7 +49,7 @@ export const generate = (props: GenerateProps) => {
 		// eslint-disable-next-line nextjs/no-img-element
 		<img
 			alt="CallApi"
-			src={new URL("/logo.png", baseURL).toString()}
+			src={new URL("/logo.png", baseURL).href}
 			width={60}
 			height={60}
 			style={{

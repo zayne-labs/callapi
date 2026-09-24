@@ -9,11 +9,11 @@ import {
 	type PossibleValidationError,
 } from "./result";
 import type { StreamProgressEvent } from "./stream";
+import type { CallApiContext } from "./types/callapi-context";
 import type { DefaultCallApiContext } from "./types/default-types";
 import type {
 	BaseCallApiConfig,
 	CallApiConfig,
-	CallApiContext,
 	CallApiExtraOptions,
 	CallApiRequestOptions,
 } from "./types/options-types";

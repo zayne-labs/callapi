@@ -1,5 +1,5 @@
 import type { PluginSetupContext } from "@zayne-labs/callapi";
-import { definePlugin } from "@zayne-labs/callapi/utils";
+import { definePlugin, extraOptionsHelper } from "@zayne-labs/callapi/utils";
 
 type CacheConfig = {
 	cacheLifetime?: number;
@@ -57,11 +57,8 @@ export const cachingPlugin = (cacheConfig: CacheConfig) => {
 	} = cacheConfig;
 
 	return definePlugin({
+		extraOptionsDef: extraOptionsHelper<CacheConfig>(),
 		id: "caching-plugin",
-		name: "Caching Plugin",
-
-		// eslint-disable-next-line perfectionist/sort-objects, ts-eslint/no-unnecessary-type-assertion -- Ignore
-		defineExtraOptions: () => ({}) as CacheConfig,
 
 		middlewares: ({ options }: PluginSetupContext<{ InferredExtraOptions: CacheConfig }>) => {
 			const { cacheLifetime = initCacheLifeTime, cachePolicy = initCachePolicy } = options;
@@ -102,5 +99,6 @@ export const cachingPlugin = (cacheConfig: CacheConfig) => {
 				},
 			};
 		},
+		name: "Caching Plugin",
 	});
 };

@@ -9,15 +9,15 @@ const useIsDarkMode = () => {
 		if (!isBrowser()) return;
 
 		return new MutationObserver((mutations) => {
-			const classAttributeMutation = mutations.find(
+			const isClassAttributeMutation = mutations.some(
 				(mutation) => mutation.type === "attributes" && mutation.attributeName === "class"
 			);
 
-			if (!classAttributeMutation) return;
+			if (!isClassAttributeMutation) return;
 
-			const newState = document.documentElement.classList.contains("dark");
+			const isNewState = document.documentElement.classList.contains("dark");
 
-			setIsDarkMode(newState);
+			setIsDarkMode(isNewState);
 		});
 	}, []);
 

@@ -1,19 +1,4 @@
 /**
- * @description Helper to create a promise that can be resolved/rejected externally
- */
-export const createDeferredPromise = <T>() => {
-	let resolve!: (value: T) => void;
-	let reject!: (reason?: unknown) => void;
-
-	const promise = new Promise<T>((res, rej) => {
-		resolve = res;
-		reject = rej;
-	});
-
-	return { promise, reject, resolve };
-};
-
-/**
  * @description Helper to track function calls with timestamps
  */
 export const createCallTracker = () => {
@@ -43,6 +28,7 @@ export const mockNetworkError = (message = "Network error"): Error => {
  */
 export const mockTimeoutError = (): Error => {
 	const error = new Error("The operation was aborted");
+	// eslint-disable-next-line unicorn/no-error-property-assignment -- Ignore
 	error.name = "AbortError";
 	return error;
 };

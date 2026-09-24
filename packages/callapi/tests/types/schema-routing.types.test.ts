@@ -32,7 +32,7 @@ const standardSchema = <TInput, TOutput>(
 	},
 });
 
-const createUserBodySchema = standardSchema<CreateUserInput, CreateUserBody>((input) => ({
+const UserBodySchema = standardSchema<CreateUserInput, CreateUserBody>((input) => ({
 	age: Number(input.age),
 	name: input.name,
 }));
@@ -49,7 +49,7 @@ const preprocessedBodySchema = z.preprocess(
 const schema = defineSchema(
 	{
 		"@post/users/:id": {
-			body: createUserBodySchema,
+			body: UserBodySchema,
 			data: userSchema,
 			errorData: errorSchema,
 			params: paramsSchema,

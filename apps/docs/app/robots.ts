@@ -8,7 +8,7 @@ const robots = (): MetadataRoute.Robots => {
 			allow: "/",
 			userAgent: "*",
 		},
-		sitemap: new URL("/sitemap.xml", baseURL).toString(),
+		sitemap: new URL("/sitemap.xml", baseURL).href,
 	};
 };
 

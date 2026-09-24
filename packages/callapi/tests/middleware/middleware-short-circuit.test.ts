@@ -148,9 +148,9 @@ test("middleware can short-circuit based on request method", async () => {
 	});
 
 	// GET request - should short-circuit
-	const getResult = await client("/users/1", { method: "GET" });
-	expectSuccessResult(getResult);
-	expect(getResult.data).toEqual({ cached: true, method: "GET" });
+	const result = await client("/users/1", { method: "GET" });
+	expectSuccessResult(result);
+	expect(result.data).toEqual({ cached: true, method: "GET" });
 	expect(mockFetch).not.toHaveBeenCalled();
 
 	// POST request - should call fetch

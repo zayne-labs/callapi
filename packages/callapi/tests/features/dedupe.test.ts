@@ -10,11 +10,8 @@ import {
 import { mockUser } from "../test-setup/fixtures";
 
 const mockPendingFetchSuccess = (mockFetch: ReturnType<typeof createFetchMock>) => {
-	let releaseFetch: () => void = () => {};
-
-	const pendingFetch = new Promise<void>((resolve) => {
-		releaseFetch = resolve;
-	});
+	// eslint-disable-next-line ts-eslint/no-invalid-void-type -- Ignore
+	const { resolve: releaseFetch, promise: pendingFetch } = Promise.withResolvers<void>();
 
 	mockFetch.mockImplementation(async () => {
 		await pendingFetch;
@@ -43,9 +40,9 @@ test("Dedupe Keys - uses custom string dedupe key to deduplicate different endpo
 	releaseFetch();
 	const results = await resultsPromise;
 
-	results.forEach((result) => {
+	for (const result of results) {
 		expect(result.data).toBeDefined();
-	});
+	}
 });
 
 test("Dedupe Keys - uses custom function dedupe key for granular control", async () => {
@@ -251,14 +248,14 @@ test("Dedupe Strategies - defer strategy shares response between duplicate reque
 	const results = await Promise.all(requests);
 
 	expect(results).toHaveLength(3);
-	results.forEach((result) => {
+	for (const result of results) {
 		expect(result.data).toBeDefined();
-	});
+	}
 
-	const allSameData = results.every(
+	const isAllSameData = results.every(
 		(result) => JSON.stringify(result.data) === JSON.stringify(results[0]?.data)
 	);
-	expect(allSameData).toBe(true);
+	expect(isAllSameData).toBe(true);
 });
 
 test("Dedupe Strategies - none strategy allows duplicate requests to execute independently", async () => {
@@ -292,10 +289,10 @@ test("Dedupe Strategies - defer strategy shares error responses between requests
 	const requests = [client("/users/999"), client("/users/999")];
 	const results = await Promise.all(requests);
 
-	results.forEach((result) => {
+	for (const result of results) {
 		expect(result.error).toBeDefined();
 		expect(result.data).toBeNull();
-	});
+	}
 });
 
 test("Dedupe Strategies - supports dynamic function-based strategy selection", async () => {
@@ -310,9 +307,9 @@ test("Dedupe Strategies - supports dynamic function-based strategy selection", a
 	mockFetchSuccess(mockUser);
 	mockFetchSuccess({ success: true });
 
-	const getResult = await client("/users/1", { method: "GET" });
+	const result = await client("/users/1", { method: "GET" });
 	const postResult = await client("/users", { body: { name: "Test" }, method: "POST" });
 
-	expect(getResult.data).toBeDefined();
+	expect(result.data).toBeDefined();
 	expect(postResult.data).toBeDefined();
 });

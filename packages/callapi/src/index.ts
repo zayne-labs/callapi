@@ -23,6 +23,14 @@ export type { FetchImpl, FetchMiddlewareContext, Middlewares } from "./middlewar
 export type { CallApiPlugin, PluginHooks, PluginMiddlewares, PluginSetupContext } from "./plugins";
 
 export type {
+	ContextTag,
+	MetaWithContextTag,
+	GetCallApiContext,
+	GetCallApiContextRequired,
+	ExtraOptionsWithContextTag,
+} from "./types/callapi-context";
+
+export type {
 	CallApiResultErrorVariant,
 	CallApiResultSuccessOrErrorVariant,
 	CallApiResultSuccessVariant,
@@ -43,8 +51,6 @@ export type {
 	CallApiParameters,
 	CallApiRequestOptions,
 	CallApiResultLoose as CallApiResult,
-	GetCallApiContext,
-	GetCallApiContextRequired,
 	InstanceContext,
 	Register,
 } from "./types/options-types";
@@ -57,7 +63,7 @@ export type {
 	InferAllMainRoutes,
 } from "./types/conditional-types";
 
-export type { DefaultCallApiContext } from "./types/default-types";
+export type { DefaultCallApiContext, DefaultMetaObject } from "./types/default-types";
 
 export type { URLOptions } from "./url";
 

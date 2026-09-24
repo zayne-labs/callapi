@@ -56,8 +56,7 @@ export const mockFetchError = (errorData: unknown, status = 400, headers: Record
 };
 
 export const mockFetchNetworkError = (message = "Network error") => {
-	const error = new Error(message);
-	error.name = "TypeError";
+	const error = new TypeError(message);
 	mockFetch.mockRejectedValueOnce(error);
 	return error;
 };

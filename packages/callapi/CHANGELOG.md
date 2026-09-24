@@ -16,7 +16,7 @@
   ✨ refactor(logger-plugin): standardize log message format and structure
   📄 docs(retry): document Retry-After header configuration
   📄 docs(logger): document redact option and onResponse enabled flag
-  🤖 ci(workflow): bump pnpm to v12.3.4 and add Playwright browser tests
+  🤖 ci(workflow): bump pnpm to v12.5.1 and add Playwright browser tests
   ✅ test(callapi): add coverage for auth, dedupe, retry, URL, and common utils
   ✅ test(logger-plugin): add tests for redaction and updated log formats
   🧰 chore(callapi): rename TSUP to TSDOWN in build:test concurrently label

@@ -4,7 +4,7 @@ import { source } from "@/lib/source";
 
 export const revalidate = false;
 
-const url = (path: string): string => new URL(path, baseURL).toString();
+const url = (path: string): string => new URL(path, baseURL).href;
 
 const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
 	const docsSiteMap = await Promise.all(

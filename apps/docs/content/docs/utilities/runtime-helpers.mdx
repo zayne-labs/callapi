@@ -35,22 +35,20 @@ export const apiSchema = defineSchema({
 });
 ```
 
-### definePlugin
+### definePluginWithContext
 
-Creates type-safe plugins:
+Use this when the plugin's hooks or setup need extra fields. For plugins that only add request options or metadata, `definePlugin` is enough.
 
 ```ts title="auth-plugin.ts"
-import { definePlugin } from "@zayne-labs/callapi/utils";
-import { z } from "zod";
+import type { GetCallApiContext } from "@zayne-labs/callapi";
+import { definePluginWithContext } from "@zayne-labs/callapi/utils";
 
-export const authPlugin = definePlugin({
+type AuthOptions = { apiKey: string; refreshToken?: string };
+type AuthContext = GetCallApiContext<{ InferredExtraOptions: AuthOptions }>;
+
+export const authPlugin = definePluginWithContext<AuthContext>()({
 	id: "auth-plugin",
 	name: "Authentication Plugin",
-	defineExtraOptions: () =>
-		z.object({
-			apiKey: z.string(),
-			refreshToken: z.string().optional(),
-		}),
 	setup: ({ options, request }) => ({
 		request: {
 			...request,

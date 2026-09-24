@@ -49,6 +49,7 @@ export default zayne(
 		rules: {
 			"eslint-comments/disable-enable-pair": "off",
 			"no-param-reassign": "off",
+			"ts-eslint/consistent-type-definitions": "off",
 		},
 	},
 
@@ -76,5 +77,13 @@ export default zayne(
 	"zayne/react/refresh/rules": (config) => ({
 		...config,
 		files: ["apps/docs/**/*.{ts,tsx}"],
+	}),
+	"zayne/unicorn/recommended": (config) => ({
+		...config,
+		ignores: ["apps/docs/content/docs/**"],
+	}),
+	"zayne/unicorn/rules": (config) => ({
+		...config,
+		ignores: ["apps/docs/content/docs/**"],
 	}),
 });

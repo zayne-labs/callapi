@@ -5,7 +5,7 @@ import { createFetchClient } from "../../src";
 import type { StandardSchemaV1 } from "../../src/types/standard-schema";
 import { expectErrorResult, expectSuccessResult } from "../test-setup/assertions";
 
-const nativeFetch = globalThis.fetch.bind(globalThis);
+const nativeFetch = fetch.bind(globalThis);
 
 const app = new Hono();
 

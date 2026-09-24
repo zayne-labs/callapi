@@ -1,7 +1,8 @@
 import { fallBackRouteSchemaKey } from "../../constants";
 import type { CallApiPlugin } from "../../plugins";
+import type { CallApiContext, ContextTag } from "../../types/callapi-context";
 import type { BaseCallApiConfig, CallApiConfig } from "../../types/options-types";
-import type { AnyFunction, Satisfies, Writeable } from "../../types/type-helpers";
+import type { AnyFunction, NonNullableUnknown, Satisfies, Writeable } from "../../types/type-helpers";
 import type {
 	BaseCallApiSchemaAndConfig,
 	BaseCallApiSchemaRoutes,
@@ -41,9 +42,15 @@ export const defineSchemaConfig = <const TSchemaConfig extends CallApiSchemaConf
 	return config as Writeable<typeof config, "deep">;
 };
 
-export const definePlugin = <const TPlugin extends CallApiPlugin>(plugin: TPlugin) => {
-	return plugin as Writeable<typeof plugin, "deep">;
+export const definePluginWithContext = <
+	const TCallApiContext extends CallApiContext = NonNullableUnknown,
+>() => {
+	return <const TPlugin extends CallApiPlugin<TCallApiContext>>(plugin: TPlugin) =>
+		plugin as NonNullableUnknown extends TCallApiContext ? Writeable<TPlugin, "deep">
+		:	ContextTag<Writeable<TPlugin, "deep">, TCallApiContext>;
 };
+
+export const definePlugin = definePluginWithContext();
 
 type BaseConfigObject = Exclude<BaseCallApiConfig, AnyFunction>;
 

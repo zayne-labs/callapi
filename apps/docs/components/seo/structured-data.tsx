@@ -21,7 +21,7 @@ const getStructuredData = (options: StructuredDataProps): WithContext<Organizati
 				...baseData,
 				"@type": "Organization",
 				description: "A lightweight, type-safe Fetch API wrapper with dozens of convenience features.",
-				logo: new URL("/logo.png", baseURL).toString(),
+				logo: new URL("/logo.png", baseURL).href,
 				name: "CallApi",
 				sameAs: [
 					"https://github.com/zayne-labs/callapi",

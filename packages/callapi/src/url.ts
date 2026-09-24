@@ -43,7 +43,7 @@ const handleArrayParams = (url: string, params: Extract<CallApiExtraOptions["par
 
 		const paramValue = params[index];
 
-		resolvedURL = resolvedURL.replace(placeholder, encodeParamValue(paramValue));
+		resolvedURL = resolvedURL.replace(placeholder, () => encodeParamValue(paramValue));
 	}
 
 	return resolvedURL;

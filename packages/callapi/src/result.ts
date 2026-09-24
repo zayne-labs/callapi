@@ -52,7 +52,7 @@ export type GetResponseType<
 	: never;
 
 const textTypes = new Set(["image/svg", "application/xml", "application/xhtml", "application/html"]);
-const JSON_REGEX = /^application\/(?:[\w!#$%&*.^`~-]*\+)?json(;.+)?$/i;
+const JSON_REGEX = /^application\/(?:[\w!#$%&*.^`~-]*\+)?json(?:;.+)?$/i;
 
 const detectResponseType = (response: Response): Extract<ResponseTypeType, "blob" | "json" | "text"> => {
 	const initContentType = response.headers.get("content-type");
@@ -61,7 +61,7 @@ const detectResponseType = (response: Response): Extract<ResponseTypeType, "blob
 		return extraOptionDefaults.responseType;
 	}
 
-	const contentType = initContentType.split(";")[0] ?? "";
+	const contentType = initContentType.split(";", 1)[0] ?? "";
 
 	if (JSON_REGEX.test(contentType)) {
 		return "json";

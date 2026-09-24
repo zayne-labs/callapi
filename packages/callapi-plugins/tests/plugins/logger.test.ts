@@ -199,7 +199,7 @@ test("Logger Plugin - onRequestError hook logs network errors", async () => {
 
 	globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network failure"));
 
-	await client("/users/1").catch(() => {});
+	await client("/users/1");
 
 	expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("Request failed"));
 	expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("Reason:"));
@@ -366,7 +366,7 @@ test("Logger Plugin - onRequestError respects onError in granular config", async
 
 	globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network failure"));
 
-	await client("/users/1").catch(() => {});
+	await client("/users/1");
 
 	expect(errorSpy).toHaveBeenCalled();
 });

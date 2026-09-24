@@ -132,9 +132,9 @@ const callApi = createFetchClient({
 	bodyTransformer: ({ body }) => {
 		const formData = new FormData();
 
-		Object.entries(body).forEach(([key, value]) => {
+		for (const [key, value] of Object.entries(body)) {
 			formData.append(key, String(value));
-		});
+		}
 
 		return formData;
 	},
@@ -199,6 +199,21 @@ const client = createFetchClient({
 ## Meta Field
 
 Associate metadata with requests for logging, tracing, or custom handling in hooks and middleware.
+
+Use `metaHelper<T>()` in the base config to type metadata for one `callApi` instance. It adds no runtime value:
+
+```ts
+import { createFetchClient } from "@zayne-labs/callapi";
+import { metaHelper } from "@zayne-labs/callapi/utils";
+
+const callApi = createFetchClient({
+	meta: metaHelper<{ requestId?: string; source?: "background" | "dashboard" }>(),
+});
+
+await callApi("/users", { meta: { source: "dashboard" } });
+```
+
+Use a plain object when you want actual default metadata. Its shape does not register a type for the `callApi` instance. Individual calls take metadata values, not `metaHelper()`.
 
 ```ts title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";

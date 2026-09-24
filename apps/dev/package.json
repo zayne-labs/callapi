@@ -8,6 +8,7 @@
 		"dev": "vite --force",
 		"dev:client": "pnpm dev",
 		"dev:server": "tsx --watch src/server.ts --clear-screen=false",
+		"lint:type-check": "tsc --pretty -p tsconfig.json",
 		"lint:eslint": "eslint . --max-warnings=0",
 		"lint:format": "prettier --write .",
 		"preview": "vite preview"
@@ -15,13 +16,13 @@
 	"dependencies": {
 		"@zayne-labs/callapi": "workspace:*",
 		"@zayne-labs/callapi-plugins": "workspace:*",
-		"zod": "^4.6.1"
+		"zod": "^4.6.5"
 	},
 	"devDependencies": {
-		"@types/node": "^26.5.1",
-		"@zayne-labs/tsconfig": "0.13.14",
-		"tsx": "^4.23.13",
+		"@types/node": "^26.6.2",
+		"@zayne-labs/tsconfig": "0.13.19",
+		"tsx": "^4.23.15",
 		"typescript": "6.0.3",
-		"vite": "8.2.2"
+		"vite": "8.3.0"
 	}
 }

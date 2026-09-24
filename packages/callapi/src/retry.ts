@@ -105,7 +105,7 @@ const getRetryAfterDelay = (retryAfter: string | null | undefined) => {
 
 	const retryAfterSeconds = Number(normalizedRetryAfter);
 
-	if (Number.isInteger(retryAfterSeconds) && retryAfterSeconds >= 0) {
+	if (Number.isSafeInteger(retryAfterSeconds) && retryAfterSeconds >= 0) {
 		return retryAfterSeconds * 1000;
 	}
 
@@ -193,7 +193,7 @@ export const createRetryManager = (ctx: RetryManagerContext) => {
 				return resolveRetryDelay;
 			}
 			default: {
-				throw new Error(`Invalid retry strategy: ${String(retryStrategy)}`);
+				throw new Error(`Invalid retry strategy: ${retryStrategy}`);
 			}
 		}
 	};

@@ -151,10 +151,10 @@ test("Refetch - returns error if refetch also fails", async () => {
 
 	const result = await callTestApi("/test", {
 		onResponseError: (context) => {
-			if (refetchCount === 0) {
-				refetchCount++;
-				context.options.refetch();
-			}
+			if (refetchCount !== 0) return;
+
+			refetchCount++;
+			context.options.refetch();
 		},
 		resultMode: "all",
 		retryAttempts: 0,

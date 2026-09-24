@@ -11,12 +11,15 @@ import type {
 	RouteKeyMethods,
 	RouteKeyMethodsURLUnion,
 } from "../validation";
-import type { CallApiContext } from "./options-types";
+import type { CallApiContext } from "./callapi-context";
+import type { DefaultMetaObject } from "./default-types";
+import type { GlobalMeta } from "./options-types";
 import type {
 	AnyString,
 	CommonAuthorizationHeaders,
 	CommonContentTypes,
 	CommonRequestHeaders,
+	NonNullableUnknown,
 	Prettify,
 	RemoveLeadingSlash,
 	RemoveTrailingSlash,
@@ -186,10 +189,10 @@ type InferMetaOption<
 	TSchema["meta"],
 	{
 		/**
-		 * - An optional field you can fill with additional information,
-		 * to associate with the request, typically used for logging or tracing.
+		 * Optional metadata field for associating additional information with requests.
 		 *
-		 * - A good use case for this, would be to use the info to handle specific cases in any of the shared interceptors.
+		 * Useful for logging, tracing, or handling specific cases in shared interceptors.
+		 * The meta object is passed through to all hooks and can be accessed in error handlers.
 		 *
 		 * @example
 		 * ```ts
@@ -206,9 +209,31 @@ type InferMetaOption<
 		 * 	url: "https://example.com/api/data",
 		 * 	meta: { userId: "123" },
 		 * });
+		 *
+		 * // Use case: Request tracking
+		 * const result = await callMainApi({
+		 *   url: "https://example.com/api/data",
+		 *   meta: {
+		 *     requestId: generateId(),
+		 *     source: "user-dashboard",
+		 *     priority: "high"
+		 *   }
+		 * });
+		 *
+		 * // Use case: Feature flags
+		 * const client = callApi.create({
+		 *   baseURL: "https://api.example.com",
+		 *   meta: {
+		 *     features: ["newUI", "betaFeature"],
+		 *     experiment: "variantA"
+		 *   }
+		 * });
 		 * ```
 		 */
-		meta?: InferSchemaOutput<TSchema["meta"], TCallApiContext["Meta"]>;
+		meta?: InferSchemaOutput<
+			TSchema["meta"],
+			TCallApiContext["Meta"] extends DefaultMetaObject ? TCallApiContext["Meta"] : GlobalMeta
+		>;
 	}
 >;
 
@@ -318,7 +343,7 @@ type ConvertParamNamesToRecord<TParamNames extends StringTuple> = Prettify<
 	) ?
 		// eslint-disable-next-line perfectionist/sort-intersection-types -- Allow
 		Record<TFirstParamName, AllowedQueryParamValues> & ConvertParamNamesToRecord<TRemainingParamNames>
-	:	NonNullable<unknown>
+	:	NonNullableUnknown
 >;
 
 // Helper type to convert array of param names to clean tuple type
@@ -367,7 +392,7 @@ type InferParamsOption<
 	}
 >;
 
-export type InferExtraOptions<
+export type InferRequiredExtraOptions<
 	TSchema extends CallApiSchema,
 	TBaseSchemaRoutes extends BaseCallApiSchemaRoutes,
 	TCurrentRouteSchemaKey extends string,

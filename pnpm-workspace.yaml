@@ -1,9 +1,13 @@
-strictDepBuilds: false
+minimumReleaseAgeExcludePrune: true
 minimumReleaseAgeExclude:
    - "@zayne-labs/*"
+
+strictDepBuilds: false
+
 packages:
    - apps/*
    - packages/*
+
 allowBuilds:
    esbuild: set this to true or false
    sharp: set this to true or false

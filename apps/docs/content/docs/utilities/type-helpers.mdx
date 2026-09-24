@@ -5,7 +5,51 @@ description: Advanced type helpers for CallApi
 
 CallApi provides type helpers for complex type scenarios and better type safety.
 
-## Client Context Types
+## CallApi Context Types
+
+### Scoped Metadata
+
+Register metadata for one `callApi` instance with `metaHelper<TMeta>()` from `@zayne-labs/callapi/utils`:
+
+```ts
+import { createFetchClient } from "@zayne-labs/callapi";
+import { metaHelper } from "@zayne-labs/callapi/utils";
+
+const callApi = createFetchClient({
+	meta: metaHelper<{ requestId?: string }>(),
+});
+
+await callApi("/users", { meta: { requestId: "req-1" } });
+```
+
+The helper returns `undefined`; it registers a type, not default metadata. A plain base `meta` object supplies runtime values without registering its inferred shape.
+
+### Plugin Context
+
+Put `Meta` and `InferredExtraOptions` in the context when the plugin's hooks need to read them. A `callApi` instance using the plugin can pass those values too. `Data` and `ErrorData` only affect the plugin's hooks:
+
+```ts
+import type { GetCallApiContext } from "@zayne-labs/callapi";
+import { definePluginWithContext } from "@zayne-labs/callapi/utils";
+
+type AuditContext = GetCallApiContext<{
+	InferredExtraOptions: { auditLabel?: string };
+	Meta: { audit?: { actor: string } };
+}>;
+
+const auditPlugin = definePluginWithContext<AuditContext>()({
+	id: "audit",
+	name: "Audit",
+	hooks: {
+		onRequest: ({ options }) => {
+			console.info(options.meta?.audit?.actor);
+			console.info(options.auditLabel);
+		},
+	},
+});
+```
+
+Use `createFetchClientWithContext` for full context on one `callApi` instance, or `Register` to apply types globally.
 
 ### GetCallApiContext
 
@@ -41,7 +85,7 @@ Benefits: validates context structure at compile time, provides autocomplete, an
 
 ### createFetchClientWithContext
 
-Create clients with custom context types:
+Create a `callApi` instance with custom context types:
 
 ```ts title="typed-client.ts"
 import { createFetchClientWithContext, GetCallApiContext } from "@zayne-labs/callapi";
@@ -110,36 +154,23 @@ function createLoggingHooks<TData, TErrorData>() {
 
 ### CallApiPlugin
 
-Type for defining plugins:
+Use `extraOptionsHelper<T>()` with `definePlugin` to add request options to `callApi` instances using the plugin. It doesn't make those options available inside the plugin's hooks:
 
 ```ts title="plugin-types.ts"
-import type { CallApiPlugin } from "@zayne-labs/callapi";
-import { z } from "zod";
+import { definePlugin, extraOptionsHelper } from "@zayne-labs/callapi/utils";
 
-const myOptionsSchema = z.object({
-	apiKey: z.string(),
-	debug: z.boolean().default(false),
-});
+type MyPluginOptions = {
+	apiKey: string;
+	debug?: boolean;
+};
 
-type MyPluginContext = GetCallApiContext<{
-	InferredExtraOptions: typeof myOptionsSchema;
-}>;
-
-const myPlugin = {
+const myPlugin = definePlugin({
 	id: "my-plugin",
 	name: "My Plugin",
-	setup: ({ options }) => {
-		console.log(`API Key: ${options.apiKey}, Debug: ${options.debug}`);
-		return {};
-	},
-	hooks: {
-		onRequest: ({ options }) => {
-			if (options.debug) {
-				console.log("Debug mode enabled");
-			}
-		},
-	},
-} satisfies CallApiPlugin<MyPluginContext>;
+	extraOptionsDef: extraOptionsHelper<MyPluginOptions>(),
+});
 ```
+
+If the plugin's hooks also need those types, put `InferredExtraOptions` in the context passed to `definePluginWithContext`. If both the context and a helper define the same field, their types combine.
 
 These type utilities provide advanced TypeScript support while maintaining type safety throughout your application.

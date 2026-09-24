@@ -101,7 +101,7 @@ export const mockHookTracker = {
 
 // Helper to reset mock hook tracker
 export function resetMockHookTracker() {
-	Object.keys(mockHookTracker).forEach((key) => {
+	for (const key of Object.keys(mockHookTracker)) {
 		mockHookTracker[key as keyof typeof mockHookTracker].length = 0;
-	});
+	}
 }
