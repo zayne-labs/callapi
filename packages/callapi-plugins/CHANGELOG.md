@@ -4,6 +4,7 @@
 
 ### Patch Changes
 
+- 5badab4: 📝 README: the install command now includes the peer dependencies `@zayne-labs/callapi`, `consola` and `@zayne-labs/toolkit-type-helpers`, which the logger needs at runtime. Also fixed the `definePlugin` import path and the logger docs link, and documented the `redact` option.
 - Updated dependencies [5badab4]
    - @zayne-labs/callapi@1.16.2
 

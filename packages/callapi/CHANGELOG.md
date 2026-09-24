@@ -4,10 +4,20 @@
 
 ### Patch Changes
 
-- 5badab4: 🐛 fix(callapi): cap manual refetches to prevent infinite loops (e.g. a token refresh that keeps returning 401)
-  ✨ feat(callapi): add `refetchAttempts` option (default `1`) and `refetch({ maxAttempts })` per-call override, which takes priority when set
-  🔥 refactor(callapi)!: remove the `respectRetryAfter` option; retries now always use `retryDelay` / `retryStrategy`
-  📝 docs: fix refetch, dedupe key, retry defaults, debugMode and extraFetchOptions docs; fix stale JSDoc examples and broken API reference links
+- 5badab4: **⚠️ Breaking: removed the `respectRetryAfter` option.** Retries now always wait according to `retryDelay` and `retryStrategy`, and the `Retry-After` response header is ignored. If you set `respectRetryAfter`, delete it; TypeScript will flag any remaining uses. For per-request control over retry timing, pass a function to `retryDelay`.
+
+  🐛 **`refetch()` can no longer loop forever.** Previously, calling `options.refetch()` on every error (for example, refreshing a token on each `401`) retried indefinitely if the refetched request failed the same way. Manual refetches are now capped:
+  - New `refetchAttempts` option, default `1`. Set it in `createFetchClient` or per request.
+  - `refetch()` accepts `{ maxAttempts }` to override the limit for that call; it takes priority over `refetchAttempts`.
+  - Once the limit is reached, `refetch()` does nothing and the request resolves with its error as usual.
+
+  If you chain refetches on purpose (such as polling from `onSuccess`), raise the limit, e.g. `options.refetch({ maxAttempts: 10 })`.
+
+  📝 **Docs and editor tooltips:**
+  - Corrected the refetch, deduplication-key and retry-default docs, and documented `debugMode` and `extraFetchOptions`.
+  - The `plugins` option now states that a per-request array replaces the base plugins; use `({ basePlugins }) => [...basePlugins, plugin]` to keep them.
+  - Fixed JSDoc examples that used a non-existent `callApi.create()`, and the wrong `defaultHTTPErrorMessage` default.
+  - README: corrected the bundle size (~7 KB) and fixed the error-handling, schema and plugin examples.
 
 ## 1.16.1
 

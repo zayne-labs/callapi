@@ -35,6 +35,8 @@ jobs:
            with:
               node-version: ${{ matrix.node-version }}
               cache: pnpm
+              # changesets/action v2 no longer writes .npmrc from NPM_TOKEN, so setup-node writes it instead
+              registry-url: "https://registry.npmjs.org"
 
          - name: Install dependencies and build
            run: |
@@ -50,4 +52,4 @@ jobs:
               github-token: ${{ secrets.GITHUB_TOKEN }}
 
            env:
-              NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+              NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
