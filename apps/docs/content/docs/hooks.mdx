@@ -372,7 +372,8 @@ For a detailed walkthrough on using `refetch()` for token refreshing, see the [A
 
 <Callout type="warning">
 	To prevent infinite loops, manual refetches are limited by the `refetchAttempts` option (defaults to
-	`1`). Once the limit is reached, `refetch()` does nothing, and the request resolves with its error as usual.
+	`1`). Once the limit is reached, `refetch()` does nothing, and the request resolves with its error as
+	usual.
 </Callout>
 
 Raise the limit for a client or a single request with `refetchAttempts`, or for one `refetch()` call with `maxAttempts`, which takes priority when set:

@@ -77,10 +77,10 @@ const { data } = await callApi("/api/logs", {
 The default `dedupeKey` is the full URL plus a stable hash of every serializable request value (method, headers and body) and extra option (such as `query`, `meta` and `timeout`). Two requests share a key only when all of those match.
 
 <Callout type="warn">
-	The hash uses `JSON.stringify`, so non-JSON values such as `FormData`, `Blob` and `Headers` instances all hash
-	to `{}`. Two uploads to the same URL with different `FormData` bodies get the same key and would cancel each
-	other under the default `"cancel"` strategy. Set a custom `dedupeKey` or use `dedupeStrategy: "none"` for these
-	requests.
+	The hash uses `JSON.stringify`, so non-JSON values such as `FormData`, `Blob` and `Headers` instances
+	all hash to `{}`. Two uploads to the same URL with different `FormData` bodies get the same key and
+	would cancel each other under the default `"cancel"` strategy. Set a custom `dedupeKey` or use
+	`dedupeStrategy: "none"` for these requests.
 </Callout>
 
 ### Static Key
