@@ -22,7 +22,7 @@ const result = await callBackendApi("/api/users", {
 
 ## Auto Retry
 
-CallApi can automatically retry failed requests. For most use cases, you only need to specify the number of retry attempts:
+CallApi can automatically retry failed requests. Retries are off by default (`retryAttempts: 0`). For most use cases, you only need to specify the number of retry attempts:
 
 ```ts title="api.ts"
 const result = await callApi("/api/users", {
@@ -76,25 +76,13 @@ const result = await callApi("/api/data", {
 });
 ```
 
-### Retry-After
-
-Set `respectRetryAfter: true` to use a valid `Retry-After` response header instead of `retryDelay`. Both delay seconds and HTTP dates are supported.
-
-```ts title="api.ts"
-const result = await callApi("/api/data", {
-	retryAttempts: 3,
-	retryStatusCodes: [429, 503],
-	respectRetryAfter: true,
-});
-```
-
 ### Retry Methods and Status Codes
 
 Customize when to retry a request with `retryMethods` and `retryStatusCodes`:
 
 1. **Retry Methods**: Specifies which HTTP methods should be retried. Defaults to `["GET", "POST"]`. Be careful when configuring this to retry `PUT` or `DELETE` requests unless they are idempotent.
 
-2. **Retry Status Codes**: Specifies which HTTP status codes should be retried. If not specified, all error status codes are eligible for retry.
+2. **Retry Status Codes**: Specifies which HTTP status codes should be retried. Defaults to `[]`, which makes every error status code eligible for retry. Network errors have no status code, so they are always eligible, whatever this list contains.
 
 ```ts title="api.ts"
 const result = await callApi("/api/users", {

@@ -338,7 +338,7 @@ export type DedupeOptions = {
 	 *
 	 * // URL and method only - ignore headers and body
 	 * const userData = callApi("/api/user/123", {
-	 *   dedupeKey: (context) => `${context.options.method}:${context.options.fullURL}`
+	 *   dedupeKey: (context) => `${context.request.method}:${context.options.fullURL}`
 	 * });
 	 *
 	 * // Include specific headers in deduplication
@@ -393,7 +393,7 @@ export type DedupeOptions = {
 	 * // Dynamic strategy based on request
 	 * const smartClient = createFetchClient({
 	 *   dedupeStrategy: (context) => {
-	 *     return context.options.method === "GET" ? "defer" : "cancel";
+	 *     return context.request.method === "GET" ? "defer" : "cancel";
 	 *   }
 	 * });
 	 *

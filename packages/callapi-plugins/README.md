@@ -2,7 +2,7 @@
 
 <p align="center">
    <a href="https://www.npmjs.com/package/@zayne-labs/callapi-plugins"><img src="https://img.shields.io/npm/v/@zayne-labs/callapi-plugins?style=flat&color=EFBA5F" alt="npm version"></a>
-   <a href="https://github.com/zayne-labs/callapi/blob/master/LICENSE"><img src="https://img.shields.io/npm/l/@zayne-labs/callapi-plugins?style=flat&color=EFBA5F" alt="license"></a>
+   <a href="https://github.com/zayne-labs/callapi/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@zayne-labs/callapi-plugins?style=flat&color=EFBA5F" alt="license"></a>
    <a href="https://www.npmjs.com/package/@zayne-labs/callapi-plugins"><img src="https://img.shields.io/npm/dm/@zayne-labs/callapi-plugins?style=flat&color=EFBA5F" alt="downloads per month"></a>
 </p>
 
@@ -54,6 +54,7 @@ const api = createFetchClient({
 - `enabled` - Toggle logging on/off (boolean or granular object)
 - `mode` - "basic" or "verbose" logging
 - `consoleObject` - Custom console implementation
+- `redact` - Remove sensitive values from error data before it's logged in verbose mode
 
 **Granular Control:**
 
@@ -86,9 +87,14 @@ const api = createFetchClient({
 	],
 });
 
-// Per-request plugins
+// Per-request plugins replace the base plugins for that call
 const { data } = await api("/users", {
 	plugins: [loggerPlugin({ mode: "verbose" })],
+});
+
+// To keep the base plugins, pass a function instead
+await api("/users", {
+	plugins: ({ basePlugins }) => [...basePlugins, myPlugin], // myPlugin: see Plugin Development below
 });
 ```
 
@@ -99,7 +105,7 @@ Want to create your own plugin? Check out the [plugin development guide](https:/
 Basic plugin structure:
 
 ```js
-import { definePlugin } from "@zayne-labs/callapi";
+import { definePlugin } from "@zayne-labs/callapi/utils";
 
 const myPlugin = definePlugin({
 	id: "my-plugin",
@@ -128,11 +134,11 @@ For detailed documentation and examples, visit:
 
 - [CallApi Documentation](https://zayne-labs-callapi.vercel.app)
 - [Plugin Guide](https://zayne-labs-callapi.vercel.app/docs/plugins)
-- [Logger Plugin Docs](https://zayne-labs-callapi.vercel.app/docs/plugins/utility/logger)
+- [Logger Plugin Docs](https://zayne-labs-callapi.vercel.app/docs/utilities/plugins/logger)
 
 ## Contributing
 
-Contributions are welcome! Please read our contributing guidelines and submit pull requests to the [main repository](https://github.com/zayne-labs/callapi).
+Contributions are welcome! Open an issue or pull request in the [main repository](https://github.com/zayne-labs/callapi).
 
 ## License
 

@@ -1,12 +1,19 @@
 import fsPromises from "node:fs/promises";
 import type { ImageResponseOptions } from "@takumi-rs/image-response";
 import type { ReactNode } from "react";
-import { baseURL } from "@/lib/metadata";
 
 export type GenerateProps = {
 	description?: ReactNode;
+	logoSrc: string;
 	title: ReactNode;
 };
+
+// == Read from disk instead of fetching `${baseURL}/logo.png`, so builds don't depend on a running server
+const logoSrc = fsPromises
+	.readFile(new URL("../../../../public/logo.png", import.meta.url))
+	.then((data) => `data:image/png;base64,${data.toString("base64")}`);
+
+export const getLogoSrc = () => logoSrc;
 
 const font = fsPromises
 	.readFile(new URL("../../../../lib/og/JetBrainsMono-Regular.ttf", import.meta.url))
@@ -40,7 +47,7 @@ export const getImageResponseOptions = async (): Promise<ImageResponseOptions> =
 };
 
 export const generate = (props: GenerateProps) => {
-	const { description, title } = props;
+	const { description, logoSrc: resolvedLogoSrc, title } = props;
 
 	const siteName = "CallApi";
 	const primaryTextColor = "rgb(240,240,240)";
@@ -49,7 +56,7 @@ export const generate = (props: GenerateProps) => {
 		// eslint-disable-next-line nextjs/no-img-element
 		<img
 			alt="CallApi"
-			src={new URL("/logo.png", baseURL).href}
+			src={resolvedLogoSrc}
 			width={60}
 			height={60}
 			style={{

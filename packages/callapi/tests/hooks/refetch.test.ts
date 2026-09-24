@@ -352,3 +352,47 @@ test("Refetch Edge cases - refetch can be called from onSuccess hook", async () 
 	// onSuccess should be called twice
 	expect(callCount).toBe(2);
 });
+
+test("Refetch limit - stops an unconditional refetch loop after one refetch by default", async () => {
+	using mockFetch = createFetchMock();
+
+	mockFetch.mockImplementation(() => createMockErrorResponse({ error: "Unauthorized" }, 401));
+
+	const result = await callTestApi("/test", {
+		onResponseError: ({ options, response }) => {
+			if (response.status === 401) {
+				options.refetch();
+			}
+		},
+		resultMode: "all",
+	});
+
+	expect(mockFetch).toHaveBeenCalledTimes(2);
+	expect(result.response?.status).toBe(401);
+});
+
+test("Refetch limit - refetchAttempts option raises the limit", async () => {
+	using mockFetch = createFetchMock();
+
+	mockFetch.mockImplementation(() => createMockErrorResponse({ error: "Unauthorized" }, 401));
+
+	await callTestApi("/test", {
+		onResponseError: ({ options }) => options.refetch(),
+		refetchAttempts: 3,
+	});
+
+	expect(mockFetch).toHaveBeenCalledTimes(4);
+});
+
+test("Refetch limit - refetch({ maxAttempts }) takes priority over refetchAttempts", async () => {
+	using mockFetch = createFetchMock();
+
+	mockFetch.mockImplementation(() => createMockErrorResponse({ error: "Unauthorized" }, 401));
+
+	await callTestApi("/test", {
+		onResponseError: ({ options }) => options.refetch({ maxAttempts: 2 }),
+		refetchAttempts: 5,
+	});
+
+	expect(mockFetch).toHaveBeenCalledTimes(3);
+});

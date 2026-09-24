@@ -2,7 +2,7 @@ import { ImageResponse } from "@takumi-rs/image-response";
 import { notFound } from "next/navigation";
 import { getPageImage } from "@/lib/metadata";
 import { source } from "@/lib/source";
-import { getImageResponseOptions, generate as MetadataImage } from "./generate";
+import { getImageResponseOptions, getLogoSrc, generate as MetadataImage } from "./generate";
 
 export const revalidate = false;
 
@@ -16,7 +16,11 @@ export async function GET(_req: Request, { params }: RouteContext<"/og/docs/[[..
 	}
 
 	return new ImageResponse(
-		<MetadataImage title={page.data.title} description={page.data.description} />,
+		<MetadataImage
+			title={page.data.title}
+			description={page.data.description}
+			logoSrc={await getLogoSrc()}
+		/>,
 		await getImageResponseOptions()
 	);
 }

@@ -46,6 +46,42 @@ const callApi = createFetchClient({
 });
 ```
 
+## Extra Fetch Options
+
+Pass fetch options that aren't part of the standard `RequestInit` type with `extraFetchOptions`, such as Next.js's `next` object or Undici's `dispatcher` in Node.js. CallApi spreads them into the options it passes to `fetch`.
+
+```ts title="api.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+const callApi = createFetchClient({
+	baseURL: "https://api.example.com",
+});
+
+// Next.js: cache the response and revalidate it every 60 seconds
+await callApi("/posts", {
+	extraFetchOptions: { next: { revalidate: 60 } },
+});
+```
+
+Set it in the base config to apply it to every request. Per-request values are spread over the base values.
+
+## Debug Warnings
+
+`debugMode` controls development warnings logged to the console. It defaults to `true`. Currently it warns when a request resolves to a relative URL, which fails during server-side rendering unless you set an absolute `baseURL`.
+
+```ts title="api.ts"
+import { createFetchClient } from "@zayne-labs/callapi";
+
+const callApi = createFetchClient({
+	debugMode: false,
+});
+```
+
+<Callout type="info">
+	`debugMode` doesn't affect abort and timeout errors. Those are logged with `console.error` whenever
+	`throwOnError` is off.
+</Callout>
+
 ## Skip Auto-Merge
 
 Control which configuration parts skip automatic merging between base and instance configs.
@@ -213,7 +249,9 @@ const callApi = createFetchClient({
 await callApi("/users", { meta: { source: "dashboard" } });
 ```
 
-Use a plain object when you want actual default metadata. Its shape does not register a type for the `callApi` instance. Individual calls take metadata values, not `metaHelper()`.
+Use a plain object when you want actual default metadata. Its shape does not register a type for the `callApi` instance.
+
+Only use `metaHelper()` in the base config. It returns `undefined`, so passing it to an individual call sends no metadata. Pass a plain metadata object there instead.
 
 ```ts title="api.ts"
 import { createFetchClient } from "@zayne-labs/callapi";
@@ -241,6 +279,6 @@ await callApi("/api/data", {
 
 For complete type information on all options, see:
 
-- [Extra Options](/docs/extra-options) - Instance-level options
-- [Base Extra Options](/docs/base-extra-options) - Base client options
-- [Request Options](/docs/request-options) - Fetch API options
+- [Extra Options](/docs/api-reference/extra-options) - Instance-level options
+- [Base Extra Options](/docs/api-reference/base-extra-options) - Base client options
+- [Request Options](/docs/api-reference/request-options) - Fetch API options

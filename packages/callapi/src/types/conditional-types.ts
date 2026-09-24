@@ -196,37 +196,31 @@ type InferMetaOption<
 		 *
 		 * @example
 		 * ```ts
-		 * const callMainApi = callApi.create({
+		 * const callMainApi = createFetchClient({
 		 * 	baseURL: "https://main-api.com",
-		 * 	onResponseError: ({ response, options }) => {
+		 * 	onResponseError: ({ options }) => {
 		 * 		if (options.meta?.userId) {
 		 * 			console.error(`User ${options.meta.userId} made an error`);
 		 * 		}
 		 * 	},
 		 * });
 		 *
-		 * const response = await callMainApi({
-		 * 	url: "https://example.com/api/data",
+		 * await callMainApi("/api/data", {
 		 * 	meta: { userId: "123" },
 		 * });
 		 *
 		 * // Use case: Request tracking
-		 * const result = await callMainApi({
-		 *   url: "https://example.com/api/data",
-		 *   meta: {
-		 *     requestId: generateId(),
-		 *     source: "user-dashboard",
-		 *     priority: "high"
-		 *   }
+		 * await callMainApi("/api/data", {
+		 * 	meta: {
+		 * 		requestId: generateId(),
+		 * 		source: "user-dashboard",
+		 * 	},
 		 * });
 		 *
-		 * // Use case: Feature flags
-		 * const client = callApi.create({
-		 *   baseURL: "https://api.example.com",
-		 *   meta: {
-		 *     features: ["newUI", "betaFeature"],
-		 *     experiment: "variantA"
-		 *   }
+		 * // Use case: Default metadata for every request from a client
+		 * const client = createFetchClient({
+		 * 	baseURL: "https://api.example.com",
+		 * 	meta: { experiment: "variantA" },
 		 * });
 		 * ```
 		 */

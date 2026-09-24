@@ -100,8 +100,6 @@ export type SharedExtraOptions<
 		 * Supports multiple authentication patterns:
 		 * - String: Direct authorization header value
 		 * - Auth object: Structured authentication configuration
-		 *
-		 * ```
 		 */
 		auth?: AuthOption;
 
@@ -202,7 +200,10 @@ export type SharedExtraOptions<
 		customFetchImpl?: FetchImpl;
 
 		/**
-		 * Enable debug mode for the request.
+		 * Log development warnings to the console.
+		 *
+		 * Currently warns when the resolved URL is relative, which fails during server-side rendering
+		 * unless an absolute `baseURL` is set.
 		 *
 		 * @default true
 		 */
@@ -214,7 +215,7 @@ export type SharedExtraOptions<
 		 * Can be a static string or a function that receives error context
 		 * to generate dynamic error messages based on the response.
 		 *
-		 * @default "Failed to fetch data from server!"
+		 * @default "Request failed unexpectedly"
 		 *
 		 * @example
 		 * ```ts
@@ -475,7 +476,7 @@ export type BaseCallApiExtraOptions<
 	 * @example
 	 * ```ts
 	 * // Skip all automatic merging - full manual control
-	 * const client = callApi.create((ctx) => ({
+	 * const client = createFetchClient((ctx) => ({
 	 *   skipAutoMergeFor: "all",
 	 *
 	 *   // Manually decide what to merge
@@ -488,7 +489,7 @@ export type BaseCallApiExtraOptions<
 	 * }));
 	 *
 	 * // Skip options merging - manual plugin/hook control
-	 * const client = callApi.create((ctx) => ({
+	 * const client = createFetchClient((ctx) => ({
 	 *   skipAutoMergeFor: "options",
 	 *
 	 *   // Manually control which plugins to use
@@ -502,7 +503,7 @@ export type BaseCallApiExtraOptions<
 	 * }));
 	 *
 	 * // Skip request merging - manual request control
-	 * const client = callApi.create((ctx) => ({
+	 * const client = createFetchClient((ctx) => ({
 	 *   skipAutoMergeFor: "request",
 	 *
 	 *   // Extra options still auto-merge (plugins, hooks, etc.)
@@ -585,10 +586,13 @@ export type CallApiExtraOptions<
 		/**
 		 * Array of instance-specific CallApi plugins or a function to configure plugins.
 		 *
-		 * Instance plugins are added to the base plugins and provide functionality
-		 * specific to this particular API instance. Can be a static array or a function
-		 * that receives base plugins and returns the instance plugins.
+		 * A static array replaces the base plugins for this request. To keep them, pass a function
+		 * that receives the base plugins and returns the full list.
 		 *
+		 * @example
+		 * ```ts
+		 * plugins: ({ basePlugins }) => [...basePlugins, metricsPlugin]
+		 * ```
 		 */
 		plugins?: TPluginArray | ((context: InferExtendPluginContext<TBasePluginArray>) => TPluginArray);
 

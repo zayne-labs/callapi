@@ -7,7 +7,7 @@
 <p align="center">
    <!-- <a href="https://deno.bundlejs.com/badge?q=@zayne-labs/callapi,@zayne-labs/callapi&treeshake=%5B*%5D,%5B%7B+createFetchClient+%7D%5D&config=%7B%22compression%22:%7B%22type%22:%22brotli%22,%22quality%22:11%7D%7D"><img src="https://deno.bundlejs.com/badge?q=@zayne-labs/callapi,@zayne-labs/callapi&treeshake=%5B*%5D,%5B%7B+createFetchClient+%7D%5D&config=%7B%22compression%22:%7B%22type%22:%22brotli%22,%22quality%22:11%7D%7D" alt="bundle size"></a> -->
    <a href="https://www.npmjs.com/package/@zayne-labs/callapi"><img src="https://img.shields.io/npm/v/@zayne-labs/callapi?style=flat&color=EFBA5F" alt="npm version"></a>
-   <a href="https://github.com/zayne-labs/callapi/blob/master/LICENSE"><img src="https://img.shields.io/npm/l/@zayne-labs/callapi?style=flat&color=EFBA5F" alt="license"></a>
+   <a href="https://github.com/zayne-labs/callapi/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@zayne-labs/callapi?style=flat&color=EFBA5F" alt="license"></a>
    <a href="https://www.npmjs.com/package/@zayne-labs/callapi"><img src="https://img.shields.io/npm/dm/@zayne-labs/callapi?style=flat&color=EFBA5F" alt="downloads per month"></a>
    <a href="https://github.com/zayne-labs/callapi/graphs/commit-activity"><img src="https://img.shields.io/github/commit-activity/m/zayne-labs/callapi?style=flat&color=EFBA5F" alt="commit activity"></a>
    <a href="https://deepwiki.com/zayne-labs/callapi"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
@@ -29,7 +29,7 @@
 
 Fetch is too basic for real apps. You end up writing the same boilerplate: error handling, retries, deduplication, response parsing etc. CallApi handles all of that and practically more.
 
-**Drop-in replacement for fetch. Under 6KB. All kinds of convenience features. Zero dependencies.**
+**Fetch-style API. ~7KB. All kinds of convenience features. Zero dependencies.**
 
 ```js
 import { callApi } from "@zayne-labs/callapi";
@@ -45,7 +45,7 @@ User spam-clicks a button? Handled. No race conditions.
 
 ```js
 const req1 = callApi("/api/user");
-const req2 = callApi("/api/user"); // Cancels req1 (can be configured to share it's response instead)
+const req2 = callApi("/api/user"); // Cancels req1 (can be configured to share its response instead)
 ```
 
 ### Smart Response Parsing
@@ -58,16 +58,23 @@ const { data } = await callApi("/api/data"); // JSON? Parsed.
 
 ### Error Handling
 
-Structured errors make robust error handling trivial.
+Errors are returned, not thrown, so every failure is handled in one place.
 
 ```js
+import { isHTTPError, isValidationError } from "@zayne-labs/callapi/utils";
+
 const { data, error } = await callApi("/api/users");
 
-if (error) {
-	console.log(error.name); // "HTTPError", "ValidationError"
-	console.log(error.errorData); // Actual API response
+if (isHTTPError(error)) {
+	console.log(error.errorData); // The API's error response body
+}
+
+if (isValidationError(error)) {
+	console.log(error.errorData); // The schema validation issues
 }
 ```
+
+Prefer try/catch? Set `throwOnError: true`.
 
 ### Retries
 
@@ -102,9 +109,13 @@ const callMainApi = createFetchClient({
 });
 
 // Fully typed + validated
-const user = await callMainApi("/users/:id", {
+const { data: user, error } = await callMainApi("/users/:id", {
 	params: { id: 123 },
 });
+
+if (!error) {
+	user.name; // string
+}
 ```
 
 ### Hooks
@@ -129,21 +140,27 @@ const api = createFetchClient({
 
 Extend functionality with setup, hooks, and middleware.
 
-```js
-const metricsPlugin = definePlugin({
+```ts
+import { createFetchClient, type GetCallApiContext } from "@zayne-labs/callapi";
+import { definePluginWithContext } from "@zayne-labs/callapi/utils";
+
+// Types the metadata this plugin reads and writes
+type MetricsContext = GetCallApiContext<{ Meta: { startTime?: number } }>;
+
+const metricsPlugin = definePluginWithContext<MetricsContext>()({
 	id: "metrics",
 	name: "Metrics Plugin",
 
 	setup: ({ options }) => ({
 		options: {
 			...options,
-			meta: { startTime: Date.now() },
+			meta: { ...options.meta, startTime: Date.now() },
 		},
 	}),
 
 	hooks: {
 		onSuccess: ({ options }) => {
-			const duration = Date.now() - options.meta.startTime;
+			const duration = Date.now() - (options.meta?.startTime ?? Date.now());
 
 			console.info(`Request took ${duration}ms`);
 		},
@@ -213,9 +230,11 @@ const api = createFetchClient({
 
 - **TypeScript-first** - Full inference everywhere
 - **Familiar API** - If you know fetch, you know CallApi
-- **Actually small** - Zero dependencies and Under 6KB, unlike other 50kb libs in the wild
+- **Actually small** - Zero dependencies and ~7KB (minified + brotli)
 - **Fast** - Built on native Web APIs
 - **Works everywhere** - Browsers, Node 18+, Deno, Bun, Cloudflare Workers
+
+Coming from axios, ky or ofetch? See [how CallApi compares](https://zayne-labs-callapi.vercel.app/docs/comparisons).
 
 ## License
 

@@ -3,6 +3,8 @@ title: Request Options
 description: All options shared with the Fetch API
 ---
 
-This page documents the configuration options that callApi shares with the [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit).
+This page documents the configuration options that callApi shares with the [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit). You can set them in `createFetchClient` or per request. Per-request values replace base values. This includes `headers`: to keep the base headers, pass a function, for example `headers: ({ baseHeaders }) => ({ ...baseHeaders, "X-Trace": "1" })`.
+
+For options that the Fetch API doesn't support, such as Next.js's `next`, use [`extraFetchOptions`](/docs/advanced-options#extra-fetch-options).
 
 <auto-type-table path="../../../lib/callapi-options.ts" name="CallApiRequestOptions" />

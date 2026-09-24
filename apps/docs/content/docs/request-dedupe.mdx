@@ -74,7 +74,14 @@ const { data } = await callApi("/api/logs", {
 
 ## Custom Deduplication Key
 
-The default `dedupeKey` is generated from the **URL** plus a stable hash of the **Method**, **Body**, and **explicitly provided Headers**.
+The default `dedupeKey` is the full URL plus a stable hash of every serializable request value (method, headers and body) and extra option (such as `query`, `meta` and `timeout`). Two requests share a key only when all of those match.
+
+<Callout type="warn">
+	The hash uses `JSON.stringify`, so non-JSON values such as `FormData`, `Blob` and `Headers` instances all hash
+	to `{}`. Two uploads to the same URL with different `FormData` bodies get the same key and would cancel each
+	other under the default `"cancel"` strategy. Set a custom `dedupeKey` or use `dedupeStrategy: "none"` for these
+	requests.
+</Callout>
 
 ### Static Key
 
@@ -93,9 +100,7 @@ Use a function to return a key based on the request context.
 ```ts title="api.ts"
 await callApi("/api/user/123", {
 	dedupeKey: (ctx) => {
-		const { method, fullURL } = ctx.options;
-
-		return `${method}:${fullURL}`;
+		return `${ctx.request.method}:${ctx.options.fullURL}`;
 	},
 });
 ```

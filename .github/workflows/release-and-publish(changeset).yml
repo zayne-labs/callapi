@@ -30,7 +30,7 @@ jobs:
            with:
               version: 12.5.1
 
-         - name: Setup Node.js 20.x
+         - name: Setup Node.js
            uses: actions/setup-node@v6 # v4
            with:
               node-version: ${{ matrix.node-version }}
@@ -42,12 +42,12 @@ jobs:
               pnpm build
 
          - name: Create Release Pull Request or Publish to npm
-           uses: changesets/action@v1
+           uses: changesets/action@v2.1.2
            with:
-              commit: "ci(changesets): update package version"
-              title: "ci(changesets): update package version"
-              publish: pnpm release
+              commit-message: "ci(changesets): update package version"
+              pr-title: "ci(changesets): update package version"
+              publish-script: pnpm release
+              github-token: ${{ secrets.GITHUB_TOKEN }}
 
            env:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
