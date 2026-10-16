@@ -40,7 +40,7 @@
 		"hast-util-to-jsx-runtime": "^2.3.6",
 		"lucide-react": "^1.47.0",
 		"motion": "^13.4.1",
-		"next": "16.3.6",
+		"next": "16.3.8",
 		"radix-ui": "^1.6.7",
 		"react": "19.3.0",
 		"react-dom": "19.3.0",
