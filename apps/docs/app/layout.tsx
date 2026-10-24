@@ -1,7 +1,10 @@
+import { NextProvider } from "fumadocs-core/framework/next";
+import { TreeContextProvider } from "fumadocs-ui/contexts/tree";
 import type { Metadata, Viewport } from "next";
 import { Geist, JetBrains_Mono } from "next/font/google";
 import { StructuredData } from "@/components/seo/structured-data";
 import { baseURL, createMetadata, defaultSiteName } from "@/lib/metadata";
+import { source } from "@/lib/source";
 import { cnJoin } from "@/lib/utils/cn";
 import { Providers } from "./Providers";
 import "../tailwind.css";
@@ -30,7 +33,11 @@ function RootLayout({ children }: LayoutProps<"/">) {
 				<StructuredData variant="organization" />
 			</head>
 			<body>
-				<Providers>{children}</Providers>
+				<NextProvider>
+					<TreeContextProvider tree={source.getPageTree()}>
+						<Providers>{children}</Providers>
+					</TreeContextProvider>
+				</NextProvider>
 			</body>
 		</html>
 	);

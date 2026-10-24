@@ -18,24 +18,11 @@ const config: NextConfig = {
 		},
 	},
 
-	// rewrites: () => {
-	// 	return [
-	// 		{
-	// 			destination: "/llms.mdx/docs/:path*",
-	// 			source: "/docs/:path*.mdx",
-	// 		},
-	// 	];
-	// },
-
 	reactStrictMode: true,
 
 	serverExternalPackages: ["typescript", "twoslash", "shiki", "@takumi-rs/core"],
 
 	typedRoutes: true,
-
-	typescript: {
-		ignoreBuildErrors: true,
-	},
 };
 
 export default withMDX(config);

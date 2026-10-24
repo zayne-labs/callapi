@@ -1,15 +1,17 @@
 // Type definitions for Next.js cacheLife configs
 
-declare module 'next/cache' {
-  export { unstable_cache } from 'next/dist/server/web/spec-extension/unstable-cache'
-  export {
-    updateTag,
-    revalidateTag,
-    revalidatePath,
-    refresh,
-  } from 'next/dist/server/web/spec-extension/revalidate'
-  export { unstable_noStore } from 'next/dist/server/web/spec-extension/unstable-no-store'
+export {}
 
+declare module 'next/cache' {
+  export interface CacheLifeProfiles {
+    "default": true
+    "seconds": true
+    "minutes": true
+    "hours": true
+    "days": true
+    "weeks": true
+    "max": true
+  }
   
     /**
      * Cache this `"use cache"` for a timespan defined by the `"default"` profile.
@@ -109,37 +111,4 @@ declare module 'next/cache' {
      */
     export function cacheLife(profile: "max"): void
     
-    /**
-     * Cache this `"use cache"` using a custom timespan.
-     * ```
-     *   stale: ... // seconds
-     *   revalidate: ... // seconds
-     *   expire: ... // seconds
-     * ```
-     *
-     * This is similar to Cache-Control: max-age=`stale`,s-max-age=`revalidate`,stale-while-revalidate=`expire-revalidate`
-     *
-     * If a value is left out, the lowest of other cacheLife() calls or the default, is used instead.
-     */
-    export function cacheLife(profile: {
-      /**
-       * This cache may be stale on clients for ... seconds before checking with the server.
-       */
-      stale?: number,
-      /**
-       * If the server receives a new request after ... seconds, start revalidating new values in the background.
-       */
-      revalidate?: number,
-      /**
-       * If this entry has no traffic for ... seconds it will expire. The next request will recompute it.
-       */
-      expire?: number
-    }): void
-  
-
-  import { cacheTag } from 'next/dist/server/use-cache/cache-tag'
-  export { cacheTag }
-
-  export const unstable_cacheTag: typeof cacheTag
-  export const unstable_cacheLife: typeof cacheLife
 }

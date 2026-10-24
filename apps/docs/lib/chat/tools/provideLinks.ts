@@ -32,3 +32,5 @@ export const ProvideLinksToolSchema = z.object({
 export const provideLinksTool = tool({
 	inputSchema: ProvideLinksToolSchema,
 });
+
+export type ProvideLinksToolType = typeof provideLinksTool;

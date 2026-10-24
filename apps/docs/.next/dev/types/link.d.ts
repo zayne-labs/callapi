@@ -32,15 +32,20 @@ declare namespace __next_route_internal_types__ {
     S extends `${string}${SearchOrHash}` ? never : S
 
   type StaticRoutes = 
-    | `/`
-    | `/api/chat`
-    | `/api/search`
-    | `/llms-full.txt`
-    | `/llms.txt`
+    | `/` // ../../../app/(home)/page.tsx
+    | `/api/chat` // ../../../app/api/chat/route.ts
+    | `/api/search` // ../../../app/api/search/route.ts
+    | `/apple-icon.png` // ../../../app/apple-icon.png
+    | `/icon.png` // ../../../app/icon.png
+    | `/llms-full.txt` // ../../../app/llms-full.txt/route.ts
+    | `/llms.txt` // ../../../app/llms.txt/route.ts
+    | `/robots.txt` // ../../../app/robots.ts
+    | `/sitemap.xml` // ../../../app/sitemap.ts
   type DynamicRoutes<T extends string = string> = 
-    | `/docs/${OptionalCatchAllSlug<T>}`
-    | `/llms.mdx/docs/${OptionalCatchAllSlug<T>}`
-    | `/og/docs/${OptionalCatchAllSlug<T>}`
+    | `/docs/${OptionalCatchAllSlug<T>}` // ../../../app/docs/[[...slug]]/page.tsx
+    | `/llms.mdx/${OptionalCatchAllSlug<T>}` // ../../../app/llms.mdx/[[...slug]]/route.ts
+    | `/llms.mdx/docs/${OptionalCatchAllSlug<T>}` // ../../../app/llms.mdx/docs/[[...slug]]/route.ts
+    | `/og/docs/${OptionalCatchAllSlug<T>}` // ../../../app/og/docs/[[...slug]]/route.tsx
 
   type RouteImpl<T> = 
     | StaticRoutes
@@ -121,7 +126,8 @@ declare module 'next/navigation' {
    * [Server Actions](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations).
    *
    * - In a Server Component, this will insert a meta tag to redirect the user to the target page.
-   * - In a Route Handler or Server Action, it will serve a 307/303 to the caller.
+   * - In a Route Handler, it will serve a 307 to the caller.
+   * - In a Server Action, it will perform a client-side navigation when JavaScript is available or serve a 303 for a progressive enhancement form submission.
    * - In a Server Action, type defaults to 'push' and 'replace' elsewhere.
    *
    * Read more: [Next.js Docs: redirect](https://nextjs.org/docs/app/api-reference/functions/redirect)
@@ -139,7 +145,8 @@ declare module 'next/navigation' {
    * [Server Actions](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations).
    *
    * - In a Server Component, this will insert a meta tag to redirect the user to the target page.
-   * - In a Route Handler or Server Action, it will serve a 308/303 to the caller.
+   * - In a Route Handler, it will serve a 308 to the caller.
+   * - In a Server Action, it will perform a client-side navigation when JavaScript is available or serve a 303 for a progressive enhancement form submission.
    *
    * Read more: [Next.js Docs: redirect](https://nextjs.org/docs/app/api-reference/functions/redirect)
    */

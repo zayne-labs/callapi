@@ -48,7 +48,7 @@
   📝 docs(advanced-options): update advanced-options.mdx
   📝 docs(seo): update robots, sitemap, structured-data, OG generate, and AI search components
   🎨 config(eslint): add unicorn rule ignores for docs content and disable consistent-type-definitions
-  ⬆️ ci: bump pnpm from 12.3.4 to 12.5.1 across all workflows
+  ⬆️ ci: bump pnpm from 12.3.4 to 12.15.0 across all workflows
   ⬆️ deps: bump @changesets/cli, @eslint-react/eslint-plugin, @next/eslint-plugin-next, @types/node, @zayne-labs/\*, eslint, eslint-plugin-react-refresh, lint-staged, prettier, turbo
 
 ## 1.16.0
@@ -71,7 +71,7 @@
   📝 docs(advanced-options): update advanced-options.mdx
   📝 docs(seo): update robots, sitemap, structured-data, OG generate, and AI search components
   🎨 config(eslint): add unicorn rule ignores for docs content and disable consistent-type-definitions
-  ⬆️ ci: bump pnpm from 12.3.4 to 12.5.1 across all workflows
+  ⬆️ ci: bump pnpm from 12.3.4 to 12.15.0 across all workflows
   ⬆️ deps: bump @changesets/cli, @eslint-react/eslint-plugin, @next/eslint-plugin-next, @types/node, @zayne-labs/\*, eslint, eslint-plugin-react-refresh, lint-staged, prettier, turbo
 
 ### Patch Changes
@@ -94,7 +94,7 @@
   ✨ refactor(logger-plugin): standardize log message format and structure
   📄 docs(retry): document Retry-After header configuration
   📄 docs(logger): document redact option and onResponse enabled flag
-  🤖 ci(workflow): bump pnpm to v12.5.1 and add Playwright browser tests
+  🤖 ci(workflow): bump pnpm to v12.15.0 and add Playwright browser tests
   ✅ test(callapi): add coverage for auth, dedupe, retry, URL, and common utils
   ✅ test(logger-plugin): add tests for redaction and updated log formats
   🧰 chore(callapi): rename TSUP to TSDOWN in build:test concurrently label

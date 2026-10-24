@@ -118,6 +118,16 @@ if (!error) {
 }
 ```
 
+### URL Helpers
+
+Dynamic params, query strings, and method prefixes.
+
+```js
+await callApi("/users/:id", { params: { id: 123 } });
+await callApi("/search", { query: { q: "test" } });
+await callApi("@delete/users/123");
+```
+
 ### Hooks
 
 Hook into CallApi's lifecycle at any point.
@@ -181,16 +191,6 @@ const metricsPlugin = definePluginWithContext<MetricsContext>()({
 const api = createFetchClient({
 	plugins: [metricsPlugin],
 });
-```
-
-### URL Helpers
-
-Dynamic params, query strings, and method prefixes.
-
-```js
-await callApi("/users/:id", { params: { id: 123 } });
-await callApi("/search", { query: { q: "test" } });
-await callApi("@delete/users/123");
 ```
 
 And so much more

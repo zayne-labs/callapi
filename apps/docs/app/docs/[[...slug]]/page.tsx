@@ -9,12 +9,12 @@ import {
 	PageLastUpdate,
 } from "fumadocs-ui/layouts/notebook/page";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import {
 	MarkdownCopyButton,
 	MarkdownURLCopyButton,
 	ViewOptionsPopover,
 } from "@/components/ai/page-actions";
+import { DocsNotFound } from "@/components/common/DocsNotFound";
 import { EditOnGithub } from "@/components/common/EditOnGithub";
 import { getMDXComponents } from "@/components/common/MdxComponents";
 import { HoverCard } from "@/components/ui";
@@ -29,7 +29,7 @@ async function Page({ params }: PageProps<"/docs/[[...slug]]">) {
 	const page = source.getPage(slug);
 
 	if (!page) {
-		return notFound();
+		return <DocsNotFound slug={slug ?? []} />;
 	}
 
 	const { body: MDX, lastModified, toc } = await page.data.load();
@@ -112,7 +112,10 @@ export async function generateMetadata({ params }: PageProps<"/docs/[[...slug]]"
 	const page = source.getPage(slug);
 
 	if (!page) {
-		return notFound();
+		return createMetadata({
+			description: "The documentation page you requested could not be found.",
+			title: "Not Found",
+		});
 	}
 
 	const description = page.data.description ?? defaultDescription;

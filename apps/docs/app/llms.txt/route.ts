@@ -1,8 +1,7 @@
-import { llms } from "fumadocs-core/source";
-import { source } from "@/lib/source";
+import { docsLlms } from "@/lib/llms";
 
 export const revalidate = false;
 
 export function GET() {
-	return new Response(llms(source).index());
+	return new Response(docsLlms.index());
 }

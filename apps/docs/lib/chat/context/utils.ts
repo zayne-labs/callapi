@@ -6,6 +6,15 @@ import { callGithubApi, GitHubTreeResponseSchema } from "./github-api";
 const CALLAPI_PACKAGE = "packages/callapi";
 const PRIORITY_FILES = new Set(["index.ts", "createFetchClient.ts"]);
 
+export type SourceFile = {
+	content: string;
+	path: string;
+};
+
+export const assembleContext = (title: string, intro: string, contents: string[]) => {
+	return [`=== ${title} ===`, intro, ...contents].filter(Boolean).join("\n\n");
+};
+
 const filterAndSortFiles = (files: string[]) => {
 	return (
 		files
@@ -25,24 +34,6 @@ const filterAndSortFiles = (files: string[]) => {
 
 				return a.localeCompare(b);
 			})
-	);
-};
-
-const formatFileContext = (relPath: string, content: string) => {
-	const normalizedPath = relPath.startsWith("packages/") ? relPath : `${CALLAPI_PACKAGE}/src/${relPath}`;
-
-	return `--- FILE: ${normalizedPath} ---\n${content}\n--- END FILE ---`;
-};
-
-export const assembleContext = (title: string, intro: string, contents: string[]) => {
-	return [`=== ${title} ===`, intro, ...contents].filter(Boolean).join("\n\n");
-};
-
-const assembleSourceContext = (packageJson: string, fileContents: string[]) => {
-	return assembleContext(
-		"CALLAPI SOURCE CODE CONTEXT",
-		"The following is the authoritative source code for the CallApi library. Use this for deep implementation details and TypeScript definitions.",
-		[formatFileContext(`${CALLAPI_PACKAGE}/package.json`, packageJson), ...fileContents]
 	);
 };
 
@@ -72,7 +63,7 @@ const resolveMonorepoRoot = async (): Promise<string> => {
 	return path.dirname(manifest);
 };
 
-export const getLocalSourceContext = async (): Promise<string> => {
+export const getLocalSourceFiles = async (): Promise<SourceFile[]> => {
 	const rootDir = await resolveMonorepoRoot();
 	const libraryPath = path.join(rootDir, CALLAPI_PACKAGE);
 	const srcPath = path.join(libraryPath, "src");
@@ -86,15 +77,14 @@ export const getLocalSourceContext = async (): Promise<string> => {
 
 	const targetFiles = filterAndSortFiles(relativePaths);
 
-	const fileContents = await Promise.all(
-		targetFiles.map((relPath) =>
-			fs
-				.readFile(path.join(srcPath, relPath), "utf8")
-				.then((content) => formatFileContext(relPath, content))
-		)
+	const sourceFiles = await Promise.all(
+		targetFiles.map(async (relPath) => ({
+			content: await fs.readFile(path.join(srcPath, relPath), "utf8"),
+			path: `${CALLAPI_PACKAGE}/src/${relPath}`,
+		}))
 	);
 
-	return assembleSourceContext(packageJson, fileContents);
+	return [{ content: packageJson, path: `${CALLAPI_PACKAGE}/package.json` }, ...sourceFiles];
 };
 
 // === Remote source ===
@@ -102,12 +92,12 @@ export const getLocalSourceContext = async (): Promise<string> => {
 const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/zayne-labs/callapi/main";
 const GITHUB_API_BASE = "https://api.github.com/repos/zayne-labs/callapi";
 
-export const getRemoteSourceContext = async (): Promise<string> => {
+export const getRemoteSourceFiles = async (): Promise<SourceFile[]> => {
 	const [contents, packageJson] = await Promise.all([
 		callGithubApi(`${GITHUB_API_BASE}/contents/${CALLAPI_PACKAGE}`),
 		callGithubApi(`${GITHUB_RAW_BASE}/${CALLAPI_PACKAGE}/package.json`, {
 			responseType: "text",
-		}).catch(() => "Failed to fetch package.json"),
+		}),
 	]);
 
 	const srcDir = contents.find((item) => item.type === "dir" && item.name === "src");
@@ -123,18 +113,17 @@ export const getRemoteSourceContext = async (): Promise<string> => {
 
 	const targetFiles = filterAndSortFiles(treeData.tree.map((item) => item.path));
 
-	const results = await Promise.allSettled(
+	const sourceFiles = await Promise.all(
 		targetFiles.map((filePath) =>
 			callGithubApi(`${GITHUB_RAW_BASE}/${CALLAPI_PACKAGE}/src/:filePath`, {
 				params: { filePath },
 				responseType: "text",
-			}).then((content) => formatFileContext(filePath, content))
+			}).then((content) => ({
+				content,
+				path: `${CALLAPI_PACKAGE}/src/${filePath}`,
+			}))
 		)
 	);
 
-	const fileContents = results
-		.filter((res): res is PromiseFulfilledResult<string> => res.status === "fulfilled")
-		.map((res) => res.value);
-
-	return assembleSourceContext(packageJson, fileContents);
+	return [{ content: packageJson, path: `${CALLAPI_PACKAGE}/package.json` }, ...sourceFiles];
 };
