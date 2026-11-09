@@ -1,6 +1,6 @@
 import fsPromises from "node:fs/promises";
-import type { ImageResponseOptions } from "@takumi-rs/image-response";
 import type { ReactNode } from "react";
+import type { ImageResponseOptions } from "takumi-js/response";
 
 export type GenerateProps = {
 	description?: ReactNode;

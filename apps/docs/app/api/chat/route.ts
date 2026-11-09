@@ -2,4 +2,4 @@
 
 export const maxDuration = 30;
 
-export { POST } from "@/lib/chat/gemma/serverWithLinksTool";
+export { POST } from "@/lib/chat/gemma/server";

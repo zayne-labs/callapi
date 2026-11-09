@@ -1,5 +1,5 @@
-import { ImageResponse } from "@takumi-rs/image-response";
 import { notFound } from "next/navigation";
+import { ImageResponse } from "takumi-js/response";
 import { getPageImage } from "@/lib/metadata";
 import { source } from "@/lib/source";
 import { getImageResponseOptions, getLogoSrc, generate as MetadataImage } from "./generate";
