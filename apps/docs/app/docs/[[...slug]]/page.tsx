@@ -7,7 +7,7 @@ import {
 	DocsPage,
 	DocsTitle,
 	PageLastUpdate,
-} from "fumadocs-ui/layouts/notebook/page";
+} from "fumadocs-ui/layouts/spacious/page";
 import type { Metadata } from "next";
 import {
 	MarkdownCopyButton,

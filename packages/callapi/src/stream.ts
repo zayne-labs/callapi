@@ -181,7 +181,11 @@ export const toStreamableRequest = (context: ToStreamableRequestContext): Reques
 		streamBody,
 	});
 
-	return new Request(requestInstance, { body: trackedStream, duplex: "half" } as RequestInit);
+	return new Request(requestInstance, {
+		body: trackedStream,
+		duplex: "half",
+		method: requestInstance.method,
+	} as RequestInit);
 };
 
 type StreamableResponseContext = RequestContext & {

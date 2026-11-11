@@ -47,3 +47,5 @@ jobs:
            run: |
               pnpm lint:type-check
               pnpm lint:eslint:root
+              pnpm lint:knip
+              pnpm lint:knip:production

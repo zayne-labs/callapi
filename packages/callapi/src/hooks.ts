@@ -289,11 +289,11 @@ export type RetryContext<
 	retryAttemptCount: number;
 };
 
-type HookRegistries = Required<{
-	[Key in keyof Hooks]: Set<Hooks[Key]>;
-}>;
-
 export const getHookRegistriesAndKeys = () => {
+	type HookRegistries = Required<{
+		[Key in keyof Hooks]: Set<Hooks[Key]>;
+	}>;
+
 	const hookRegistries: HookRegistries = {
 		onError: new Set(),
 		onRequest: new Set(),

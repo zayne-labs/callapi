@@ -3,20 +3,23 @@ import { Document, type DocumentData } from "flexsearch";
 import { z } from "zod";
 import { source } from "@/lib/source";
 
-type CustomDocument = DocumentData & {
-	content: string;
-	description: string;
-	title: string;
-	url: string;
-};
-
 const createSearchServer = async () => {
+	type CustomDocument = DocumentData & {
+		content: string;
+		description: string;
+		title: string;
+		url: string;
+	};
+
 	const search = new Document<CustomDocument>({
 		document: {
 			id: "url",
 			index: ["title", "description", "content"],
 			store: true,
 		},
+
+		// == Same tokenizer as fumadocs-core's flexsearch, matching parts of words like "drop" in "dropzone"
+		tokenize: "full",
 	});
 
 	const docs = await Promise.all(
@@ -43,7 +46,13 @@ const createSearchServer = async () => {
 	return search;
 };
 
-const searchServer = createSearchServer();
+let searchServerPromise: ReturnType<typeof createSearchServer> | undefined;
+
+// == Built on the first search, not when the route module loads
+const getSearchServer = () => {
+	searchServerPromise ??= createSearchServer();
+	return searchServerPromise;
+};
 
 const getSnippet = (content: string, query: string) => {
 	const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
@@ -63,32 +72,28 @@ const getSnippet = (content: string, query: string) => {
 
 export const searchTool = tool({
 	description:
-		"Search CallApi documentation for evidence relevant to the user's question. Call this before answering CallApi questions. Returns a few matching pages with concise excerpts and URLs.",
+		"Search CallApi documentation for evidence relevant to the user's question. Call this before answering CallApi questions. Returns a few matching pages, each with its title and URL under `doc`, plus a concise excerpt.",
 
 	execute: async ({ limit, query }) => {
-		const search = await searchServer;
+		const search = await getSearchServer();
 		const matches = search.search(query, {
 			enrich: true,
 			limit,
 			merge: true,
 		});
 
-		const results = matches.flatMap(({ doc }) => {
+		// == Each result has `doc: { title, url }`, the shape `AIChatSearch` from @fumadocs/ai-chat renders
+		return matches.flatMap(({ doc }) => {
 			if (!doc) {
 				return [];
 			}
 
-			return [
-				{
-					description: doc.description,
-					snippet: getSnippet(doc.content, query),
-					title: doc.title,
-					url: doc.url,
-				},
-			];
+			return {
+				description: doc.description,
+				doc: { title: doc.title, url: doc.url },
+				snippet: getSnippet(doc.content, query),
+			};
 		});
-
-		return { results };
 	},
 
 	inputSchema: z.object({

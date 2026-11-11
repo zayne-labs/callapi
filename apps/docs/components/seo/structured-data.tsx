@@ -9,7 +9,12 @@ type StructuredDataProps = {
 };
 
 const getStructuredData = (options: StructuredDataProps): WithContext<Organization | WebSite> => {
-	const { description, title, url, variant } = options;
+	const {
+		description = "Documentation for CallApi - A lightweight, type-safe Fetch API wrapper",
+		title = "CallApi Documentation",
+		url = baseURL,
+		variant,
+	} = options;
 
 	const baseData = {
 		"@context": "https://schema.org",
@@ -40,11 +45,10 @@ const getStructuredData = (options: StructuredDataProps): WithContext<Organizati
 					name: "Zayne Labs",
 					url: "https://github.com/zayne-labs",
 				},
-				description:
-					description ?? "Documentation for CallApi - A lightweight, type-safe Fetch API wrapper",
-				headline: title ?? "CallApi Documentation",
+				description,
+				headline: title,
 				mainEntityOfPage: {
-					"@id": url ?? baseURL,
+					"@id": url,
 					"@type": "WebPage",
 				},
 				publisher: {
@@ -52,7 +56,7 @@ const getStructuredData = (options: StructuredDataProps): WithContext<Organizati
 					name: "Zayne Labs",
 					url: "https://github.com/zayne-labs",
 				},
-				url: url ?? baseURL,
+				url,
 			};
 		}
 

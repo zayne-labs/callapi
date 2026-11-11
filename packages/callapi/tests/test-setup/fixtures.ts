@@ -90,7 +90,7 @@ export const mockPlugin = definePlugin({
 });
 
 // Mock hook execution tracking
-export const mockHookTracker = {
+const mockHookTracker = {
 	onError: [],
 	onRequest: [],
 	onRequestStream: [],

@@ -14,11 +14,9 @@ import { omitKeys } from "./utils/common";
 import type { HTTPError, ValidationError } from "./utils/external/error";
 import { isHTTPErrorInstance, isValidationErrorInstance } from "./utils/external/guards";
 
-export type ResponseType = "blob" | "json" | "text";
-
 export type ResponseParser<TData> = (text: string) => Awaitable<TData>;
 
-export const getResponseType = <TData>(response: Response, responseParser: ResponseParser<TData>) => ({
+const getResponseType = <TData>(response: Response, responseParser: ResponseParser<TData>) => ({
 	arrayBuffer: () => response.arrayBuffer(),
 	blob: () => response.blob(),
 	formData: () => response.formData(),

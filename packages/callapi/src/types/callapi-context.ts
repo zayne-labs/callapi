@@ -52,6 +52,10 @@ export type InferExtraOptionsFromTag<TTaggedType> =
 		:	TCallApiContext["InferredExtraOptions"]
 	:	never;
 
+/**
+ * @description Exported for tests
+ * @internal
+ */
 export type ResolveMetaFromContext<
 	TCallApiContext extends CallApiContext,
 	TAdditionalMeta,

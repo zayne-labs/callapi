@@ -1,8 +1,8 @@
 import { callApi } from "@zayne-labs/callapi";
 import { Image, Link } from "fumadocs-core/framework";
 import { GithubInfo } from "fumadocs-ui/components/github-info";
-import type { DocsLayoutProps } from "fumadocs-ui/layouts/docs";
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
+import type { DocsLayoutProps } from "fumadocs-ui/layouts/spacious";
 import { TagIcon } from "lucide-react";
 import { z } from "zod";
 import { IconBox } from "@/components/common";
@@ -15,7 +15,7 @@ import { packageName, packageScope, repoName, repoOwner } from "./github";
  * Shared layout configurations
  */
 
-export const getBaseOptions = () => {
+const getBaseOptions = () => {
 	return {
 		githubUrl: `https://github.com/${repoOwner}/${repoName}`,
 
@@ -76,20 +76,18 @@ export const getDocsOptions = () => {
 			url: "/",
 		},
 
-		sidebar: {
-			tabs: [
-				{
-					description: descriptionPromise,
-					icon: (
-						<span className="flex size-full items-center justify-center rounded-lg max-md:border max-md:bg-fd-primary/10 max-md:p-1.5">
-							<TagIcon className="size-full text-fd-primary" />
-						</span>
-					),
-					title: "Latest",
-					url: "/docs",
-				},
-			],
-		},
+		tabs: [
+			{
+				description: descriptionPromise,
+				icon: (
+					<span className="flex size-full items-center justify-center rounded-lg max-md:border max-md:bg-fd-primary/10 max-md:p-1.5">
+						<TagIcon className="size-full text-fd-primary" />
+					</span>
+				),
+				title: "Latest",
+				url: "/docs",
+			},
+		],
 
 		tree: source.getPageTree(),
 	} satisfies DocsLayoutProps;

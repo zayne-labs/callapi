@@ -39,6 +39,10 @@ export const omitKeys = <
 	return updatedObject as DistributiveOmit<TObject, TOmitArray[number]>;
 };
 
+/**
+ * @description Exported for tests
+ * @internal
+ */
 export const pickKeys = <
 	TObject extends Record<string, unknown>,
 	const TPickArray extends Array<keyof TObject> | ReadonlyArray<keyof TObject>,
@@ -172,6 +176,10 @@ export const getBody = (options: GetBodyOptions) => {
 	return body;
 };
 
+/**
+ * @description Exported for tests
+ * @internal
+ */
 export const getInitFetchImpl = (customFetchImpl: CallApiExtraOptions["customFetchImpl"]) => {
 	if (customFetchImpl) {
 		return customFetchImpl;

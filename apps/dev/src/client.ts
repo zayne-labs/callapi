@@ -120,19 +120,19 @@ const callMainApi = createFetchClient({
 	schema: apiSchema,
 });
 
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const waitASecond = () => new Promise((resolve) => setTimeout(resolve, 1000));
 
 const stream = new ReadableStream({
 	async start(controller) {
-		await wait(1000);
+		await waitASecond();
 		controller.enqueue("This ");
-		await wait(1000);
+		await waitASecond();
 		controller.enqueue("is ");
-		await wait(1000);
+		await waitASecond();
 		controller.enqueue("a ");
-		await wait(1000);
+		await waitASecond();
 		controller.enqueue("slow ");
-		await wait(1000);
+		await waitASecond();
 		controller.enqueue("request.");
 		controller.close();
 	},
@@ -234,7 +234,7 @@ export const callBackendApiForQuery = <TData = unknown>(
 };
 
 // const getAllowedDomains = async () => {
-// 	await wait(1000);
+// 	await waitASecond();
 // 	return ["example.com", "company.com"];
 // };
 

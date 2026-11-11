@@ -2,7 +2,7 @@ import { expect } from "vitest";
 import type { CallApiRequestOptionsForHooks } from "../../src";
 import { mockFetch } from "./setup";
 
-export const getStatusText = (status: number): string => {
+const getStatusText = (status: number): string => {
 	const statusTexts: Record<number, string> = {
 		200: "OK",
 		201: "Created",

@@ -1,7 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@import "fumadocs-ui/css/generated/spacious.css";
 @import "fumadocs-ui/css/preset.css";
+@import "@fumadocs/ai-chat/css/preset.css";
 @import "fumadocs-ui/css/neutral.css";
 @import "fumadocs-twoslash/twoslash.css";
 

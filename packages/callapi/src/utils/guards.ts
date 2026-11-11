@@ -2,8 +2,6 @@ import type { AnyFunction } from "../types/type-helpers";
 
 export const isArray = <TArrayItem>(value: unknown): value is TArrayItem[] => Array.isArray(value);
 
-export const isBoolean = (value: unknown): value is boolean => typeof value === "boolean";
-
 export const isBlob = (value: unknown): value is Blob => value instanceof Blob;
 
 export const isObject = <TObject extends object>(value: unknown): value is TObject => {
@@ -86,6 +84,10 @@ export const isString = (value: unknown) => typeof value === "string";
 export const isPromise = (value: unknown) => value instanceof Promise;
 
 // https://github.com/unjs/ofetch/blob/main/src/utils.ts
+/**
+ * @description Exported for tests
+ * @internal
+ */
 export const isJSONSerializable = (value: unknown) => {
 	if (value === undefined) {
 		return false;

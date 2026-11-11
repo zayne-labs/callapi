@@ -1,0 +1,6 @@
+{
+	"extends": ["./tsconfig.base.json", "@zayne-labs/tsconfig/bundler/dom/library"],
+
+	"include": ["*.ts"],
+	"exclude": ["dist", "node_modules/**"]
+}

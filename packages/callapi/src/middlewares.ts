@@ -55,11 +55,11 @@ export interface Middlewares<TCallApiContext extends NoInfer<CallApiContext> = D
 	fetchMiddleware?: (context: FetchMiddlewareContext<TCallApiContext>) => FetchImpl;
 }
 
-type MiddlewareRegistries = Required<{
-	[Key in keyof Middlewares]: Set<Middlewares[Key]>;
-}>;
-
 export const getMiddlewareRegistriesAndKeys = () => {
+	type MiddlewareRegistries = Required<{
+		[Key in keyof Middlewares]: Set<Middlewares[Key]>;
+	}>;
+
 	const middlewareRegistries: MiddlewareRegistries = {
 		fetchMiddleware: new Set(),
 	};

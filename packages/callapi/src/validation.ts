@@ -92,7 +92,7 @@ const callApiSchemaParser = async <
 	schemaName: TSchemaName,
 	options: { inputValue: InferSchemaInput<TSchema>; response?: Response | null }
 ): Promise<InferSchemaOutput<TSchema>> => {
-	const { inputValue, response } = options;
+	const { inputValue, response = null } = options;
 
 	const schema = fullSchema?.[schemaName];
 
@@ -102,7 +102,7 @@ const callApiSchemaParser = async <
 		throw new ValidationError({
 			issueCause: schemaName,
 			issues: result.issues,
-			response: response ?? null,
+			response,
 		});
 	}
 
@@ -408,7 +408,7 @@ type GetResolvedSchemaContext = {
 	extraOptions: CallApiExtraOptions;
 };
 
-export const getResolvedSchema = (context: GetResolvedSchemaContext) => {
+const getResolvedSchema = (context: GetResolvedSchemaContext) => {
 	const { baseExtraOptions, currentRouteSchemaKey, extraOptions } = context;
 
 	const fallbackRouteSchema = baseExtraOptions.schema?.routes[fallBackRouteSchemaKey];
@@ -432,7 +432,7 @@ export const getResolvedSchema = (context: GetResolvedSchemaContext) => {
 	return { currentRouteSchema, resolvedSchema };
 };
 
-export const getResolvedSchemaConfig = (
+const getResolvedSchemaConfig = (
 	context: Omit<GetResolvedSchemaContext, "currentRouteSchemaKey">
 ) => {
 	const { baseExtraOptions, extraOptions } = context;

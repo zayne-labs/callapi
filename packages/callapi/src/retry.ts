@@ -24,8 +24,6 @@ type RetryStatusCodes = UnmaskType<AnyNumber | keyof ReturnType<typeof defaultRe
 
 type RetryCondition<TErrorData> = (context: ErrorContext<{ ErrorData: TErrorData }>) => Awaitable<boolean>;
 
-export const retryAttemptCountSymbol = Symbol("retryAttemptCount");
-
 export type CallApiLooseImpl = (
 	initURL: InitURLOrURLObject,
 	init?: CallApiConfig
@@ -119,14 +117,14 @@ export const createRetryManager = (ctx: RetryManagerContext) => {
 		const retryMethods = options.retryMethods ?? extraOptionDefaults.retryMethods;
 
 		const includesMethod =
-			request.method != null && retryMethods.length > 0 ? retryMethods.includes(request.method) : true;
+			request.method == null || retryMethods.length === 0 || retryMethods.includes(request.method);
 
 		const retryStatusCodes = options.retryStatusCodes ?? extraOptionDefaults.retryStatusCodes;
 
 		const includesStatusCodes =
-			errorContext.response != null && retryStatusCodes.length > 0 ?
-				retryStatusCodes.includes(errorContext.response.status)
-			:	true;
+			errorContext.response == null
+			|| retryStatusCodes.length === 0
+			|| retryStatusCodes.includes(errorContext.response.status);
 
 		const finalShouldAttemptRetry = includesMethod && includesStatusCodes;
 

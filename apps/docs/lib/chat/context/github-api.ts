@@ -1,36 +1,41 @@
 import { createFetchClient } from "@zayne-labs/callapi";
 import { defineSchema } from "@zayne-labs/callapi/utils";
 import { z } from "zod";
+import { repoName, repoOwner } from "@/lib/github";
 
-const GitHubContentItemSchema = z.object({
-	git_url: z.string(),
-	name: z.string(),
-	type: z.string(),
-});
+export const CALLAPI_PACKAGE = "packages/callapi";
 
-export const GitHubTreeResponseSchema = z.object({
+// == `type` stays a string: besides "blob" and "tree", submodules show up as "commit"
+const GitHubTreeResponseSchema = z.object({
 	tree: z.array(
 		z.object({
 			path: z.string(),
-			type: z.enum(["blob", "tree"]),
+			type: z.string(),
 		})
 	),
 });
 
-const apiSchema = defineSchema({
-	"https://api.github.com/repos/zayne-labs/callapi/contents/packages/callapi": {
-		data: GitHubContentItemSchema.array(),
-	},
-	"https://raw.githubusercontent.com/zayne-labs/callapi/main/packages/callapi/package.json": {
-		data: z.string(),
-	},
-	"https://raw.githubusercontent.com/zayne-labs/callapi/main/packages/callapi/src/:filePath": {
-		data: z.string(),
-	},
+export const callGithubApi = createFetchClient({
+	baseURL: `https://api.github.com/repos/${repoOwner}/${repoName}`,
+	resultMode: "onlyData",
+	schema: defineSchema(
+		{
+			"/git/trees/:ref": {
+				data: GitHubTreeResponseSchema,
+				params: z.object({ ref: z.string() }),
+				query: z.object({ recursive: z.boolean() }),
+			},
+		},
+		{ strict: true }
+	),
+	throwOnError: true,
 });
 
-export const callGithubApi = createFetchClient({
+// == Raw files of the package on `main`. File paths contain `/`, which path params would encode,
+// == so they're appended to the URL and typed by the fallback route instead
+export const callGithubRaw = createFetchClient({
+	baseURL: `https://raw.githubusercontent.com/${repoOwner}/${repoName}/main/${CALLAPI_PACKAGE}`,
+	responseType: "text",
 	resultMode: "onlyData",
-	schema: apiSchema,
 	throwOnError: true,
 });

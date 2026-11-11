@@ -150,7 +150,7 @@ export type InferPluginArrayExtraOptions<
 	TPlugin extends CallApiPlugin = TPluginArray[number],
 > = UnionToIntersection<InferPluginExtraOptions<TPlugin>>;
 
-export const getResolvedPlugins = (context: Pick<RequestContext, "baseConfig" | "options">) => {
+const getResolvedPlugins = (context: Pick<RequestContext, "baseConfig" | "options">) => {
 	const { baseConfig, options } = context;
 
 	const resolvedPlugins =

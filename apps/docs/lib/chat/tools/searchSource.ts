@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { Document, type DocumentData } from "flexsearch";
 import { z } from "zod";
+import { repoName, repoOwner } from "@/lib/github";
 import { getLocalSourceFiles, getRemoteSourceFiles, type SourceFile } from "../context/utils";
 
 const LinesPerChunk = 80;
@@ -178,7 +179,7 @@ export const searchSourceTool = tool({
 
 			const score = getChunkRelevance(doc, terms);
 
-			return score > 0 ? [{ chunk: doc, score }] : [];
+			return score > 0 ? { chunk: doc, score } : [];
 		});
 
 		rankedChunks.sort((a, b) => b.score - a.score);
@@ -200,7 +201,7 @@ export const searchSourceTool = tool({
 				return {
 					path: chunk.path,
 					...excerpt,
-					url: `https://github.com/zayne-labs/callapi/blob/main/${chunk.path}#L${excerpt.startLine}-L${excerpt.endLine}`,
+					url: `https://github.com/${repoOwner}/${repoName}/blob/main/${chunk.path}#L${excerpt.startLine}-L${excerpt.endLine}`,
 				};
 			}),
 		};

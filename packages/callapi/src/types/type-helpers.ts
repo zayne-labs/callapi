@@ -6,9 +6,6 @@ export type NonNullableUnknown = NonNullable<unknown>;
 export type AnyString = string & NonNullableUnknown;
 export type AnyNumber = number & NonNullableUnknown;
 
-// eslint-disable-next-line ts-eslint/no-explicit-any -- Any is fine here
-export type AnyObject = Record<keyof any, any>;
-
 // eslint-disable-next-line ts-eslint/no-explicit-any -- Any is required here so that one can pass custom function type without type errors
 export type AnyFunction<TResult = unknown> = (...args: any[]) => TResult;
 

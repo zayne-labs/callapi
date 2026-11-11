@@ -124,15 +124,17 @@ export function ViewOptionsPopover(props: ViewOptionsProps) {
 
 	return (
 		<Popover>
-			<PopoverTrigger asChild={true}>
-				<Button
-					theme="secondary"
-					size="sm"
-					className="gap-2 data-[state=open]:bg-fd-accent data-[state=open]:text-fd-accent-foreground"
-				>
-					Open
-					<ChevronDown className="size-3.5 text-fd-muted-foreground" />
-				</Button>
+			<PopoverTrigger
+				render={
+					<Button
+						theme="secondary"
+						size="sm"
+						className="gap-2 data-popup-open:bg-fd-accent data-popup-open:text-fd-accent-foreground"
+					/>
+				}
+			>
+				Open
+				<ChevronDown className="size-3.5 text-fd-muted-foreground" />
 			</PopoverTrigger>
 
 			<PopoverContent className="flex flex-col">

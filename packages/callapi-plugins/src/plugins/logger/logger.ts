@@ -204,21 +204,14 @@ export const loggerPlugin = (options?: LoggerOptions) => {
 
 				if (!isEnabled) return;
 
-				const getMessage = (limit: number | null = null) => {
-					const errorMessage =
-						limit === null ?
-							ctx.error.message
-						:	`${ctx.error.message.slice(0, limit).trimEnd()}${ctx.error.message.length > limit ? "..." : ""}`;
+				const message = [
+					`${formatMethod(ctx.request.method)} Validation failed (${ctx.error.issueCause.toUpperCase()}) ${formatURL(ctx.options.fullURL)}`,
+					`Reason: ${formatErrorReason({ message: ctx.error.message, name: ctx.error.name })}`,
+				].join(lineBreak);
 
-					return [
-						`${formatMethod(ctx.request.method)} Validation failed (${ctx.error.issueCause.toUpperCase()}) ${formatURL(ctx.options.fullURL)}`,
-						`Reason: ${formatErrorReason({ message: errorMessage, name: ctx.error.name })}`,
-					].join(lineBreak);
-				};
+				isBasicMode && errorLog(message);
 
-				isBasicMode && errorLog(getMessage());
-
-				const verboseMessage = [getMessage(), "Issues: "].join(lineBreak);
+				const verboseMessage = [message, "Issues: "].join(lineBreak);
 
 				isVerboseMode && errorLog(verboseMessage, redact(ctx.error.errorData));
 			},

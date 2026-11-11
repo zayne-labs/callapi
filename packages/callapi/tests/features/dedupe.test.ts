@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { createFetchClient } from "../../src";
 import { waitFor } from "../../src/utils/common";
 import {
@@ -34,11 +34,14 @@ test("Dedupe Keys - uses custom string dedupe key to deduplicate different endpo
 
 	const resultsPromise = Promise.all([client("/users/1"), client("/users/2"), client("/config")]);
 
-	await waitFor(10);
-	expect(getFetchCallCount()).toBe(1);
+	// == Poll rather than wait a fixed delay, so a busy machine can't make the request look unsent
+	await vi.waitFor(() => expect(getFetchCallCount()).toBe(1));
 
 	releaseFetch();
 	const results = await resultsPromise;
+
+	// == Still one fetch after every request settled, so the duplicates shared it
+	expect(getFetchCallCount()).toBe(1);
 
 	for (const result of results) {
 		expect(result.data).toBeDefined();
@@ -60,11 +63,14 @@ test("Dedupe Keys - uses custom function dedupe key for granular control", async
 
 	const resultsPromise = Promise.all([client("/users/1?a=1"), client("/users/1?b=2")]);
 
-	await waitFor(10);
-	expect(getFetchCallCount()).toBe(1);
+	// == Poll rather than wait a fixed delay, so a busy machine can't make the request look unsent
+	await vi.waitFor(() => expect(getFetchCallCount()).toBe(1));
 
 	releaseFetch();
 	const results = await resultsPromise;
+
+	// == Still one fetch after every request settled, so the duplicates shared it
+	expect(getFetchCallCount()).toBe(1);
 
 	expect(results).toHaveLength(2);
 });
@@ -81,11 +87,14 @@ test("Dedupe Keys - handles empty string dedupe key correctly", async () => {
 
 	const resultsPromise = Promise.all([client("/users/1"), client("/users/2")]);
 
-	await waitFor(10);
-	expect(getFetchCallCount()).toBe(1);
+	// == Poll rather than wait a fixed delay, so a busy machine can't make the request look unsent
+	await vi.waitFor(() => expect(getFetchCallCount()).toBe(1));
 
 	releaseFetch();
 	const results = await resultsPromise;
+
+	// == Still one fetch after every request settled, so the duplicates shared it
+	expect(getFetchCallCount()).toBe(1);
 
 	expect(results[0].data).toBeDefined();
 	expect(results[1].data).toBeDefined();
@@ -155,11 +164,14 @@ test("Dedupe Scopes - shares deduplication between clients with same global cach
 
 	const resultsPromise = Promise.all([client1("/users/1"), client2("/users/1")]);
 
-	await waitFor(10);
-	expect(getFetchCallCount()).toBe(1);
+	// == Poll rather than wait a fixed delay, so a busy machine can't make the request look unsent
+	await vi.waitFor(() => expect(getFetchCallCount()).toBe(1));
 
 	releaseFetch();
 	const [result1, result2] = await resultsPromise;
+
+	// == Still one fetch after every request settled, so the duplicates shared it
+	expect(getFetchCallCount()).toBe(1);
 
 	expect(result1.data).toBeDefined();
 	expect(result2.data).toBeDefined();

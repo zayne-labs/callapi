@@ -6,20 +6,20 @@ import {
 	type DefaultCallApiContext,
 } from "../../src";
 
-type User = {
-	id: string;
-	name: string;
-};
-
-type ApiError = {
-	code: string;
-};
-
 const client = createFetchClient({
 	baseURL: "https://api.example.com",
 });
 
 test("Result types - infer every result mode", () => {
+	type User = {
+		id: string;
+		name: string;
+	};
+
+	type ApiError = {
+		code: string;
+	};
+
 	const defaultResult = () => client<User, ApiError>("/users");
 	const throwingResult = () =>
 		client<User, ApiError, "all", DefaultCallApiContext, true>("/users", {
