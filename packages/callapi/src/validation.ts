@@ -432,9 +432,7 @@ const getResolvedSchema = (context: GetResolvedSchemaContext) => {
 	return { currentRouteSchema, resolvedSchema };
 };
 
-const getResolvedSchemaConfig = (
-	context: Omit<GetResolvedSchemaContext, "currentRouteSchemaKey">
-) => {
+const getResolvedSchemaConfig = (context: Omit<GetResolvedSchemaContext, "currentRouteSchemaKey">) => {
 	const { baseExtraOptions, extraOptions } = context;
 
 	const resolvedSchemaConfig =
