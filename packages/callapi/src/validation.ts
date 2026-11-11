@@ -8,13 +8,12 @@ import type {
 	GlobalMeta,
 } from "./types/options-types";
 import type { StandardSchemaV1 } from "./types/standard-schema";
-import {
-	defineEnum,
-	type AnyFunction,
-	type AnyString,
-	type Awaitable,
-	type UnionDiscriminator,
-	type UnionToIntersection,
+import type {
+	AnyFunction,
+	AnyString,
+	Awaitable,
+	UnionDiscriminator,
+	UnionToIntersection,
 } from "./types/type-helpers";
 import {
 	atSymbol,
@@ -203,7 +202,7 @@ export interface CallApiSchema {
 	query?: CallApiSchemaType<Query>;
 }
 
-export const routeKeyMethods = defineEnum(["delete", "get", "patch", "post", "put"]);
+export const routeKeyMethods = ["delete", "get", "patch", "post", "put"] as const;
 
 export type RouteKeyMethods = (typeof routeKeyMethods)[number];
 

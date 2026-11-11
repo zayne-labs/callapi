@@ -19,7 +19,10 @@
 		"lint:format": {},
 		"lint:size": {},
 		"lint:publint": {},
-		"lint:eslint": {},
+		"lint:knip": {},
+		"lint:eslint": {
+			"cache": false
+		},
 		"test": {},
 		"test:browser": {},
 		"test:dev": {
@@ -27,8 +30,6 @@
 			"persistent": true
 		},
 		"test:coverage": {},
-		"lint:eslint:dev": {},
-		"knip": {},
 		"lint:type-check": {}
 	}
 }

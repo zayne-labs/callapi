@@ -1,7 +1,6 @@
 import type { ModifiedRequestInit } from "../types/options-types";
-import { defineEnum } from "../types/type-helpers";
 
-export const fetchSpecificKeys = defineEnum([
+export const fetchSpecificKeys = [
 	"body",
 	"integrity",
 	"duplex",
@@ -18,4 +17,4 @@ export const fetchSpecificKeys = defineEnum([
 	"mode",
 	"referrerPolicy",
 	"extraFetchOptions",
-] satisfies Array<keyof ModifiedRequestInit> as Array<keyof ModifiedRequestInit>);
+] as const satisfies Array<keyof ModifiedRequestInit>;

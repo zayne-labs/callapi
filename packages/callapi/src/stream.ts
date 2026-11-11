@@ -62,12 +62,12 @@ const createProgressEvent = (options: CreateProgressEventOptions): StreamProgres
 	};
 };
 
-const textEncoder = new TextEncoder();
-
 const estimateBodySize = (body: RequestContext["request"]["body"]): number => {
 	if (!body || body instanceof ReadableStream) {
 		return 0;
 	}
+
+	const textEncoder = new TextEncoder();
 
 	if (body instanceof FormData) {
 		let size = 0;

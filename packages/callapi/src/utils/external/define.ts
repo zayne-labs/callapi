@@ -50,7 +50,8 @@ export const definePluginWithContext = <
 		:	ContextTag<Writeable<TPlugin, "deep">, TCallApiContext>;
 };
 
-export const definePlugin = definePluginWithContext();
+export const definePlugin = <const TPlugin extends CallApiPlugin<NonNullableUnknown>>(plugin: TPlugin) =>
+	plugin as Writeable<TPlugin, "deep">;
 
 type BaseConfigObject = Exclude<BaseCallApiConfig, AnyFunction>;
 

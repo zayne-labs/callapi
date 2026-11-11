@@ -14,10 +14,7 @@ export default zayne(
 		tailwindcssBetter: {
 			settings: { entryPoint: "apps/docs/tailwind.css" },
 		},
-		typescript: {
-			tsconfigPath: ["packages/*/tsconfig.json", "apps/*/tsconfig.json"],
-			// tsconfigPath: ["**/tsconfig.json"],
-		},
+		typescript: true,
 	},
 	{
 		files: ["packages/callapi/src/createFetchClient.ts"],
