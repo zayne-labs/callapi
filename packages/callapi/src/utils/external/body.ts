@@ -7,7 +7,7 @@ const toStringOrStringify = (value: unknown): string => {
 	return isString(value) ? value : JSON.stringify(value);
 };
 
-type BodyType = NonNullable<CallApiRequestOptions["body"]>;
+type BodyType = CallApiRequestOptions["body"];
 
 export const toSearchParams = <TSchema extends CallApiSchemaType<BodyType>>(
 	data: InferSchemaOutput<TSchema>,
@@ -24,7 +24,7 @@ export const toSearchParams = <TSchema extends CallApiSchemaType<BodyType>>(
 	}
 
 	if (result.value instanceof URLSearchParams) {
-		return new URLSearchParams(result.value);
+		return result.value;
 	}
 
 	const searchParams = new URLSearchParams();

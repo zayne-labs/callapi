@@ -64,7 +64,9 @@ const resolveAuthValue = (value: PossibleAuthValueOrGetter) => (isFunction(value
 
 const isMissingAuthValue = (value: PossibleAuthValue) => value == null;
 
-type AuthHeaderObject = { Authorization: string };
+type AuthHeaderObject = {
+	Authorization: string;
+};
 
 export const getAuthHeader = async (
 	auth: CallApiExtraOptions["auth"]
@@ -94,6 +96,7 @@ export const getAuthHeader = async (
 				Authorization: `Basic ${globalThis.btoa(`${username}:${password}`)}`,
 			};
 		}
+
 		case "Bearer": {
 			const value = await resolveAuthValue(auth.value);
 
@@ -103,6 +106,7 @@ export const getAuthHeader = async (
 				Authorization: `Bearer ${value}`,
 			};
 		}
+
 		case "Custom": {
 			const [prefix, value] = await Promise.all([
 				resolveAuthValue(auth.prefix),
