@@ -1,4 +1,5 @@
 import type { ModifiedRequestInit } from "../types/options-types";
+import type { UnionToTuple } from "../validation";
 
 export const fetchSpecificKeys = [
 	"body",
@@ -16,5 +17,6 @@ export const fetchSpecificKeys = [
 	"priority",
 	"mode",
 	"referrerPolicy",
+	"dispatcher",
 	"extraFetchOptions",
-] as const satisfies Array<keyof ModifiedRequestInit>;
+] as const satisfies UnionToTuple<"dispatcher" | keyof ModifiedRequestInit>;

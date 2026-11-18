@@ -79,15 +79,19 @@ export type Satisfies<TActualType extends TExpectedTypeShape, TExpectedTypeShape
 	[Key in keyof TActualType]: Key extends keyof TExpectedTypeShape ? TActualType[Key] : never;
 };
 
+export type OmitStrict<TObject, TKeysToOmit extends keyof TObject> = Omit<TObject, TKeysToOmit>;
+
+export type PickStrict<TObject, TKeysToPick extends keyof TObject> = Pick<TObject, TKeysToPick>;
+
 // export type Satisfies<TActualObject extends TExpectedObject, TExpectedObject> = {
 // 	[Key in keyof TActualObject & keyof TExpectedObject]: TActualObject[Key];
 // };
 
 export type DistributiveOmit<TObject, TKeysToOmit extends keyof TObject> =
-	TObject extends unknown ? Omit<TObject, TKeysToOmit> : never;
+	TObject extends unknown ? OmitStrict<TObject, TKeysToOmit> : never;
 
 export type DistributivePick<TObject, TKeysToPick extends keyof TObject> =
-	TObject extends unknown ? Pick<TObject, TKeysToPick> : never;
+	TObject extends unknown ? PickStrict<TObject, TKeysToPick> : never;
 
 type ErrorMessages<TType extends number | string | symbol = never> = Partial<
 	Record<"$all" | number | symbol | (AnyString | TType), unknown>

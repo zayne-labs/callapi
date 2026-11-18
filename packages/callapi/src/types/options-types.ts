@@ -1,5 +1,4 @@
 import type { AuthOption } from "../auth";
-import type { fetchSpecificKeys } from "../constants/common";
 import type { DedupeOptions } from "../dedupe";
 import type { HookConfigOptions, HooksOrHooksArray } from "../hooks";
 import type { FetchImpl, Middlewares } from "../middlewares";
@@ -37,7 +36,7 @@ import type {
 	DefaultPluginArray,
 	DefaultThrowOnError,
 } from "./default-types";
-import type { NoInferUnMasked, NonNullableUnknown, Writeable } from "./type-helpers";
+import type { NoInferUnMasked, NonNullableUnknown, OmitStrict, Writeable } from "./type-helpers";
 
 // eslint-disable-next-line ts-eslint/no-empty-object-type -- This needs to be empty to allow users to register their own meta
 export interface Register {
@@ -46,8 +45,6 @@ export interface Register {
 
 export type GlobalMeta =
 	Register extends { meta?: infer TMeta extends DefaultMetaObject } ? TMeta : DefaultMetaObject;
-
-type FetchSpecificKeysUnion = Exclude<(typeof fetchSpecificKeys)[number], "body" | "headers" | "method">;
 
 export type ModifiedRequestInit = RequestInit & {
 	duplex?: "half";
@@ -74,7 +71,7 @@ export type CallApiRequestOptions<TBody = Body> = {
 	 */
 	method?: MethodUnion;
 	// eslint-disable-next-line perfectionist/sort-intersection-types -- Allow
-} & Pick<ModifiedRequestInit, FetchSpecificKeysUnion>;
+} & Partial<OmitStrict<ModifiedRequestInit, "body" | "headers" | "method">>;
 
 export type SharedExtraOptions<
 	TCallApiContext extends CallApiContext = DefaultCallApiContext,
@@ -534,6 +531,7 @@ export type GetBaseSchemaRoutes<TBaseSchemaAndConfig extends BaseCallApiSchemaAn
 	TBaseSchemaAndConfig["routes"],
 	"deep"
 >;
+
 export type GetBaseSchemaConfig<TBaseSchemaAndConfig extends BaseCallApiSchemaAndConfig> = Writeable<
 	NonNullable<TBaseSchemaAndConfig["config"]>,
 	"deep"
