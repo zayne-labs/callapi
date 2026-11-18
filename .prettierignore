@@ -3,3 +3,6 @@ pnpm-lock.yaml
 *.tsbuildinfo
 .next
 .source
+
+# root README is a symlink to packages/callapi/README.md; formatting it corrupts the link target
+/README.md
