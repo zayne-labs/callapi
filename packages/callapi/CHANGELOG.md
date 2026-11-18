@@ -1,5 +1,11 @@
 # @zayne-labs/callapi
 
+## 1.16.5
+
+### Patch Changes
+
+- 20a6397: fix(callapi): fix type issues due to differences in server and client fetch types
+
 ## 1.16.4
 
 ### Patch Changes
